@@ -8,7 +8,7 @@ de banco, para permitir integração futura.
 ## Stack
 React + Vite + TypeScript · Tailwind v4 · React Router · TanStack Query ·
 React Hook Form + Zod · Supabase (Auth + Postgres schema `treino` + RLS) ·
-Recharts · Vercel
+Recharts · GitHub Pages
 
 ## Setup
 1. Crie um projeto novo no Supabase (não use o do Personal Perto).
@@ -17,11 +17,19 @@ Recharts · Vercel
 4. `cp .env.example .env` e preencha URL e anon key.
 5. `npm install && npm run dev`
 
-## Deploy (Vercel)
-- Importar o repo `andrevisc-1209/Treino-PP`, framework Vite.
-- Env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (conferir se salvaram inteiras).
-- Domínio: `treino.personalperto.com.br` (CNAME no DNS).
-- Supabase → Auth → URL Configuration: adicionar o domínio em Site URL / Redirect URLs.
+## Deploy (GitHub Pages)
+App publicado em **https://andrevisc-1209.github.io/Treino-PP/** via GitHub Actions
+(`.github/workflows/deploy.yml`), disparado a cada push na `main` ou manualmente
+(workflow_dispatch).
+
+Passos manuais (uma vez só):
+1. GitHub → **Settings → Pages → Source**: selecione **GitHub Actions**.
+2. GitHub → **Settings → Secrets and variables → Actions**: crie os secrets
+   `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com os valores do projeto Supabase.
+3. Supabase → **Authentication → URL Configuration**:
+   - **Site URL**: `https://andrevisc-1209.github.io/Treino-PP/`
+   - **Redirect URLs**: adicione `https://andrevisc-1209.github.io/Treino-PP/` e
+     mantenha `http://localhost:5173` para o dev local.
 
 ## Estrutura
 ```
