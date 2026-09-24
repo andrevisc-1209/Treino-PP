@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Pencil, Scale } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
+import { PlanosTab } from '@/features/planos/PlanosTab'
 import { useAluno, useArquivarAluno, usePesos, useRegistrarPeso } from './api'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
@@ -172,7 +173,9 @@ export function AlunoFichaPage() {
         </div>
       )}
 
-      {tab !== 'Resumo' && (
+      {tab === 'Treinos' && <PlanosTab alunoId={aluno.id} />}
+
+      {(tab === 'Histórico' || tab === 'Evolução') && (
         <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">Em breve</div>
       )}
     </div>
