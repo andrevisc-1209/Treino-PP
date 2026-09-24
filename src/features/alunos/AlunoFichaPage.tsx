@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Scale } from 'lucide-react'
+import { ArrowLeft, Pencil, Play, Scale } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
 import { PlanosTab } from '@/features/planos/PlanosTab'
+import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
+import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import { useAluno, useArquivarAluno, usePesos, useRegistrarPeso } from './api'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
@@ -63,6 +65,7 @@ export function AlunoFichaPage() {
   const navigate = useNavigate()
   const { data: aluno, isLoading, error } = useAluno(id)
   const { data: pesos } = usePesos(id)
+  const { data: sessaoEmAndamento } = useSessaoEmAndamento(id)
   const arquivar = useArquivarAluno()
   const [tab, setTab] = useState<Tab>('Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
@@ -104,6 +107,13 @@ export function AlunoFichaPage() {
         {aluno.practices_sport && <Badge>Esporte: {aluno.sport_name}</Badge>}
         {aluno.medications && <Badge>Medicamentos</Badge>}
       </div>
+
+      <Link
+        to={sessaoEmAndamento ? `/alunos/${aluno.id}/sessoes/${sessaoEmAndamento.id}` : `/alunos/${aluno.id}/sessoes/nova`}
+        className="mb-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-dark"
+      >
+        <Play size={18} /> {sessaoEmAndamento ? 'Continuar treino' : 'Iniciar treino'}
+      </Link>
 
       <div className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
         {TABS.map((t) => (
@@ -175,7 +185,9 @@ export function AlunoFichaPage() {
 
       {tab === 'Treinos' && <PlanosTab alunoId={aluno.id} />}
 
-      {(tab === 'Histórico' || tab === 'Evolução') && (
+      {tab === 'Histórico' && <HistoricoTab alunoId={aluno.id} />}
+
+      {tab === 'Evolução' && (
         <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">Em breve</div>
       )}
     </div>

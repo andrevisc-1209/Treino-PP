@@ -1,0 +1,91 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Button, Field, Input, ScaleGrid } from '@/components/ui'
+import { useAtualizarSessao, useSessao } from './api'
+
+const PSE_LABELS: Record<number, string> = { 0: 'repouso', 3: 'moderado', 5: 'difícil', 7: 'muito difícil', 10: 'máximo' }
+
+export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: string }) {
+  const navigate = useNavigate()
+  const { data: sessao } = useSessao(sessionId)
+  const atualizar = useAtualizarSessao(sessionId, alunoId)
+
+  const minutosDecorridos = sessao ? Math.max(1, Math.round((Date.now() - new Date(sessao.created_at).getTime()) / 60000)) : 0
+
+  const [pse, setPse] = useState<number | null>(null)
+  const [duracao, setDuracao] = useState<string>('')
+  const [nota, setNota] = useState<number | null>(null)
+  const [observacao, setObservacao] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (sessao) setDuracao(String(minutosDecorridos))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!sessao])
+
+  const cargaInterna = pse != null && duracao.trim() ? pse * Number(duracao) : null
+
+  const concluir = () => {
+    if (pse == null) {
+      setErro('Informe o PSE')
+      return
+    }
+    if (!duracao.trim() || Number(duracao) <= 0) {
+      setErro('Informe a duração')
+      return
+    }
+    setErro(null)
+    atualizar.mutate(
+      {
+        status: 'concluida',
+        post_pse: pse,
+        duration_minutes: Number(duracao),
+        prof_rating: nota,
+        prof_notes: observacao.trim() || null,
+      },
+      {
+        onSuccess: () => navigate(`/alunos/${alunoId}`, { replace: true }),
+        onError: (e) => setErro((e as Error).message),
+      },
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="font-semibold">PSE (esforço percebido)</h2>
+        <ScaleGrid value={pse} onChange={setPse} labels={PSE_LABELS} />
+      </div>
+
+      <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <Field label="Duração (minutos)">
+          <Input type="number" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value)} />
+        </Field>
+      </div>
+
+      <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="font-semibold">Avaliação do professor</h2>
+        <ScaleGrid value={nota} onChange={setNota} />
+        <Field label="Observação">
+          <textarea
+            className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+          />
+        </Field>
+      </div>
+
+      {cargaInterna != null && (
+        <div className="rounded-2xl bg-slate-100 p-4 text-center">
+          <p className="text-sm text-slate-500">Carga interna (PSE × duração)</p>
+          <p className="text-2xl font-bold">{cargaInterna} UA</p>
+        </div>
+      )}
+
+      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      <Button onClick={concluir} className="w-full" disabled={atualizar.isPending}>
+        Concluir treino
+      </Button>
+    </div>
+  )
+}
