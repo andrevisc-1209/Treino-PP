@@ -30,7 +30,10 @@ export function LoginPage() {
         : await supabase.auth.signUp({
             email: f.email,
             password: f.password,
-            options: { data: { name: f.name ?? '' } },
+            options: {
+              data: { name: f.name ?? '' },
+              emailRedirectTo: window.location.origin + import.meta.env.BASE_URL,
+            },
           })
     if (error) setMsg(error.message)
     else if (mode === 'signup') setMsg('Conta criada. Confirme o e-mail, se for pedido, e entre.')
