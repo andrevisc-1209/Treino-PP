@@ -7,7 +7,8 @@ import { PlanosTab } from '@/features/planos/PlanosTab'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
-import { useAluno, useArquivarAluno, usePesos, useRegistrarPeso } from './api'
+import { useAluno, useArquivarAluno, useConsentimentoDetalhado, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
+import { TERMO_VERSAO } from './termo'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -67,6 +68,8 @@ export function AlunoFichaPage() {
   const { data: aluno, isLoading, error } = useAluno(id)
   const { data: pesos } = usePesos(id)
   const { data: sessaoEmAndamento } = useSessaoEmAndamento(id)
+  const { data: consentimento } = useConsentimentoDetalhado(id)
+  const revogar = useRevogarConsentimento(id ?? '')
   const arquivar = useArquivarAluno()
   const [tab, setTab] = useState<Tab>('Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
@@ -81,6 +84,13 @@ export function AlunoFichaPage() {
   const handleArquivar = () => {
     if (!confirm(`Arquivar ${aluno.name}? Ele deixará de aparecer na lista de alunos.`)) return
     arquivar.mutate(aluno.id, { onSuccess: () => navigate('/') })
+  }
+
+  const handleRevogar = () => {
+    if (!consentimento) return
+    if (!confirm('Revogar o consentimento LGPD? Os dados de lesão e medicamentos serão apagados e os campos de saúde ficarão travados até um novo consentimento.'))
+      return
+    revogar.mutate(consentimento.id)
   }
 
   return (
@@ -146,6 +156,17 @@ export function AlunoFichaPage() {
               <dd>{aluno.medications ?? '—'}</dd>
             </dl>
           </div>
+
+          {consentimento && (
+            <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-600">
+                Consentimento LGPD v{TERMO_VERSAO} em {new Date(consentimento.consented_at).toLocaleDateString('pt-BR')}
+              </p>
+              <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
+                Revogar
+              </Button>
+            </div>
+          )}
 
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
