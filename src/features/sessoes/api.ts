@@ -9,6 +9,7 @@ export type Sessao = {
   professional_id: string
   plano_id: string | null
   plano_nome: string | null
+  aula_id: string | null
   status: SessaoStatus
   session_date: string
   duration_minutes: number | null
@@ -134,6 +135,7 @@ export type PreTreinoInput = {
   pre_muscle_pain: number
   plano_id: string | null
   plano_nome: string | null
+  aula_id: string | null
 }
 
 export function useIniciarSessao(alunoId: string) {
@@ -150,6 +152,7 @@ export function useIniciarSessao(alunoId: string) {
           professional_id: u.user.id,
           plano_id: input.plano_id,
           plano_nome: input.plano_nome,
+          aula_id: input.aula_id,
           status: 'em_andamento',
           pre_sleep: input.pre_sleep,
           pre_stress: input.pre_stress,

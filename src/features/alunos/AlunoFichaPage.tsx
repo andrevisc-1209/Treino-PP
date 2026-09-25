@@ -4,6 +4,7 @@ import { ArrowLeft, Pencil, Play, Scale } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
 import { PlanosTab } from '@/features/planos/PlanosTab'
+import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
@@ -76,7 +77,7 @@ export function AlunoFichaPage() {
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
 
-  if (!id) return <Navigate to="/" replace />
+  if (!id) return <Navigate to="/alunos" replace />
   if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
   if (error) return <p className="p-4 text-red-600">{(error as Error).message}</p>
   if (!aluno) return <p className="p-4 text-slate-500">Aluno não encontrado.</p>
@@ -85,7 +86,7 @@ export function AlunoFichaPage() {
 
   const handleArquivar = () => {
     if (!confirm(`Arquivar ${aluno.name}? Ele deixará de aparecer na lista de alunos.`)) return
-    arquivar.mutate(aluno.id, { onSuccess: () => navigate('/') })
+    arquivar.mutate(aluno.id, { onSuccess: () => navigate('/alunos') })
   }
 
   const handleRevogar = () => {
@@ -98,7 +99,7 @@ export function AlunoFichaPage() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center gap-3">
-        <Link to="/" className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
+        <Link to="/alunos" className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
           <ArrowLeft size={20} />
         </Link>
         <h1 className="flex-1 truncate text-xl font-bold">{aluno.name}</h1>
@@ -159,6 +160,8 @@ export function AlunoFichaPage() {
               <dd>{aluno.medications ?? '—'}</dd>
             </dl>
           </div>
+
+          <HorariosFixosBlock alunoId={aluno.id} />
 
           {consentimento && (
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">

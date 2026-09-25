@@ -26,6 +26,7 @@ export function NovaSessaoPage() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const planoDaUrl = searchParams.get('plano')
+  const aulaId = searchParams.get('aula')
   const navigate = useNavigate()
   const { data: aluno } = useAluno(id)
   const { data: planos } = usePlanos(id)
@@ -154,6 +155,7 @@ export function NovaSessaoPage() {
       {
         plano_id: planoEscolhido?.id ?? null,
         plano_nome: planoEscolhido?.name ?? null,
+        aula_id: aulaId,
         pre_sleep: respostas.pre_sleep!,
         pre_stress: respostas.pre_stress!,
         pre_fatigue: respostas.pre_fatigue!,

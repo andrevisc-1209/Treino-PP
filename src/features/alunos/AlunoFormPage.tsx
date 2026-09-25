@@ -6,9 +6,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import { cn, formatarTelefone, idade } from '@/lib/utils'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
-import { useAluno, useConsentimentoAtivo, usePesos, useSalvarAluno } from './api'
+import { useAluno, useAlunos, useConsentimentoAtivo, usePesos, useSalvarAluno } from './api'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
 import { ESPORTES, REGIOES_CORPO } from './opcoes'
+import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
+import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
+import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
+import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
 
 const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : Number(v))
 
@@ -81,7 +85,8 @@ const STEP2_FIELDS = [
 const ETAPAS = [
   { n: 1, label: 'Dados' },
   { n: 2, label: 'Saúde' },
-  { n: 3, label: 'Revisão' },
+  { n: 3, label: 'Horários' },
+  { n: 4, label: 'Revisão' },
 ] as const
 
 function OptionButtons<T extends string>({
@@ -127,9 +132,14 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { data: hadActiveConsent, isLoading: consentLoading } = useConsentimentoAtivo(mode === 'edit' ? id : undefined)
   const { data: pesos } = usePesos(mode === 'edit' ? id : undefined)
   const salvar = useSalvarAluno()
+  const { data: outrosAlunosRaw } = useAlunos()
+  const { data: horariosDoPersonal } = useHorariosFixos()
 
   const [etapa, setEtapa] = useState(1)
   const [termoAberto, setTermoAberto] = useState(false)
+  const [horariosPendentes, setHorariosPendentes] = useState<HorarioFormValor[]>([])
+  const [novoHorarioAberto, setNovoHorarioAberto] = useState(false)
+  const [erroHorarios, setErroHorarios] = useState<string | null>(null)
 
   const { register, handleSubmit, watch, setValue, reset, control, trigger, formState } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
@@ -184,9 +194,13 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const medicationsFlag = watch('medications_flag')
 
   const avancar = async () => {
+    if (etapa === 3) {
+      setEtapa(4)
+      return
+    }
     const campos = etapa === 1 ? STEP1_FIELDS : STEP2_FIELDS
     const ok = await trigger(campos as unknown as (keyof FormInput)[])
-    if (ok) setEtapa((e) => Math.min(3, e + 1))
+    if (ok) setEtapa((e) => Math.min(4, e + 1))
   }
 
   const onSubmit = async (f: FormOutput) => {
@@ -195,7 +209,29 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
       ...f,
       hadActiveConsent: !!hadActiveConsent,
     })
+    if (mode === 'create' && horariosPendentes.length > 0) {
+      try {
+        for (const h of horariosPendentes) {
+          await criarHorariosFixos({
+            weekdays: h.weekdays,
+            start_time: h.start_time,
+            duration_min: h.duration_min,
+            local: h.local.trim() || null,
+            alunoIds: [alunoId, ...h.coParticipantesIds],
+          })
+        }
+      } catch (e) {
+        setErroHorarios(`Aluno salvo, mas houve um erro ao criar os horários: ${(e as Error).message}`)
+      }
+    }
     navigate(`/alunos/${alunoId}`)
+  }
+
+  const outrosAlunos = (outrosAlunosRaw ?? []).filter((a) => a.id !== id).map((a) => ({ id: a.id, name: a.name }))
+
+  const salvarHorarioPendente = (v: HorarioFormValor) => {
+    setHorariosPendentes((atual) => [...atual, v])
+    setNovoHorarioAberto(false)
   }
 
   if (mode === 'edit' && (alunoLoading || consentLoading)) {
@@ -206,7 +242,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     <div className="mx-auto max-w-2xl p-4 pb-28">
       <header className="mb-4 flex items-center gap-3">
         <Link
-          to={mode === 'edit' ? `/alunos/${id}` : '/'}
+          to={mode === 'edit' ? `/alunos/${id}` : '/alunos'}
           className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100"
           aria-label="Voltar"
         >
@@ -373,7 +409,47 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </div>
           ))}
 
-        {etapa === 3 && (
+        {etapa === 3 &&
+          (mode === 'edit' ? (
+            <HorariosFixosBlock alunoId={id!} />
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-slate-500">Opcional. Você também pode adicionar horários fixos depois, na ficha do aluno.</p>
+              {horariosPendentes.length === 0 && <p className="text-sm text-slate-400">Nenhum horário adicionado ainda.</p>}
+              <ul className="space-y-2">
+                {horariosPendentes.map((h, i) => (
+                  <li key={i} className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-3 text-sm">
+                    <span>
+                      {h.weekdays.map(nomeDiaCurtoPorWeekday).join(' e ')} · {h.start_time} · {h.duration_min} min
+                      {h.local && ` · ${h.local}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setHorariosPendentes((atual) => atual.filter((_, idx) => idx !== i))}
+                      className="text-xs font-medium text-red-600"
+                    >
+                      Remover
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Button type="button" variant="ghost" onClick={() => setNovoHorarioAberto(true)} className="w-full border border-dashed border-slate-300">
+                + Adicionar horário
+              </Button>
+              {erroHorarios && <p className="text-sm text-red-600">{erroHorarios}</p>}
+
+              <HorarioFormSheet
+                open={novoHorarioAberto}
+                onClose={() => setNovoHorarioAberto(false)}
+                title="Novo horário fixo"
+                outrosAlunos={outrosAlunos}
+                outrosHorarios={horariosDoPersonal}
+                onSalvar={salvarHorarioPendente}
+              />
+            </div>
+          ))}
+
+        {etapa === 4 && (
           <div className="space-y-4">
             <div className="space-y-2 rounded-xl bg-slate-50 p-3">
               <div className="flex items-center justify-between">
@@ -443,7 +519,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               Voltar
             </Button>
           )}
-          {etapa < 3 ? (
+          {etapa < 4 ? (
             <Button type="button" onClick={avancar} className="flex-1">
               Continuar
             </Button>
