@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Plus, Search, Trash2, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
+import { avisoSaude } from '@/features/alunos/format'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
@@ -123,10 +124,10 @@ export function PlanoEditorPage() {
         </div>
       </header>
 
-      {aluno?.injury && (
+      {aluno && avisoSaude(aluno) && (
         <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
           <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-          <span>Lesão registrada: {aluno.injury_notes}</span>
+          <span>{avisoSaude(aluno)}</span>
         </div>
       )}
 

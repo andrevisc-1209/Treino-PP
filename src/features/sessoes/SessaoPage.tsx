@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
+import { avisoSaude } from '@/features/alunos/format'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
 import { BottomSheet, Button, Field, Input, ScaleGrid } from '@/components/ui'
@@ -183,10 +184,10 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
         <span className="font-mono text-xl font-semibold">{formatarDuracao(segundos)}</span>
       </div>
 
-      {aluno?.injury && (
+      {aluno && avisoSaude(aluno) && (
         <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
           <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-          <span>Lesão registrada: {aluno.injury_notes}</span>
+          <span>{avisoSaude(aluno)}</span>
         </div>
       )}
 

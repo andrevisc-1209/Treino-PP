@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Componentes base mínimos. Podem ser trocados por shadcn/ui depois
@@ -34,6 +35,44 @@ export function Field({ label, error, children }: { label: string; error?: strin
       {children}
       {error && <span className="text-xs text-red-600">{error}</span>}
     </label>
+  )
+}
+
+export function ChipsMultiSelect({
+  options,
+  value,
+  onChange,
+  disabled,
+}: {
+  options: readonly string[]
+  value: string[]
+  onChange: (v: string[]) => void
+  disabled?: boolean
+}) {
+  const toggle = (opt: string) => {
+    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt])
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
+        const selecionado = value.includes(opt)
+        return (
+          <button
+            key={opt}
+            type="button"
+            disabled={disabled}
+            onClick={() => toggle(opt)}
+            className={cn(
+              'flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition disabled:opacity-50',
+              selecionado ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
+            )}
+          >
+            {selecionado && <Check size={16} />}
+            {opt}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 

@@ -14,3 +14,11 @@ export function idade(birthDate: string | null): number | null {
   if (m < 0 || (m === 0 && now.getDate() < b.getDate())) a--
   return a
 }
+
+/** Máscara progressiva (21) 99999-9999 conforme o usuário digita. */
+export function formatarTelefone(valor: string): string {
+  const d = valor.replace(/\D/g, '').slice(0, 11)
+  if (d.length <= 2) return d.length ? `(${d}` : ''
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+}

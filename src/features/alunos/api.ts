@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { TERMO_VERSAO } from './termo'
 
 export type Aluno = {
   id: string
@@ -12,8 +13,13 @@ export type Aluno = {
   email: string | null
   active: boolean
   injury: boolean
+  injury_regions: string[]
   injury_notes: string | null
+  surgery: boolean
+  surgery_regions: string[]
+  surgery_notes: string | null
   practices_sport: boolean
+  sports: string[]
   sport_name: string | null
   medications: string | null
 }
@@ -142,8 +148,13 @@ export type SalvarAlunoInput = {
   email?: string
   weight_kg?: number
   injury: boolean
+  injury_regions: string[]
   injury_notes?: string
+  surgery: boolean
+  surgery_regions: string[]
+  surgery_notes?: string
   practices_sport: boolean
+  sports: string[]
   sport_name?: string
   medications?: string
   lgpd_consent: boolean
@@ -167,8 +178,13 @@ export function useSalvarAluno() {
         phone: input.phone || null,
         email: input.email || null,
         injury: input.injury,
+        injury_regions: input.injury ? input.injury_regions : [],
         injury_notes: input.injury ? input.injury_notes || null : null,
+        surgery: input.surgery,
+        surgery_regions: input.surgery ? input.surgery_regions : [],
+        surgery_notes: input.surgery ? input.surgery_notes || null : null,
         practices_sport: input.practices_sport,
+        sports: input.practices_sport ? input.sports : [],
         sport_name: input.practices_sport ? input.sport_name || null : null,
         medications: input.medications || null,
       }
@@ -183,9 +199,23 @@ export function useSalvarAluno() {
         alunoId = data.id as string
       }
 
-      if (!input.id && input.weight_kg) {
-        const { error } = await supabase.from('pesos').insert({ aluno_id: alunoId, weight_kg: input.weight_kg })
-        if (error) throw error
+      if (input.weight_kg) {
+        let deveRegistrar = !input.id
+        if (input.id) {
+          const { data: ultimo } = await supabase
+            .from('pesos')
+            .select('weight_kg')
+            .eq('aluno_id', alunoId)
+            .order('measured_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+          deveRegistrar = ultimo?.weight_kg !== input.weight_kg
+        }
+        if (deveRegistrar) {
+          const { error } = await supabase.from('pesos').insert({ aluno_id: alunoId, weight_kg: input.weight_kg })
+          if (error) throw error
+        }
       }
 
       if (input.lgpd_consent && !input.hadActiveConsent) {
@@ -193,7 +223,7 @@ export function useSalvarAluno() {
           aluno_id: alunoId,
           professional_id,
           method: 'app',
-          consent_version: '1.0',
+          consent_version: TERMO_VERSAO,
         })
         if (error) throw error
       }

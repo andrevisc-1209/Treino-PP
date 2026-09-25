@@ -8,7 +8,7 @@ import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import { useAluno, useArquivarAluno, useConsentimentoDetalhado, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
-import { TERMO_VERSAO } from './termo'
+import { formatarLista } from './format'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -114,8 +114,9 @@ export function AlunoFichaPage() {
         {aluno.sex && <Badge>{aluno.sex === 'M' ? 'Masculino' : aluno.sex === 'F' ? 'Feminino' : 'Outro'}</Badge>}
         {aluno.height_cm && <Badge>{aluno.height_cm} cm</Badge>}
         {ultimoPeso && <Badge>{ultimoPeso.weight_kg} kg</Badge>}
-        {aluno.injury && <Badge>Lesão: {aluno.injury_notes}</Badge>}
-        {aluno.practices_sport && <Badge>Esporte: {aluno.sport_name}</Badge>}
+        {aluno.injury && <Badge>Lesão: {formatarLista(aluno.injury_regions, aluno.injury_notes)}</Badge>}
+        {aluno.surgery && <Badge>Cirurgia: {formatarLista(aluno.surgery_regions, aluno.surgery_notes)}</Badge>}
+        {aluno.practices_sport && <Badge>Esportes: {formatarLista(aluno.sports, aluno.sport_name)}</Badge>}
         {aluno.medications && <Badge>Medicamentos</Badge>}
       </div>
 
@@ -160,7 +161,7 @@ export function AlunoFichaPage() {
           {consentimento && (
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-600">
-                Consentimento LGPD v{TERMO_VERSAO} em {new Date(consentimento.consented_at).toLocaleDateString('pt-BR')}
+                Consentimento LGPD v{consentimento.consent_version} em {new Date(consentimento.consented_at).toLocaleDateString('pt-BR')}
               </p>
               <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
                 Revogar
