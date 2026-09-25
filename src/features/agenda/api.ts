@@ -159,8 +159,8 @@ export function useRemarcarAula() {
   })
 }
 
-/** Valor a cobrar de um aluno pela presença numa aula avulsa, se ele tiver cobrança configurada como 'por_aula'. */
-async function valorPorAulaDoAluno(alunoId: string): Promise<number | null> {
+/** Valor a cobrar de um aluno pela presença numa aula, se ele tiver cobrança configurada como 'por_aula'. */
+export async function valorPorAulaDoAluno(alunoId: string): Promise<number | null> {
   const { data } = await supabase.from('aluno_cobranca').select('modelo, valor_aula').eq('aluno_id', alunoId).maybeSingle()
   if (!data || data.modelo !== 'por_aula') return null
   return data.valor_aula
@@ -178,14 +178,23 @@ async function atualizarStatusAulaSeCompleta(aulaId: string) {
 export function useCheckIn() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ aulaId, alunoIds }: { aulaId: string; alunoIds?: string[] }) => {
+    mutationFn: async ({
+      aulaId,
+      alunoIds,
+      valoresPorAluno,
+    }: {
+      aulaId: string
+      alunoIds?: string[]
+      /** Valor explícito por aluno (edição manual ou divisão de um total em grupo); sem entrada, usa o valor_aula padrão do aluno. */
+      valoresPorAluno?: Record<string, number>
+    }) => {
       let query = supabase.from('aula_participantes').select('id, aluno_id').eq('aula_id', aulaId).eq('status', 'previsto')
       if (alunoIds) query = query.in('aluno_id', alunoIds)
       const { data: alvos, error: errSel } = await query
       if (errSel) throw errSel
 
       for (const p of alvos) {
-        const valor = await valorPorAulaDoAluno(p.aluno_id)
+        const valor = valoresPorAluno?.[p.aluno_id] ?? (await valorPorAulaDoAluno(p.aluno_id))
         const { error } = await supabase.from('aula_participantes').update({ status: 'presente', cobrar: true, valor }).eq('id', p.id)
         if (error) throw error
       }
@@ -546,10 +555,12 @@ export function useProfessionalConfig() {
   })
 }
 
+export type SalvarProfessionalConfigInput = Partial<Omit<ProfessionalConfig, 'professional_id'>>
+
 export function useSalvarProfessionalConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { cobrar_falta_padrao: boolean; cobrar_cancel_padrao: boolean; duracao_padrao_min: number }) => {
+    mutationFn: async (input: SalvarProfessionalConfigInput) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
       const { error } = await supabase.from('professional_config').upsert({ professional_id: u.user.id, ...input })

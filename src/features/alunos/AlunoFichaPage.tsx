@@ -5,6 +5,8 @@ import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
 import { PlanosTab } from '@/features/planos/PlanosTab'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
+import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
+import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
@@ -162,6 +164,10 @@ export function AlunoFichaPage() {
           </div>
 
           <HorariosFixosBlock alunoId={aluno.id} />
+
+          <CobrancaBlock alunoId={aluno.id} />
+
+          <FinanceiroBlock alunoId={aluno.id} />
 
           {consentimento && (
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">

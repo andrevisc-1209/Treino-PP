@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { CalendarDays, Dumbbell, Sun, Users } from 'lucide-react'
+import { CalendarDays, DollarSign, Dumbbell, Sun, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
   { to: '/', label: 'Hoje', icon: Sun, end: true },
   { to: '/agenda', label: 'Agenda', icon: CalendarDays, end: false },
   { to: '/alunos', label: 'Alunos', icon: Users, end: false },
+  { to: '/financeiro', label: 'Financeiro', icon: DollarSign, end: false },
   { to: '/exercicios', label: 'Exercícios', icon: Dumbbell, end: false },
 ]
 

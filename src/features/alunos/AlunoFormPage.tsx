@@ -13,6 +13,9 @@ import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
 import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
 import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
+import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
+import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
+import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
 
 const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : Number(v))
 
@@ -84,9 +87,10 @@ const STEP2_FIELDS = [
 
 const ETAPAS = [
   { n: 1, label: 'Dados' },
-  { n: 2, label: 'Saúde' },
-  { n: 3, label: 'Horários' },
-  { n: 4, label: 'Revisão' },
+  { n: 2, label: 'Cobrança' },
+  { n: 3, label: 'Saúde' },
+  { n: 4, label: 'Horários' },
+  { n: 5, label: 'Revisão' },
 ] as const
 
 function OptionButtons<T extends string>({
@@ -132,6 +136,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { data: hadActiveConsent, isLoading: consentLoading } = useConsentimentoAtivo(mode === 'edit' ? id : undefined)
   const { data: pesos } = usePesos(mode === 'edit' ? id : undefined)
   const salvar = useSalvarAluno()
+  const salvarCobranca = useSalvarAlunoCobranca()
   const { data: outrosAlunosRaw } = useAlunos()
   const { data: horariosDoPersonal } = useHorariosFixos()
 
@@ -140,6 +145,9 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const [horariosPendentes, setHorariosPendentes] = useState<HorarioFormValor[]>([])
   const [novoHorarioAberto, setNovoHorarioAberto] = useState(false)
   const [erroHorarios, setErroHorarios] = useState<string | null>(null)
+  const [cobrancaAtiva, setCobrancaAtiva] = useState(false)
+  const [cobrancaValor, setCobrancaValor] = useState<CobrancaFormValor>(valorInicialCobranca())
+  const [erroCobranca, setErroCobranca] = useState<string | null>(null)
 
   const { register, handleSubmit, watch, setValue, reset, control, trigger, formState } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
@@ -194,13 +202,13 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const medicationsFlag = watch('medications_flag')
 
   const avancar = async () => {
-    if (etapa === 3) {
-      setEtapa(4)
+    if (etapa === 2 || etapa === 4) {
+      setEtapa((e) => e + 1)
       return
     }
     const campos = etapa === 1 ? STEP1_FIELDS : STEP2_FIELDS
     const ok = await trigger(campos as unknown as (keyof FormInput)[])
-    if (ok) setEtapa((e) => Math.min(4, e + 1))
+    if (ok) setEtapa((e) => Math.min(5, e + 1))
   }
 
   const onSubmit = async (f: FormOutput) => {
@@ -209,6 +217,23 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
       ...f,
       hadActiveConsent: !!hadActiveConsent,
     })
+    if (mode === 'create' && cobrancaAtiva) {
+      const valorNum = Number(cobrancaValor.valorTexto.replace(',', '.'))
+      if (cobrancaValor.valorTexto.trim() && !Number.isNaN(valorNum) && valorNum >= 0) {
+        try {
+          await salvarCobranca.mutateAsync({
+            aluno_id: alunoId,
+            modelo: cobrancaValor.modelo,
+            valor_aula: cobrancaValor.modelo === 'por_aula' ? valorNum : null,
+            valor_mensal: cobrancaValor.modelo === 'mensal' ? valorNum : null,
+            dia_ciclo: Number(cobrancaValor.diaCicloTexto) || 1,
+            dias_vencimento: Number(cobrancaValor.diasVencimentoTexto) || 0,
+          })
+        } catch (e) {
+          setErroCobranca(`Aluno salvo, mas houve um erro ao salvar a cobrança: ${(e as Error).message}`)
+        }
+      }
+    }
     if (mode === 'create' && horariosPendentes.length > 0) {
       try {
         for (const h of horariosPendentes) {
@@ -323,6 +348,29 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         )}
 
         {etapa === 2 &&
+          (mode === 'edit' ? (
+            <CobrancaBlock alunoId={id!} />
+          ) : (
+            <div className="space-y-4">
+              <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
+                <span className="font-medium">Definir cobrança para este aluno</span>
+                <input
+                  type="checkbox"
+                  checked={cobrancaAtiva}
+                  onChange={(e) => {
+                    setCobrancaAtiva(e.target.checked)
+                    if (e.target.checked) setCobrancaValor(valorInicialCobranca())
+                  }}
+                  className="size-5"
+                />
+              </label>
+              {!cobrancaAtiva && <p className="text-sm text-slate-500">Opcional. Você também pode definir a cobrança depois, na ficha do aluno.</p>}
+              {cobrancaAtiva && <CobrancaForm value={cobrancaValor} onChange={setCobrancaValor} />}
+              {erroCobranca && <p className="text-sm text-red-600">{erroCobranca}</p>}
+            </div>
+          ))}
+
+        {etapa === 3 &&
           (!lgpdConsent ? (
             <div className="space-y-4">
               <p className="text-sm text-slate-600">
@@ -409,7 +457,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </div>
           ))}
 
-        {etapa === 3 &&
+        {etapa === 4 &&
           (mode === 'edit' ? (
             <HorariosFixosBlock alunoId={id!} />
           ) : (
@@ -449,7 +497,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </div>
           ))}
 
-        {etapa === 4 && (
+        {etapa === 5 && (
           <div className="space-y-4">
             <div className="space-y-2 rounded-xl bg-slate-50 p-3">
               <div className="flex items-center justify-between">
@@ -476,10 +524,26 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               </dl>
             </div>
 
+            {mode === 'create' && (
+              <div className="space-y-2 rounded-xl bg-slate-50 p-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold">Cobrança</h2>
+                  <button type="button" onClick={() => setEtapa(2)} className="flex items-center gap-1 text-sm text-brand-dark">
+                    <Pencil size={14} /> Editar
+                  </button>
+                </div>
+                <p className="text-sm">
+                  {cobrancaAtiva
+                    ? `${cobrancaValor.modelo === 'por_aula' ? 'Por aula' : 'Mensal'} · R$ ${cobrancaValor.valorTexto || '0'}`
+                    : 'Sem valor definido'}
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2 rounded-xl bg-slate-50 p-3">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Saúde</h2>
-                <button type="button" onClick={() => setEtapa(2)} className="flex items-center gap-1 text-sm text-brand-dark">
+                <button type="button" onClick={() => setEtapa(3)} className="flex items-center gap-1 text-sm text-brand-dark">
                   <Pencil size={14} /> Editar
                 </button>
               </div>
@@ -519,7 +583,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               Voltar
             </Button>
           )}
-          {etapa < 4 ? (
+          {etapa < 5 ? (
             <Button type="button" onClick={avancar} className="flex-1">
               Continuar
             </Button>

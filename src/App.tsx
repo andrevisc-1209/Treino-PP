@@ -16,6 +16,9 @@ import { FinalizarSessaoPage } from '@/features/sessoes/FinalizarSessaoPage'
 import { HojePage } from '@/features/agenda/HojePage'
 import { AgendaPage } from '@/features/agenda/AgendaPage'
 import { ConfiguracoesPage } from '@/features/agenda/ConfiguracoesPage'
+import { FinanceiroPage } from '@/features/financeiro/FinanceiroPage'
+import { FecharCicloPage } from '@/features/financeiro/FecharCicloPage'
+import { FaturaPage } from '@/features/financeiro/FaturaPage'
 import { PwaUpdatePrompt } from '@/components/PwaUpdatePrompt'
 
 export default function App() {
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="/alunos/:id/sessoes/nova" element={<NovaSessaoPage />} />
           <Route path="/alunos/:id/sessoes/:sessionId" element={<SessaoPage />} />
           <Route path="/alunos/:id/sessoes/:sessionId/finalizar" element={<FinalizarSessaoPage />} />
+          <Route path="/alunos/:id/fechar-ciclo" element={<FecharCicloPage />} />
+          <Route path="/financeiro" element={<FinanceiroPage />} />
+          <Route path="/financeiro/:faturaId" element={<FaturaPage />} />
           <Route path="/exercicios" element={<ExerciciosPage />} />
           <Route path="/modelos" element={<ModelosPage />} />
           <Route path="/modelos/:modeloId" element={<ModeloEditorPage />} />
