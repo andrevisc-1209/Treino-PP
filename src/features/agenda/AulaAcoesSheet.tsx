@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { dividirValor } from '@/features/financeiro/calc'
+import { formatarBRL } from '@/lib/moeda'
 import { dataSP, horaSP, montarDataHoraSP } from '@/lib/datas'
-import { useCancelarAula, useCheckIn, useMarcarFalta, useProfessionalConfig, useRemarcarAula, type Aula } from './api'
+import { useCancelarAula, useCheckIn, useMarcarFalta, useProfessionalConfig, useRemarcarAula, valorPorAulaDoAluno, type Aula } from './api'
 
 type Passo = 'menu' | 'iniciar' | 'checkin' | 'falta' | 'cancelar' | 'remarcar'
 
@@ -21,17 +23,39 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
   const [cobrarCancel, setCobrarCancel] = useState(true)
   const [novaData, setNovaData] = useState('')
   const [novaHora, setNovaHora] = useState('')
+  const [valoresGrupo, setValoresGrupo] = useState<Record<string, string>>({})
+  const [dividirTotal, setDividirTotal] = useState(false)
+  const [totalDividir, setTotalDividir] = useState('')
 
   const fechar = () => {
     setPasso('menu')
     setAlunoFalta(null)
+    setDividirTotal(false)
+    setTotalDividir('')
     onClose()
   }
 
-  if (!aula) return null
+  const previstos = aula?.aula_participantes.filter((p) => p.status === 'previsto') ?? []
+  const podeAgir = aula?.status === 'agendada' && previstos.length > 0
 
-  const previstos = aula.aula_participantes.filter((p) => p.status === 'previsto')
-  const podeAgir = aula.status === 'agendada' && previstos.length > 0
+  useEffect(() => {
+    if (passo !== 'checkin' || previstos.length <= 1 || !aula) return
+    let cancelado = false
+    Promise.all(previstos.map((p) => valorPorAulaDoAluno(p.aluno_id))).then((valores) => {
+      if (cancelado) return
+      const iniciais: Record<string, string> = {}
+      previstos.forEach((p, i) => {
+        iniciais[p.aluno_id] = String(valores[i] ?? 0)
+      })
+      setValoresGrupo(iniciais)
+    })
+    return () => {
+      cancelado = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [passo, aula?.id])
+
+  if (!aula) return null
 
   const abrirFalta = (aluno: { id: string; name: string }) => {
     setAlunoFalta(aluno)
@@ -68,6 +92,25 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
   const iniciarTreino = (alunoId: string) => {
     fechar()
     navigate(`/alunos/${alunoId}/sessoes/nova?aula=${aula.id}`)
+  }
+
+  const aplicarDivisao = () => {
+    const total = Number(totalDividir.replace(',', '.'))
+    if (!total || total <= 0) return
+    const partes = dividirValor(total, previstos.length)
+    const novosValores: Record<string, string> = {}
+    previstos.forEach((p, i) => {
+      novosValores[p.aluno_id] = String(partes[i])
+    })
+    setValoresGrupo(novosValores)
+  }
+
+  const confirmarCheckInGrupo = () => {
+    const valoresPorAluno: Record<string, number> = {}
+    for (const p of previstos) {
+      valoresPorAluno[p.aluno_id] = Number((valoresGrupo[p.aluno_id] ?? '0').replace(',', '.')) || 0
+    }
+    checkIn.mutate({ aulaId: aula.id, valoresPorAluno }, { onSuccess: fechar })
   }
 
   const titulo =
@@ -134,17 +177,8 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
         </ul>
       )}
 
-      {passo === 'checkin' && (
+      {passo === 'checkin' && previstos.length <= 1 && (
         <div className="space-y-1">
-          {previstos.length > 1 && (
-            <button
-              onClick={() => checkIn.mutate({ aulaId: aula.id }, { onSuccess: fechar })}
-              disabled={checkIn.isPending}
-              className="w-full rounded-xl px-3 py-3 text-left font-medium text-brand-dark active:bg-slate-100"
-            >
-              Marcar todos presentes
-            </button>
-          )}
           {previstos.map((p) => (
             <button
               key={p.id}
@@ -155,6 +189,51 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
               {p.aluno?.name ?? 'Aluno'}
             </button>
           ))}
+        </div>
+      )}
+
+      {passo === 'checkin' && previstos.length > 1 && (
+        <div className="space-y-4">
+          <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
+            <span className="font-medium">Dividir um valor total</span>
+            <input type="checkbox" checked={dividirTotal} onChange={(e) => setDividirTotal(e.target.checked)} className="size-5" />
+          </label>
+
+          {dividirTotal && (
+            <div className="flex items-end gap-2">
+              <Field label="Total (R$)">
+                <Input type="number" step="0.01" inputMode="decimal" value={totalDividir} onChange={(e) => setTotalDividir(e.target.value)} />
+              </Field>
+              <Button type="button" variant="ghost" onClick={aplicarDivisao}>
+                Aplicar
+              </Button>
+            </div>
+          )}
+
+          <ul className="space-y-2">
+            {previstos.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.aluno?.name ?? 'Aluno'}</span>
+                <div className="w-28 shrink-0">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={valoresGrupo[p.aluno_id] ?? ''}
+                    onChange={(e) => setValoresGrupo((v) => ({ ...v, [p.aluno_id]: e.target.value }))}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="text-sm text-slate-500">
+            Total: {formatarBRL(previstos.reduce((acc, p) => acc + (Number((valoresGrupo[p.aluno_id] ?? '0').replace(',', '.')) || 0), 0))}
+          </p>
+
+          <Button onClick={confirmarCheckInGrupo} className="w-full" disabled={checkIn.isPending}>
+            Confirmar presença de todos
+          </Button>
         </div>
       )}
 

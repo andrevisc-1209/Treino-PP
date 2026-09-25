@@ -5,11 +5,15 @@ import { supabase } from '@/lib/supabase'
 import { cn, idade } from '@/lib/utils'
 import { Button, Input } from '@/components/ui'
 import { InstallBanner } from '@/components/InstallBanner'
+import { useAlunosComCobranca } from '@/features/financeiro/api'
 import { useAlunos } from './api'
 
 export function AlunosPage() {
   const { data: alunos, isLoading, error } = useAlunos()
+  const { data: alunosComCobranca } = useAlunosComCobranca()
   const [busca, setBusca] = useState('')
+
+  const idsComCobranca = new Set((alunosComCobranca ?? []).map((c) => c.aluno_id))
 
   const filtrados = alunos?.filter((a) => a.name.toLowerCase().includes(busca.trim().toLowerCase()))
 
@@ -67,6 +71,9 @@ export function AlunosPage() {
                 <p className="text-sm text-slate-500">
                   {[idade(a.birth_date) != null && `${idade(a.birth_date)} anos`, a.injury && 'lesão'].filter(Boolean).join(' · ') ||
                     'Ficha incompleta'}
+                  {!idsComCobranca.has(a.id) && (
+                    <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Sem valor definido</span>
+                  )}
                 </p>
               </div>
             </Link>
