@@ -21,6 +21,34 @@ ALTER TABLE treino.aulas
   ADD COLUMN occurrence_date DATE
   GENERATED ALWAYS AS ((original_starts_at AT TIME ZONE 'America/Sao_Paulo')::date) STORED;
 
+-- ------------------------------------------------------------
+-- Limpeza: quem já bateu no bug pode ter duplicatas de
+-- (horario_id, occurrence_date). Mantém, por grupo, a aula que foi
+-- remarcada manualmente (starts_at <> original_starts_at) ou que já
+-- tem algum participante com status diferente de 'previsto'; entre
+-- empates, a mais antiga. Apaga as demais (cascade limpa
+-- aula_participantes; sessoes.aula_id vira NULL nas apagadas).
+-- ------------------------------------------------------------
+
+WITH ranqueadas AS (
+  SELECT
+    au.id,
+    row_number() OVER (
+      PARTITION BY au.horario_id, (au.original_starts_at AT TIME ZONE 'America/Sao_Paulo')::date
+      ORDER BY
+        (au.starts_at <> au.original_starts_at) DESC,
+        EXISTS (
+          SELECT 1 FROM treino.aula_participantes p
+          WHERE p.aula_id = au.id AND p.status <> 'previsto'
+        ) DESC,
+        au.created_at ASC
+    ) AS posicao
+  FROM treino.aulas au
+  WHERE au.horario_id IS NOT NULL
+)
+DELETE FROM treino.aulas
+WHERE id IN (SELECT id FROM ranqueadas WHERE posicao > 1);
+
 DROP INDEX treino.uq_aulas_horario_orig;
 
 CREATE UNIQUE INDEX uq_aulas_horario_occurrence
