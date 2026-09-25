@@ -13,6 +13,9 @@ import { PlanoEditorPage } from '@/features/planos/PlanoEditorPage'
 import { NovaSessaoPage } from '@/features/sessoes/NovaSessaoPage'
 import { SessaoPage } from '@/features/sessoes/SessaoPage'
 import { FinalizarSessaoPage } from '@/features/sessoes/FinalizarSessaoPage'
+import { HojePage } from '@/features/agenda/HojePage'
+import { AgendaPage } from '@/features/agenda/AgendaPage'
+import { ConfiguracoesPage } from '@/features/agenda/ConfiguracoesPage'
 import { PwaUpdatePrompt } from '@/components/PwaUpdatePrompt'
 
 export default function App() {
@@ -23,7 +26,10 @@ export default function App() {
         <Route path="/definir-senha" element={<DefinirSenhaPage />} />
         <Route path="/termo" element={<TermoPage />} />
         <Route element={<RequireAuth />}>
-          <Route path="/" element={<AlunosPage />} />
+          <Route path="/" element={<HojePage />} />
+          <Route path="/agenda" element={<AgendaPage />} />
+          <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/alunos" element={<AlunosPage />} />
           <Route path="/alunos/novo" element={<AlunoFormPage mode="create" />} />
           <Route path="/alunos/:id" element={<AlunoFichaPage />} />
           <Route path="/alunos/:id/editar" element={<AlunoFormPage mode="edit" />} />

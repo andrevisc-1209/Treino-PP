@@ -1,14 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
-import { Button, Field, Input } from '@/components/ui'
+import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
 import { useAtualizarSessao, useSessao } from './api'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
 
-export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: string }) {
+export function PosTreino({
+  sessionId,
+  alunoId,
+  onConcluirInicio,
+}: {
+  sessionId: string
+  alunoId: string
+  onConcluirInicio?: () => void
+}) {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { data: sessao } = useSessao(sessionId)
   const atualizar = useAtualizarSessao(sessionId, alunoId)
+  const [perguntaAulaAvulsa, setPerguntaAulaAvulsa] = useState(false)
+  const [duracaoConcluida, setDuracaoConcluida] = useState(0)
+  const [salvandoAulaAvulsa, setSalvandoAulaAvulsa] = useState(false)
 
   const minutosDecorridos = sessao ? Math.max(1, Math.round((Date.now() - new Date(sessao.created_at).getTime()) / 60000)) : 0
 
@@ -35,19 +49,49 @@ export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: 
       return
     }
     setErro(null)
+    onConcluirInicio?.()
+    const duracaoMin = Number(duracao)
     atualizar.mutate(
       {
         status: 'concluida',
         post_pse: pse,
-        duration_minutes: Number(duracao),
+        duration_minutes: duracaoMin,
         prof_rating: nota,
         prof_notes: observacao.trim() || null,
       },
       {
-        onSuccess: () => navigate(`/alunos/${alunoId}`, { replace: true }),
+        onSuccess: async () => {
+          try {
+            const resultado = await finalizarAgendaAoConcluir({ sessaoId: sessionId, alunoId, aulaId: sessao?.aula_id ?? null })
+            qc.invalidateQueries({ queryKey: ['aulas'] })
+            if (resultado === 'sem-aula-hoje') {
+              setDuracaoConcluida(duracaoMin)
+              setPerguntaAulaAvulsa(true)
+              return
+            }
+          } catch {
+            // a agenda é um bônus sobre o treino já concluído — uma falha aqui não deve travar o professor
+          }
+          navigate(`/alunos/${alunoId}`, { replace: true })
+        },
         onError: (e) => setErro((e as Error).message),
       },
     )
+  }
+
+  const responderAulaAvulsa = async (criar: boolean) => {
+    if (criar) {
+      setSalvandoAulaAvulsa(true)
+      try {
+        await criarAulaAvulsaRealizada({ alunoId, sessaoId: sessionId, durationMin: duracaoConcluida })
+        qc.invalidateQueries({ queryKey: ['aulas'] })
+      } catch {
+        // segue mesmo se falhar — o treino já foi concluído normalmente
+      }
+      setSalvandoAulaAvulsa(false)
+    }
+    setPerguntaAulaAvulsa(false)
+    navigate(`/alunos/${alunoId}`, { replace: true })
   }
 
   return (
@@ -84,6 +128,18 @@ export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: 
       <Button onClick={concluir} className="w-full" disabled={atualizar.isPending}>
         Concluir treino
       </Button>
+
+      <BottomSheet open={perguntaAulaAvulsa} onClose={() => responderAulaAvulsa(false)} title="Registrar como aula avulsa?">
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500">Não há aula prevista hoje para este aluno. Registrar este treino como aula avulsa para cobrança?</p>
+          <Button onClick={() => responderAulaAvulsa(true)} className="w-full" disabled={salvandoAulaAvulsa}>
+            Sim, registrar
+          </Button>
+          <Button variant="ghost" onClick={() => responderAulaAvulsa(false)} className="w-full" disabled={salvandoAulaAvulsa}>
+            Não
+          </Button>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

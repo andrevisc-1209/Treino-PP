@@ -6,7 +6,7 @@ export function TermoPage() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center gap-3">
-        <Link to="/" className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
+        <Link to="/alunos" className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-xl font-bold">Termo de consentimento</h1>
