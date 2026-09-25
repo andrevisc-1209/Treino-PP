@@ -3,6 +3,7 @@ import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { ExerciciosTabs } from '@/components/ExerciciosTabs'
 import { useAtualizarExercicio, useCriarExercicio, useExcluirExercicio, useExercicios, type Exercicio } from './api'
 
 type FormState = { name: string; muscle_group: string; equipment: string; description: string }
@@ -88,6 +89,8 @@ export function ExerciciosPage() {
           <Plus size={20} />
         </Button>
       </header>
+
+      <ExerciciosTabs />
 
       <div className="relative mb-3">
         <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Pencil, Play, Scale } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
@@ -8,7 +8,7 @@ import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import { useAluno, useArquivarAluno, useConsentimentoDetalhado, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
-import { formatarLista } from './format'
+import { rotuloBadge } from './format'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -65,13 +65,15 @@ function RegistrarPesoForm({ alunoId, onDone }: { alunoId: string; onDone: () =>
 export function AlunoFichaPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { data: aluno, isLoading, error } = useAluno(id)
   const { data: pesos } = usePesos(id)
   const { data: sessaoEmAndamento } = useSessaoEmAndamento(id)
   const { data: consentimento } = useConsentimentoDetalhado(id)
   const revogar = useRevogarConsentimento(id ?? '')
   const arquivar = useArquivarAluno()
-  const [tab, setTab] = useState<Tab>('Resumo')
+  const tabDaUrl = searchParams.get('tab')
+  const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
 
   if (!id) return <Navigate to="/" replace />
@@ -114,9 +116,9 @@ export function AlunoFichaPage() {
         {aluno.sex && <Badge>{aluno.sex === 'M' ? 'Masculino' : aluno.sex === 'F' ? 'Feminino' : 'Outro'}</Badge>}
         {aluno.height_cm && <Badge>{aluno.height_cm} cm</Badge>}
         {ultimoPeso && <Badge>{ultimoPeso.weight_kg} kg</Badge>}
-        {aluno.injury && <Badge>Lesão: {formatarLista(aluno.injury_regions, aluno.injury_notes)}</Badge>}
-        {aluno.surgery && <Badge>Cirurgia: {formatarLista(aluno.surgery_regions, aluno.surgery_notes)}</Badge>}
-        {aluno.practices_sport && <Badge>Esportes: {formatarLista(aluno.sports, aluno.sport_name)}</Badge>}
+        {aluno.injury && <Badge>{rotuloBadge('Lesão', aluno.injury_regions, aluno.injury_notes)}</Badge>}
+        {aluno.surgery && <Badge>{rotuloBadge('Cirurgia', aluno.surgery_regions, aluno.surgery_notes)}</Badge>}
+        {aluno.practices_sport && <Badge>{rotuloBadge('Esportes', aluno.sports, aluno.sport_name)}</Badge>}
         {aluno.medications && <Badge>Medicamentos</Badge>}
       </div>
 

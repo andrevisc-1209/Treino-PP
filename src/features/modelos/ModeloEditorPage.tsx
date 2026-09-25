@@ -22,7 +22,7 @@ export function ModeloEditorPage() {
 
   if (!modeloId) return <Navigate to="/modelos" replace />
   if (modeloLoading) return <p className="p-4 text-slate-500">Carregando…</p>
-  if (!modelo) return <p className="p-4 text-slate-500">Modelo não encontrado.</p>
+  if (!modelo) return <p className="p-4 text-slate-500">Treino pronto não encontrado.</p>
 
   return (
     <div className="mx-auto max-w-2xl p-4">
