@@ -76,48 +76,6 @@ export function ChipsMultiSelect({
   )
 }
 
-export function ScaleGrid({
-  value,
-  onChange,
-  labels,
-  disabled,
-}: {
-  value: number | null
-  onChange: (v: number) => void
-  labels?: Record<number, string>
-  disabled?: boolean
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-2">
-        {Array.from({ length: 11 }, (_, n) => (
-          <button
-            key={n}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(n)}
-            className={cn(
-              'flex min-h-12 items-center justify-center rounded-xl border text-base font-semibold transition disabled:opacity-50',
-              value === n ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
-            )}
-          >
-            {n}
-          </button>
-        ))}
-      </div>
-      {labels && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-          {Object.entries(labels).map(([n, label]) => (
-            <span key={n}>
-              {n} = {label}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export function BottomSheet({
   open,
   onClose,
