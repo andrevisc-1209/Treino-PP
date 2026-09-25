@@ -79,9 +79,11 @@ export function NovaSessaoPage() {
       return
     }
     setErro(null)
+    const planoEscolhido = selecao === 'livre' || !selecao ? null : (planosAtivos?.find((p) => p.id === selecao) ?? null)
     iniciar.mutate(
       {
-        plano_id: selecao === 'livre' || !selecao ? null : selecao,
+        plano_id: planoEscolhido?.id ?? null,
+        plano_nome: planoEscolhido?.name ?? null,
         pre_sleep: respostas.pre_sleep!,
         pre_stress: respostas.pre_stress!,
         pre_fatigue: respostas.pre_fatigue!,

@@ -8,6 +8,7 @@ export type Sessao = {
   aluno_id: string
   professional_id: string
   plano_id: string | null
+  plano_nome: string | null
   status: SessaoStatus
   session_date: string
   duration_minutes: number | null
@@ -20,8 +21,6 @@ export type Sessao = {
   prof_notes: string | null
   created_at: string
 }
-
-export type SessaoResumo = Sessao & { plano: { name: string } | null }
 
 export type SessaoSerie = {
   id: string
@@ -67,12 +66,12 @@ export function useSessoes(alunoId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sessoes')
-        .select('*, plano:planos(name)')
+        .select('*')
         .eq('aluno_id', alunoId!)
         .order('session_date', { ascending: false })
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data as SessaoResumo[]
+      return data as Sessao[]
     },
     enabled: !!alunoId,
   })
@@ -134,6 +133,7 @@ export type PreTreinoInput = {
   pre_fatigue: number
   pre_muscle_pain: number
   plano_id: string | null
+  plano_nome: string | null
 }
 
 export function useIniciarSessao(alunoId: string) {
@@ -149,6 +149,7 @@ export function useIniciarSessao(alunoId: string) {
           aluno_id: alunoId,
           professional_id: u.user.id,
           plano_id: input.plano_id,
+          plano_nome: input.plano_nome,
           status: 'em_andamento',
           pre_sleep: input.pre_sleep,
           pre_stress: input.pre_stress,

@@ -277,6 +277,13 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
         <div className="rounded-xl bg-slate-100 p-3 text-center text-sm font-medium text-slate-500">Sessão cancelada</div>
       )}
 
+      <div className="flex items-center gap-2 rounded-2xl bg-white p-4 shadow-sm">
+        <p className="font-semibold">{sessao.plano_nome ?? 'Treino livre'}</p>
+        {sessao.plano_nome != null && sessao.plano_id == null && (
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500">plano excluído</span>
+        )}
+      </div>
+
       <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="font-semibold">Pré-treino</h2>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">

@@ -16,7 +16,12 @@ export function HistoricoTab({ alunoId }: { alunoId: string }) {
           <li key={s.id}>
             <Link to={`/alunos/${alunoId}/sessoes/${s.id}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
               <div className="flex items-center justify-between">
-                <p className="font-medium">{s.plano_id == null ? 'Treino excluído' : s.plano?.name}</p>
+                <p className="flex items-center gap-2 font-medium">
+                  {s.plano_nome ?? 'Treino livre'}
+                  {s.plano_nome != null && s.plano_id == null && (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500">plano excluído</span>
+                  )}
+                </p>
                 <span className="text-sm text-slate-500">{s.session_date}</span>
               </div>
               <p className="mt-1 text-sm text-slate-500">
