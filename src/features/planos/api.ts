@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { ItemComparavel } from './compare'
 
 export type Plano = {
   id: string
@@ -8,6 +9,7 @@ export type Plano = {
   name: string
   notes: string | null
   active: boolean
+  modelo_origem_id: string | null
   plano_exercicios: { order_index: number; exercicio: { name: string } | null }[]
 }
 
@@ -158,7 +160,10 @@ export function useAdicionarExercicio(planoId: string) {
       const { error } = await supabase.from('plano_exercicios').insert({ plano_id: planoId, ...input })
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] })
+      qc.invalidateQueries({ queryKey: ['plano-exercicios-cmp', planoId] })
+    },
   })
 }
 
@@ -169,7 +174,10 @@ export function useAtualizarItem(planoId: string) {
       const { error } = await supabase.from('plano_exercicios').update(input).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] })
+      qc.invalidateQueries({ queryKey: ['plano-exercicios-cmp', planoId] })
+    },
   })
 }
 
@@ -180,7 +188,10 @@ export function useRemoverItem(planoId: string) {
       const { error } = await supabase.from('plano_exercicios').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] })
+      qc.invalidateQueries({ queryKey: ['plano-exercicios-cmp', planoId] })
+    },
   })
 }
 
@@ -193,7 +204,10 @@ export function useReordenarItem(planoId: string) {
       const { error: e2 } = await supabase.from('plano_exercicios').update({ order_index: a.order_index }).eq('id', b.id)
       if (e2) throw e2
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] })
+      qc.invalidateQueries({ queryKey: ['plano-exercicios-cmp', planoId] })
+    },
   })
 }
 
@@ -220,7 +234,7 @@ export function useCriarPlanoDeModelo(alunoId: string) {
 
       const { data: novo, error: errNovo } = await supabase
         .from('planos')
-        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: modelo.name, notes: modelo.notes })
+        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: modelo.name, notes: modelo.notes, modelo_origem_id: modelo.id })
         .select('id')
         .single()
       if (errNovo) throw errNovo
@@ -250,6 +264,62 @@ export function useCriarPlanoDeModelo(alunoId: string) {
       return novo.id as string
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['planos', alunoId] }),
+  })
+}
+
+// ============================================================
+// Sincronização com o treino planejado de origem (modelo_origem_id)
+// ============================================================
+
+/** Itens comparáveis (para itensIguais) do plano do aluno. */
+export async function buscarItensComparaveisPlano(planoId: string): Promise<ItemComparavel[]> {
+  const { data, error } = await supabase
+    .from('plano_exercicios')
+    .select('exercicio_id, order_index, sets, reps, target_load_kg, rest_seconds')
+    .eq('plano_id', planoId)
+  if (error) throw error
+  return data
+}
+
+/** Substitui os exercícios do plano do aluno pelos do treino planejado atual. */
+export async function sincronizarPlanoComModelo(planoId: string, modeloId: string): Promise<void> {
+  const { error: errDel } = await supabase.from('plano_exercicios').delete().eq('plano_id', planoId)
+  if (errDel) throw errDel
+
+  const { data: itensModelo, error: errItens } = await supabase
+    .from('modelo_exercicios')
+    .select('*')
+    .eq('modelo_id', modeloId)
+    .order('order_index')
+  if (errItens) throw errItens
+
+  if (itensModelo.length > 0) {
+    const copia = itensModelo.map((it) => ({
+      plano_id: planoId,
+      exercicio_id: it.exercicio_id,
+      sets: it.sets,
+      reps: it.reps,
+      target_load_kg: it.target_load_kg,
+      rest_seconds: it.rest_seconds,
+      notes: it.notes,
+      order_index: it.order_index,
+    }))
+    const { error: errCopia } = await supabase.from('plano_exercicios').insert(copia)
+    if (errCopia) throw errCopia
+  }
+}
+
+export function useSincronizarPlanoComModelo(alunoId?: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ planoId, modeloId }: { planoId: string; modeloId: string }) => {
+      await sincronizarPlanoComModelo(planoId, modeloId)
+    },
+    onSuccess: (_d, vars) => {
+      if (alunoId) qc.invalidateQueries({ queryKey: ['planos', alunoId] })
+      qc.invalidateQueries({ queryKey: ['plano-exercicios', vars.planoId] })
+      qc.invalidateQueries({ queryKey: ['plano', vars.planoId] })
+    },
   })
 }
 

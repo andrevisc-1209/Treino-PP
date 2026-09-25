@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MoreVertical, Play, Plus } from 'lucide-react'
-import { useModelos } from '@/features/modelos/api'
+import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { itensIguais } from './compare'
+import { PlanoOrigemBadge } from './PlanoOrigemBadge'
 import {
   useAtualizarPlano,
   useCriarPlano,
@@ -11,6 +13,8 @@ import {
   useExcluirPlano,
   usePlanos,
   useSalvarPlanoComoModelo,
+  useSincronizarPlanoComModelo,
+  buscarItensComparaveisPlano,
   type Plano,
 } from './api'
 
@@ -24,10 +28,13 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const duplicar = useDuplicarPlano(alunoId)
   const excluir = useExcluirPlano(alunoId)
   const salvarComoModelo = useSalvarPlanoComoModelo()
+  const sincronizar = useSincronizarPlanoComModelo(alunoId)
 
   const [novoEtapa, setNovoEtapa] = useState<'escolha' | 'modelo' | 'nome' | null>(null)
   const [nomeNovo, setNomeNovo] = useState('')
   const [erroNovo, setErroNovo] = useState<string | null>(null)
+  const [verificandoModelo, setVerificandoModelo] = useState(false)
+  const [conflitoModelo, setConflitoModelo] = useState<{ modelo: Modelo; planoExistente: Plano } | null>(null)
 
   const [renomeando, setRenomeando] = useState<Plano | null>(null)
   const [nome, setNome] = useState('')
@@ -59,7 +66,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     )
   }
 
-  const usarModelo = (modelo: NonNullable<typeof modelos>[number]) => {
+  const criarCopiaEAbrir = (modelo: Modelo) => {
     criarDeModelo.mutate(
       { id: modelo.id, name: modelo.name, notes: modelo.notes },
       {
@@ -69,6 +76,38 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         },
       },
     )
+  }
+
+  const usarModelo = async (modelo: Modelo) => {
+    if (modelo.modelo_exercicios.length === 0) return
+    const existente = planos?.find((p) => p.modelo_origem_id === modelo.id)
+    if (!existente) {
+      criarCopiaEAbrir(modelo)
+      return
+    }
+    setVerificandoModelo(true)
+    try {
+      const [itensExistente, itensModelo] = await Promise.all([
+        buscarItensComparaveisPlano(existente.id),
+        buscarItensComparaveisModelo(modelo.id),
+      ])
+      setVerificandoModelo(false)
+      if (itensExistente.length === 0) {
+        sincronizar.mutate(
+          { planoId: existente.id, modeloId: modelo.id },
+          { onSuccess: () => { fecharNovo(); navigate(`/alunos/${alunoId}/planos/${existente.id}`) } },
+        )
+        return
+      }
+      if (itensIguais(itensExistente, itensModelo)) {
+        fecharNovo()
+        navigate(`/alunos/${alunoId}/planos/${existente.id}`)
+        return
+      }
+      setConflitoModelo({ modelo, planoExistente: existente })
+    } catch {
+      setVerificandoModelo(false)
+    }
   }
 
   const abrirEditar = (p: Plano) => {
@@ -146,6 +185,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                   <MoreVertical size={18} />
                 </button>
               </div>
+              <PlanoOrigemBadge plano={p} alunoId={alunoId} />
             </li>
           )
         })}
@@ -170,20 +210,69 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
 
       <BottomSheet open={novoEtapa === 'modelo'} onClose={fecharNovo} title="Escolher treino planejado">
         <ul className="max-h-96 space-y-1 overflow-y-auto">
-          {modelos?.map((m) => (
-            <li key={m.id}>
-              <button
-                onClick={() => usarModelo(m)}
-                disabled={criarDeModelo.isPending}
-                className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
-              >
-                <p className="font-medium">{m.name}</p>
-                <p className="text-sm text-slate-500">{m.modelo_exercicios.length} exercícios</p>
-              </button>
-            </li>
-          ))}
+          {modelos?.map((m) => {
+            const vazio = m.modelo_exercicios.length === 0
+            if (vazio) {
+              return (
+                <li key={m.id}>
+                  <Link to={`/meus-treinos/planejados/${m.id}`} onClick={fecharNovo} className="block rounded-xl px-3 py-3 opacity-70 active:bg-slate-100">
+                    <p className="font-medium text-slate-400">{m.name}</p>
+                    <span className="text-sm font-medium text-brand-dark">Sem exercícios · toque para montar</span>
+                  </Link>
+                </li>
+              )
+            }
+            return (
+              <li key={m.id}>
+                <button
+                  onClick={() => usarModelo(m)}
+                  disabled={criarDeModelo.isPending || verificandoModelo || sincronizar.isPending}
+                  className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100 disabled:opacity-50"
+                >
+                  <p className="font-medium">{m.name}</p>
+                  <p className="text-sm text-slate-500">{m.modelo_exercicios.length} exercícios</p>
+                </button>
+              </li>
+            )
+          })}
           {modelos?.length === 0 && <p className="p-3 text-sm text-slate-500">Nenhum treino planejado cadastrado ainda.</p>}
         </ul>
+      </BottomSheet>
+
+      <BottomSheet open={!!conflitoModelo} onClose={() => setConflitoModelo(null)} title={conflitoModelo?.modelo.name}>
+        <div className="space-y-2">
+          <p className="text-sm text-slate-500">
+            O treino do aluno tem ajustes diferentes da versão atual do treino planejado. O que fazer?
+          </p>
+          <button
+            onClick={() => {
+              const c = conflitoModelo
+              setConflitoModelo(null)
+              if (c) {
+                fecharNovo()
+                navigate(`/alunos/${alunoId}/planos/${c.planoExistente.id}`)
+              }
+            }}
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+          >
+            Usar o treino do aluno (com os ajustes dele)
+          </button>
+          <button
+            onClick={() => {
+              const c = conflitoModelo
+              setConflitoModelo(null)
+              if (c) {
+                sincronizar.mutate(
+                  { planoId: c.planoExistente.id, modeloId: c.modelo.id },
+                  { onSuccess: () => { fecharNovo(); navigate(`/alunos/${alunoId}/planos/${c.planoExistente.id}`) } },
+                )
+              }
+            }}
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+          >
+            Atualizar com a versão atual do treino planejado
+          </button>
+        </div>
       </BottomSheet>
 
       <BottomSheet open={novoEtapa === 'nome'} onClose={fecharNovo} title="Criar do zero">

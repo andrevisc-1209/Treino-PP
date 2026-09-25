@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { ItemInput } from '@/features/planos/api'
+import type { ItemComparavel } from '@/features/planos/compare'
 
 export type Modelo = {
   id: string
@@ -157,7 +158,10 @@ export function useAdicionarExercicioModelo(modeloId: string) {
       const { error } = await supabase.from('modelo_exercicios').insert({ modelo_id: modeloId, ...input })
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] })
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios-cmp', modeloId] })
+    },
   })
 }
 
@@ -168,7 +172,10 @@ export function useAtualizarItemModelo(modeloId: string) {
       const { error } = await supabase.from('modelo_exercicios').update(input).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] })
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios-cmp', modeloId] })
+    },
   })
 }
 
@@ -179,7 +186,10 @@ export function useRemoverItemModelo(modeloId: string) {
       const { error } = await supabase.from('modelo_exercicios').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] })
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios-cmp', modeloId] })
+    },
   })
 }
 
@@ -192,6 +202,19 @@ export function useReordenarItemModelo(modeloId: string) {
       const { error: e2 } = await supabase.from('modelo_exercicios').update({ order_index: a.order_index }).eq('id', b.id)
       if (e2) throw e2
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios', modeloId] })
+      qc.invalidateQueries({ queryKey: ['modelo-exercicios-cmp', modeloId] })
+    },
   })
+}
+
+/** Itens comparáveis (para itensIguais) do treino planejado. */
+export async function buscarItensComparaveisModelo(modeloId: string): Promise<ItemComparavel[]> {
+  const { data, error } = await supabase
+    .from('modelo_exercicios')
+    .select('exercicio_id, order_index, sets, reps, target_load_kg, rest_seconds')
+    .eq('modelo_id', modeloId)
+  if (error) throw error
+  return data
 }
