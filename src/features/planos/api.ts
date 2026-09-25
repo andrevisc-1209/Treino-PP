@@ -8,7 +8,7 @@ export type Plano = {
   name: string
   notes: string | null
   active: boolean
-  plano_exercicios: { count: number }[]
+  plano_exercicios: { order_index: number; exercicio: { name: string } | null }[]
 }
 
 export type PlanoExercicioItem = {
@@ -30,7 +30,7 @@ export function usePlanos(alunoId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('planos')
-        .select('*, plano_exercicios(count)')
+        .select('*, plano_exercicios(order_index, exercicio:exercicios(name))')
         .eq('aluno_id', alunoId!)
         .order('active', { ascending: false })
         .order('name')
@@ -194,5 +194,103 @@ export function useReordenarItem(planoId: string) {
       if (e2) throw e2
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['plano-exercicios', planoId] }),
+  })
+}
+
+export function useExcluirPlano(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (planoId: string) => {
+      const { error } = await supabase.from('planos').delete().eq('id', planoId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['planos', alunoId] })
+      qc.invalidateQueries({ queryKey: ['sessoes', alunoId] })
+    },
+  })
+}
+
+export function useCriarPlanoDeModelo(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (modelo: { id: string; name: string; notes: string | null }) => {
+      const { data: u } = await supabase.auth.getUser()
+      if (!u.user) throw new Error('Sessão expirada')
+
+      const { data: novo, error: errNovo } = await supabase
+        .from('planos')
+        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: modelo.name, notes: modelo.notes })
+        .select('id')
+        .single()
+      if (errNovo) throw errNovo
+
+      const { data: itens, error: errItens } = await supabase
+        .from('modelo_exercicios')
+        .select('*')
+        .eq('modelo_id', modelo.id)
+        .order('order_index')
+      if (errItens) throw errItens
+
+      if (itens.length > 0) {
+        const copia = itens.map((it) => ({
+          plano_id: novo.id,
+          exercicio_id: it.exercicio_id,
+          sets: it.sets,
+          reps: it.reps,
+          target_load_kg: it.target_load_kg,
+          rest_seconds: it.rest_seconds,
+          notes: it.notes,
+          order_index: it.order_index,
+        }))
+        const { error: errCopia } = await supabase.from('plano_exercicios').insert(copia)
+        if (errCopia) throw errCopia
+      }
+
+      return novo.id as string
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['planos', alunoId] }),
+  })
+}
+
+export function useSalvarPlanoComoModelo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (plano: { id: string; name: string; notes: string | null }) => {
+      const { data: u } = await supabase.auth.getUser()
+      if (!u.user) throw new Error('Sessão expirada')
+
+      const { data: novo, error: errNovo } = await supabase
+        .from('modelos')
+        .insert({ professional_id: u.user.id, name: plano.name, notes: plano.notes })
+        .select('id')
+        .single()
+      if (errNovo) throw errNovo
+
+      const { data: itens, error: errItens } = await supabase
+        .from('plano_exercicios')
+        .select('*')
+        .eq('plano_id', plano.id)
+        .order('order_index')
+      if (errItens) throw errItens
+
+      if (itens.length > 0) {
+        const copia = itens.map((it) => ({
+          modelo_id: novo.id,
+          exercicio_id: it.exercicio_id,
+          sets: it.sets,
+          reps: it.reps,
+          target_load_kg: it.target_load_kg,
+          rest_seconds: it.rest_seconds,
+          notes: it.notes,
+          order_index: it.order_index,
+        }))
+        const { error: errCopia } = await supabase.from('modelo_exercicios').insert(copia)
+        if (errCopia) throw errCopia
+      }
+
+      return novo.id as string
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['modelos'] }),
   })
 }

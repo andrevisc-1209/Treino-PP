@@ -16,7 +16,7 @@ export function HistoricoTab({ alunoId }: { alunoId: string }) {
           <li key={s.id}>
             <Link to={`/alunos/${alunoId}/sessoes/${s.id}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
               <div className="flex items-center justify-between">
-                <p className="font-medium">{s.plano?.name ?? 'Treino livre'}</p>
+                <p className="font-medium">{s.plano_id == null ? 'Treino excluído' : s.plano?.name}</p>
                 <span className="text-sm text-slate-500">{s.session_date}</span>
               </div>
               <p className="mt-1 text-sm text-slate-500">
