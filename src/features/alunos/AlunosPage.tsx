@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, Plus, Search, User } from 'lucide-react'
+import { LogOut, Plus, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { cn, idade } from '@/lib/utils'
+import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { Button, Input } from '@/components/ui'
 import { InstallBanner } from '@/components/InstallBanner'
+import { Avatar } from '@/components/Avatar'
 import { useAlunosComCobranca } from '@/features/financeiro/api'
 import { useAlunos } from './api'
 
@@ -16,6 +17,7 @@ export function AlunosPage() {
   const idsComCobranca = new Set((alunosComCobranca ?? []).map((c) => c.aluno_id))
 
   const filtrados = alunos?.filter((a) => a.name.toLowerCase().includes(busca.trim().toLowerCase()))
+  const desambiguar = desambiguarPorNome(alunos ?? [])
 
   return (
     <div className="mx-auto max-w-2xl p-4">
@@ -63,11 +65,12 @@ export function AlunosPage() {
               to={`/alunos/${a.id}`}
               className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm transition active:bg-slate-50"
             >
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100">
-                <User size={20} className="text-slate-500" />
-              </div>
+              <Avatar id={a.id} nome={a.name} />
               <div className="min-w-0">
-                <p className="font-medium">{a.name}</p>
+                <p className="font-medium">
+                  {a.name}
+                  {desambiguar(a) && <span className="ml-1 font-normal text-slate-400">· {desambiguar(a)}</span>}
+                </p>
                 <p className="text-sm text-slate-500">
                   {[idade(a.birth_date) != null && `${idade(a.birth_date)} anos`, a.injury && 'lesão'].filter(Boolean).join(' · ') ||
                     'Ficha incompleta'}

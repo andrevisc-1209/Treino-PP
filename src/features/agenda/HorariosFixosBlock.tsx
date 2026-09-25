@@ -28,7 +28,7 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
   const [erro, setErro] = useState<string | null>(null)
 
   const grupos = agruparHorarios(linhas ?? []).filter((g) => g.active && (!g.valid_until || g.valid_until >= new Date().toISOString().slice(0, 10)))
-  const outrosAlunos = alunos?.filter((a) => a.id !== alunoId).map((a) => ({ id: a.id, name: a.name })) ?? []
+  const outrosAlunos = alunos?.filter((a) => a.id !== alunoId).map((a) => ({ id: a.id, name: a.name, birth_date: a.birth_date, phone: a.phone })) ?? []
 
   const salvarNovo = (v: HorarioFormValor) => {
     setErro(null)

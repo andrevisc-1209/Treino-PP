@@ -4,7 +4,7 @@ import { TriangleAlert } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAlunos } from '@/features/alunos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
-import { cn } from '@/lib/utils'
+import { cn, desambiguarPorNome } from '@/lib/utils'
 import { hojeSP, limitesDoDiaSP, montarDataHoraSP } from '@/lib/datas'
 import { aulasSobrepoe } from './conflitos'
 import { useAulasNoIntervalo, useCriarAulaAvulsa, useProfessionalConfig, type Aula } from './api'
@@ -82,19 +82,23 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
       <div className="space-y-4">
         <Field label="Alunos">
           <div className="flex max-h-40 flex-wrap gap-2 overflow-y-auto">
-            {alunos?.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => toggleAluno(a.id)}
-                className={cn(
-                  'min-h-9 rounded-full border px-3 text-sm font-medium',
-                  alunoIds.includes(a.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
-                )}
-              >
-                {a.name}
-              </button>
-            ))}
+            {alunos?.map((a) => {
+              const desambiguar = alunos ? desambiguarPorNome(alunos)(a) : null
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => toggleAluno(a.id)}
+                  className={cn(
+                    'min-h-9 rounded-full border px-3 text-sm font-medium',
+                    alunoIds.includes(a.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
+                  )}
+                >
+                  {a.name}
+                  {desambiguar && <span className="opacity-70"> · {desambiguar}</span>}
+                </button>
+              )
+            })}
           </div>
         </Field>
 

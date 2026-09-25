@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Pencil, Plus, Search, Trash2 } from 'lucide-rea
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import type { ItemInput } from '@/features/planos/api'
 import { cn } from '@/lib/utils'
+import { formatarNumero } from '@/lib/format'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 
 export type ExercicioEditavel = {
@@ -152,7 +153,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               <p className="truncate font-medium">{item.exercicio?.name ?? 'Exercício removido'}</p>
               <p className="text-sm text-slate-500">
                 {item.sets}x {item.reps}
-                {item.target_load_kg != null && ` · ${item.target_load_kg}kg`}
+                {item.target_load_kg != null && ` · ${formatarNumero(item.target_load_kg)}kg`}
                 {item.rest_seconds != null && ` · ${item.rest_seconds}s descanso`}
               </p>
               {item.notes && <p className="text-sm text-slate-400">{item.notes}</p>}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { formatarDataBR, formatarNumero } from '@/lib/format'
 import { useSessoes } from './api'
 
 export function HistoricoTab({ alunoId }: { alunoId: string }) {
@@ -22,7 +23,7 @@ export function HistoricoTab({ alunoId }: { alunoId: string }) {
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500">plano excluído</span>
                   )}
                 </p>
-                <span className="text-sm text-slate-500">{s.session_date}</span>
+                <span className="text-sm text-slate-500">{formatarDataBR(s.session_date)}</span>
               </div>
               <p className="mt-1 text-sm text-slate-500">
                 {s.status === 'em_andamento' && 'Em andamento'}
@@ -31,7 +32,7 @@ export function HistoricoTab({ alunoId }: { alunoId: string }) {
                   [
                     s.post_pse != null && `PSE ${s.post_pse}`,
                     s.duration_minutes != null && `${s.duration_minutes} min`,
-                    cargaInterna != null && `${cargaInterna} UA`,
+                    cargaInterna != null && `${formatarNumero(cargaInterna)} UA`,
                     s.prof_rating != null && `nota ${s.prof_rating}`,
                   ]
                     .filter(Boolean)

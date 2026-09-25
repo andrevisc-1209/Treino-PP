@@ -13,6 +13,7 @@ import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import { useAluno, useArquivarAluno, useConsentimentoDetalhado, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
 import { rotuloBadge, rotuloObjetivos } from './format'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
+import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -124,9 +125,9 @@ export function AlunoFichaPage() {
 
       <div className="mb-4 flex flex-wrap gap-2">
         {idade(aluno.birth_date) != null && <Badge>{idade(aluno.birth_date)} anos</Badge>}
-        {aluno.sex && <Badge>{aluno.sex === 'M' ? 'Masculino' : aluno.sex === 'F' ? 'Feminino' : 'Outro'}</Badge>}
+        {aluno.sex && <Badge>{formatarSexo(aluno.sex)}</Badge>}
         {aluno.height_cm && <Badge>{aluno.height_cm} cm</Badge>}
-        {ultimoPeso && <Badge>{ultimoPeso.weight_kg} kg</Badge>}
+        {ultimoPeso && <Badge>{formatarPesoKg(ultimoPeso.weight_kg)}</Badge>}
         {aluno.objetivos.length > 0 && <Badge>Objetivo: {rotuloObjetivos(aluno.objetivos, aluno.objetivo_notes)}</Badge>}
         {aluno.injury && <Badge>{rotuloBadge('Lesão', aluno.injury_regions, aluno.injury_notes)}</Badge>}
         {aluno.surgery && <Badge>{rotuloBadge('Cirurgia', aluno.surgery_regions, aluno.surgery_notes)}</Badge>}
@@ -181,7 +182,7 @@ export function AlunoFichaPage() {
           {consentimento && (
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-600">
-                Consentimento LGPD v{consentimento.consent_version} em {new Date(consentimento.consented_at).toLocaleDateString('pt-BR')}
+                Consentimento LGPD v{consentimento.consent_version} em {formatarDataBR(consentimento.consented_at)}
               </p>
               <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
                 Revogar
@@ -205,8 +206,8 @@ export function AlunoFichaPage() {
               <ul className="divide-y divide-slate-100">
                 {pesos.map((p) => (
                   <li key={p.id} className="flex justify-between py-2 text-sm">
-                    <span className="text-slate-500">{p.measured_at}</span>
-                    <span className="font-medium">{p.weight_kg} kg</span>
+                    <span className="text-slate-500">{formatarDataBR(p.measured_at)}</span>
+                    <span className="font-medium">{formatarPesoKg(p.weight_kg)}</span>
                   </li>
                 ))}
               </ul>

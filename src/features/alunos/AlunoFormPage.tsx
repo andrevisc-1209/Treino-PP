@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import { cn, formatarTelefone, idade } from '@/lib/utils'
+import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
 import { useAluno, useAlunos, useConsentimentoAtivo, usePesos, useSalvarAluno } from './api'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
@@ -36,24 +37,32 @@ const schema = z
 
     lgpd_consent: z.boolean(),
 
-    injury: z.boolean(),
+    injury: z.boolean().optional(),
     injury_regions: z.array(z.string()),
     injury_notes: z.string().optional(),
 
-    surgery: z.boolean(),
+    surgery: z.boolean().optional(),
     surgery_regions: z.array(z.string()),
     surgery_notes: z.string().optional(),
 
-    practices_sport: z.boolean(),
+    practices_sport: z.boolean().optional(),
     sports: z.array(z.string()),
     sport_name: z.string().optional(),
 
-    medications_flag: z.boolean(),
+    medications_flag: z.boolean().optional(),
     medications: z.string().optional(),
   })
   .superRefine((val, ctx) => {
     if (val.objetivos.includes('Outros') && !val.objetivo_notes?.trim())
       ctx.addIssue({ code: 'custom', path: ['objetivo_notes'], message: 'Descreva o objetivo' })
+    if (val.lgpd_consent) {
+      if (val.injury === undefined) ctx.addIssue({ code: 'custom', path: ['injury'], message: 'Responda todas as perguntas de saúde' })
+      if (val.surgery === undefined) ctx.addIssue({ code: 'custom', path: ['surgery'], message: 'Responda todas as perguntas de saúde' })
+      if (val.practices_sport === undefined)
+        ctx.addIssue({ code: 'custom', path: ['practices_sport'], message: 'Responda todas as perguntas de saúde' })
+      if (val.medications_flag === undefined)
+        ctx.addIssue({ code: 'custom', path: ['medications_flag'], message: 'Responda todas as perguntas de saúde' })
+    }
     if (val.injury) {
       if (val.injury_regions.length === 0) ctx.addIssue({ code: 'custom', path: ['injury_regions'], message: 'Selecione ao menos uma região' })
       if (val.injury_regions.includes('Outros') && !val.injury_notes?.trim())
@@ -160,13 +169,9 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     resolver: zodResolver(schema),
     defaultValues: {
       objetivos: [],
-      injury: false,
       injury_regions: [],
-      surgery: false,
       surgery_regions: [],
-      practices_sport: false,
       sports: [],
-      medications_flag: false,
       lgpd_consent: false,
     },
   })
@@ -213,7 +218,17 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const medicationsFlag = watch('medications_flag')
 
   const avancar = async () => {
-    if (etapa === 2 || etapa === 4) {
+    if (etapa === 2) {
+      const valorNum = Number(cobrancaValor.valorTexto.replace(',', '.'))
+      if (cobrancaAtiva && (!cobrancaValor.valorTexto.trim() || Number.isNaN(valorNum) || valorNum <= 0)) {
+        setErroCobranca('Informe um valor maior que zero')
+        return
+      }
+      setErroCobranca(null)
+      setEtapa((e) => e + 1)
+      return
+    }
+    if (etapa === 4) {
       setEtapa((e) => e + 1)
       return
     }
@@ -226,11 +241,14 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     const alunoId = await salvar.mutateAsync({
       id: mode === 'edit' ? id : undefined,
       ...f,
+      injury: f.injury ?? false,
+      surgery: f.surgery ?? false,
+      practices_sport: f.practices_sport ?? false,
       hadActiveConsent: !!hadActiveConsent,
     })
     if (mode === 'create' && cobrancaAtiva) {
       const valorNum = Number(cobrancaValor.valorTexto.replace(',', '.'))
-      if (cobrancaValor.valorTexto.trim() && !Number.isNaN(valorNum) && valorNum >= 0) {
+      if (cobrancaValor.valorTexto.trim() && !Number.isNaN(valorNum) && valorNum > 0) {
         try {
           await salvarCobranca.mutateAsync({
             aluno_id: alunoId,
@@ -263,7 +281,9 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     navigate(`/alunos/${alunoId}`)
   }
 
-  const outrosAlunos = (outrosAlunosRaw ?? []).filter((a) => a.id !== id).map((a) => ({ id: a.id, name: a.name }))
+  const outrosAlunos = (outrosAlunosRaw ?? [])
+    .filter((a) => a.id !== id)
+    .map((a) => ({ id: a.id, name: a.name, birth_date: a.birth_date, phone: a.phone }))
 
   const salvarHorarioPendente = (v: HorarioFormValor) => {
     setHorariosPendentes((atual) => [...atual, v])
@@ -417,7 +437,11 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               </div>
 
               <Field label="Possui lesão?">
-                <OptionButtons value={injury ? 'sim' : 'nao'} onChange={(v) => setValue('injury', v === 'sim')} options={SIM_NAO} />
+                <OptionButtons
+                  value={injury === undefined ? undefined : injury ? 'sim' : 'nao'}
+                  onChange={(v) => setValue('injury', v === 'sim', { shouldValidate: true })}
+                  options={SIM_NAO}
+                />
               </Field>
               {injury && (
                 <>
@@ -431,7 +455,11 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               )}
 
               <Field label="Já fez cirurgia?">
-                <OptionButtons value={surgery ? 'sim' : 'nao'} onChange={(v) => setValue('surgery', v === 'sim')} options={SIM_NAO} />
+                <OptionButtons
+                  value={surgery === undefined ? undefined : surgery ? 'sim' : 'nao'}
+                  onChange={(v) => setValue('surgery', v === 'sim', { shouldValidate: true })}
+                  options={SIM_NAO}
+                />
               </Field>
               {surgery && (
                 <>
@@ -445,7 +473,11 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               )}
 
               <Field label="Pratica esporte?">
-                <OptionButtons value={practicesSport ? 'sim' : 'nao'} onChange={(v) => setValue('practices_sport', v === 'sim')} options={SIM_NAO} />
+                <OptionButtons
+                  value={practicesSport === undefined ? undefined : practicesSport ? 'sim' : 'nao'}
+                  onChange={(v) => setValue('practices_sport', v === 'sim', { shouldValidate: true })}
+                  options={SIM_NAO}
+                />
               </Field>
               {practicesSport && (
                 <>
@@ -462,9 +494,9 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
 
               <Field label="Usa medicamentos?">
                 <OptionButtons
-                  value={medicationsFlag ? 'sim' : 'nao'}
+                  value={medicationsFlag === undefined ? undefined : medicationsFlag ? 'sim' : 'nao'}
                   onChange={(v) => {
-                    setValue('medications_flag', v === 'sim')
+                    setValue('medications_flag', v === 'sim', { shouldValidate: true })
                     if (v === 'nao') setValue('medications', '')
                   }}
                   options={SIM_NAO}
@@ -477,6 +509,10 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                     {...register('medications')}
                   />
                 </Field>
+              )}
+
+              {(formState.errors.injury || formState.errors.surgery || formState.errors.practices_sport || formState.errors.medications_flag) && (
+                <p className="text-sm text-red-600">Responda todas as perguntas de saúde para continuar.</p>
               )}
             </div>
           ))}
@@ -534,13 +570,13 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 <dt className="text-slate-500">Nome</dt>
                 <dd>{watch('name') || '—'}</dd>
                 <dt className="text-slate-500">Nascimento</dt>
-                <dd>{watch('birth_date') || '—'}</dd>
+                <dd>{formatarDataBR(watch('birth_date'))}</dd>
                 <dt className="text-slate-500">Sexo</dt>
-                <dd>{sex ?? '—'}</dd>
+                <dd>{formatarSexo(sex)}</dd>
                 <dt className="text-slate-500">Altura</dt>
-                <dd>{watch('height_cm') ? `${watch('height_cm')} cm` : '—'}</dd>
+                <dd>{watch('height_cm') ? `${formatarNumero(watch('height_cm') as number)} cm` : '—'}</dd>
                 <dt className="text-slate-500">Peso</dt>
-                <dd>{watch('weight_kg') ? `${watch('weight_kg')} kg` : '—'}</dd>
+                <dd>{watch('weight_kg') ? formatarPesoKg(watch('weight_kg') as number) : '—'}</dd>
                 <dt className="text-slate-500">Telefone</dt>
                 <dd>{watch('phone') || '—'}</dd>
                 <dt className="text-slate-500">E-mail</dt>
