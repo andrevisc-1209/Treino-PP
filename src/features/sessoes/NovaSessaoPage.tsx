@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Search, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
-import { usePlanos } from '@/features/planos/api'
+import { avisoSaude } from '@/features/alunos/format'
+import { usePlanos, useAtualizarPlano, useCriarPlanoDeModelo, type Plano } from '@/features/planos/api'
+import { useModelos, type Modelo } from '@/features/modelos/api'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui'
+import { Button, BottomSheet, Input } from '@/components/ui'
 import { useIniciarSessao, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
 
@@ -27,22 +29,90 @@ export function NovaSessaoPage() {
   const navigate = useNavigate()
   const { data: aluno } = useAluno(id)
   const { data: planos } = usePlanos(id)
+  const { data: modelos } = useModelos()
   const iniciar = useIniciarSessao(id!)
+  const ativarPlano = useAtualizarPlano(id!)
+  const criarDeModelo = useCriarPlanoDeModelo(id!)
 
-  const [etapa, setEtapa] = useState<'plano' | 'perguntas' | 'resumo'>(planoDaUrl ? 'perguntas' : 'plano')
+  const [etapa, setEtapa] = useState<'plano' | 'aviso' | 'perguntas' | 'resumo'>(planoDaUrl ? 'perguntas' : 'plano')
   const [selecaoManual, setSelecaoManual] = useState<Selecao>(planoDaUrl ?? undefined)
   const [perguntaAtual, setPerguntaAtual] = useState(0)
   const [respostas, setRespostas] = useState<Partial<Record<ChaveResposta, number>>>({})
   const [erro, setErro] = useState<string | null>(null)
 
+  const [inativosAbertos, setInativosAbertos] = useState(false)
+  const [buscaModelo, setBuscaModelo] = useState('')
+  const [conflito, setConflito] = useState<{ modelo: Modelo; planoExistente: Plano } | null>(null)
+  const [avisoPendente, setAvisoPendente] = useState<{ id: string; name: string } | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const [copiando, setCopiando] = useState(false)
+
   const planosAtivos = useMemo(() => planos?.filter((p) => p.active), [planos])
+  const planosInativos = useMemo(() => planos?.filter((p) => !p.active), [planos])
   const planosComExercicios = useMemo(() => planosAtivos?.filter((p) => p.plano_exercicios.length > 0), [planosAtivos])
+  const modelosFiltrados = useMemo(
+    () => modelos?.filter((m) => m.name.toLowerCase().includes(buscaModelo.trim().toLowerCase())),
+    [modelos, buscaModelo],
+  )
 
   // Se só há um plano ativo com exercícios, ele já vem selecionado.
   const selecao = selecaoManual ?? (planosComExercicios?.length === 1 ? planosComExercicios[0].id : undefined)
   const setSelecao = setSelecaoManual
 
   if (!id) return <Navigate to="/" replace />
+
+  const mostrarToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  const avancarComPlano = (plano: { id: string; name: string }, viaTreinoPronto: boolean) => {
+    if (viaTreinoPronto && aluno && avisoSaude(aluno)) {
+      setAvisoPendente(plano)
+      setEtapa('aviso')
+      return
+    }
+    setSelecao(plano.id)
+    setEtapa('perguntas')
+  }
+
+  const copiarTreinoPronto = (m: Modelo) => {
+    setCopiando(true)
+    criarDeModelo.mutate(
+      { id: m.id, name: m.name, notes: m.notes },
+      {
+        onSuccess: (planoId) => {
+          setCopiando(false)
+          mostrarToast('Treino adicionado ao aluno')
+          avancarComPlano({ id: planoId, name: m.name }, true)
+        },
+        onError: (e) => {
+          setCopiando(false)
+          setErro((e as Error).message)
+        },
+      },
+    )
+  }
+
+  const usarPlanoExistente = (p: Plano) => {
+    if (!p.active) {
+      ativarPlano.mutate({ id: p.id, active: true })
+    }
+    avancarComPlano(p, true)
+  }
+
+  const escolherTreinoPronto = (m: Modelo) => {
+    const existente = planos?.find((p) => p.name === m.name)
+    if (existente) {
+      setConflito({ modelo: m, planoExistente: existente })
+      return
+    }
+    copiarTreinoPronto(m)
+  }
+
+  const ativarEIniciar = (p: Plano) => {
+    ativarPlano.mutate({ id: p.id, active: true }, { onSuccess: () => avancarComPlano(p, false) })
+  }
 
   const responder = (key: ChaveResposta, v: number) => setRespostas((r) => ({ ...r, [key]: v }))
 
@@ -79,7 +149,7 @@ export function NovaSessaoPage() {
       return
     }
     setErro(null)
-    const planoEscolhido = selecao === 'livre' || !selecao ? null : (planosAtivos?.find((p) => p.id === selecao) ?? null)
+    const planoEscolhido = selecao === 'livre' || !selecao ? null : (planos?.find((p) => p.id === selecao) ?? null)
     iniciar.mutate(
       {
         plano_id: planoEscolhido?.id ?? null,
@@ -102,9 +172,17 @@ export function NovaSessaoPage() {
       if (perguntaAtual > 0) return setPerguntaAtual((p) => p - 1)
       return setEtapa('plano')
     }
+    if (etapa === 'aviso') {
+      setAvisoPendente(null)
+      return setEtapa('plano')
+    }
   }
 
-  const titulo = etapa === 'plano' ? 'Escolher plano' : etapa === 'resumo' ? 'Resumo' : 'Pré-treino'
+  const titulo = etapa === 'plano' ? 'Escolher treino' : etapa === 'aviso' ? 'Aviso de saúde' : etapa === 'resumo' ? 'Resumo' : 'Pré-treino'
+
+  const semPlanos = (planos?.length ?? 0) === 0
+  const semTreinosProntos = (modelos?.length ?? 0) === 0
+  const estadoVazio = semPlanos && semTreinosProntos
 
   return (
     <div className="mx-auto max-w-2xl p-4">
@@ -124,9 +202,38 @@ export function NovaSessaoPage() {
         </div>
       </header>
 
-      {etapa === 'plano' && (
-        <div className="space-y-3 pb-4">
+      {etapa === 'plano' && estadoVazio && (
+        <div className="space-y-4 rounded-2xl bg-white p-6 text-center shadow-sm">
+          <p className="font-semibold">Crie o primeiro treino</p>
+          <p className="text-sm text-slate-500">Monte um treino para {aluno?.name ?? 'o aluno'} ou crie um treino pronto para reutilizar depois.</p>
           <div className="space-y-2">
+            <Button onClick={() => navigate(`/alunos/${id}?tab=Treinos`)} className="w-full">
+              Montar treino do aluno
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/modelos')} className="w-full">
+              Criar treino pronto
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelecao('livre')
+                setEtapa('perguntas')
+              }}
+              className="w-full"
+            >
+              Treino livre
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {etapa === 'plano' && !estadoVazio && (
+        <div className="space-y-5 pb-4">
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-slate-500">Treinos do aluno</h2>
+            {planosComExercicios?.length === 0 && planosAtivos && planosAtivos.length === 0 && (
+              <p className="text-sm text-slate-500">Nenhum plano ativo ainda.</p>
+            )}
             {planosAtivos?.map((p) => {
               const temExercicios = p.plano_exercicios.length > 0
               const ordenados = [...p.plano_exercicios].sort((a, b) => a.order_index - b.order_index)
@@ -161,6 +268,87 @@ export function NovaSessaoPage() {
                 </button>
               )
             })}
+
+            {planosInativos && planosInativos.length > 0 && (
+              <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                <button
+                  onClick={() => setInativosAbertos((v) => !v)}
+                  className="flex w-full items-center justify-between p-4 text-left text-sm font-medium text-slate-500"
+                >
+                  Treinos inativos ({planosInativos.length})
+                  <ChevronDown size={18} className={cn('transition', inativosAbertos && 'rotate-180')} />
+                </button>
+                {inativosAbertos && (
+                  <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                    {planosInativos.map((p) => {
+                      const temExercicios = p.plano_exercicios.length > 0
+                      return (
+                        <li key={p.id} className="flex items-center justify-between gap-2 p-4">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-slate-500">{p.name}</p>
+                            <p className="text-sm text-slate-400">{p.plano_exercicios.length} exercícios</p>
+                          </div>
+                          {temExercicios ? (
+                            <Button variant="ghost" onClick={() => ativarEIniciar(p)} disabled={ativarPlano.isPending} className="shrink-0 px-3">
+                              Ativar e iniciar
+                            </Button>
+                          ) : (
+                            <Link to={`/alunos/${id}/planos/${p.id}`} className="shrink-0 text-sm font-medium text-brand-dark">
+                              Adicione exercícios
+                            </Link>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
+          {modelos && modelos.length > 0 && (
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-slate-500">Treinos prontos</h2>
+              {modelos.length > 5 && (
+                <div className="relative">
+                  <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    placeholder="Buscar treino pronto"
+                    value={buscaModelo}
+                    onChange={(e) => setBuscaModelo(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                {modelosFiltrados?.map((m) => {
+                  const ordenados = [...m.modelo_exercicios].sort((a, b) => a.order_index - b.order_index)
+                  const previa = ordenados
+                    .slice(0, 3)
+                    .map((i) => i.exercicio?.name)
+                    .filter(Boolean)
+                    .join(', ')
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => escolherTreinoPronto(m)}
+                      disabled={copiando}
+                      className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50 disabled:opacity-50"
+                    >
+                      <p className="font-medium">{m.name}</p>
+                      <p className="text-sm text-slate-500">
+                        {m.modelo_exercicios.length} exercícios{previa && ` · ${previa}`}
+                      </p>
+                    </button>
+                  )
+                })}
+                {modelosFiltrados?.length === 0 && <p className="text-sm text-slate-500">Nenhum treino pronto encontrado.</p>}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-slate-500">Treino livre</h2>
             <button
               onClick={() => setSelecao('livre')}
               className={cn(
@@ -171,8 +359,33 @@ export function NovaSessaoPage() {
               Treino livre
             </button>
           </div>
+
+          {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={() => setEtapa('perguntas')} className="w-full" disabled={selecao === undefined}>
             Continuar
+          </Button>
+        </div>
+      )}
+
+      {etapa === 'aviso' && avisoPendente && aluno && (
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+            <TriangleAlert size={18} className="mt-0.5 shrink-0" />
+            <span>{avisoSaude(aluno)}. Revise a prescrição antes de iniciar.</span>
+          </div>
+          <Button variant="ghost" onClick={() => navigate(`/alunos/${id}/planos/${avisoPendente.id}`)} className="w-full">
+            Ajustar treino antes
+          </Button>
+          <Button
+            onClick={() => {
+              const p = avisoPendente
+              setAvisoPendente(null)
+              setSelecao(p.id)
+              setEtapa('perguntas')
+            }}
+            className="w-full"
+          >
+            Seguir assim
           </Button>
         </div>
       )}
@@ -260,6 +473,38 @@ export function NovaSessaoPage() {
           <Button onClick={comecarTreino} className="w-full" disabled={iniciar.isPending}>
             Começar treino
           </Button>
+        </div>
+      )}
+
+      <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
+        <div className="space-y-2">
+          <p className="text-sm text-slate-500">O aluno já tem um plano com esse nome, copiado desse treino pronto.</p>
+          <button
+            onClick={() => {
+              const c = conflito
+              setConflito(null)
+              if (c) usarPlanoExistente(c.planoExistente)
+            }}
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+          >
+            Usar o existente
+          </button>
+          <button
+            onClick={() => {
+              const c = conflito
+              setConflito(null)
+              if (c) copiarTreinoPronto(c.modelo)
+            }}
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+          >
+            Criar nova cópia
+          </button>
+        </div>
+      </BottomSheet>
+
+      {toast && (
+        <div className="fixed inset-x-0 bottom-20 z-50 flex justify-center px-4">
+          <div className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">{toast}</div>
         </div>
       )}
     </div>

@@ -1,10 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { ClipboardList, Dumbbell, Users } from 'lucide-react'
+import { Dumbbell, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
   { to: '/', label: 'Alunos', icon: Users, end: true },
-  { to: '/modelos', label: 'Modelos', icon: ClipboardList, end: false },
   { to: '/exercicios', label: 'Exercícios', icon: Dumbbell, end: false },
 ]
 

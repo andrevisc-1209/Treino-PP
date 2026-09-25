@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Copy, Pencil, Plus, Trash2 } from 'lucide-react'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { ExerciciosTabs } from '@/components/ExerciciosTabs'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
 
 export function ModelosPage() {
@@ -46,22 +47,24 @@ export function ModelosPage() {
   }
 
   const excluirModelo = (m: Modelo) => {
-    if (!confirm(`Excluir o modelo "${m.name}"? Os planos já criados a partir dele não são afetados.`)) return
+    if (!confirm(`Excluir o treino pronto "${m.name}"? Os planos já criados a partir dele não são afetados.`)) return
     excluir.mutate(m.id)
   }
 
   return (
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Modelos de treino</h1>
-        <Button onClick={abrirNovo} aria-label="Novo modelo" className="px-3">
+        <h1 className="text-2xl font-bold">Treinos prontos</h1>
+        <Button onClick={abrirNovo} aria-label="Novo treino pronto" className="px-3">
           <Plus size={20} />
         </Button>
       </header>
 
+      <ExerciciosTabs />
+
       {isLoading && <p className="text-slate-500">Carregando…</p>}
       {error && <p className="text-red-600">{(error as Error).message}</p>}
-      {modelos?.length === 0 && <p className="text-sm text-slate-500">Nenhum modelo ainda. Crie treinos prontos para aplicar aos alunos.</p>}
+      {modelos?.length === 0 && <p className="text-sm text-slate-500">Nenhum treino pronto ainda. Crie treinos prontos para aplicar aos alunos.</p>}
 
       <ul className="space-y-2">
         {modelos?.map((m) => {
@@ -109,7 +112,7 @@ export function ModelosPage() {
         })}
       </ul>
 
-      <BottomSheet open={!!editando} onClose={() => setEditando(null)} title={editando === 'novo' ? 'Novo modelo' : 'Renomear modelo'}>
+      <BottomSheet open={!!editando} onClose={() => setEditando(null)} title={editando === 'novo' ? 'Novo treino pronto' : 'Renomear treino pronto'}>
         <div className="space-y-4">
           <Field label="Nome">
             <Input value={nome} onChange={(e) => setNome(e.target.value)} autoFocus placeholder="Full body A" />

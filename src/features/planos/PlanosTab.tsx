@@ -157,7 +157,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onClick={() => setNovoEtapa('modelo')}
             className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
           >
-            Usar um modelo
+            Usar um treino pronto
           </button>
           <button
             onClick={() => setNovoEtapa('nome')}
@@ -168,7 +168,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         </div>
       </BottomSheet>
 
-      <BottomSheet open={novoEtapa === 'modelo'} onClose={fecharNovo} title="Escolher modelo">
+      <BottomSheet open={novoEtapa === 'modelo'} onClose={fecharNovo} title="Escolher treino pronto">
         <ul className="max-h-96 space-y-1 overflow-y-auto">
           {modelos?.map((m) => (
             <li key={m.id}>
@@ -182,7 +182,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               </button>
             </li>
           ))}
-          {modelos?.length === 0 && <p className="p-3 text-sm text-slate-500">Nenhum modelo cadastrado ainda.</p>}
+          {modelos?.length === 0 && <p className="p-3 text-sm text-slate-500">Nenhum treino pronto cadastrado ainda.</p>}
         </ul>
       </BottomSheet>
 
@@ -219,7 +219,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             }}
             className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
           >
-            Salvar como modelo
+            Salvar como treino pronto
           </button>
           <button
             onClick={() => {
