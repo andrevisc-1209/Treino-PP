@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import type { ItemInput } from '@/features/planos/api'
@@ -40,6 +40,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
   removerItemPending,
   onReordenar,
   reordenarPending,
+  abrirAdicionarInicial,
 }: {
   itens: T[] | undefined
   isLoading: boolean
@@ -51,10 +52,17 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
   removerItemPending: boolean
   onReordenar: (a: T, b: T) => void
   reordenarPending: boolean
+  /** Abre o bottom sheet de "Adicionar exercício" assim que o editor monta (fluxo de criação). */
+  abrirAdicionarInicial?: boolean
 }) {
   const { data: exercicios } = useExercicios()
 
   const [adicionando, setAdicionando] = useState(false)
+
+  useEffect(() => {
+    if (abrirAdicionarInicial) setAdicionando(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirAdicionarInicial])
   const [buscaEx, setBuscaEx] = useState('')
   const [grupoEx, setGrupoEx] = useState<string | null>(null)
   const [escolhido, setEscolhido] = useState<Exercicio | null>(null)

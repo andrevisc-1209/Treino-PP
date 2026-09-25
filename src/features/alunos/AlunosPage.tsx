@@ -66,7 +66,7 @@ export function AlunosPage() {
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-100">
                 <User size={20} className="text-slate-500" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">{a.name}</p>
                 <p className="text-sm text-slate-500">
                   {[idade(a.birth_date) != null && `${idade(a.birth_date)} anos`, a.injury && 'lesão'].filter(Boolean).join(' · ') ||
@@ -75,6 +75,7 @@ export function AlunosPage() {
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Sem valor definido</span>
                   )}
                 </p>
+                {a.objetivos[0] && <p className="truncate text-xs text-slate-400">{a.objetivos[0]}</p>}
               </div>
             </Link>
           </li>

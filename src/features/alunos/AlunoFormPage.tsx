@@ -8,7 +8,7 @@ import { cn, formatarTelefone, idade } from '@/lib/utils'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
 import { useAluno, useAlunos, useConsentimentoAtivo, usePesos, useSalvarAluno } from './api'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
-import { ESPORTES, REGIOES_CORPO } from './opcoes'
+import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
 import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
@@ -16,6 +16,8 @@ import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
 import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
+import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
+import { linkWhatsApp } from '@/lib/whatsapp'
 
 const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : Number(v))
 
@@ -28,6 +30,9 @@ const schema = z
     weight_kg: z.preprocess(numOrUndef, z.number().positive('Peso inválido').optional()),
     phone: z.string().optional(),
     email: z.preprocess((v) => (v === '' ? undefined : v), z.string().email('E-mail inválido').optional()),
+
+    objetivos: z.array(z.string()),
+    objetivo_notes: z.string().optional(),
 
     lgpd_consent: z.boolean(),
 
@@ -47,6 +52,8 @@ const schema = z
     medications: z.string().optional(),
   })
   .superRefine((val, ctx) => {
+    if (val.objetivos.includes('Outros') && !val.objetivo_notes?.trim())
+      ctx.addIssue({ code: 'custom', path: ['objetivo_notes'], message: 'Descreva o objetivo' })
     if (val.injury) {
       if (val.injury_regions.length === 0) ctx.addIssue({ code: 'custom', path: ['injury_regions'], message: 'Selecione ao menos uma região' })
       if (val.injury_regions.includes('Outros') && !val.injury_notes?.trim())
@@ -69,7 +76,7 @@ const schema = z
 type FormInput = z.input<typeof schema>
 type FormOutput = z.output<typeof schema>
 
-const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email'] as const
+const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email', 'objetivos', 'objetivo_notes'] as const
 const STEP2_FIELDS = [
   'lgpd_consent',
   'injury',
@@ -152,6 +159,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { register, handleSubmit, watch, setValue, reset, control, trigger, formState } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
     defaultValues: {
+      objetivos: [],
       injury: false,
       injury_regions: [],
       surgery: false,
@@ -173,6 +181,8 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         weight_kg: pesos?.[0]?.weight_kg,
         phone: aluno.phone ?? '',
         email: aluno.email ?? '',
+        objetivos: aluno.objetivos,
+        objetivo_notes: aluno.objetivo_notes ?? '',
         injury: aluno.injury,
         injury_regions: aluno.injury_regions,
         injury_notes: aluno.injury_notes ?? '',
@@ -192,6 +202,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
 
   const birthDate = watch('birth_date')
   const sex = watch('sex')
+  const objetivos = watch('objetivos')
   const lgpdConsent = watch('lgpd_consent')
   const injury = watch('injury')
   const injuryRegions = watch('injury_regions')
@@ -330,13 +341,17 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 control={control}
                 name="phone"
                 render={({ field }) => (
-                  <Input
-                    type="tel"
-                    inputMode="numeric"
-                    placeholder="(21) 99999-9999"
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(formatarTelefone(e.target.value))}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="(21) 99999-9999"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(formatarTelefone(e.target.value))}
+                      className={linkWhatsApp(field.value) ? 'pr-12' : undefined}
+                    />
+                    <BotaoWhatsApp telefone={field.value} className="absolute right-0 top-1/2 -translate-y-1/2" />
+                  </div>
                 )}
               />
             </Field>
@@ -344,6 +359,15 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <Field label="E-mail" error={formState.errors.email?.message}>
               <Input type="email" {...register('email')} autoComplete="email" />
             </Field>
+
+            <Field label="Objetivos" error={formState.errors.objetivos?.message}>
+              <ChipsMultiSelect options={OBJETIVOS} value={objetivos} onChange={(v) => setValue('objetivos', v)} />
+            </Field>
+            {objetivos.includes('Outros') && (
+              <Field label="Descreva o objetivo" error={formState.errors.objetivo_notes?.message}>
+                <Input {...register('objetivo_notes')} placeholder="Ex.: voltar a jogar futevôlei" />
+              </Field>
+            )}
           </>
         )}
 
@@ -521,6 +545,12 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 <dd>{watch('phone') || '—'}</dd>
                 <dt className="text-slate-500">E-mail</dt>
                 <dd className="truncate">{(watch('email') as string) || '—'}</dd>
+                <dt className="text-slate-500">Objetivos</dt>
+                <dd>
+                  {objetivos.length > 0
+                    ? objetivos.map((o) => (o === 'Outros' ? watch('objetivo_notes') || 'Outros' : o)).join(', ')
+                    : '—'}
+                </dd>
               </dl>
             </div>
 

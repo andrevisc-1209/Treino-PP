@@ -8,6 +8,7 @@ import { useSessoesDetalhadas } from '@/features/evolucao/api'
 import { formatarBRL } from '@/lib/moeda'
 import { formatarDataCurta, hojeSP } from '@/lib/datas'
 import { gerarPayloadPix } from '@/lib/pix'
+import { linkWhatsApp } from '@/lib/whatsapp'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
@@ -104,16 +105,16 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
-  const telefoneDigits = aluno?.phone?.replace(/\D/g, '') ?? ''
+  const linkBase = linkWhatsApp(aluno?.phone)
 
   const marcarEnviadaSeNecessario = () => {
     if (fatura.status === 'aberta') enviar.mutate({ faturaId: fatura.id, alunoId: fatura.aluno_id })
   }
 
   const abrirWhatsApp = () => {
+    if (!linkBase) return
     marcarEnviadaSeNecessario()
-    const url = `https://wa.me/55${telefoneDigits}?text=${encodeURIComponent(mensagem)}`
-    window.open(url, '_blank', 'noopener,noreferrer')
+    window.open(`${linkBase}?text=${encodeURIComponent(mensagem)}`, '_blank', 'noopener,noreferrer')
   }
 
   const copiarMensagem = async () => {
@@ -240,7 +241,7 @@ export function FaturaPage() {
             value={mensagem}
             onChange={(e) => setMensagem(e.target.value)}
           />
-          {telefoneDigits ? (
+          {linkBase ? (
             <Button onClick={abrirWhatsApp} className="w-full">
               <MessageCircle size={18} /> Abrir WhatsApp
             </Button>

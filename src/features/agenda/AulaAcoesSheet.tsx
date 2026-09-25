@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { dividirValor } from '@/features/financeiro/calc'
 import { formatarBRL } from '@/lib/moeda'
 import { dataSP, horaSP, montarDataHoraSP } from '@/lib/datas'
@@ -132,6 +133,16 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
     <BottomSheet open={!!aula} onClose={fechar} title={titulo}>
       {passo === 'menu' && (
         <div className="space-y-1">
+          {aula.aula_participantes.length > 1 && (
+            <ul className="mb-2 space-y-1 border-b border-slate-100 pb-2">
+              {aula.aula_participantes.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-2 px-1">
+                  <span className="text-sm font-medium">{p.aluno?.name ?? 'Aluno'}</span>
+                  <BotaoWhatsApp telefone={p.aluno?.phone} label={`WhatsApp de ${p.aluno?.name}`} size={18} />
+                </li>
+              ))}
+            </ul>
+          )}
           {!podeAgir && aula.status !== 'agendada' && (
             <p className="px-1 pb-2 text-sm text-slate-500">
               {aula.status === 'realizada' ? 'Esta aula já foi realizada.' : 'Esta aula foi cancelada.'}

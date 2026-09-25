@@ -43,9 +43,10 @@ export default function App() {
           <Route path="/alunos/:id/fechar-ciclo" element={<FecharCicloPage />} />
           <Route path="/financeiro" element={<FinanceiroPage />} />
           <Route path="/financeiro/:faturaId" element={<FaturaPage />} />
-          <Route path="/exercicios" element={<ExerciciosPage />} />
-          <Route path="/modelos" element={<ModelosPage />} />
-          <Route path="/modelos/:modeloId" element={<ModeloEditorPage />} />
+          <Route path="/meus-treinos" element={<Navigate to="/meus-treinos/planejados" replace />} />
+          <Route path="/meus-treinos/exercicios" element={<ExerciciosPage />} />
+          <Route path="/meus-treinos/planejados" element={<ModelosPage />} />
+          <Route path="/meus-treinos/planejados/:modeloId" element={<ModeloEditorPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

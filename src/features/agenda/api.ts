@@ -21,7 +21,7 @@ export type AulaParticipante = {
   cancelado_em: string | null
   sessao_id: string | null
   fatura_id: string | null
-  aluno: { name: string } | null
+  aluno: { name: string; phone: string | null } | null
 }
 
 export type Aula = {
@@ -49,7 +49,7 @@ export type ProfessionalConfig = {
   pix_cidade: string | null
 }
 
-const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name))'
+const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
 
 // ============================================================
 // Geração diária de aulas (gerar_aulas via RPC, no máx. 1x/dia/aparelho)
