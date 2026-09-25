@@ -25,6 +25,11 @@ export function rotuloBadge(prefixo: string, regioes: string[], notas: string | 
   return r ? `${prefixo}: ${r}` : prefixo
 }
 
+/** Lista de objetivos para o selo da ficha: "Outros" mostra objetivo_notes resumido em 30 caracteres. */
+export function rotuloObjetivos(objetivos: string[], notas: string | null): string {
+  return formatarLista(objetivos, notas ? truncar(notas, 30) : notas)
+}
+
 /** Mensagem de aviso de saúde (lesão + cirurgia) para telas de plano/execução. null se não houver nada a avisar. */
 export function avisoSaude(aluno: Pick<Aluno, 'injury' | 'injury_regions' | 'injury_notes' | 'surgery' | 'surgery_regions' | 'surgery_notes'>): string | null {
   const partes: string[] = []

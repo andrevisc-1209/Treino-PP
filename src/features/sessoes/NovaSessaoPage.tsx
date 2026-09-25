@@ -207,13 +207,13 @@ export function NovaSessaoPage() {
       {etapa === 'plano' && estadoVazio && (
         <div className="space-y-4 rounded-2xl bg-white p-6 text-center shadow-sm">
           <p className="font-semibold">Crie o primeiro treino</p>
-          <p className="text-sm text-slate-500">Monte um treino para {aluno?.name ?? 'o aluno'} ou crie um treino pronto para reutilizar depois.</p>
+          <p className="text-sm text-slate-500">Monte um treino para {aluno?.name ?? 'o aluno'} ou crie um treino planejado para reutilizar depois.</p>
           <div className="space-y-2">
             <Button onClick={() => navigate(`/alunos/${id}?tab=Treinos`)} className="w-full">
               Montar treino do aluno
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/modelos')} className="w-full">
-              Criar treino pronto
+            <Button variant="ghost" onClick={() => navigate('/meus-treinos/planejados')} className="w-full">
+              Criar treino planejado
             </Button>
             <Button
               variant="ghost"
@@ -310,12 +310,12 @@ export function NovaSessaoPage() {
 
           {modelos && modelos.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-sm font-semibold text-slate-500">Treinos prontos</h2>
+              <h2 className="text-sm font-semibold text-slate-500">Treinos planejados</h2>
               {modelos.length > 5 && (
                 <div className="relative">
                   <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <Input
-                    placeholder="Buscar treino pronto"
+                    placeholder="Buscar treino planejado"
                     value={buscaModelo}
                     onChange={(e) => setBuscaModelo(e.target.value)}
                     className="pl-10"
@@ -344,7 +344,7 @@ export function NovaSessaoPage() {
                     </button>
                   )
                 })}
-                {modelosFiltrados?.length === 0 && <p className="text-sm text-slate-500">Nenhum treino pronto encontrado.</p>}
+                {modelosFiltrados?.length === 0 && <p className="text-sm text-slate-500">Nenhum treino planejado encontrado.</p>}
               </div>
             </div>
           )}
@@ -480,7 +480,7 @@ export function NovaSessaoPage() {
 
       <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
         <div className="space-y-2">
-          <p className="text-sm text-slate-500">O aluno já tem um plano com esse nome, copiado desse treino pronto.</p>
+          <p className="text-sm text-slate-500">O aluno já tem um plano com esse nome, copiado desse treino planejado.</p>
           <button
             onClick={() => {
               const c = conflito

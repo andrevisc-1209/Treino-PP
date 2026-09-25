@@ -11,7 +11,8 @@ import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import { useAluno, useArquivarAluno, useConsentimentoDetalhado, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
-import { rotuloBadge } from './format'
+import { rotuloBadge, rotuloObjetivos } from './format'
+import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -105,6 +106,13 @@ export function AlunoFichaPage() {
           <ArrowLeft size={20} />
         </Link>
         <h1 className="flex-1 truncate text-xl font-bold">{aluno.name}</h1>
+        {aluno.phone ? (
+          <BotaoWhatsApp telefone={aluno.phone} label={`WhatsApp de ${aluno.name}`} />
+        ) : (
+          <Link to={`/alunos/${aluno.id}/editar`} className="text-sm font-medium text-brand-dark">
+            Adicionar telefone
+          </Link>
+        )}
         <Link
           to={`/alunos/${aluno.id}/editar`}
           className="flex size-11 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100"
@@ -119,6 +127,7 @@ export function AlunoFichaPage() {
         {aluno.sex && <Badge>{aluno.sex === 'M' ? 'Masculino' : aluno.sex === 'F' ? 'Feminino' : 'Outro'}</Badge>}
         {aluno.height_cm && <Badge>{aluno.height_cm} cm</Badge>}
         {ultimoPeso && <Badge>{ultimoPeso.weight_kg} kg</Badge>}
+        {aluno.objetivos.length > 0 && <Badge>Objetivo: {rotuloObjetivos(aluno.objetivos, aluno.objetivo_notes)}</Badge>}
         {aluno.injury && <Badge>{rotuloBadge('Lesão', aluno.injury_regions, aluno.injury_notes)}</Badge>}
         {aluno.surgery && <Badge>{rotuloBadge('Cirurgia', aluno.surgery_regions, aluno.surgery_notes)}</Badge>}
         {aluno.practices_sport && <Badge>{rotuloBadge('Esportes', aluno.sports, aluno.sport_name)}</Badge>}

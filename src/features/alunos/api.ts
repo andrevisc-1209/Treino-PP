@@ -12,6 +12,8 @@ export type Aluno = {
   phone: string | null
   email: string | null
   active: boolean
+  objetivos: string[]
+  objetivo_notes: string | null
   injury: boolean
   injury_regions: string[]
   injury_notes: string | null
@@ -147,6 +149,8 @@ export type SalvarAlunoInput = {
   phone?: string
   email?: string
   weight_kg?: number
+  objetivos: string[]
+  objetivo_notes?: string
   injury: boolean
   injury_regions: string[]
   injury_notes?: string
@@ -177,6 +181,8 @@ export function useSalvarAluno() {
         height_cm: input.height_cm ?? null,
         phone: input.phone || null,
         email: input.email || null,
+        objetivos: input.objetivos,
+        objetivo_notes: input.objetivos.includes('Outros') ? input.objetivo_notes || null : null,
         injury: input.injury,
         injury_regions: input.injury ? input.injury_regions : [],
         injury_notes: input.injury ? input.injury_notes || null : null,

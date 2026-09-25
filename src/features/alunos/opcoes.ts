@@ -14,6 +14,18 @@ export const REGIOES_CORPO = [
   'Outros',
 ] as const
 
+export const OBJETIVOS = [
+  'Perder peso',
+  'Hipertrofia',
+  'Saúde e qualidade de vida',
+  'Condicionamento físico',
+  'Corrida/maratona',
+  'Performance esportiva',
+  'Reabilitação',
+  'Mobilidade/flexibilidade',
+  'Outros',
+] as const
+
 export const ESPORTES = [
   'Musculação',
   'Corrida',

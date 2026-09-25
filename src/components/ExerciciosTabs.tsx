@@ -2,8 +2,8 @@ import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
-  { to: '/exercicios', label: 'Exercícios', end: true },
-  { to: '/modelos', label: 'Treinos prontos', end: false },
+  { to: '/meus-treinos/planejados', label: 'Treinos planejados', end: false },
+  { to: '/meus-treinos/exercicios', label: 'Exercícios', end: false },
 ]
 
 export function ExerciciosTabs() {
