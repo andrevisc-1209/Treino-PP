@@ -1,10 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ChevronDown, Search, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
-import { usePlanos, useAtualizarPlano, useCriarPlanoDeModelo, type Plano } from '@/features/planos/api'
-import { useModelos, type Modelo } from '@/features/modelos/api'
+import {
+  usePlanos,
+  useAtualizarPlano,
+  useCriarPlanoDeModelo,
+  buscarItensComparaveisPlano,
+  sincronizarPlanoComModelo,
+  type Plano,
+} from '@/features/planos/api'
+import { itensIguais } from '@/features/planos/compare'
+import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
 import { Button, BottomSheet, Input } from '@/components/ui'
@@ -28,6 +37,7 @@ export function NovaSessaoPage() {
   const planoDaUrl = searchParams.get('plano')
   const aulaId = searchParams.get('aula')
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { data: aluno } = useAluno(id)
   const { data: planos } = usePlanos(id)
   const { data: modelos } = useModelos()
@@ -47,6 +57,8 @@ export function NovaSessaoPage() {
   const [avisoPendente, setAvisoPendente] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [copiando, setCopiando] = useState(false)
+  const [verificando, setVerificando] = useState(false)
+  const [sincronizando, setSincronizando] = useState(false)
 
   const planosAtivos = useMemo(() => planos?.filter((p) => p.active), [planos])
   const planosInativos = useMemo(() => planos?.filter((p) => !p.active), [planos])
@@ -77,7 +89,7 @@ export function NovaSessaoPage() {
     setEtapa('perguntas')
   }
 
-  const copiarTreinoPronto = (m: Modelo) => {
+  const copiarTreinoPlanejado = (m: Modelo) => {
     setCopiando(true)
     criarDeModelo.mutate(
       { id: m.id, name: m.name, notes: m.notes },
@@ -102,13 +114,47 @@ export function NovaSessaoPage() {
     avancarComPlano(p, true)
   }
 
-  const escolherTreinoPronto = (m: Modelo) => {
-    const existente = planos?.find((p) => p.name === m.name)
-    if (existente) {
-      setConflito({ modelo: m, planoExistente: existente })
+  const atualizarCopiaEUsar = async (p: Plano, m: Modelo) => {
+    setSincronizando(true)
+    try {
+      await sincronizarPlanoComModelo(p.id, m.id)
+      qc.invalidateQueries({ queryKey: ['planos', id] })
+      setSincronizando(false)
+      if (!p.active) ativarPlano.mutate({ id: p.id, active: true })
+      avancarComPlano(p, true)
+    } catch (e) {
+      setSincronizando(false)
+      setErro((e as Error).message)
+    }
+  }
+
+  const escolherTreinoPlanejado = async (m: Modelo) => {
+    if (m.modelo_exercicios.length === 0) return
+    const existente = planos?.find((p) => p.modelo_origem_id === m.id)
+    if (!existente) {
+      copiarTreinoPlanejado(m)
       return
     }
-    copiarTreinoPronto(m)
+    setVerificando(true)
+    try {
+      const [itensExistente, itensModelo] = await Promise.all([
+        buscarItensComparaveisPlano(existente.id),
+        buscarItensComparaveisModelo(m.id),
+      ])
+      setVerificando(false)
+      if (itensExistente.length === 0) {
+        await atualizarCopiaEUsar(existente, m)
+        return
+      }
+      if (itensIguais(itensExistente, itensModelo)) {
+        usarPlanoExistente(existente)
+        return
+      }
+      setConflito({ modelo: m, planoExistente: existente })
+    } catch (e) {
+      setVerificando(false)
+      setErro((e as Error).message)
+    }
   }
 
   const ativarEIniciar = (p: Plano) => {
@@ -324,17 +370,30 @@ export function NovaSessaoPage() {
               )}
               <div className="space-y-2">
                 {modelosFiltrados?.map((m) => {
+                  const vazio = m.modelo_exercicios.length === 0
                   const ordenados = [...m.modelo_exercicios].sort((a, b) => a.order_index - b.order_index)
                   const previa = ordenados
                     .slice(0, 3)
                     .map((i) => i.exercicio?.name)
                     .filter(Boolean)
                     .join(', ')
+                  if (vazio) {
+                    return (
+                      <Link
+                        key={m.id}
+                        to={`/meus-treinos/planejados/${m.id}`}
+                        className="block rounded-2xl bg-white p-4 opacity-70 shadow-sm"
+                      >
+                        <p className="font-medium text-slate-400">{m.name}</p>
+                        <span className="text-sm font-medium text-brand-dark">Sem exercícios · toque para montar</span>
+                      </Link>
+                    )
+                  }
                   return (
                     <button
                       key={m.id}
-                      onClick={() => escolherTreinoPronto(m)}
-                      disabled={copiando}
+                      onClick={() => escolherTreinoPlanejado(m)}
+                      disabled={copiando || verificando || sincronizando}
                       className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50 disabled:opacity-50"
                     >
                       <p className="font-medium">{m.name}</p>
@@ -480,26 +539,30 @@ export function NovaSessaoPage() {
 
       <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
         <div className="space-y-2">
-          <p className="text-sm text-slate-500">O aluno já tem um plano com esse nome, copiado desse treino planejado.</p>
+          <p className="text-sm text-slate-500">
+            O treino do aluno tem ajustes diferentes da versão atual do treino planejado. O que fazer?
+          </p>
           <button
             onClick={() => {
               const c = conflito
               setConflito(null)
               if (c) usarPlanoExistente(c.planoExistente)
             }}
-            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+            disabled={sincronizando}
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50 disabled:opacity-50"
           >
-            Usar o existente
+            Usar o treino do aluno (com os ajustes dele)
           </button>
           <button
             onClick={() => {
               const c = conflito
               setConflito(null)
-              if (c) copiarTreinoPronto(c.modelo)
+              if (c) atualizarCopiaEUsar(c.planoExistente, c.modelo)
             }}
-            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+            disabled={sincronizando}
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50 disabled:opacity-50"
           >
-            Criar nova cópia
+            Atualizar com a versão atual do treino planejado
           </button>
         </div>
       </BottomSheet>

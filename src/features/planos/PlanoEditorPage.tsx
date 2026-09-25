@@ -3,6 +3,7 @@ import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
 import { ExerciciosEditor } from '@/components/ExerciciosEditor'
+import { PlanoOrigemBadge } from './PlanoOrigemBadge'
 import { useAdicionarExercicio, useAtualizarItem, usePlano, usePlanoExercicios, useRemoverItem, useReordenarItem } from './api'
 
 export function PlanoEditorPage() {
@@ -31,6 +32,8 @@ export function PlanoEditorPage() {
           {plano.notes && <p className="truncate text-sm text-slate-500">{plano.notes}</p>}
         </div>
       </header>
+
+      <PlanoOrigemBadge plano={plano} alunoId={id} />
 
       {aluno && avisoSaude(aluno) && (
         <div className="mb-4 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
