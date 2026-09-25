@@ -71,6 +71,50 @@ export function useConsentimentoAtivo(alunoId: string | undefined) {
   })
 }
 
+export type ConsentimentoAtivo = { id: string; consented_at: string; consent_version: string }
+
+export function useConsentimentoDetalhado(alunoId: string | undefined) {
+  return useQuery({
+    queryKey: ['consentimento-detalhado', alunoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('consentimentos')
+        .select('id, consented_at, consent_version')
+        .eq('aluno_id', alunoId!)
+        .is('revoked_at', null)
+        .order('consented_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) throw error
+      return data as ConsentimentoAtivo | null
+    },
+    enabled: !!alunoId,
+  })
+}
+
+export function useRevogarConsentimento(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (consentimentoId: string) => {
+      const { error: e1 } = await supabase
+        .from('consentimentos')
+        .update({ revoked_at: new Date().toISOString() })
+        .eq('id', consentimentoId)
+      if (e1) throw e1
+      const { error: e2 } = await supabase
+        .from('alunos')
+        .update({ injury: false, injury_notes: null, medications: null })
+        .eq('id', alunoId)
+      if (e2) throw e2
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['consentimento-ativo', alunoId] })
+      qc.invalidateQueries({ queryKey: ['consentimento-detalhado', alunoId] })
+      qc.invalidateQueries({ queryKey: ['aluno', alunoId] })
+    },
+  })
+}
+
 export function usePesos(alunoId: string | undefined) {
   return useQuery({
     queryKey: ['pesos', alunoId],

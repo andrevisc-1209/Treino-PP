@@ -4,6 +4,7 @@ import { LogOut, Plus, Search, User } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn, idade } from '@/lib/utils'
 import { Button, Input } from '@/components/ui'
+import { InstallBanner } from '@/components/InstallBanner'
 import { useAlunos } from './api'
 
 export function AlunosPage() {
@@ -20,6 +21,8 @@ export function AlunosPage() {
           <LogOut size={20} />
         </Button>
       </header>
+
+      <InstallBanner />
 
       <div className="mb-4 flex gap-2">
         <div className="relative flex-1">

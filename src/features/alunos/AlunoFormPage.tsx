@@ -1,12 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
-import { Button, Field, Input } from '@/components/ui'
+import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { useAluno, useConsentimentoAtivo, useSalvarAluno } from './api'
+import { TERMO_AVISO, TERMO_TEXTO } from './termo'
 
 const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : Number(v))
 
@@ -106,6 +107,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const practicesSport = watch('practices_sport')
   const lgpdConsent = watch('lgpd_consent')
   const healthDisabled = !lgpdConsent
+  const [termoAberto, setTermoAberto] = useState(false)
 
   const onSubmit = async (f: FormOutput) => {
     const alunoId = await salvar.mutateAsync({
@@ -168,12 +170,17 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
           </Field>
         )}
 
-        <label className="flex items-start gap-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
-          <input type="checkbox" className="mt-0.5 size-5 shrink-0" {...register('lgpd_consent')} />
-          <span>
-            O aluno autorizou o registro dos seus dados de saúde (lesão e medicamentos) para acompanhamento do treino.
-          </span>
-        </label>
+        <div className="space-y-2 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+          <label className="flex items-start gap-3">
+            <input type="checkbox" className="mt-0.5 size-5 shrink-0" {...register('lgpd_consent')} />
+            <span>
+              O aluno autorizou o registro dos seus dados de saúde (lesão e medicamentos) para acompanhamento do treino.
+            </span>
+          </label>
+          <button type="button" onClick={() => setTermoAberto(true)} className="text-sm font-medium text-brand-dark underline">
+            Ler termo
+          </button>
+        </div>
 
         <Field label="Possui lesão?">
           <OptionButtons
@@ -221,6 +228,13 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         </Button>
         {salvar.error && <p className="text-sm text-red-600">{(salvar.error as Error).message}</p>}
       </form>
+
+      <BottomSheet open={termoAberto} onClose={() => setTermoAberto(false)} title="Termo de consentimento">
+        <div className="space-y-3">
+          <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{TERMO_AVISO}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{TERMO_TEXTO}</p>
+        </div>
+      </BottomSheet>
     </div>
   )
 }

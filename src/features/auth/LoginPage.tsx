@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthProvider'
 import { Button, Field, Input } from '@/components/ui'
 
+const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
+
 const schema = z.object({
   name: z.string().optional(),
   email: z.string().email('E-mail inválido'),
@@ -14,11 +16,15 @@ const schema = z.object({
 })
 type Form = z.infer<typeof schema>
 
+const schemaRecuperar = z.object({ email: z.string().email('E-mail inválido') })
+type FormRecuperar = z.infer<typeof schemaRecuperar>
+
 export function LoginPage() {
   const { session } = useAuth()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup' | 'recuperar'>('login')
   const [msg, setMsg] = useState<string | null>(null)
   const { register, handleSubmit, formState } = useForm<Form>({ resolver: zodResolver(schema) })
+  const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
 
   if (session) return <Navigate to="/" replace />
 
@@ -37,6 +43,45 @@ export function LoginPage() {
           })
     if (error) setMsg(error.message)
     else if (mode === 'signup') setMsg('Conta criada. Confirme o e-mail, se for pedido, e entre.')
+  }
+
+  const onSubmitRecuperar = async (f: FormRecuperar) => {
+    setMsg(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(f.email, {
+      redirectTo: window.location.origin + import.meta.env.BASE_URL + 'definir-senha',
+    })
+    if (error) setMsg(error.message)
+    else setMsg('Se o e-mail existir, enviamos um link para redefinir a senha.')
+  }
+
+  if (mode === 'recuperar') {
+    return (
+      <div className="flex min-h-full items-center justify-center p-4">
+        <form onSubmit={recuperarForm.handleSubmit(onSubmitRecuperar)} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
+          <div>
+            <h1 className="text-2xl font-bold">Recuperar senha</h1>
+            <p className="text-sm text-slate-500">Informe seu e-mail para receber o link de redefinição.</p>
+          </div>
+          <Field label="E-mail" error={recuperarForm.formState.errors.email?.message}>
+            <Input type="email" {...recuperarForm.register('email')} autoComplete="email" autoFocus />
+          </Field>
+          {msg && <p className="text-sm text-slate-600">{msg}</p>}
+          <Button type="submit" className="w-full" disabled={recuperarForm.formState.isSubmitting}>
+            Enviar link
+          </Button>
+          <button
+            type="button"
+            className="w-full text-sm text-brand-dark"
+            onClick={() => {
+              setMode('login')
+              setMsg(null)
+            }}
+          >
+            Voltar para o login
+          </button>
+        </form>
+      </div>
+    )
   }
 
   return (
@@ -61,13 +106,24 @@ export function LoginPage() {
         <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
           {mode === 'login' ? 'Entrar' : 'Criar conta'}
         </Button>
-        <button
-          type="button"
-          className="w-full text-sm text-brand-dark"
-          onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-        >
-          {mode === 'login' ? 'Não tem conta? Criar' : 'Já tenho conta'}
-        </button>
+
+        {mode === 'login' && (
+          <button type="button" className="w-full text-sm text-slate-500" onClick={() => setMode('recuperar')}>
+            Esqueci minha senha
+          </button>
+        )}
+
+        {ALLOW_SIGNUP ? (
+          <button
+            type="button"
+            className="w-full text-sm text-brand-dark"
+            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+          >
+            {mode === 'login' ? 'Não tem conta? Criar' : 'Já tenho conta'}
+          </button>
+        ) : (
+          <p className="text-center text-sm text-slate-400">Acesso por convite. Fale com o administrador.</p>
+        )}
       </form>
     </div>
   )
