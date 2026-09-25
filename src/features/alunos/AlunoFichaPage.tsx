@@ -5,6 +5,7 @@ import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
 import { PlanosTab } from '@/features/planos/PlanosTab'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
+import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import { useAluno, useArquivarAluno, usePesos, useRegistrarPeso } from './api'
 
@@ -187,9 +188,7 @@ export function AlunoFichaPage() {
 
       {tab === 'Histórico' && <HistoricoTab alunoId={aluno.id} />}
 
-      {tab === 'Evolução' && (
-        <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow-sm">Em breve</div>
-      )}
+      {tab === 'Evolução' && <EvolucaoTab alunoId={aluno.id} />}
     </div>
   )
 }
