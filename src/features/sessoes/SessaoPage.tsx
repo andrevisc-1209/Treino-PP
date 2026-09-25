@@ -7,6 +7,8 @@ import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
 import {
   useAdicionarExercicioSessao,
   useAtualizarSessao,
@@ -185,8 +187,14 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
     setBusca('')
   }
 
-  const pular = (item: SessaoExercicio) => {
-    if (!confirm(`Pular ${item.exercicio?.name}? Ele será removido desta sessão.`)) return
+  const pular = async (item: SessaoExercicio) => {
+    const ok = await confirmarAcao({
+      titulo: 'Pular exercício',
+      mensagem: `Pular ${item.exercicio?.name}? Ele será removido desta sessão.`,
+      textoConfirmar: 'Pular',
+      destrutivo: true,
+    })
+    if (!ok) return
     removerExercicio.mutate(item.id)
   }
 
@@ -279,8 +287,9 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
     )
   }
 
-  const cancelarSessao = () => {
-    if (!confirm('Cancelar esta sessão?')) return
+  const cancelarSessao = async () => {
+    const ok = await confirmarAcao({ titulo: 'Cancelar sessão', mensagem: 'Cancelar esta sessão?', textoConfirmar: 'Cancelar sessão', destrutivo: true })
+    if (!ok) return
     atualizar.mutate({ status: 'cancelada' })
   }
 
@@ -399,7 +408,7 @@ export function SessaoPage() {
 
   if (!id || !sessionId) return <Navigate to="/" replace />
   if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
-  if (error) return <p className="p-4 text-red-600">{(error as Error).message}</p>
+  if (error) return <p className="p-4 text-red-600">{mapearErroSupabase(error)}</p>
   if (!sessao) return <p className="p-4 text-slate-500">Sessão não encontrada.</p>
 
   return (

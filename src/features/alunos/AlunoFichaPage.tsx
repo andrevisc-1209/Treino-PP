@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Play, Scale } from 'lucide-react'
+import { ArrowLeft, Pencil, Play, Scale, TriangleAlert } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
 import { PlanosTab } from '@/features/planos/PlanosTab'
@@ -10,10 +10,13 @@ import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
-import { useAluno, useArquivarAluno, useConsentimentoDetalhado, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
+import { useAluno, useArquivarAluno, useConsentimentoDetalhado, useDesarquivarAluno, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mostrarDesfazer } from '@/components/UndoToast'
 import { rotuloBadge, rotuloObjetivos } from './format'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
+import { mapearErroSupabase } from '@/lib/erros'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -77,26 +80,36 @@ export function AlunoFichaPage() {
   const { data: consentimento } = useConsentimentoDetalhado(id)
   const revogar = useRevogarConsentimento(id ?? '')
   const arquivar = useArquivarAluno()
+  const desarquivar = useDesarquivarAluno()
   const tabDaUrl = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
 
   if (!id) return <Navigate to="/alunos" replace />
   if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
-  if (error) return <p className="p-4 text-red-600">{(error as Error).message}</p>
+  if (error) return <p className="p-4 text-red-600">{mapearErroSupabase(error)}</p>
   if (!aluno) return <p className="p-4 text-slate-500">Aluno não encontrado.</p>
 
   const ultimoPeso = pesos?.[0]
 
   const handleArquivar = () => {
-    if (!confirm(`Arquivar ${aluno.name}? Ele deixará de aparecer na lista de alunos.`)) return
-    arquivar.mutate(aluno.id, { onSuccess: () => navigate('/alunos') })
+    arquivar.mutate(aluno.id, {
+      onSuccess: () => {
+        navigate('/alunos')
+        mostrarDesfazer(`${aluno.name} foi arquivado.`, () => desarquivar.mutate(aluno.id))
+      },
+    })
   }
 
-  const handleRevogar = () => {
+  const handleRevogar = async () => {
     if (!consentimento) return
-    if (!confirm('Revogar o consentimento LGPD? Os dados de lesão e medicamentos serão apagados e os campos de saúde ficarão travados até um novo consentimento.'))
-      return
+    const ok = await confirmarAcao({
+      titulo: 'Revogar consentimento LGPD',
+      mensagem: 'Os dados de lesão e medicamentos serão apagados e os campos de saúde ficarão travados até um novo consentimento.',
+      textoConfirmar: 'Revogar',
+      destrutivo: true,
+    })
+    if (!ok) return
     revogar.mutate(consentimento.id)
   }
 
@@ -123,17 +136,42 @@ export function AlunoFichaPage() {
         </Link>
       </header>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {idade(aluno.birth_date) != null && <Badge>{idade(aluno.birth_date)} anos</Badge>}
-        {aluno.sex && <Badge>{formatarSexo(aluno.sex)}</Badge>}
-        {aluno.height_cm && <Badge>{aluno.height_cm} cm</Badge>}
-        {ultimoPeso && <Badge>{formatarPesoKg(ultimoPeso.weight_kg)}</Badge>}
-        {aluno.objetivos.length > 0 && <Badge>Objetivo: {rotuloObjetivos(aluno.objetivos, aluno.objetivo_notes)}</Badge>}
-        {aluno.injury && <Badge>{rotuloBadge('Lesão', aluno.injury_regions, aluno.injury_notes)}</Badge>}
-        {aluno.surgery && <Badge>{rotuloBadge('Cirurgia', aluno.surgery_regions, aluno.surgery_notes)}</Badge>}
-        {aluno.practices_sport && <Badge>{rotuloBadge('Esportes', aluno.sports, aluno.sport_name)}</Badge>}
-        {aluno.medications && <Badge>Medicamentos</Badge>}
-      </div>
+      {(() => {
+        const demograficos = [
+          idade(aluno.birth_date) != null && `${idade(aluno.birth_date)} anos`,
+          aluno.sex && formatarSexo(aluno.sex),
+          aluno.height_cm && `${aluno.height_cm} cm`,
+          ultimoPeso && formatarPesoKg(ultimoPeso.weight_kg),
+        ].filter(Boolean)
+        const alertasSaude = [
+          aluno.injury && rotuloBadge('Lesão', aluno.injury_regions, aluno.injury_notes),
+          aluno.surgery && rotuloBadge('Cirurgia', aluno.surgery_regions, aluno.surgery_notes),
+          aluno.medications && 'Medicamentos',
+        ].filter((v): v is string => !!v)
+        return (
+          <div className="mb-4 space-y-2">
+            {demograficos.length > 0 && <p className="text-sm text-slate-500">{demograficos.join(' · ')}</p>}
+
+            {alertasSaude.length > 0 && (
+              <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3">
+                <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-700" />
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm font-medium text-amber-800">
+                  {alertasSaude.map((a) => (
+                    <span key={a}>{a}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(aluno.objetivos.length > 0 || aluno.practices_sport) && (
+              <div className="flex flex-wrap gap-2">
+                {aluno.objetivos.length > 0 && <Badge>Objetivo: {rotuloObjetivos(aluno.objetivos, aluno.objetivo_notes)}</Badge>}
+                {aluno.practices_sport && <Badge>{rotuloBadge('Esportes', aluno.sports, aluno.sport_name)}</Badge>}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       <Link
         to={sessaoEmAndamento ? `/alunos/${aluno.id}/sessoes/${sessaoEmAndamento.id}` : `/alunos/${aluno.id}/sessoes/nova`}

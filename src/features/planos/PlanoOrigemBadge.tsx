@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCw } from 'lucide-react'
 import { useModelo, buscarItensComparaveisModelo } from '@/features/modelos/api'
+import { confirmarAcao } from '@/components/ConfirmSheet'
 import { itensIguais } from './compare'
 import { buscarItensComparaveisPlano, useSincronizarPlanoComModelo, type Plano } from './api'
 
@@ -28,10 +29,18 @@ export function PlanoOrigemBadge({ plano, alunoId }: { plano: PlanoParaBadge; al
   const igual = !vazio && itensIguais(itensPlano, itensModelo)
   if (igual) return null
 
-  const atualizar = (e: React.MouseEvent) => {
+  const atualizar = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!vazio && !confirm(`Atualizar "${plano.name}" com os exercícios atuais de "${modelo.name}"? Os ajustes feitos aqui serão substituídos.`)) return
+    if (!vazio) {
+      const ok = await confirmarAcao({
+        titulo: 'Atualizar treino',
+        mensagem: `Atualizar "${plano.name}" com os exercícios atuais de "${modelo.name}"? Os ajustes feitos aqui serão substituídos.`,
+        textoConfirmar: 'Atualizar',
+        destrutivo: true,
+      })
+      if (!ok) return
+    }
     sincronizar.mutate({ planoId: plano.id, modeloId })
   }
 

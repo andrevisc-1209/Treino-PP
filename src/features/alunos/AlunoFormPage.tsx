@@ -405,7 +405,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                     setCobrancaAtiva(e.target.checked)
                     if (e.target.checked) setCobrancaValor(valorInicialCobranca())
                   }}
-                  className="size-5"
+                  className="size-5 accent-brand"
                 />
               </label>
               {!cobrancaAtiva && <p className="text-sm text-slate-500">Opcional. Você também pode definir a cobrança depois, na ficha do aluno.</p>}

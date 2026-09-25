@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { MoreVertical, Play, Plus } from 'lucide-react'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
 import { itensIguais } from './compare'
 import { PlanoOrigemBadge } from './PlanoOrigemBadge'
@@ -153,22 +156,28 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     )
   }
 
-  const excluirPlano = (p: Plano) => {
+  const excluirPlano = async (p: Plano) => {
     setMenuPlano(null)
-    if (!confirm(`Excluir "${p.name}"? As sessões já registradas continuam no histórico.`)) return
+    const ok = await confirmarAcao({
+      titulo: 'Excluir treino',
+      mensagem: `Excluir "${p.name}"? As sessões já registradas continuam no histórico.`,
+      textoConfirmar: 'Excluir',
+      destrutivo: true,
+    })
+    if (!ok) return
     excluir.mutate(p.id)
   }
 
-  if (isLoading) return <p className="text-slate-500">Carregando…</p>
-  if (error) return <p className="text-red-600">{(error as Error).message}</p>
+  if (isLoading) return <ListaSkeleton />
+  if (error) return <p className="text-red-600">{mapearErroSupabase(error)}</p>
 
   return (
     <div className="space-y-3">
-      <Button onClick={() => setNovoEtapa('escolha')} className="w-full">
-        <Plus size={18} /> Novo plano
+      <Button variant="outline" onClick={() => setNovoEtapa('escolha')} className="w-full">
+        <Plus size={18} /> Novo treino
       </Button>
 
-      {planos?.length === 0 && <p className="text-sm text-slate-500">Nenhum plano ainda.</p>}
+      {planos?.length === 0 && <p className="text-sm text-slate-500">Nenhum treino ainda.</p>}
 
       <ul className="space-y-2">
         {planos?.map((p) => {
@@ -214,7 +223,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         })}
       </ul>
 
-      <BottomSheet open={novoEtapa === 'escolha'} onClose={fecharNovo} title="Novo plano">
+      <BottomSheet open={novoEtapa === 'escolha'} onClose={fecharNovo} title="Novo treino">
         <div className="space-y-2">
           <button
             onClick={() => setNovoEtapa('modelo')}
@@ -365,7 +374,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         </div>
       </BottomSheet>
 
-      <BottomSheet open={!!renomeando} onClose={() => setRenomeando(null)} title="Editar plano">
+      <BottomSheet open={!!renomeando} onClose={() => setRenomeando(null)} title="Editar treino">
         <div className="space-y-4">
           <Field label="Nome">
             <Input value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />

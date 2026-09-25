@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { MoreVertical, Plus } from 'lucide-react'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
 
@@ -90,9 +93,15 @@ export function ModelosPage() {
     )
   }
 
-  const excluirModelo = (m: Modelo) => {
+  const excluirModelo = async (m: Modelo) => {
     setMenuAberto(null)
-    if (!confirm(`Excluir o treino planejado "${m.name}"? Os planos já criados a partir dele não são afetados.`)) return
+    const ok = await confirmarAcao({
+      titulo: 'Excluir treino planejado',
+      mensagem: `Excluir "${m.name}"? Os treinos já criados a partir dele nos alunos não são afetados.`,
+      textoConfirmar: 'Excluir',
+      destrutivo: true,
+    })
+    if (!ok) return
     excluir.mutate(m.id)
   }
 
@@ -107,8 +116,8 @@ export function ModelosPage() {
 
       <ExerciciosTabs />
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
-      {error && <p className="text-red-600">{(error as Error).message}</p>}
+      {isLoading && <ListaSkeleton />}
+      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {modelos?.length === 0 && (
         <p className="text-sm text-slate-500">Nenhum treino planejado ainda. Crie treinos planejados para aplicar aos alunos.</p>
       )}

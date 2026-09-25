@@ -207,7 +207,7 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
         <div className="space-y-4">
           <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
             <span className="font-medium">Dividir um valor total</span>
-            <input type="checkbox" checked={dividirTotal} onChange={(e) => setDividirTotal(e.target.checked)} className="size-5" />
+            <input type="checkbox" checked={dividirTotal} onChange={(e) => setDividirTotal(e.target.checked)} className="size-5 accent-brand" />
           </label>
 
           {dividirTotal && (
@@ -267,7 +267,7 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
         <div className="space-y-4">
           <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
             <span className="font-medium">Cobrar esta aula</span>
-            <input type="checkbox" checked={cobrarFalta} onChange={(e) => setCobrarFalta(e.target.checked)} className="size-5" />
+            <input type="checkbox" checked={cobrarFalta} onChange={(e) => setCobrarFalta(e.target.checked)} className="size-5 accent-brand" />
           </label>
           <Button onClick={confirmarFalta} className="w-full" disabled={marcarFalta.isPending}>
             Confirmar falta
@@ -298,7 +298,7 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
           {canceladoPor === 'aluno' && (
             <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
               <span className="font-medium">Cobrar</span>
-              <input type="checkbox" checked={cobrarCancel} onChange={(e) => setCobrarCancel(e.target.checked)} className="size-5" />
+              <input type="checkbox" checked={cobrarCancel} onChange={(e) => setCobrarCancel(e.target.checked)} className="size-5 accent-brand" />
             </label>
           )}
           <Button onClick={confirmarCancelar} className="w-full" disabled={cancelarAula.isPending}>

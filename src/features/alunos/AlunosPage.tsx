@@ -6,6 +6,8 @@ import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { Button, Input } from '@/components/ui'
 import { InstallBanner } from '@/components/InstallBanner'
 import { Avatar } from '@/components/Avatar'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { useAlunosComCobranca } from '@/features/financeiro/api'
 import { useAlunos } from './api'
 
@@ -51,8 +53,8 @@ export function AlunosPage() {
         </Link>
       </div>
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
-      {error && <p className="text-red-600">{(error as Error).message}</p>}
+      {isLoading && <ListaSkeleton />}
+      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {alunos?.length === 0 && <p className="text-slate-500">Nenhum aluno ainda. Cadastre o primeiro acima.</p>}
       {alunos && alunos.length > 0 && filtrados?.length === 0 && (
         <p className="text-slate-500">Nenhum aluno encontrado para "{busca}".</p>

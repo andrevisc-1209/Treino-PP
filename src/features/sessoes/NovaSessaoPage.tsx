@@ -282,7 +282,7 @@ export function NovaSessaoPage() {
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-slate-500">Treinos do aluno</h2>
             {planosComExercicios?.length === 0 && planosAtivos && planosAtivos.length === 0 && (
-              <p className="text-sm text-slate-500">Nenhum plano ativo ainda.</p>
+              <p className="text-sm text-slate-500">Nenhum treino ativo ainda.</p>
             )}
             {planosAtivos?.map((p) => {
               const temExercicios = p.plano_exercicios.length > 0

@@ -171,7 +171,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
           valor={formatarNumero(atual)}
           sub={
             mediaAnterior > 0 ? (
-              <p className={cn('flex items-center gap-1 text-xs', tendenciaSubindo ? 'text-emerald-600' : 'text-red-600')}>
+              <p className={cn('flex items-center gap-1 text-xs', tendenciaSubindo ? 'text-emerald-700' : 'text-red-600')}>
                 {tendenciaSubindo ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 vs média {formatarNumero(mediaAnterior)}
               </p>
