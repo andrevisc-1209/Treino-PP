@@ -3,10 +3,13 @@ import { ChevronDown, ChevronUp, Pencil, Plus, Search, Trash2 } from 'lucide-rea
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import type { ItemInput } from '@/features/planos/api'
 import { cn } from '@/lib/utils'
+import { formatarNumero } from '@/lib/format'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { mostrarDesfazer } from '@/components/UndoToast'
 
 export type ExercicioEditavel = {
   id: string
+  exercicio_id: string
   sets: number
   reps: string
   target_load_kg: number | null
@@ -114,8 +117,27 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
 
   const removerAtual = () => {
     if (!editandoItem) return
-    if (!confirm(`Remover ${editandoItem.exercicio?.name}?`)) return
-    onRemoverItem(editandoItem.id, { onSuccess: () => setEditandoItem(null), onError: (e) => setErro(e.message) })
+    const item = editandoItem
+    onRemoverItem(item.id, {
+      onSuccess: () => {
+        setEditandoItem(null)
+        mostrarDesfazer(`${item.exercicio?.name ?? 'Exercício'} removido.`, () => {
+          onAdicionar(
+            {
+              exercicio_id: item.exercicio_id,
+              order_index: item.order_index,
+              sets: item.sets,
+              reps: item.reps,
+              target_load_kg: item.target_load_kg,
+              rest_seconds: item.rest_seconds,
+              notes: item.notes,
+            },
+            { onSuccess: () => {}, onError: () => {} },
+          )
+        })
+      },
+      onError: (e) => setErro(e.message),
+    })
   }
 
   const mover = (index: number, dir: -1 | 1) => {
@@ -134,7 +156,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               <button
                 onClick={() => mover(index, -1)}
                 disabled={index === 0 || reordenarPending}
-                className="flex size-8 items-center justify-center rounded-lg text-slate-400 disabled:opacity-30 active:bg-slate-100"
+                className="flex size-11 items-center justify-center rounded-lg text-slate-500 disabled:opacity-30 active:bg-slate-100"
                 aria-label="Mover para cima"
               >
                 <ChevronUp size={18} />
@@ -142,7 +164,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               <button
                 onClick={() => mover(index, 1)}
                 disabled={index === itens.length - 1 || reordenarPending}
-                className="flex size-8 items-center justify-center rounded-lg text-slate-400 disabled:opacity-30 active:bg-slate-100"
+                className="flex size-11 items-center justify-center rounded-lg text-slate-500 disabled:opacity-30 active:bg-slate-100"
                 aria-label="Mover para baixo"
               >
                 <ChevronDown size={18} />
@@ -152,7 +174,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               <p className="truncate font-medium">{item.exercicio?.name ?? 'Exercício removido'}</p>
               <p className="text-sm text-slate-500">
                 {item.sets}x {item.reps}
-                {item.target_load_kg != null && ` · ${item.target_load_kg}kg`}
+                {item.target_load_kg != null && ` · ${formatarNumero(item.target_load_kg)}kg`}
                 {item.rest_seconds != null && ` · ${item.rest_seconds}s descanso`}
               </p>
               {item.notes && <p className="text-sm text-slate-400">{item.notes}</p>}

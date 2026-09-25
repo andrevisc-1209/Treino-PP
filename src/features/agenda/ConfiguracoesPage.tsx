@@ -97,12 +97,12 @@ export function ConfiguracoesPage() {
 
           <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
             <span className="font-medium">Cobrar falta por padrão</span>
-            <input type="checkbox" checked={cobrarFalta} onChange={(e) => setCobrarFalta(e.target.checked)} className="size-5" />
+            <input type="checkbox" checked={cobrarFalta} onChange={(e) => setCobrarFalta(e.target.checked)} className="size-5 accent-brand" />
           </label>
 
           <label className="flex min-h-11 items-center justify-between rounded-xl bg-slate-50 px-3">
             <span className="font-medium">Cobrar cancelamento do aluno por padrão</span>
-            <input type="checkbox" checked={cobrarCancel} onChange={(e) => setCobrarCancel(e.target.checked)} className="size-5" />
+            <input type="checkbox" checked={cobrarCancel} onChange={(e) => setCobrarCancel(e.target.checked)} className="size-5 accent-brand" />
           </label>
 
           {salvo && <p className="text-sm text-emerald-700">Configurações salvas.</p>}

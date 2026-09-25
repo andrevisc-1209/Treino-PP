@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { MoreVertical, Plus } from 'lucide-react'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ListaSkeleton } from '@/components/Skeleton'
+import { sugerirNomeDuplicado } from '@/lib/nomes'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
 
 export function ModelosPage() {
@@ -23,6 +27,28 @@ export function ModelosPage() {
   const [erro, setErro] = useState<string | null>(null)
 
   const [menuAberto, setMenuAberto] = useState<Modelo | null>(null)
+  const [duplicando, setDuplicando] = useState<Modelo | null>(null)
+  const [nomeDuplicado, setNomeDuplicado] = useState('')
+  const [erroDuplicado, setErroDuplicado] = useState<string | null>(null)
+
+  const abrirDuplicar = (m: Modelo) => {
+    setMenuAberto(null)
+    setDuplicando(m)
+    setNomeDuplicado(sugerirNomeDuplicado(m.name, (modelos ?? []).map((x) => x.name)))
+    setErroDuplicado(null)
+  }
+
+  const confirmarDuplicar = () => {
+    if (!duplicando) return
+    if (!nomeDuplicado.trim()) {
+      setErroDuplicado('Nome é obrigatório')
+      return
+    }
+    duplicar.mutate(
+      { modelo: duplicando, novoNome: nomeDuplicado.trim() },
+      { onSuccess: () => setDuplicando(null), onError: (e) => setErroDuplicado((e as Error).message) },
+    )
+  }
 
   const abrirNovo = () => {
     setNomeNovo('')
@@ -67,9 +93,15 @@ export function ModelosPage() {
     )
   }
 
-  const excluirModelo = (m: Modelo) => {
+  const excluirModelo = async (m: Modelo) => {
     setMenuAberto(null)
-    if (!confirm(`Excluir o treino planejado "${m.name}"? Os planos já criados a partir dele não são afetados.`)) return
+    const ok = await confirmarAcao({
+      titulo: 'Excluir treino planejado',
+      mensagem: `Excluir "${m.name}"? Os treinos já criados a partir dele nos alunos não são afetados.`,
+      textoConfirmar: 'Excluir',
+      destrutivo: true,
+    })
+    if (!ok) return
     excluir.mutate(m.id)
   }
 
@@ -84,8 +116,8 @@ export function ModelosPage() {
 
       <ExerciciosTabs />
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
-      {error && <p className="text-red-600">{(error as Error).message}</p>}
+      {isLoading && <ListaSkeleton />}
+      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {modelos?.length === 0 && (
         <p className="text-sm text-slate-500">Nenhum treino planejado ainda. Crie treinos planejados para aplicar aos alunos.</p>
       )}
@@ -143,11 +175,7 @@ export function ModelosPage() {
             Editar
           </button>
           <button
-            onClick={() => {
-              if (menuAberto) duplicar.mutate(menuAberto)
-              setMenuAberto(null)
-            }}
-            disabled={duplicar.isPending}
+            onClick={() => menuAberto && abrirDuplicar(menuAberto)}
             className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
           >
             Duplicar
@@ -159,6 +187,18 @@ export function ModelosPage() {
           >
             Excluir
           </button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={!!duplicando} onClose={() => setDuplicando(null)} title="Duplicar treino planejado">
+        <div className="space-y-4">
+          <Field label="Nome do novo treino planejado">
+            <Input value={nomeDuplicado} onChange={(e) => setNomeDuplicado(e.target.value)} autoFocus />
+          </Field>
+          {erroDuplicado && <p className="text-sm text-red-600">{erroDuplicado}</p>}
+          <Button onClick={confirmarDuplicar} className="w-full" disabled={duplicar.isPending}>
+            Duplicar
+          </Button>
         </div>
       </BottomSheet>
 

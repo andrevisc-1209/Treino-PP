@@ -34,8 +34,8 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
     const valorNum = Number(valor.valorTexto.replace(',', '.'))
     const diaCiclo = Number(valor.diaCicloTexto)
     const diasVencimento = Number(valor.diasVencimentoTexto)
-    if (!valor.valorTexto.trim() || Number.isNaN(valorNum) || valorNum < 0) {
-      setErro('Informe um valor válido')
+    if (!valor.valorTexto.trim() || Number.isNaN(valorNum) || valorNum <= 0) {
+      setErro('Informe um valor maior que zero')
       return
     }
     if (!diaCiclo || diaCiclo < 1 || diaCiclo > 28) {

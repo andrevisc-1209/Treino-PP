@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
+import { formatarNumero } from '@/lib/format'
 import { useAtualizarSessao, useSessao } from './api'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
 
@@ -31,6 +33,7 @@ export function PosTreino({
   const [nota, setNota] = useState<number | null>(null)
   const [observacao, setObservacao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [explicarCarga, setExplicarCarga] = useState(false)
 
   useEffect(() => {
     if (sessao) setDuracao(String(minutosDecorridos))
@@ -97,7 +100,14 @@ export function PosTreino({
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-white p-4 shadow-sm">
-        <ScaleQuestion titulo="Esforço percebido (PSE)" descritores={DESCRITORES_PSE} polaridade="negativa" value={pse} onChange={setPse} />
+        <ScaleQuestion
+          titulo="Esforço percebido (PSE)"
+          subtitulo="Como o aluno sentiu o treino?"
+          descritores={DESCRITORES_PSE}
+          polaridade="negativa"
+          value={pse}
+          onChange={setPse}
+        />
       </div>
 
       <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -107,7 +117,14 @@ export function PosTreino({
       </div>
 
       <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
-        <ScaleQuestion titulo="Avaliação do professor" descritores={DESCRITORES_NOTA} polaridade="positiva" value={nota} onChange={setNota} />
+        <ScaleQuestion
+          titulo="Avaliação do personal"
+          subtitulo="Como você avalia a sessão?"
+          descritores={DESCRITORES_NOTA}
+          polaridade="positiva"
+          value={nota}
+          onChange={setNota}
+        />
         <Field label="Observação">
           <textarea
             className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"
@@ -119,10 +136,25 @@ export function PosTreino({
 
       {cargaInterna != null && (
         <div className="rounded-2xl bg-slate-100 p-4 text-center">
-          <p className="text-sm text-slate-500">Carga interna (PSE × duração)</p>
-          <p className="text-2xl font-bold">{cargaInterna} UA</p>
+          <div className="flex items-center justify-center gap-1.5">
+            <p className="text-sm text-slate-500">Carga interna</p>
+            <button type="button" onClick={() => setExplicarCarga(true)} aria-label="O que é carga interna?" className="flex size-6 items-center justify-center text-slate-400">
+              <Info size={14} />
+            </button>
+          </div>
+          <p className="text-2xl font-bold">{formatarNumero(cargaInterna)} UA</p>
+          <p className="text-xs text-slate-500">
+            PSE {pse} × {duracao} min
+          </p>
         </div>
       )}
+
+      <BottomSheet open={explicarCarga} onClose={() => setExplicarCarga(false)} title="Carga interna">
+        <p className="text-sm leading-relaxed text-slate-600">
+          Método de Foster: carga interna (em UA, unidades arbitrárias) = PSE (esforço percebido de 0 a 10) × duração do treino em minutos. É uma
+          forma simples de comparar o quanto cada sessão exigiu do aluno, mesmo entre treinos bem diferentes.
+        </p>
+      </BottomSheet>
 
       {erro && <p className="text-sm text-red-600">{erro}</p>}
       <Button onClick={concluir} className="w-full" disabled={atualizar.isPending}>

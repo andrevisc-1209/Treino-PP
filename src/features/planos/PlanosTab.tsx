@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { MoreVertical, Play, Plus } from 'lucide-react'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ListaSkeleton } from '@/components/Skeleton'
+import { sugerirNomeDuplicado } from '@/lib/nomes'
 import { itensIguais } from './compare'
 import { PlanoOrigemBadge } from './PlanoOrigemBadge'
 import {
@@ -42,6 +46,28 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [erro, setErro] = useState<string | null>(null)
 
   const [menuPlano, setMenuPlano] = useState<Plano | null>(null)
+  const [duplicando, setDuplicando] = useState<Plano | null>(null)
+  const [nomeDuplicado, setNomeDuplicado] = useState('')
+  const [erroDuplicado, setErroDuplicado] = useState<string | null>(null)
+
+  const abrirDuplicar = (p: Plano) => {
+    setMenuPlano(null)
+    setDuplicando(p)
+    setNomeDuplicado(sugerirNomeDuplicado(p.name, (planos ?? []).map((x) => x.name)))
+    setErroDuplicado(null)
+  }
+
+  const confirmarDuplicar = () => {
+    if (!duplicando) return
+    if (!nomeDuplicado.trim()) {
+      setErroDuplicado('Nome é obrigatório')
+      return
+    }
+    duplicar.mutate(
+      { plano: duplicando, novoNome: nomeDuplicado.trim() },
+      { onSuccess: () => setDuplicando(null), onError: (e) => setErroDuplicado((e as Error).message) },
+    )
+  }
 
   const fecharNovo = () => {
     setNovoEtapa(null)
@@ -130,22 +156,28 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     )
   }
 
-  const excluirPlano = (p: Plano) => {
+  const excluirPlano = async (p: Plano) => {
     setMenuPlano(null)
-    if (!confirm(`Excluir "${p.name}"? As sessões já registradas continuam no histórico.`)) return
+    const ok = await confirmarAcao({
+      titulo: 'Excluir treino',
+      mensagem: `Excluir "${p.name}"? As sessões já registradas continuam no histórico.`,
+      textoConfirmar: 'Excluir',
+      destrutivo: true,
+    })
+    if (!ok) return
     excluir.mutate(p.id)
   }
 
-  if (isLoading) return <p className="text-slate-500">Carregando…</p>
-  if (error) return <p className="text-red-600">{(error as Error).message}</p>
+  if (isLoading) return <ListaSkeleton />
+  if (error) return <p className="text-red-600">{mapearErroSupabase(error)}</p>
 
   return (
     <div className="space-y-3">
-      <Button onClick={() => setNovoEtapa('escolha')} className="w-full">
-        <Plus size={18} /> Novo plano
+      <Button variant="outline" onClick={() => setNovoEtapa('escolha')} className="w-full">
+        <Plus size={18} /> Novo treino
       </Button>
 
-      {planos?.length === 0 && <p className="text-sm text-slate-500">Nenhum plano ainda.</p>}
+      {planos?.length === 0 && <p className="text-sm text-slate-500">Nenhum treino ainda.</p>}
 
       <ul className="space-y-2">
         {planos?.map((p) => {
@@ -191,7 +223,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         })}
       </ul>
 
-      <BottomSheet open={novoEtapa === 'escolha'} onClose={fecharNovo} title="Novo plano">
+      <BottomSheet open={novoEtapa === 'escolha'} onClose={fecharNovo} title="Novo treino">
         <div className="space-y-2">
           <button
             onClick={() => setNovoEtapa('modelo')}
@@ -240,9 +272,12 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       </BottomSheet>
 
       <BottomSheet open={!!conflitoModelo} onClose={() => setConflitoModelo(null)} title={conflitoModelo?.modelo.name}>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm text-slate-500">
-            O treino do aluno tem ajustes diferentes da versão atual do treino planejado. O que fazer?
+            O treino do aluno ("{conflitoModelo?.planoExistente.name}", {conflitoModelo?.planoExistente.plano_exercicios.length}{' '}
+            {conflitoModelo?.planoExistente.plano_exercicios.length === 1 ? 'exercício' : 'exercícios'}) tem ajustes diferentes da versão atual
+            do treino planejado ({conflitoModelo?.modelo.modelo_exercicios.length}{' '}
+            {conflitoModelo?.modelo.modelo_exercicios.length === 1 ? 'exercício' : 'exercícios'}). O que fazer?
           </p>
           <button
             onClick={() => {
@@ -253,9 +288,10 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                 navigate(`/alunos/${alunoId}/planos/${c.planoExistente.id}`)
               }
             }}
-            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left active:bg-slate-50"
           >
-            Usar o treino do aluno (com os ajustes dele)
+            <p className="font-medium">Usar o treino do aluno</p>
+            <p className="text-sm text-slate-500">Mantém os ajustes que já foram feitos pra esse aluno, sem mudar nada.</p>
           </button>
           <button
             onClick={() => {
@@ -268,9 +304,10 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                 )
               }
             }}
-            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left active:bg-slate-50"
           >
-            Atualizar com a versão atual do treino planejado
+            <p className="font-medium">Atualizar com o treino planejado</p>
+            <p className="text-sm text-slate-500">Substitui os exercícios do aluno pelos do treino planejado atual. Os ajustes dele se perdem.</p>
           </button>
         </div>
       </BottomSheet>
@@ -293,10 +330,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             Editar
           </button>
           <button
-            onClick={() => {
-              if (menuPlano) duplicar.mutate(menuPlano)
-              setMenuPlano(null)
-            }}
+            onClick={() => menuPlano && abrirDuplicar(menuPlano)}
             className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
           >
             Duplicar
@@ -328,7 +362,19 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         </div>
       </BottomSheet>
 
-      <BottomSheet open={!!renomeando} onClose={() => setRenomeando(null)} title="Editar plano">
+      <BottomSheet open={!!duplicando} onClose={() => setDuplicando(null)} title="Duplicar treino">
+        <div className="space-y-4">
+          <Field label="Nome do novo treino">
+            <Input value={nomeDuplicado} onChange={(e) => setNomeDuplicado(e.target.value)} autoFocus />
+          </Field>
+          {erroDuplicado && <p className="text-sm text-red-600">{erroDuplicado}</p>}
+          <Button onClick={confirmarDuplicar} className="w-full" disabled={duplicar.isPending}>
+            Duplicar
+          </Button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={!!renomeando} onClose={() => setRenomeando(null)} title="Editar treino">
         <div className="space-y-4">
           <Field label="Nome">
             <Input value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />

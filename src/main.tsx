@@ -4,6 +4,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { mostrarErroGlobal, ToastHost } from '@/components/Toast'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ConfirmHost } from '@/components/ConfirmSheet'
+import { UndoToastHost } from '@/components/UndoToast'
+import { OfflineBanner, marcarFalhaDeRede } from '@/components/OfflineBanner'
 import App from './App'
 import './index.css'
 
@@ -13,7 +17,9 @@ const queryClient = new QueryClient({
   // tratam onError localmente (fire-and-forget: duplicar, excluir, reordenar...).
   mutationCache: new MutationCache({
     onError: (error) => {
-      mostrarErroGlobal((error as Error).message || 'Algo deu errado. Tente novamente.')
+      const msg = (error as Error).message?.toLowerCase() ?? ''
+      if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed')) marcarFalhaDeRede()
+      mostrarErroGlobal(mapearErroSupabase(error))
     },
   }),
 })
@@ -26,7 +32,10 @@ createRoot(document.getElementById('root')!).render(
           <App />
         </AuthProvider>
       </BrowserRouter>
+      <OfflineBanner />
       <ToastHost />
+      <ConfirmHost />
+      <UndoToastHost />
     </QueryClientProvider>
   </StrictMode>,
 )

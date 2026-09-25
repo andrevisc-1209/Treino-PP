@@ -5,12 +5,17 @@ import { cn } from '@/lib/utils'
 // Componentes base mínimos. Podem ser trocados por shadcn/ui depois
 // sem mudar as telas (mesmos nomes/props).
 
-export function Button({ className, variant = 'primary', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' }) {
+export function Button({
+  className,
+  variant = 'primary',
+  ...p
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'outline' | 'ghost' }) {
   return (
     <button
       className={cn(
         'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-medium transition disabled:opacity-50',
         variant === 'primary' && 'bg-brand text-white active:bg-brand-dark',
+        variant === 'outline' && 'border border-slate-300 bg-white text-slate-700 active:bg-slate-50',
         variant === 'ghost' && 'text-slate-600 active:bg-slate-100',
         className,
       )}

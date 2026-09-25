@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CalendarOff, Pause, Pencil, Play, Plus } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
 import { useAlunos } from '@/features/alunos/api'
 import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { agruparHorarios, type GrupoHorario } from './horarioGrupo'
@@ -28,7 +29,7 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
   const [erro, setErro] = useState<string | null>(null)
 
   const grupos = agruparHorarios(linhas ?? []).filter((g) => g.active && (!g.valid_until || g.valid_until >= new Date().toISOString().slice(0, 10)))
-  const outrosAlunos = alunos?.filter((a) => a.id !== alunoId).map((a) => ({ id: a.id, name: a.name })) ?? []
+  const outrosAlunos = alunos?.filter((a) => a.id !== alunoId).map((a) => ({ id: a.id, name: a.name, birth_date: a.birth_date, phone: a.phone })) ?? []
 
   const salvarNovo = (v: HorarioFormValor) => {
     setErro(null)
@@ -73,17 +74,23 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
               <button
                 onClick={() => pausar.mutate({ ids: g.ids, active: !g.active })}
                 disabled={pausar.isPending}
-                className="flex size-9 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
+                className="flex size-11 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
                 aria-label={g.active ? 'Pausar horário' : 'Retomar horário'}
               >
                 {g.active ? <Pause size={16} /> : <Play size={16} />}
               </button>
               <button
-                onClick={() => {
-                  if (confirm('Encerrar este horário fixo? Ele deixa de gerar novas aulas a partir de hoje.')) encerrar.mutate({ ids: g.ids })
+                onClick={async () => {
+                  const ok = await confirmarAcao({
+                    titulo: 'Encerrar horário',
+                    mensagem: 'Encerrar este horário fixo? Ele deixa de gerar novas aulas a partir de hoje.',
+                    textoConfirmar: 'Encerrar',
+                    destrutivo: true,
+                  })
+                  if (ok) encerrar.mutate({ ids: g.ids })
                 }}
                 disabled={encerrar.isPending}
-                className="flex size-9 items-center justify-center rounded-lg text-red-600 active:bg-slate-100"
+                className="flex size-11 items-center justify-center rounded-lg text-red-600 active:bg-slate-100"
                 aria-label="Encerrar horário"
               >
                 <CalendarOff size={16} />

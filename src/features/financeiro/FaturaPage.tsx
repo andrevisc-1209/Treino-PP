@@ -10,6 +10,7 @@ import { formatarDataCurta, hojeSP } from '@/lib/datas'
 import { gerarPayloadPix } from '@/lib/pix'
 import { linkWhatsApp } from '@/lib/whatsapp'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
 import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import {
@@ -151,8 +152,14 @@ export function FaturaPage() {
     desfazer.mutate({ faturaId: fatura.id, alunoId: fatura.aluno_id, statusAnterior })
   }
 
-  const confirmarCancelar = () => {
-    if (!confirm('Cancelar esta fatura? Os itens voltam para o ciclo em aberto.')) return
+  const confirmarCancelar = async () => {
+    const ok = await confirmarAcao({
+      titulo: 'Cancelar fatura',
+      mensagem: 'Cancelar esta fatura? Os itens voltam para o ciclo em aberto.',
+      textoConfirmar: 'Cancelar fatura',
+      destrutivo: true,
+    })
+    if (!ok) return
     cancelar.mutate({ faturaId: fatura.id, alunoId: fatura.aluno_id })
   }
 

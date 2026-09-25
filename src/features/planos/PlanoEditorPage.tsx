@@ -19,7 +19,7 @@ export function PlanoEditorPage() {
 
   if (!id || !planoId) return <Navigate to="/" replace />
   if (planoLoading) return <p className="p-4 text-slate-500">Carregando…</p>
-  if (!plano) return <p className="p-4 text-slate-500">Plano não encontrado.</p>
+  if (!plano) return <p className="p-4 text-slate-500">Treino não encontrado.</p>
 
   return (
     <div className="mx-auto max-w-2xl p-4">

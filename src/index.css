@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #16a34a;
-  --color-brand-dark: #15803d;
+  /* Contraste com texto branco ≥ 4.5:1 (WCAG AA): brand 5.02:1, brand-dark 7.13:1.
+     Ver src/lib/contraste.test.ts. */
+  --color-brand: #15803d;
+  --color-brand-dark: #166534;
 }
 
 html, body, #root { height: 100%; }
 body { @apply bg-slate-50 text-slate-900 antialiased; }
+
+/* iOS renderiza date/time com um controle nativo que ignora width/padding
+   normais e pode até vazar do card. appearance:none + width:100% deixa a
+   altura e a largura iguais aos outros campos de texto. */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}

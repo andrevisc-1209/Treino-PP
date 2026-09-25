@@ -130,7 +130,7 @@ export function FecharCicloPage() {
                       type="checkbox"
                       checked={!!incluidos[item.id]}
                       onChange={(e) => setIncluidos((v) => ({ ...v, [item.id]: e.target.checked }))}
-                      className="size-5 shrink-0"
+                      className="size-5 shrink-0 accent-brand"
                     />
                     <div className="min-w-0 flex-1">
                       <p className={cn('text-sm font-medium', !incluidos[item.id] && 'text-slate-400 line-through')}>

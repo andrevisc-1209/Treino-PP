@@ -112,13 +112,13 @@ export function useExcluirModelo() {
 export function useDuplicarModelo() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (modelo: Modelo) => {
+    mutationFn: async ({ modelo, novoNome }: { modelo: Modelo; novoNome: string }) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
 
       const { data: novo, error: errNovo } = await supabase
         .from('modelos')
-        .insert({ professional_id: u.user.id, name: `${modelo.name} (cópia)`, notes: modelo.notes })
+        .insert({ professional_id: u.user.id, name: novoNome, notes: modelo.notes })
         .select('id')
         .single()
       if (errNovo) throw errNovo

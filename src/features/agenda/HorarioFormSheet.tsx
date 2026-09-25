@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
-import { cn } from '@/lib/utils'
+import { cn, desambiguarPorNome } from '@/lib/utils'
 import { ORDEM_SEMANA_SEG_DOM, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { horariosFixosSobrepoe } from './conflitos'
 import type { HorarioFixoLinha } from './horarioGrupo'
@@ -31,7 +31,7 @@ export function HorarioFormSheet({
   open: boolean
   onClose: () => void
   title: string
-  outrosAlunos: { id: string; name: string }[]
+  outrosAlunos: { id: string; name: string; birth_date?: string | null; phone?: string | null }[]
   valorInicial?: HorarioFormValor
   diasEditaveis?: boolean
   /** horários já existentes do personal, para aviso de conflito (não bloqueante) */
@@ -59,6 +59,8 @@ export function HorarioFormSheet({
   const toggleAluno = (id: string) => {
     setValor((v) => ({ ...v, coParticipantesIds: v.coParticipantesIds.includes(id) ? v.coParticipantesIds.filter((x) => x !== id) : [...v.coParticipantesIds, id] }))
   }
+
+  const desambiguarOutrosAlunos = desambiguarPorNome(outrosAlunos)
 
   const conflito = (outrosHorarios ?? []).find((h) =>
     valor.weekdays.some((weekday) => horariosFixosSobrepoe({ weekday, start_time: valor.start_time, duration_min: valor.duration_min }, h)),
@@ -120,19 +122,23 @@ export function HorarioFormSheet({
         {outrosAlunos.length > 0 && (
           <Field label="Treina junto com">
             <div className="flex flex-wrap gap-2">
-              {outrosAlunos.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => toggleAluno(a.id)}
-                  className={cn(
-                    'min-h-9 rounded-full border px-3 text-sm font-medium',
-                    valor.coParticipantesIds.includes(a.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
-                  )}
-                >
-                  {a.name}
-                </button>
-              ))}
+              {outrosAlunos.map((a) => {
+                const desambiguar = desambiguarOutrosAlunos(a)
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => toggleAluno(a.id)}
+                    className={cn(
+                      'min-h-9 rounded-full border px-3 text-sm font-medium',
+                      valor.coParticipantesIds.includes(a.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
+                    )}
+                  >
+                    {a.name}
+                    {desambiguar && <span className="opacity-70"> · {desambiguar}</span>}
+                  </button>
+                )
+              })}
             </div>
           </Field>
         )}

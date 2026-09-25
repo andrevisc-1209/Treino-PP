@@ -273,3 +273,18 @@ export function useArquivarAluno() {
     },
   })
 }
+
+/** Desfaz um arquivamento (ver useArquivarAluno + toast "Desfazer"). */
+export function useDesarquivarAluno() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('alunos').update({ active: true }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+      qc.invalidateQueries({ queryKey: ['aluno'] })
+    },
+  })
+}

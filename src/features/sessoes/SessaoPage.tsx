@@ -7,6 +7,8 @@ import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
 import {
   useAdicionarExercicioSessao,
   useAtualizarSessao,
@@ -43,20 +45,25 @@ function SerieRow({
       <input
         type="number"
         inputMode="numeric"
+        aria-label={`Repetições da série ${serie.set_number}`}
         placeholder="reps"
         value={reps}
         onChange={(e) => setReps(e.target.value)}
         className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-center outline-none focus:border-brand"
       />
-      <input
-        type="number"
-        step="0.5"
-        inputMode="decimal"
-        placeholder="kg"
-        value={load}
-        onChange={(e) => setLoad(e.target.value)}
-        className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-center outline-none focus:border-brand"
-      />
+      <div className="relative w-full min-w-0">
+        <input
+          type="number"
+          step="0.5"
+          inputMode="decimal"
+          aria-label={`Carga em kg da série ${serie.set_number}`}
+          placeholder="0"
+          value={load}
+          onChange={(e) => setLoad(e.target.value)}
+          className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 pr-8 text-center outline-none focus:border-brand"
+        />
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">kg</span>
+      </div>
       <button
         onClick={() => onSalvar({ reps: reps.trim() ? Number(reps) : null, load_kg: load.trim() ? Number(load) : null })}
         disabled={salvando}
@@ -114,11 +121,19 @@ function ExercicioBlock({
           onClick={() => onPular(item)}
           className="flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100"
         >
-          <SkipForward size={16} /> Pular
+          <SkipForward size={16} /> Pular exercício
         </button>
       </div>
 
       <div className="space-y-2">
+        {item.sessao_series.length > 0 && (
+          <div className="flex items-center gap-2 px-0.5 text-xs font-medium text-slate-400">
+            <span className="w-5 shrink-0 text-center">Série</span>
+            <span className="w-full min-w-0 text-center">Reps</span>
+            <span className="w-full min-w-0 text-center">Carga (kg)</span>
+            <span className="size-11 shrink-0" />
+          </div>
+        )}
         {item.sessao_series.map((s) => (
           <div key={s.id}>
             <SerieRow
@@ -172,8 +187,14 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
     setBusca('')
   }
 
-  const pular = (item: SessaoExercicio) => {
-    if (!confirm(`Pular ${item.exercicio?.name}? Ele será removido desta sessão.`)) return
+  const pular = async (item: SessaoExercicio) => {
+    const ok = await confirmarAcao({
+      titulo: 'Pular exercício',
+      mensagem: `Pular ${item.exercicio?.name}? Ele será removido desta sessão.`,
+      textoConfirmar: 'Pular',
+      destrutivo: true,
+    })
+    if (!ok) return
     removerExercicio.mutate(item.id)
   }
 
@@ -266,8 +287,9 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
     )
   }
 
-  const cancelarSessao = () => {
-    if (!confirm('Cancelar esta sessão?')) return
+  const cancelarSessao = async () => {
+    const ok = await confirmarAcao({ titulo: 'Cancelar sessão', mensagem: 'Cancelar esta sessão?', textoConfirmar: 'Cancelar sessão', destrutivo: true })
+    if (!ok) return
     atualizar.mutate({ status: 'cancelada' })
   }
 
@@ -386,7 +408,7 @@ export function SessaoPage() {
 
   if (!id || !sessionId) return <Navigate to="/" replace />
   if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
-  if (error) return <p className="p-4 text-red-600">{(error as Error).message}</p>
+  if (error) return <p className="p-4 text-red-600">{mapearErroSupabase(error)}</p>
   if (!sessao) return <p className="p-4 text-slate-500">Sessão não encontrada.</p>
 
   return (

@@ -4,6 +4,8 @@ import { Plus, Settings } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { formatarDataCompleta, hojeSP } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
+import { mapearErroSupabase } from '@/lib/erros'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { AulaCard } from './AulaCard'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
@@ -43,8 +45,8 @@ export function HojePage() {
         </Link>
       </header>
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
-      {error && <p className="text-red-600">{(error as Error).message}</p>}
+      {isLoading && <ListaSkeleton />}
+      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
 
       {aulas && aulas.length === 0 && (
         <div className="space-y-4 rounded-2xl bg-white p-6 text-center shadow-sm">

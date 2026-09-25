@@ -4,6 +4,8 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
 import { useAtualizarExercicio, useCriarExercicio, useExcluirExercicio, useExercicios, type Exercicio } from './api'
 
 type FormState = { name: string; muscle_group: string; equipment: string; description: string }
@@ -75,9 +77,10 @@ export function ExerciciosPage() {
     }
   }
 
-  const excluirAtual = () => {
+  const excluirAtual = async () => {
     if (!editando) return
-    if (!confirm(`Excluir "${editando.name}"?`)) return
+    const ok = await confirmarAcao({ titulo: 'Excluir exercício', mensagem: `Excluir "${editando.name}"?`, textoConfirmar: 'Excluir', destrutivo: true })
+    if (!ok) return
     excluir.mutate(editando.id, { onSuccess: fechar, onError: (e) => setErro((e as Error).message) })
   }
 
@@ -122,7 +125,7 @@ export function ExerciciosPage() {
       </div>
 
       {isLoading && <p className="text-slate-500">Carregando…</p>}
-      {error && <p className="text-red-600">{(error as Error).message}</p>}
+      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {filtrados?.length === 0 && <p className="text-slate-500">Nenhum exercício encontrado.</p>}
 
       <ul className="space-y-2">
