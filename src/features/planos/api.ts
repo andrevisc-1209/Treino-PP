@@ -106,13 +106,13 @@ export function useAtualizarPlano(alunoId: string) {
 export function useDuplicarPlano(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (plano: Plano) => {
+    mutationFn: async ({ plano, novoNome }: { plano: Plano; novoNome: string }) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
 
       const { data: novo, error: errNovo } = await supabase
         .from('planos')
-        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: `${plano.name} (cópia)`, notes: plano.notes })
+        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: novoNome, notes: plano.notes })
         .select('id')
         .single()
       if (errNovo) throw errNovo

@@ -183,7 +183,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
 
       <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Bem-estar pré-treino</h2>
+          <h2 className="font-semibold">Prontidão pré-treino</h2>
           <button onClick={() => setBemEstarDetalhado((v) => !v)} className="text-sm font-medium text-brand-dark">
             {bemEstarDetalhado ? 'Ver índice' : 'Ver detalhes'}
           </button>

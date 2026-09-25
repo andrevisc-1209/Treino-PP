@@ -16,9 +16,11 @@ import { itensIguais } from '@/features/planos/compare'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
+import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
 import { useIniciarSessao, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
+import { descritorPara, faixaProntidao } from './prontidao'
 
 type ChaveResposta = keyof Omit<PreTreinoInput, 'plano_id'>
 
@@ -517,9 +519,28 @@ export function NovaSessaoPage() {
           </div>
 
           {bemEstar != null && (
-            <div className="rounded-2xl bg-slate-100 p-4 text-center">
-              <p className="text-sm text-slate-500">Índice de bem-estar</p>
-              <p className="text-2xl font-bold">{bemEstar.toFixed(1)}</p>
+            <div className="space-y-3 rounded-2xl bg-slate-100 p-4">
+              <div className="text-center">
+                <p className="text-sm text-slate-500">Prontidão</p>
+                <p className="text-2xl font-bold">
+                  {formatarNumero(bemEstar)} / 10{' '}
+                  <span className={cn('text-base font-medium', faixaProntidao(bemEstar).cor)}>{faixaProntidao(bemEstar).label}</span>
+                </p>
+              </div>
+              <div className="space-y-1 border-t border-slate-200 pt-3">
+                <p className="text-xs font-medium text-slate-500">O que influenciou</p>
+                {PERGUNTAS.map((p) => {
+                  const valor = respostas[p.key]
+                  if (valor == null) return null
+                  const descritor = descritorPara(p.descritores, valor)
+                  const faixa = p.polaridade === 'positiva' ? faixaProntidao(valor) : faixaProntidao(10 - valor)
+                  return (
+                    <p key={p.key} className={cn('text-sm', faixa.cor)}>
+                      {p.titulo} {valor} · {descritor.toLowerCase()}
+                    </p>
+                  )
+                })}
+              </div>
             </div>
           )}
 
@@ -538,9 +559,12 @@ export function NovaSessaoPage() {
       )}
 
       <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-sm text-slate-500">
-            O treino do aluno tem ajustes diferentes da versão atual do treino planejado. O que fazer?
+            O treino do aluno ("{conflito?.planoExistente.name}", {conflito?.planoExistente.plano_exercicios.length}{' '}
+            {conflito?.planoExistente.plano_exercicios.length === 1 ? 'exercício' : 'exercícios'}) tem ajustes diferentes da versão atual do
+            treino planejado ({conflito?.modelo.modelo_exercicios.length} {conflito?.modelo.modelo_exercicios.length === 1 ? 'exercício' : 'exercícios'}).
+            O que fazer?
           </p>
           <button
             onClick={() => {
@@ -549,9 +573,10 @@ export function NovaSessaoPage() {
               if (c) usarPlanoExistente(c.planoExistente)
             }}
             disabled={sincronizando}
-            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50 disabled:opacity-50"
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left active:bg-slate-50 disabled:opacity-50"
           >
-            Usar o treino do aluno (com os ajustes dele)
+            <p className="font-medium">Usar o treino do aluno</p>
+            <p className="text-sm text-slate-500">Mantém os ajustes que já foram feitos pra esse aluno, sem mudar nada.</p>
           </button>
           <button
             onClick={() => {
@@ -560,9 +585,10 @@ export function NovaSessaoPage() {
               if (c) atualizarCopiaEUsar(c.planoExistente, c.modelo)
             }}
             disabled={sincronizando}
-            className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50 disabled:opacity-50"
+            className="w-full rounded-2xl border border-slate-200 p-4 text-left active:bg-slate-50 disabled:opacity-50"
           >
-            Atualizar com a versão atual do treino planejado
+            <p className="font-medium">Atualizar com o treino planejado</p>
+            <p className="text-sm text-slate-500">Substitui os exercícios do aluno pelos do treino planejado atual. Os ajustes dele se perdem.</p>
           </button>
         </div>
       </BottomSheet>
