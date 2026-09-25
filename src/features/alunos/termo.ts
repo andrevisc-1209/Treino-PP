@@ -1,4 +1,4 @@
-export const TERMO_VERSAO = '1.0'
+export const TERMO_VERSAO = '1.1'
 
 export const TERMO_AVISO = 'Modelo inicial — revisar com assessoria jurídica.'
 
@@ -8,7 +8,7 @@ Quem coleta
 O profissional de educação física responsável pelo aluno coleta e usa estas informações através do app Treino, ferramenta de apoio ao acompanhamento do treino.
 
 Quais dados de saúde
-Lesões, uso de medicamentos, respostas de bem-estar (sono, estresse, fadiga, dor) registradas antes de cada treino, e a percepção de esforço (PSE) registrada depois.
+Lesões, cirurgias, uso de medicamentos, respostas de bem-estar (sono, estresse, fadiga, dor) registradas antes de cada treino, e a percepção de esforço (PSE) registrada depois.
 
 Para que servem
 Exclusivamente para planejar e acompanhar o treino com segurança, ajustando exercícios, cargas e intensidade de acordo com a condição do aluno.

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Field, Input, ScaleGrid } from '@/components/ui'
+import { ScaleQuestion } from '@/components/ScaleQuestion'
+import { Button, Field, Input } from '@/components/ui'
 import { useAtualizarSessao, useSessao } from './api'
-
-const PSE_LABELS: Record<number, string> = { 0: 'repouso', 3: 'moderado', 5: 'difícil', 7: 'muito difícil', 10: 'máximo' }
+import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
 
 export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: string }) {
   const navigate = useNavigate()
@@ -52,9 +52,8 @@ export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: 
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">PSE (esforço percebido)</h2>
-        <ScaleGrid value={pse} onChange={setPse} labels={PSE_LABELS} />
+      <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <ScaleQuestion titulo="Esforço percebido (PSE)" descritores={DESCRITORES_PSE} polaridade="negativa" value={pse} onChange={setPse} />
       </div>
 
       <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -63,9 +62,8 @@ export function PosTreino({ sessionId, alunoId }: { sessionId: string; alunoId: 
         </Field>
       </div>
 
-      <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Avaliação do professor</h2>
-        <ScaleGrid value={nota} onChange={setNota} />
+      <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+        <ScaleQuestion titulo="Avaliação do professor" descritores={DESCRITORES_NOTA} polaridade="positiva" value={nota} onChange={setNota} />
         <Field label="Observação">
           <textarea
             className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"

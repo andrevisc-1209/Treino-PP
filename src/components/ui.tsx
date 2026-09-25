@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Componentes base mínimos. Podem ser trocados por shadcn/ui depois
@@ -37,44 +38,40 @@ export function Field({ label, error, children }: { label: string; error?: strin
   )
 }
 
-export function ScaleGrid({
+export function ChipsMultiSelect({
+  options,
   value,
   onChange,
-  labels,
   disabled,
 }: {
-  value: number | null
-  onChange: (v: number) => void
-  labels?: Record<number, string>
+  options: readonly string[]
+  value: string[]
+  onChange: (v: string[]) => void
   disabled?: boolean
 }) {
+  const toggle = (opt: string) => {
+    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt])
+  }
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-2">
-        {Array.from({ length: 11 }, (_, n) => (
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
+        const selecionado = value.includes(opt)
+        return (
           <button
-            key={n}
+            key={opt}
             type="button"
             disabled={disabled}
-            onClick={() => onChange(n)}
+            onClick={() => toggle(opt)}
             className={cn(
-              'flex min-h-12 items-center justify-center rounded-xl border text-base font-semibold transition disabled:opacity-50',
-              value === n ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
+              'flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition disabled:opacity-50',
+              selecionado ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
             )}
           >
-            {n}
+            {selecionado && <Check size={16} />}
+            {opt}
           </button>
-        ))}
-      </div>
-      {labels && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-          {Object.entries(labels).map(([n, label]) => (
-            <span key={n}>
-              {n} = {label}
-            </span>
-          ))}
-        </div>
-      )}
+        )
+      })}
     </div>
   )
 }

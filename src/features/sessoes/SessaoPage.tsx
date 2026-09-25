@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
+import { avisoSaude } from '@/features/alunos/format'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
-import { BottomSheet, Button, Field, Input, ScaleGrid } from '@/components/ui'
+import { ScaleQuestion } from '@/components/ScaleQuestion'
+import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import {
   useAdicionarExercicioSessao,
   useAtualizarSessao,
@@ -15,8 +17,7 @@ import {
   type SessaoExercicio,
   type SessaoSerie,
 } from './api'
-
-const PSE_LABELS: Record<number, string> = { 0: 'repouso', 3: 'moderado', 5: 'difícil', 7: 'muito difícil', 10: 'máximo' }
+import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
 
 function formatarDuracao(segundos: number) {
   const m = Math.floor(segundos / 60)
@@ -183,10 +184,10 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
         <span className="font-mono text-xl font-semibold">{formatarDuracao(segundos)}</span>
       </div>
 
-      {aluno?.injury && (
+      {aluno && avisoSaude(aluno) && (
         <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
           <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-          <span>Lesão registrada: {aluno.injury_notes}</span>
+          <span>{avisoSaude(aluno)}</span>
         </div>
       )}
 
@@ -331,17 +332,11 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
           </dl>
         ) : (
           <div className="space-y-4">
-            <div>
-              <p className="mb-2 text-sm font-medium text-slate-700">PSE</p>
-              <ScaleGrid value={pse} onChange={setPse} labels={PSE_LABELS} />
-            </div>
+            <ScaleQuestion titulo="PSE" descritores={DESCRITORES_PSE} polaridade="negativa" value={pse} onChange={setPse} />
             <Field label="Duração (minutos)">
               <Input type="number" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value)} />
             </Field>
-            <div>
-              <p className="mb-2 text-sm font-medium text-slate-700">Nota do professor</p>
-              <ScaleGrid value={nota} onChange={setNota} />
-            </div>
+            <ScaleQuestion titulo="Avaliação do professor" descritores={DESCRITORES_NOTA} polaridade="positiva" value={nota} onChange={setNota} />
             <Field label="Observação">
               <textarea
                 className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"

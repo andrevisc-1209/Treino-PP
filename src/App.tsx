@@ -7,6 +7,8 @@ import { AlunoFormPage } from '@/features/alunos/AlunoFormPage'
 import { AlunoFichaPage } from '@/features/alunos/AlunoFichaPage'
 import { TermoPage } from '@/features/alunos/TermoPage'
 import { ExerciciosPage } from '@/features/exercicios/ExerciciosPage'
+import { ModelosPage } from '@/features/modelos/ModelosPage'
+import { ModeloEditorPage } from '@/features/modelos/ModeloEditorPage'
 import { PlanoEditorPage } from '@/features/planos/PlanoEditorPage'
 import { NovaSessaoPage } from '@/features/sessoes/NovaSessaoPage'
 import { SessaoPage } from '@/features/sessoes/SessaoPage'
@@ -30,6 +32,8 @@ export default function App() {
           <Route path="/alunos/:id/sessoes/:sessionId" element={<SessaoPage />} />
           <Route path="/alunos/:id/sessoes/:sessionId/finalizar" element={<FinalizarSessaoPage />} />
           <Route path="/exercicios" element={<ExerciciosPage />} />
+          <Route path="/modelos" element={<ModelosPage />} />
+          <Route path="/modelos/:modeloId" element={<ModeloEditorPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
