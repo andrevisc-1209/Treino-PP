@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { faixaProntidao, descritorPara } from './prontidao'
+import { calcularProntidao, faixaProntidao, descritorPara } from './prontidao'
 import { DESCRITORES_FADIGA } from './descritores'
+
+describe('calcularProntidao', () => {
+  it('sono conta a favor, o resto contra', () => {
+    expect(calcularProntidao({ pre_sleep: 10, pre_stress: 0, pre_fatigue: 0, pre_muscle_pain: 0 })).toBe(10)
+    expect(calcularProntidao({ pre_sleep: 0, pre_stress: 10, pre_fatigue: 10, pre_muscle_pain: 10 })).toBe(0)
+  })
+  it('null se faltar alguma resposta', () => {
+    expect(calcularProntidao({ pre_sleep: 5, pre_stress: null, pre_fatigue: 5, pre_muscle_pain: 5 })).toBeNull()
+    expect(calcularProntidao({ pre_sleep: 5, pre_stress: undefined, pre_fatigue: 5, pre_muscle_pain: 5 })).toBeNull()
+  })
+})
 
 describe('faixaProntidao', () => {
   it('classifica as 3 faixas', () => {

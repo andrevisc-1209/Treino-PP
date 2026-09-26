@@ -21,7 +21,7 @@ import { Button, BottomSheet, Input } from '@/components/ui'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { useIniciarSessao, useSessoes, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
-import { descritorPara, faixaProntidao } from './prontidao'
+import { calcularProntidao, descritorPara, faixaProntidao } from './prontidao'
 import { planoSugerido, rotuloUltimoUso } from './rotina'
 
 type ChaveResposta = keyof Omit<PreTreinoInput, 'plano_id'>
@@ -186,10 +186,7 @@ export function NovaSessaoPage() {
     }, 300)
   }
 
-  const bemEstar =
-    respostas.pre_sleep != null && respostas.pre_stress != null && respostas.pre_fatigue != null && respostas.pre_muscle_pain != null
-      ? (respostas.pre_sleep + (10 - respostas.pre_stress) + (10 - respostas.pre_fatigue) + (10 - respostas.pre_muscle_pain)) / 4
-      : null
+  const bemEstar = calcularProntidao(respostas)
 
   const alerta =
     respostas.pre_sleep != null && respostas.pre_sleep <= 3

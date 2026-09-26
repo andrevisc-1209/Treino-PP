@@ -1,13 +1,74 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Info } from 'lucide-react'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
 import { formatarNumero } from '@/lib/format'
-import { useAtualizarSessao, useSessao } from './api'
+import { useAtualizarSessao, useSessao, useSessaoExercicios } from './api'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
+import { calcularProntidao, faixaProntidao } from './prontidao'
+
+type ResumoConcluido = { duracaoMin: number; pse: number; nota: number | null; cargaInterna: number }
+
+function TreinoConcluidoResumo({
+  alunoId,
+  sessionId,
+  resumo,
+}: {
+  alunoId: string
+  sessionId: string
+  resumo: ResumoConcluido
+}) {
+  const { data: sessao } = useSessao(sessionId)
+  const { data: itens } = useSessaoExercicios(sessionId)
+
+  const seriesFeitas = itens?.reduce((acc, ex) => acc + ex.sessao_series.filter((s) => s.completed).length, 0) ?? 0
+  const volumeTotal =
+    itens?.reduce((acc, ex) => acc + ex.sessao_series.filter((s) => s.completed).reduce((a, s) => a + (s.reps ?? 0) * (s.load_kg ?? 0), 0), 0) ?? 0
+  const prontidaoInicio = sessao ? calcularProntidao(sessao) : null
+
+  const linhas: { label: string; valor: string }[] = [
+    { label: 'Duração', valor: `${resumo.duracaoMin} min` },
+    { label: 'Séries feitas', valor: String(seriesFeitas) },
+    { label: 'Volume total', valor: `${formatarNumero(volumeTotal)} kg` },
+    { label: 'PSE', valor: String(resumo.pse) },
+    ...(resumo.nota != null ? [{ label: 'Avaliação do personal', valor: String(resumo.nota) }] : []),
+    { label: 'Carga interna', valor: `${formatarNumero(resumo.cargaInterna)} UA` },
+    ...(prontidaoInicio != null ? [{ label: 'Prontidão no início', valor: `${formatarNumero(prontidaoInicio)}/10 · ${faixaProntidao(prontidaoInicio).label}` }] : []),
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1 text-center">
+        <p className="text-4xl">🎉</p>
+        <h1 className="text-xl font-bold">Treino concluído</h1>
+      </div>
+
+      <dl className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm">
+        {linhas.map((l) => (
+          <div key={l.label} className="flex items-center justify-between px-4 py-3">
+            <dt className="text-sm text-slate-500">{l.label}</dt>
+            <dd className="font-semibold">{l.valor}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="space-y-2">
+        <Link to="/" className="flex min-h-11 w-full items-center justify-center rounded-xl bg-brand font-medium text-white active:bg-brand-dark">
+          Voltar para Hoje
+        </Link>
+        <Link
+          to={`/alunos/${alunoId}`}
+          className="flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white font-medium text-slate-700 active:bg-slate-50"
+        >
+          Ver ficha do aluno
+        </Link>
+      </div>
+    </div>
+  )
+}
 
 export function PosTreino({
   sessionId,
@@ -18,13 +79,14 @@ export function PosTreino({
   alunoId: string
   onConcluirInicio?: () => void
 }) {
-  const navigate = useNavigate()
   const qc = useQueryClient()
   const { data: sessao } = useSessao(sessionId)
   const atualizar = useAtualizarSessao(sessionId, alunoId)
   const [perguntaAulaAvulsa, setPerguntaAulaAvulsa] = useState(false)
   const [duracaoConcluida, setDuracaoConcluida] = useState(0)
   const [salvandoAulaAvulsa, setSalvandoAulaAvulsa] = useState(false)
+  const [resumo, setResumo] = useState<ResumoConcluido | null>(null)
+  const resumoPendenteRef = useRef<ResumoConcluido | null>(null)
 
   const minutosDecorridos = sessao ? Math.max(1, Math.round((Date.now() - new Date(sessao.created_at).getTime()) / 60000)) : 0
 
@@ -54,6 +116,7 @@ export function PosTreino({
     setErro(null)
     onConcluirInicio?.()
     const duracaoMin = Number(duracao)
+    const novoResumo: ResumoConcluido = { duracaoMin, pse, nota, cargaInterna: pse * duracaoMin }
     atualizar.mutate(
       {
         status: 'concluida',
@@ -69,13 +132,14 @@ export function PosTreino({
             qc.invalidateQueries({ queryKey: ['aulas'] })
             if (resultado === 'sem-aula-hoje') {
               setDuracaoConcluida(duracaoMin)
+              resumoPendenteRef.current = novoResumo
               setPerguntaAulaAvulsa(true)
               return
             }
           } catch {
             // a agenda é um bônus sobre o treino já concluído — uma falha aqui não deve travar o professor
           }
-          navigate(`/alunos/${alunoId}`, { replace: true })
+          setResumo(novoResumo)
         },
         onError: (e) => setErro((e as Error).message),
       },
@@ -94,8 +158,10 @@ export function PosTreino({
       setSalvandoAulaAvulsa(false)
     }
     setPerguntaAulaAvulsa(false)
-    navigate(`/alunos/${alunoId}`, { replace: true })
+    setResumo(resumoPendenteRef.current)
   }
+
+  if (resumo) return <TreinoConcluidoResumo alunoId={alunoId} sessionId={sessionId} resumo={resumo} />
 
   return (
     <div className="space-y-6">
