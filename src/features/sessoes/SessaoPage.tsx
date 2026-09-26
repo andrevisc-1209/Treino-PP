@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronDown, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clock, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
@@ -24,6 +24,7 @@ import {
   type SessaoSerie,
 } from './api'
 import { formatarUltimoUso } from './ultimoUso'
+import { useFilaOffline } from './useFilaOffline'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
 
 const DESCANSO_PADRAO_SEGUNDOS = 60
@@ -41,10 +42,13 @@ function formatarDuracao(segundos: number) {
 function SerieRow({
   serie,
   salvando,
+  pendente,
   onSalvar,
 }: {
   serie: SessaoSerie
   salvando: boolean
+  /** Marcada localmente mas ainda não confirmada pelo servidor (fila offline). */
+  pendente: boolean
   onSalvar: (input: { reps: number | null; load_kg: number | null }) => void
 }) {
   const [reps, setReps] = useState(serie.reps != null ? String(serie.reps) : '')
@@ -80,11 +84,15 @@ function SerieRow({
         disabled={salvando}
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-xl border transition disabled:opacity-50',
-          serie.completed ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-400',
+          pendente
+            ? 'border-amber-400 bg-amber-50 text-amber-600'
+            : serie.completed
+              ? 'border-brand bg-brand text-white'
+              : 'border-slate-300 bg-white text-slate-400',
         )}
-        aria-label={`Salvar série ${serie.set_number}`}
+        aria-label={pendente ? `Série ${serie.set_number} pendente de sincronizar` : `Salvar série ${serie.set_number}`}
       >
-        <Check size={18} />
+        {pendente ? <Clock size={18} /> : <Check size={18} />}
       </button>
     </div>
   )
@@ -94,12 +102,16 @@ function ExercicioBlock({
   item,
   sessionId,
   ultimoUso,
+  estaPendente,
+  enfileirarSerie,
   onPular,
   onSerieCompleta,
 }: {
   item: SessaoExercicio
   sessionId: string
   ultimoUso: string | null
+  estaPendente: (sessaoExercicioId: string, setNumber: number) => boolean
+  enfileirarSerie: (item: { sessao_exercicio_id: string; set_number: number; reps: number | null; load_kg: number | null; completed: boolean }) => void
   onPular: (item: SessaoExercicio) => void
   onSerieCompleta: (restSeconds: number) => void
 }) {
@@ -109,13 +121,30 @@ function ExercicioBlock({
 
   const salvarSerie = (setNumber: number, input: { reps: number | null; load_kg: number | null }) => {
     setErroSerie(null)
-    salvar.mutate(
-      { sessao_exercicio_id: item.id, set_number: setNumber, completed: true, ...input },
-      {
-        onSuccess: () => onSerieCompleta(item.plano_exercicio?.rest_seconds ?? DESCANSO_PADRAO_SEGUNDOS),
-        onError: () => setErroSerie(setNumber),
+    const payload = { sessao_exercicio_id: item.id, set_number: setNumber, completed: true, ...input }
+    const restSeconds = item.plano_exercicio?.rest_seconds ?? DESCANSO_PADRAO_SEGUNDOS
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      enfileirarSerie(payload)
+      onSerieCompleta(restSeconds)
+      return
+    }
+    salvar.mutate(payload, {
+      onSuccess: () => onSerieCompleta(restSeconds),
+      onError: (e) => {
+        const msg = (e as Error).message?.toLowerCase() ?? ''
+        const pareceFalhaDeRede =
+          msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed') || (typeof navigator !== 'undefined' && !navigator.onLine)
+        if (pareceFalhaDeRede) {
+          // Sinal ruim na academia é o caso comum aqui, não um erro "de verdade" —
+          // enfileira e segue o treino sem travar o personal.
+          enfileirarSerie(payload)
+          onSerieCompleta(restSeconds)
+        } else {
+          setErroSerie(setNumber)
+        }
       },
-    )
+    })
   }
 
   const adicionarSerie = () => {
@@ -129,7 +158,8 @@ function ExercicioBlock({
     })
   }
 
-  const completo = estaCompleto(item)
+  const completo =
+    item.sessao_series.length > 0 && item.sessao_series.every((s) => s.completed || estaPendente(item.id, s.set_number))
   const ultimaSerie = item.sessao_series[item.sessao_series.length - 1]
 
   if (completo && !expandido) {
@@ -190,6 +220,7 @@ function ExercicioBlock({
             <SerieRow
               serie={s}
               salvando={salvar.isPending && salvar.variables?.set_number === s.set_number}
+              pendente={estaPendente(item.id, s.set_number)}
               onSalvar={(input) => salvarSerie(s.set_number, input)}
             />
             {erroSerie === s.set_number && (
@@ -217,6 +248,8 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
   const { data: exercicios } = useExercicios()
   const adicionarExercicio = useAdicionarExercicioSessao(sessionId)
   const removerExercicio = useRemoverExercicioSessao(sessionId)
+  const fila = useFilaOffline(sessionId)
+  const [avisoFilaAberto, setAvisoFilaAberto] = useState(false)
 
   const [segundos, setSegundos] = useState(0)
   useEffect(() => {
@@ -281,6 +314,14 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
     removerExercicio.mutate(item.id)
   }
 
+  const clicarFinalizar = () => {
+    if (fila.fila.length > 0) {
+      setAvisoFilaAberto(true)
+      return
+    }
+    navigate(`/alunos/${alunoId}/sessoes/${sessionId}/finalizar`)
+  }
+
   return (
     <div className="space-y-4 pb-28">
       <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
@@ -303,6 +344,8 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
             item={item}
             sessionId={sessionId}
             ultimoUso={formatarUltimoUso(ultimosUsos?.get(item.exercicio_id))}
+            estaPendente={fila.estaPendente}
+            enfileirarSerie={fila.enfileirarSerie}
             onPular={pular}
             onSerieCompleta={iniciarDescanso}
           />
@@ -323,11 +366,38 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
               onPular={() => setDescanso(null)}
             />
           )}
-          <Button className="w-full" onClick={() => navigate(`/alunos/${alunoId}/sessoes/${sessionId}/finalizar`)}>
+          {fila.fila.length > 0 && (
+            <button
+              onClick={() => setAvisoFilaAberto(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800"
+            >
+              <Clock size={16} />
+              {fila.fila.length} {fila.fila.length === 1 ? 'série ainda não sincronizada' : 'séries ainda não sincronizadas'}
+            </button>
+          )}
+          <Button className="w-full" onClick={clicarFinalizar}>
             Finalizar treino
           </Button>
         </div>
       </div>
+
+      <BottomSheet open={avisoFilaAberto} onClose={() => setAvisoFilaAberto(false)} title="Séries pendentes">
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+            <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+            <span>
+              {fila.fila.length} {fila.fila.length === 1 ? 'série ainda não foi sincronizada' : 'séries ainda não foram sincronizadas'} — provavelmente por
+              falta de sinal. Elas ficam guardadas neste aparelho e não se perdem, mas é melhor esperar sincronizar antes de finalizar.
+            </span>
+          </div>
+          <Button onClick={() => fila.sincronizar()} className="w-full" disabled={fila.sincronizando}>
+            {fila.sincronizando ? 'Sincronizando…' : 'Tentar agora'}
+          </Button>
+          <Button variant="ghost" onClick={() => setAvisoFilaAberto(false)} className="w-full">
+            Continuar treinando
+          </Button>
+        </div>
+      </BottomSheet>
 
       <BottomSheet open={adicionando} onClose={() => setAdicionando(false)} title="Adicionar exercício">
         <div className="space-y-3">
