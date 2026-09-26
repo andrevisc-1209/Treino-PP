@@ -1,4 +1,4 @@
-import { Check, MapPin, X } from 'lucide-react'
+import { Check, MapPin, Play, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatarHoraInicioFim } from '@/lib/datas'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
@@ -11,9 +11,21 @@ function SeloStatus({ status }: { status: ParticipanteStatus }) {
   return null
 }
 
-export function AulaCard({ aula, destaque, onClick }: { aula: Aula; destaque?: boolean; onClick: () => void }) {
+export function AulaCard({
+  aula,
+  destaque,
+  onClick,
+  onComecar,
+}: {
+  aula: Aula
+  destaque?: boolean
+  onClick: () => void
+  /** "▶ Começar" — só aparece pra aula ainda agendada com algum participante previsto. */
+  onComecar?: () => void
+}) {
   const nomes = aula.aula_participantes.map((p) => p.aluno?.name).filter((n): n is string => !!n)
   const participanteUnico = aula.aula_participantes.length === 1 ? aula.aula_participantes[0] : null
+  const podeComecar = aula.status === 'agendada' && aula.aula_participantes.some((p) => p.status === 'previsto')
 
   return (
     <div
@@ -26,7 +38,7 @@ export function AulaCard({ aula, destaque, onClick }: { aula: Aula; destaque?: b
       className={cn(
         'w-full cursor-pointer rounded-2xl p-4 text-left shadow-sm transition active:bg-slate-50',
         destaque ? 'bg-brand/10 ring-2 ring-brand' : 'bg-white',
-        aula.status === 'cancelada' && 'opacity-60',
+        (aula.status === 'cancelada' || aula.status === 'realizada') && 'opacity-60',
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -55,6 +67,18 @@ export function AulaCard({ aula, destaque, onClick }: { aula: Aula; destaque?: b
         <p className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
           <MapPin size={14} /> {aula.local}
         </p>
+      )}
+
+      {podeComecar && onComecar && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onComecar()
+          }}
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-dark"
+        >
+          <Play size={18} /> Começar
+        </button>
       )}
     </div>
   )

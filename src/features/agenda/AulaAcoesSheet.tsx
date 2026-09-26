@@ -9,7 +9,16 @@ import { useCancelarAula, useCheckIn, useMarcarFalta, useProfessionalConfig, use
 
 type Passo = 'menu' | 'iniciar' | 'checkin' | 'falta' | 'cancelar' | 'remarcar'
 
-export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: () => void }) {
+export function AulaAcoesSheet({
+  aula,
+  onClose,
+  passoInicial = 'menu',
+}: {
+  aula: Aula | null
+  onClose: () => void
+  /** Abre a sheet já num passo específico (ex.: "▶ Começar" numa aula em grupo pula o menu e vai direto pra escolher o aluno). */
+  passoInicial?: Passo
+}) {
   const navigate = useNavigate()
   const { data: config } = useProfessionalConfig()
   const checkIn = useCheckIn()
@@ -17,7 +26,7 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
   const cancelarAula = useCancelarAula()
   const remarcarAula = useRemarcarAula()
 
-  const [passo, setPasso] = useState<Passo>('menu')
+  const [passo, setPasso] = useState<Passo>(passoInicial)
   const [alunoFalta, setAlunoFalta] = useState<{ id: string; name: string } | null>(null)
   const [cobrarFalta, setCobrarFalta] = useState(true)
   const [canceladoPor, setCanceladoPor] = useState<'aluno' | 'personal'>('aluno')
@@ -27,6 +36,11 @@ export function AulaAcoesSheet({ aula, onClose }: { aula: Aula | null; onClose: 
   const [valoresGrupo, setValoresGrupo] = useState<Record<string, string>>({})
   const [dividirTotal, setDividirTotal] = useState(false)
   const [totalDividir, setTotalDividir] = useState('')
+
+  useEffect(() => {
+    if (aula) setPasso(passoInicial)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aula?.id])
 
   const fechar = () => {
     setPasso('menu')
