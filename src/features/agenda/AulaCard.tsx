@@ -5,7 +5,7 @@ import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import type { Aula, ParticipanteStatus } from './api'
 
 function SeloStatus({ status }: { status: ParticipanteStatus }) {
-  if (status === 'presente') return <Check size={12} className="text-emerald-600" />
+  if (status === 'presente') return <Check size={12} className="text-brand" />
   if (status === 'falta') return <X size={12} className="text-red-600" />
   if (status === 'cancelou') return <X size={12} className="text-slate-400" />
   return null
@@ -44,7 +44,7 @@ export function AulaCard({
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold">{formatarHoraInicioFim(aula.starts_at, aula.duration_min)}</p>
         <div className="flex items-center gap-1">
-          {aula.status === 'realizada' && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Realizada</span>}
+          {aula.status === 'realizada' && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">Realizada</span>}
           {aula.status === 'cancelada' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Cancelada</span>}
           {participanteUnico && <BotaoWhatsApp telefone={participanteUnico.aluno?.phone} label={`WhatsApp de ${participanteUnico.aluno?.name}`} size={18} />}
         </div>
@@ -75,7 +75,7 @@ export function AulaCard({
             e.stopPropagation()
             onComecar()
           }}
-          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-dark"
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-hover"
         >
           <Play size={18} /> Começar
         </button>

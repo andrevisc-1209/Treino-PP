@@ -46,7 +46,7 @@ export function AlunosPage() {
           to="/alunos/novo"
           aria-label="Novo aluno"
           className={cn(
-            'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 font-medium text-white transition active:bg-brand-dark',
+            'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 font-medium text-white transition active:bg-brand-hover',
           )}
         >
           <Plus size={20} />

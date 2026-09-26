@@ -105,7 +105,7 @@ export function ConfiguracoesPage() {
             <input type="checkbox" checked={cobrarCancel} onChange={(e) => setCobrarCancel(e.target.checked)} className="size-5 accent-brand" />
           </label>
 
-          {salvo && <p className="text-sm text-emerald-700">Configurações salvas.</p>}
+          {salvo && <p className="text-sm text-brand-hover">Configurações salvas.</p>}
           <Button onClick={handleSalvar} className="w-full" disabled={salvar.isPending}>
             Salvar
           </Button>
@@ -147,7 +147,7 @@ export function ConfiguracoesPage() {
           </Field>
 
           {erroPix && <p className="text-sm text-red-600">{erroPix}</p>}
-          {pixSalvo && <p className="text-sm text-emerald-700">Pix salvo.</p>}
+          {pixSalvo && <p className="text-sm text-brand-hover">Pix salvo.</p>}
           <Button onClick={handleSalvarPix} className="w-full" disabled={salvar.isPending}>
             Salvar Pix
           </Button>

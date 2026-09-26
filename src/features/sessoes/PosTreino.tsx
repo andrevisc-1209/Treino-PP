@@ -56,7 +56,7 @@ function TreinoConcluidoResumo({
       </dl>
 
       <div className="space-y-2">
-        <Link to="/" className="flex min-h-11 w-full items-center justify-center rounded-xl bg-brand font-medium text-white active:bg-brand-dark">
+        <Link to="/" className="flex min-h-11 w-full items-center justify-center rounded-xl bg-brand font-medium text-white active:bg-brand-hover">
           Voltar para Hoje
         </Link>
         <Link

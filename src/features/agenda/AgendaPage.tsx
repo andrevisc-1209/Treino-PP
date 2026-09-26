@@ -153,7 +153,7 @@ export function AgendaPage() {
           <button onClick={() => navegar(-1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Anterior">
             <ChevronLeft size={18} />
           </button>
-          <button onClick={irParaHoje} className="min-h-9 rounded-xl px-3 text-sm font-medium text-brand-dark active:bg-slate-100">
+          <button onClick={irParaHoje} className="min-h-9 rounded-xl px-3 text-sm font-medium text-brand-hover active:bg-slate-100">
             Hoje
           </button>
           <button onClick={() => navegar(1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Próximo">

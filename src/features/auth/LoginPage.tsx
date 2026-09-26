@@ -71,7 +71,7 @@ export function LoginPage() {
           </Button>
           <button
             type="button"
-            className="w-full text-sm text-brand-dark"
+            className="w-full text-sm text-brand-hover"
             onClick={() => {
               setMode('login')
               setMsg(null)
@@ -116,7 +116,7 @@ export function LoginPage() {
         {ALLOW_SIGNUP ? (
           <button
             type="button"
-            className="w-full text-sm text-brand-dark"
+            className="w-full text-sm text-brand-hover"
             onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
           >
             {mode === 'login' ? 'Não tem conta? Criar' : 'Já tenho conta'}

@@ -170,7 +170,7 @@ function ExercicioBlock({
       >
         <div className="min-w-0">
           <p className="truncate font-semibold text-slate-500">{item.exercicio?.name ?? 'Exercício'}</p>
-          <p className="flex items-center gap-1 text-sm text-emerald-700">
+          <p className="flex items-center gap-1 text-sm text-brand-hover">
             <Check size={14} /> {item.sessao_series.length}/{item.sessao_series.length}
             {ultimaSerie?.reps != null && ` · ${ultimaSerie.reps}`}
             {ultimaSerie?.load_kg != null && ` × ${formatarNumero(ultimaSerie.load_kg)} kg`}
@@ -187,7 +187,7 @@ function ExercicioBlock({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-semibold">{item.exercicio?.name ?? 'Exercício'}</p>
-            {completo && <Check size={16} className="shrink-0 text-emerald-600" />}
+            {completo && <Check size={16} className="shrink-0 text-brand" />}
           </div>
           {item.exercicio?.muscle_group && <p className="text-sm text-slate-500">{item.exercicio.muscle_group}</p>}
           {ultimoUso && <p className="text-sm text-slate-400">{ultimoUso}</p>}
@@ -232,7 +232,7 @@ function ExercicioBlock({
         ))}
       </div>
 
-      <button onClick={adicionarSerie} className="flex min-h-11 items-center gap-1 text-sm font-medium text-brand-dark">
+      <button onClick={adicionarSerie} className="flex min-h-11 items-center gap-1 text-sm font-medium text-brand-hover">
         <Plus size={16} /> Adicionar série
       </button>
     </div>
