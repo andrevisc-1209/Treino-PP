@@ -41,6 +41,7 @@ export type SessaoExercicio = {
   order_index: number
   exercicio: { id: string; name: string; muscle_group: string | null } | null
   sessao_series: SessaoSerie[]
+  plano_exercicio: { rest_seconds: number | null } | null
 }
 
 export function useSessaoEmAndamento(alunoId: string | undefined) {
@@ -96,7 +97,7 @@ export function useSessaoExercicios(sessionId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sessao_exercicios')
-        .select('*, exercicio:exercicios(id,name,muscle_group), sessao_series(*)')
+        .select('*, exercicio:exercicios(id,name,muscle_group), sessao_series(*), plano_exercicio:plano_exercicios(rest_seconds)')
         .eq('sessao_id', sessionId!)
         .order('order_index')
         .order('set_number', { foreignTable: 'sessao_series' })
@@ -104,6 +105,51 @@ export function useSessaoExercicios(sessionId: string | undefined) {
       return data as SessaoExercicio[]
     },
     enabled: !!sessionId,
+  })
+}
+
+export type UltimoUsoExercicio = { session_date: string; sets: number; reps: number | null; load_kg: number | null }
+
+/**
+ * Pra cada exercicio_id, os dados da última vez que o aluno o fez numa
+ * sessão concluída (série mais recente completada, e quantas séries
+ * completou naquela sessão) — referência "Última vez" na execução.
+ */
+export function useUltimosUsosExercicios(alunoId: string | undefined) {
+  return useQuery({
+    queryKey: ['ultimos-usos-exercicios', alunoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sessoes')
+        .select('session_date, sessao_exercicios(exercicio_id, sessao_series(set_number, reps, load_kg, completed))')
+        .eq('aluno_id', alunoId!)
+        .eq('status', 'concluida')
+        .order('session_date', { ascending: false })
+        .limit(30)
+      if (error) throw error
+
+      const porExercicio = new Map<string, UltimoUsoExercicio>()
+      type Linha = {
+        session_date: string
+        sessao_exercicios: { exercicio_id: string; sessao_series: { set_number: number; reps: number | null; load_kg: number | null; completed: boolean }[] }[]
+      }
+      for (const sessao of data as Linha[]) {
+        for (const ex of sessao.sessao_exercicios) {
+          if (porExercicio.has(ex.exercicio_id)) continue
+          const completas = ex.sessao_series.filter((s) => s.completed).sort((a, b) => a.set_number - b.set_number)
+          if (completas.length === 0) continue
+          const ultima = completas[completas.length - 1]
+          porExercicio.set(ex.exercicio_id, {
+            session_date: sessao.session_date,
+            sets: completas.length,
+            reps: ultima.reps,
+            load_kg: ultima.load_kg,
+          })
+        }
+      }
+      return porExercicio
+    },
+    enabled: !!alunoId,
   })
 }
 
