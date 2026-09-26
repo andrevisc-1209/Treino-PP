@@ -8,6 +8,8 @@ import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/
 import { formatarNumero } from '@/lib/format'
 import { useAtualizarSessao, useSessao, useSessaoExercicios } from './api'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
+import { APP_NAME } from '@/config/app'
+import iconMark from '@/assets/brand/icon-mark.png'
 import { calcularProntidao, faixaProntidao } from './prontidao'
 
 type ResumoConcluido = { duracaoMin: number; pse: number; nota: number | null; cargaInterna: number }
@@ -65,6 +67,11 @@ function TreinoConcluidoResumo({
         >
           Ver ficha do aluno
         </Link>
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 pt-2 opacity-60">
+        <img src={iconMark} alt="Personal Perto" className="h-4 w-auto" />
+        <span className="text-xs text-slate-500">{APP_NAME}</span>
       </div>
     </div>
   )

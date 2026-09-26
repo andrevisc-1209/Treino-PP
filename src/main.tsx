@@ -39,3 +39,5 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+document.getElementById('splash')?.remove()

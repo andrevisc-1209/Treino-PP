@@ -14,11 +14,19 @@
     <link rel="apple-touch-icon" href="/Treino-PP/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Treino" />
-    <title>Treino · Personal Perto</title>
+    <meta name="apple-mobile-web-app-title" content="%APP_SHORT_NAME%" />
+    <title>%APP_NAME%</title>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Splash: fica visível até o React montar (main.tsx remove), pra não
+         piscar tela branca ao abrir o app instalado. -->
+    <div
+      id="splash"
+      style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #367c39"
+    >
+      <img src="/src/assets/brand/icon-mark.png" alt="Personal Perto" style="height: 96px; width: auto" />
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

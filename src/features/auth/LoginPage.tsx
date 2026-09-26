@@ -6,6 +6,8 @@ import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthProvider'
 import { Button, Field, Input } from '@/components/ui'
+import { APP_NAME } from '@/config/app'
+import iconMark from '@/assets/brand/icon-mark.png'
 
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
 
@@ -87,8 +89,9 @@ export function LoginPage() {
   return (
     <div className="flex min-h-full items-center justify-center p-4">
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
-        <div>
-          <h1 className="text-2xl font-bold">Treino</h1>
+        <div className="text-center">
+          <img src={iconMark} alt="Personal Perto" className="mx-auto h-12 w-auto" />
+          <h1 className="mt-2 text-xl font-bold">{APP_NAME}</h1>
           <p className="text-sm text-slate-500">Assistente do personal</p>
         </div>
         {mode === 'signup' && (
