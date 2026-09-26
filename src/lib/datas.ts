@@ -132,3 +132,11 @@ export function formatarHoraInicioFim(startsAt: string, durationMin: number): st
   const fim = new Date(inicio.getTime() + durationMin * 60_000)
   return `${horaSP(inicio)}–${horaSP(fim)}`
 }
+
+/** Diferença em dias entre duas datas-calendário 'YYYY-MM-DD' (de - até). */
+export function diasEntre(deISO: string, ateISO: string): number {
+  const [a1, m1, d1] = deISO.split('-').map(Number)
+  const [a2, m2, d2] = ateISO.split('-').map(Number)
+  const ms = Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)
+  return Math.round(ms / 86_400_000)
+}

@@ -19,9 +19,10 @@ import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
-import { useIniciarSessao, type PreTreinoInput } from './api'
+import { useIniciarSessao, useSessoes, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
 import { descritorPara, faixaProntidao } from './prontidao'
+import { planoSugerido, rotuloUltimoUso } from './rotina'
 
 type ChaveResposta = keyof Omit<PreTreinoInput, 'plano_id'>
 
@@ -44,6 +45,7 @@ export function NovaSessaoPage() {
   const { data: aluno } = useAluno(id)
   const { data: planos } = usePlanos(id)
   const { data: modelos } = useModelos()
+  const { data: sessoes } = useSessoes(id)
   const iniciar = useIniciarSessao(id!)
   const ativarPlano = useAtualizarPlano(id!)
   const criarDeModelo = useCriarPlanoDeModelo(id!)
@@ -66,6 +68,10 @@ export function NovaSessaoPage() {
   const planosAtivos = useMemo(() => planos?.filter((p) => p.active), [planos])
   const planosInativos = useMemo(() => planos?.filter((p) => !p.active), [planos])
   const planosComExercicios = useMemo(() => planosAtivos?.filter((p) => p.plano_exercicios.length > 0), [planosAtivos])
+  const sugestao = useMemo(
+    () => (planosComExercicios && sessoes ? planoSugerido(planosComExercicios, sessoes) : null),
+    [planosComExercicios, sessoes],
+  )
   const modelosFiltrados = useMemo(
     () => modelos?.filter((m) => m.name.toLowerCase().includes(buscaModelo.trim().toLowerCase())),
     [modelos, buscaModelo],
@@ -278,6 +284,22 @@ export function NovaSessaoPage() {
 
       {etapa === 'plano' && !estadoVazio && (
         <div className="space-y-5 pb-4">
+          {sugestao && (
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-slate-500">Sugerido</h2>
+              <button
+                onClick={() => avancarComPlano(sugestao.plano, true)}
+                disabled={verificando || sincronizando}
+                className="w-full rounded-2xl border-2 border-brand bg-brand/10 p-4 text-left shadow-sm transition active:bg-brand/20 disabled:opacity-50"
+              >
+                <p className="font-medium">{sugestao.plano.name}</p>
+                <p className="text-sm text-slate-500">
+                  {sugestao.plano.plano_exercicios.length} exercícios · {rotuloUltimoUso(sugestao.ultimoUso)}
+                </p>
+              </button>
+            </div>
+          )}
+
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-slate-500">Treinos do aluno</h2>
             {planosComExercicios?.length === 0 && planosAtivos && planosAtivos.length === 0 && (
@@ -304,11 +326,9 @@ export function NovaSessaoPage() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => setSelecao(p.id)}
-                  className={cn(
-                    'w-full rounded-2xl p-4 text-left shadow-sm transition',
-                    selecao === p.id ? 'bg-brand/10 ring-2 ring-brand' : 'bg-white active:bg-slate-50',
-                  )}
+                  onClick={() => avancarComPlano(p, true)}
+                  disabled={verificando || sincronizando}
+                  className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50 disabled:opacity-50"
                 >
                   <p className="font-medium">{p.name}</p>
                   <p className="text-sm text-slate-500">
@@ -410,22 +430,25 @@ export function NovaSessaoPage() {
           )}
 
           <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-slate-500">Treino livre</h2>
+            <h2 className="text-sm font-semibold text-slate-500">Outras opções</h2>
             <button
-              onClick={() => setSelecao('livre')}
-              className={cn(
-                'w-full rounded-2xl p-4 text-left font-medium shadow-sm transition',
-                selecao === 'livre' ? 'bg-brand/10 text-slate-900 ring-2 ring-brand' : 'bg-white text-slate-600 active:bg-slate-50',
-              )}
+              onClick={() => {
+                setSelecao('livre')
+                setEtapa('perguntas')
+              }}
+              className="w-full rounded-2xl bg-white p-4 text-left font-medium text-slate-600 shadow-sm transition active:bg-slate-50"
             >
               Treino livre
+            </button>
+            <button
+              onClick={() => navigate(`/alunos/${id}?tab=Treinos`)}
+              className="w-full rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-left font-medium text-slate-600 shadow-sm transition active:bg-slate-50"
+            >
+              + Criar treino
             </button>
           </div>
 
           {erro && <p className="text-sm text-red-600">{erro}</p>}
-          <Button onClick={() => setEtapa('perguntas')} className="w-full" disabled={selecao === undefined}>
-            Continuar
-          </Button>
         </div>
       )}
 
