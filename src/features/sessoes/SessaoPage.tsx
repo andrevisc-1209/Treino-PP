@@ -7,6 +7,7 @@ import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mapearErroSupabase } from '@/lib/erros'
 import {
@@ -414,9 +415,13 @@ export function SessaoPage() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center gap-3">
-        <Link to={`/alunos/${id}`} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
-          <ArrowLeft size={20} />
-        </Link>
+        {sessao.status === 'em_andamento' ? (
+          <BotaoSairModoFoco to={`/alunos/${id}`} />
+        ) : (
+          <Link to={`/alunos/${id}`} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
+            <ArrowLeft size={20} />
+          </Link>
+        )}
         <h1 className="text-xl font-bold">{titulo}</h1>
       </header>
 

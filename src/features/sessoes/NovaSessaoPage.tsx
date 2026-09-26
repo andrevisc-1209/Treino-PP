@@ -18,6 +18,7 @@ import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
+import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { useIniciarSessao, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
 import { descritorPara, faixaProntidao } from './prontidao'
@@ -238,9 +239,7 @@ export function NovaSessaoPage() {
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center gap-3">
         {etapa === 'plano' && !planoDaUrl ? (
-          <Link to={`/alunos/${id}`} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
-            <ArrowLeft size={20} />
-          </Link>
+          <BotaoSairModoFoco to={`/alunos/${id}`} />
         ) : (
           <button onClick={voltar} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
             <ArrowLeft size={20} />

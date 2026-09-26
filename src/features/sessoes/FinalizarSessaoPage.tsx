@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { Navigate, useParams } from 'react-router-dom'
 import { useSessao } from './api'
 import { PosTreino } from './PosTreino'
+import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 
 export function FinalizarSessaoPage() {
   const { id, sessionId } = useParams<{ id: string; sessionId: string }>()
@@ -18,13 +18,7 @@ export function FinalizarSessaoPage() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center gap-3">
-        <Link
-          to={`/alunos/${id}/sessoes/${sessionId}`}
-          className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100"
-          aria-label="Voltar"
-        >
-          <ArrowLeft size={20} />
-        </Link>
+        <BotaoSairModoFoco to={`/alunos/${id}/sessoes/${sessionId}`} />
         <h1 className="text-xl font-bold">Pós-treino</h1>
       </header>
 

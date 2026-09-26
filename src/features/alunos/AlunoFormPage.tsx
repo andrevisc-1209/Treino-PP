@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Pencil } from 'lucide-react'
+import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { cn, formatarTelefone, idade } from '@/lib/utils'
 import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
@@ -297,13 +298,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   return (
     <div className="mx-auto max-w-2xl p-4 pb-28">
       <header className="mb-4 flex items-center gap-3">
-        <Link
-          to={mode === 'edit' ? `/alunos/${id}` : '/alunos'}
-          className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100"
-          aria-label="Voltar"
-        >
-          <ArrowLeft size={20} />
-        </Link>
+        <BotaoSairModoFoco to={mode === 'edit' ? `/alunos/${id}` : '/alunos'} />
         <h1 className="text-xl font-bold">{mode === 'edit' ? 'Editar aluno' : 'Novo aluno'}</h1>
       </header>
 
