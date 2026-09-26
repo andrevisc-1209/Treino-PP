@@ -23,7 +23,7 @@ export default defineConfig({
     htmlAppNamePlugin(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png'],
       manifest: {
         name: APP_NAME,
         short_name: APP_SHORT_NAME,
