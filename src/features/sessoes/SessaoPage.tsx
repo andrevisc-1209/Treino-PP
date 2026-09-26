@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clock, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
+import { formatarNumero } from '@/lib/format'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { confirmarAcao } from '@/components/ConfirmSheet'
+import { DescansoBar } from '@/components/DescansoBar'
 import { mapearErroSupabase } from '@/lib/erros'
 import {
   useAdicionarExercicioSessao,
@@ -16,10 +19,19 @@ import {
   useSalvarSerie,
   useSessao,
   useSessaoExercicios,
+  useUltimosUsosExercicios,
   type SessaoExercicio,
   type SessaoSerie,
 } from './api'
+import { formatarUltimoUso } from './ultimoUso'
+import { useFilaOffline } from './useFilaOffline'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
+
+const DESCANSO_PADRAO_SEGUNDOS = 60
+
+function estaCompleto(item: SessaoExercicio): boolean {
+  return item.sessao_series.length > 0 && item.sessao_series.every((s) => s.completed)
+}
 
 function formatarDuracao(segundos: number) {
   const m = Math.floor(segundos / 60)
@@ -30,10 +42,13 @@ function formatarDuracao(segundos: number) {
 function SerieRow({
   serie,
   salvando,
+  pendente,
   onSalvar,
 }: {
   serie: SessaoSerie
   salvando: boolean
+  /** Marcada localmente mas ainda não confirmada pelo servidor (fila offline). */
+  pendente: boolean
   onSalvar: (input: { reps: number | null; load_kg: number | null }) => void
 }) {
   const [reps, setReps] = useState(serie.reps != null ? String(serie.reps) : '')
@@ -69,11 +84,15 @@ function SerieRow({
         disabled={salvando}
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-xl border transition disabled:opacity-50',
-          serie.completed ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-400',
+          pendente
+            ? 'border-amber-400 bg-amber-50 text-amber-600'
+            : serie.completed
+              ? 'border-brand bg-brand text-white'
+              : 'border-slate-300 bg-white text-slate-400',
         )}
-        aria-label={`Salvar série ${serie.set_number}`}
+        aria-label={pendente ? `Série ${serie.set_number} pendente de sincronizar` : `Salvar série ${serie.set_number}`}
       >
-        <Check size={18} />
+        {pendente ? <Clock size={18} /> : <Check size={18} />}
       </button>
     </div>
   )
@@ -82,21 +101,50 @@ function SerieRow({
 function ExercicioBlock({
   item,
   sessionId,
+  ultimoUso,
+  estaPendente,
+  enfileirarSerie,
   onPular,
+  onSerieCompleta,
 }: {
   item: SessaoExercicio
   sessionId: string
+  ultimoUso: string | null
+  estaPendente: (sessaoExercicioId: string, setNumber: number) => boolean
+  enfileirarSerie: (item: { sessao_exercicio_id: string; set_number: number; reps: number | null; load_kg: number | null; completed: boolean }) => void
   onPular: (item: SessaoExercicio) => void
+  onSerieCompleta: (restSeconds: number) => void
 }) {
   const salvar = useSalvarSerie(sessionId)
   const [erroSerie, setErroSerie] = useState<number | null>(null)
+  const [expandido, setExpandido] = useState(false)
 
   const salvarSerie = (setNumber: number, input: { reps: number | null; load_kg: number | null }) => {
     setErroSerie(null)
-    salvar.mutate(
-      { sessao_exercicio_id: item.id, set_number: setNumber, completed: true, ...input },
-      { onError: () => setErroSerie(setNumber) },
-    )
+    const payload = { sessao_exercicio_id: item.id, set_number: setNumber, completed: true, ...input }
+    const restSeconds = item.plano_exercicio?.rest_seconds ?? DESCANSO_PADRAO_SEGUNDOS
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      enfileirarSerie(payload)
+      onSerieCompleta(restSeconds)
+      return
+    }
+    salvar.mutate(payload, {
+      onSuccess: () => onSerieCompleta(restSeconds),
+      onError: (e) => {
+        const msg = (e as Error).message?.toLowerCase() ?? ''
+        const pareceFalhaDeRede =
+          msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed') || (typeof navigator !== 'undefined' && !navigator.onLine)
+        if (pareceFalhaDeRede) {
+          // Sinal ruim na academia é o caso comum aqui, não um erro "de verdade" —
+          // enfileira e segue o treino sem travar o personal.
+          enfileirarSerie(payload)
+          onSerieCompleta(restSeconds)
+        } else {
+          setErroSerie(setNumber)
+        }
+      },
+    })
   }
 
   const adicionarSerie = () => {
@@ -110,19 +158,52 @@ function ExercicioBlock({
     })
   }
 
+  const completo =
+    item.sessao_series.length > 0 && item.sessao_series.every((s) => s.completed || estaPendente(item.id, s.set_number))
+  const ultimaSerie = item.sessao_series[item.sessao_series.length - 1]
+
+  if (completo && !expandido) {
+    return (
+      <button
+        onClick={() => setExpandido(true)}
+        className="flex w-full items-center justify-between rounded-2xl bg-white p-4 text-left shadow-sm active:bg-slate-50"
+      >
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-slate-500">{item.exercicio?.name ?? 'Exercício'}</p>
+          <p className="flex items-center gap-1 text-sm text-emerald-700">
+            <Check size={14} /> {item.sessao_series.length}/{item.sessao_series.length}
+            {ultimaSerie?.reps != null && ` · ${ultimaSerie.reps}`}
+            {ultimaSerie?.load_kg != null && ` × ${formatarNumero(ultimaSerie.load_kg)} kg`}
+          </p>
+        </div>
+        <ChevronDown size={18} className="shrink-0 text-slate-400" />
+      </button>
+    )
+  }
+
   return (
     <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-semibold">{item.exercicio?.name ?? 'Exercício'}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold">{item.exercicio?.name ?? 'Exercício'}</p>
+            {completo && <Check size={16} className="shrink-0 text-emerald-600" />}
+          </div>
           {item.exercicio?.muscle_group && <p className="text-sm text-slate-500">{item.exercicio.muscle_group}</p>}
+          {ultimoUso && <p className="text-sm text-slate-400">{ultimoUso}</p>}
         </div>
-        <button
-          onClick={() => onPular(item)}
-          className="flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100"
-        >
-          <SkipForward size={16} /> Pular exercício
-        </button>
+        {completo ? (
+          <button onClick={() => setExpandido(false)} className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100">
+            Recolher
+          </button>
+        ) : (
+          <button
+            onClick={() => onPular(item)}
+            className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100"
+          >
+            <SkipForward size={16} /> Pular exercício
+          </button>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -139,6 +220,7 @@ function ExercicioBlock({
             <SerieRow
               serie={s}
               salvando={salvar.isPending && salvar.variables?.set_number === s.set_number}
+              pendente={estaPendente(item.id, s.set_number)}
               onSalvar={(input) => salvarSerie(s.set_number, input)}
             />
             {erroSerie === s.set_number && (
@@ -162,9 +244,12 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
   const { data: aluno } = useAluno(alunoId)
   const { data: sessao } = useSessao(sessionId)
   const { data: itens, isLoading } = useSessaoExercicios(sessionId)
+  const { data: ultimosUsos } = useUltimosUsosExercicios(alunoId)
   const { data: exercicios } = useExercicios()
   const adicionarExercicio = useAdicionarExercicioSessao(sessionId)
   const removerExercicio = useRemoverExercicioSessao(sessionId)
+  const fila = useFilaOffline(sessionId)
+  const [avisoFilaAberto, setAvisoFilaAberto] = useState(false)
 
   const [segundos, setSegundos] = useState(0)
   useEffect(() => {
@@ -175,6 +260,37 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [sessao])
+
+  // Barra de descanso: dispara ao marcar uma série, conta pra baixo até 0 e vibra.
+  const [descanso, setDescanso] = useState<{ segundos: number } | null>(null)
+  useEffect(() => {
+    if (descanso === null) return
+    if (descanso.segundos <= 0) {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([200, 100, 200])
+      setDescanso(null)
+      return
+    }
+    const t = setTimeout(() => setDescanso((d) => (d ? { segundos: d.segundos - 1 } : null)), 1000)
+    return () => clearTimeout(t)
+  }, [descanso])
+
+  const iniciarDescanso = (restSeconds: number) => setDescanso({ segundos: restSeconds })
+
+  // Rola o próximo exercício pendente pra vista assim que um exercício vira "completo".
+  const feitosAnterioresRef = useRef<Set<string>>(new Set())
+  const refsPorItem = useRef<Record<string, HTMLDivElement | null>>({})
+  useEffect(() => {
+    if (!itens) return
+    const feitosAtuais = new Set(itens.filter(estaCompleto).map((i) => i.id))
+    const ficouCompleto = [...feitosAtuais].some((id) => !feitosAnterioresRef.current.has(id))
+    if (ficouCompleto) {
+      const proximoPendente = itens.find((i) => !feitosAtuais.has(i.id))
+      if (proximoPendente) {
+        refsPorItem.current[proximoPendente.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+    feitosAnterioresRef.current = feitosAtuais
+  }, [itens])
 
   const [adicionando, setAdicionando] = useState(false)
   const [busca, setBusca] = useState('')
@@ -198,8 +314,16 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
     removerExercicio.mutate(item.id)
   }
 
+  const clicarFinalizar = () => {
+    if (fila.fila.length > 0) {
+      setAvisoFilaAberto(true)
+      return
+    }
+    navigate(`/alunos/${alunoId}/sessoes/${sessionId}/finalizar`)
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28">
       <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
         <span className="text-sm text-slate-500">Tempo de treino</span>
         <span className="font-mono text-xl font-semibold">{formatarDuracao(segundos)}</span>
@@ -215,19 +339,65 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
       {isLoading && <p className="text-slate-500">Carregando…</p>}
 
       {itens?.map((item) => (
-        <ExercicioBlock key={item.id} item={item} sessionId={sessionId} onPular={pular} />
+        <div key={item.id} ref={(el) => { refsPorItem.current[item.id] = el }}>
+          <ExercicioBlock
+            item={item}
+            sessionId={sessionId}
+            ultimoUso={formatarUltimoUso(ultimosUsos?.get(item.exercicio_id))}
+            estaPendente={fila.estaPendente}
+            enfileirarSerie={fila.enfileirarSerie}
+            onPular={pular}
+            onSerieCompleta={iniciarDescanso}
+          />
+        </div>
       ))}
 
       <Button variant="ghost" className="w-full border border-dashed border-slate-300" onClick={() => setAdicionando(true)}>
         <Plus size={18} /> Adicionar exercício
       </Button>
 
-      <Button
-        className="w-full"
-        onClick={() => navigate(`/alunos/${alunoId}/sessoes/${sessionId}/finalizar`)}
-      >
-        Finalizar treino
-      </Button>
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+        <div className="mx-auto max-w-2xl space-y-3">
+          {descanso && (
+            <DescansoBar
+              segundosRestantes={descanso.segundos}
+              onMenos15={() => setDescanso((d) => (d ? { segundos: Math.max(0, d.segundos - 15) } : d))}
+              onMais15={() => setDescanso((d) => (d ? { segundos: d.segundos + 15 } : d))}
+              onPular={() => setDescanso(null)}
+            />
+          )}
+          {fila.fila.length > 0 && (
+            <button
+              onClick={() => setAvisoFilaAberto(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800"
+            >
+              <Clock size={16} />
+              {fila.fila.length} {fila.fila.length === 1 ? 'série ainda não sincronizada' : 'séries ainda não sincronizadas'}
+            </button>
+          )}
+          <Button className="w-full" onClick={clicarFinalizar}>
+            Finalizar treino
+          </Button>
+        </div>
+      </div>
+
+      <BottomSheet open={avisoFilaAberto} onClose={() => setAvisoFilaAberto(false)} title="Séries pendentes">
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+            <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+            <span>
+              {fila.fila.length} {fila.fila.length === 1 ? 'série ainda não foi sincronizada' : 'séries ainda não foram sincronizadas'} — provavelmente por
+              falta de sinal. Elas ficam guardadas neste aparelho e não se perdem, mas é melhor esperar sincronizar antes de finalizar.
+            </span>
+          </div>
+          <Button onClick={() => fila.sincronizar()} className="w-full" disabled={fila.sincronizando}>
+            {fila.sincronizando ? 'Sincronizando…' : 'Tentar agora'}
+          </Button>
+          <Button variant="ghost" onClick={() => setAvisoFilaAberto(false)} className="w-full">
+            Continuar treinando
+          </Button>
+        </div>
+      </BottomSheet>
 
       <BottomSheet open={adicionando} onClose={() => setAdicionando(false)} title="Adicionar exercício">
         <div className="space-y-3">
@@ -414,9 +584,13 @@ export function SessaoPage() {
   return (
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center gap-3">
-        <Link to={`/alunos/${id}`} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
-          <ArrowLeft size={20} />
-        </Link>
+        {sessao.status === 'em_andamento' ? (
+          <BotaoSairModoFoco to={`/alunos/${id}`} />
+        ) : (
+          <Link to={`/alunos/${id}`} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
+            <ArrowLeft size={20} />
+          </Link>
+        )}
         <h1 className="text-xl font-bold">{titulo}</h1>
       </header>
 

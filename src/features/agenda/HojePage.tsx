@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Settings } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { formatarDataCompleta, hojeSP } from '@/lib/datas'
@@ -12,9 +12,11 @@ import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 
 export function HojePage() {
   useGerarAulasDiarias()
+  const navigate = useNavigate()
   const hoje = hojeSP()
   const { data: aulas, isLoading, error } = useAulasDoDia(hoje)
   const [aulaAberta, setAulaAberta] = useState<Aula | null>(null)
+  const [passoInicial, setPassoInicial] = useState<'menu' | 'iniciar'>('menu')
   const [novaAulaAberta, setNovaAulaAberta] = useState(false)
 
   const [agora] = useState(() => Date.now())
@@ -23,7 +25,33 @@ export function HojePage() {
     return proxima?.id
   }, [aulas, agora])
 
+  // Aulas ainda por vir primeiro (na ordem em que já vêm do banco); realizadas
+  // e canceladas ficam esmaecidas no fim da lista, sem competir por atenção.
+  const aulasOrdenadas = useMemo(() => {
+    if (!aulas) return aulas
+    const pendentes = aulas.filter((a) => a.status === 'agendada')
+    const concluidasOuCanceladas = aulas.filter((a) => a.status !== 'agendada')
+    return [...pendentes, ...concluidasOuCanceladas]
+  }, [aulas])
+
   const concluidas = aulas?.filter((a) => a.status === 'realizada').length ?? 0
+
+  const abrirMenu = (a: Aula) => {
+    setPassoInicial('menu')
+    setAulaAberta(a)
+  }
+
+  const comecar = (a: Aula) => {
+    const previstos = a.aula_participantes.filter((p) => p.status === 'previsto')
+    if (previstos.length === 1) {
+      navigate(`/alunos/${previstos[0].aluno_id}/sessoes/nova?aula=${a.id}`)
+    } else if (previstos.length > 1) {
+      setPassoInicial('iniciar')
+      setAulaAberta(a)
+    } else {
+      abrirMenu(a)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl p-4">
@@ -57,15 +85,15 @@ export function HojePage() {
         </div>
       )}
 
-      {aulas && aulas.length > 0 && (
+      {aulasOrdenadas && aulasOrdenadas.length > 0 && (
         <div className="space-y-2">
-          {aulas.map((a) => (
-            <AulaCard key={a.id} aula={a} destaque={a.id === proximaId} onClick={() => setAulaAberta(a)} />
+          {aulasOrdenadas.map((a) => (
+            <AulaCard key={a.id} aula={a} destaque={a.id === proximaId} onClick={() => abrirMenu(a)} onComecar={() => comecar(a)} />
           ))}
         </div>
       )}
 
-      <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} />
+      <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} passoInicial={passoInicial} />
       <NovaAulaAvulsaSheet open={novaAulaAberta} onClose={() => setNovaAulaAberta(false)} dataInicial={hoje} />
     </div>
   )
