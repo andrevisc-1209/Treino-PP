@@ -6,7 +6,7 @@ import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthProvider'
 import { Button, Field, Input } from '@/components/ui'
-import { APP_NAME } from '@/config/app'
+import { APP_NAME, APP_URL } from '@/config/app'
 import { Turnstile } from '@/components/Turnstile'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import iconMark from '@/assets/brand/icon-mark.png'
@@ -111,7 +111,7 @@ export function LoginPage() {
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
         },
-        emailRedirectTo: window.location.origin + import.meta.env.BASE_URL,
+        emailRedirectTo: APP_URL,
         captchaToken: captchaToken || undefined,
       },
     })
@@ -131,7 +131,7 @@ export function LoginPage() {
   const onSubmitRecuperar = async (f: FormRecuperar) => {
     setMsg(null)
     const { error } = await supabase.auth.resetPasswordForEmail(f.email, {
-      redirectTo: window.location.origin + import.meta.env.BASE_URL + 'definir-senha',
+      redirectTo: APP_URL + 'definir-senha',
     })
     if (error) setMsg(error.message)
     else setMsg('Se o e-mail existir, enviamos um link para redefinir a senha.')
@@ -198,11 +198,11 @@ export function LoginPage() {
               />
               <span className="text-sm text-slate-600">
                 Li e aceito os{' '}
-                <a href="/Treino-PP/termos" target="_blank" rel="noreferrer" className="font-medium text-brand-hover underline">
+                <a href={`${import.meta.env.BASE_URL}termos`} target="_blank" rel="noreferrer" className="font-medium text-brand-hover underline">
                   Termos de Uso
                 </a>{' '}
                 e a{' '}
-                <a href="/Treino-PP/privacidade" target="_blank" rel="noreferrer" className="font-medium text-brand-hover underline">
+                <a href={`${import.meta.env.BASE_URL}privacidade`} target="_blank" rel="noreferrer" className="font-medium text-brand-hover underline">
                   Política de Privacidade
                 </a>
               </span>
