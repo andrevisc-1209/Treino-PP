@@ -17,7 +17,7 @@ Supabase, não no código do app. Estes arquivos são o HTML pronto pra colar l�
 
 - Layout em tabela (largura 600px, CSS inline) — compatível com clientes de e-mail
   que não suportam CSS moderno (Outlook, Gmail app, etc.).
-- Logo servida por `https://andrevisc-1209.github.io/Treino-PP/brand/logo-email.png`
+- Logo servida por `https://treino.personalperto.com.br/brand/logo-email.png`
   (arquivo em `public/brand/logo-email.png` no repo, publicado pelo GitHub Pages
   junto com o resto do app — só existe depois do primeiro deploy do site).
 - Cor do botão (`#367c39`) é a mesma de `--color-brand` em `src/index.css` — se o
