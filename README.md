@@ -44,20 +44,24 @@ O app já manda o token do Turnstile pro Supabase (`options.captchaToken` no
 `signUp`) — o Supabase valida a Secret Key do lado dele.
 
 ## Deploy (GitHub Pages)
-App publicado em **https://andrevisc-1209.github.io/Treino-PP/** via GitHub Actions
-(`.github/workflows/deploy.yml`), disparado a cada push na `main` ou manualmente
-(workflow_dispatch).
+App publicado em **https://treino.personalperto.com.br/** (domínio próprio, GitHub
+Pages) via GitHub Actions (`.github/workflows/deploy.yml`), disparado a cada push na
+`main` ou manualmente (workflow_dispatch). Detalhes do domínio (DNS, Pages, Supabase)
+em `docs/DOMINIO.md`.
 
 Passos manuais (uma vez só):
-1. GitHub → **Settings → Pages → Source**: selecione **GitHub Actions**.
+1. GitHub → **Settings → Pages → Source**: selecione **GitHub Actions**; em **Custom
+   domain**, configure `treino.personalperto.com.br` (precisa do registro CNAME no
+   DNS apontando pra `andrevisc-1209.github.io`; `public/CNAME` no repo garante que a
+   configuração não some a cada deploy).
 2. GitHub → **Settings → Secrets and variables → Actions**: crie os secrets
    `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com os valores do projeto Supabase.
    Por padrão o build usa `VITE_ALLOW_SIGNUP=true` (cadastro aberto); pra fechar,
    crie a **variable** (não secret) `VITE_ALLOW_SIGNUP` como `false`. Pra ligar o
    anti-spam, crie a variable `VITE_TURNSTILE_SITE_KEY` com a Site Key do Turnstile.
 3. Supabase → **Authentication → URL Configuration**:
-   - **Site URL**: `https://andrevisc-1209.github.io/Treino-PP/`
-   - **Redirect URLs**: adicione `https://andrevisc-1209.github.io/Treino-PP/` e
+   - **Site URL**: `https://treino.personalperto.com.br/`
+   - **Redirect URLs**: adicione `https://treino.personalperto.com.br/` e
      mantenha `http://localhost:5173` para o dev local.
 4. Supabase → **Authentication → Providers → Email**: mantenha **Allow new users
    to sign up** ativado (é o que permite o cadastro aberto) — só desative se for

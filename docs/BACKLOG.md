@@ -26,3 +26,27 @@ Decisão de produto: o cadastro de personal é aberto (não é mais por convite)
 | 5.5 | Checklist de onboarding no primeiro acesso (Pix → 1º aluno → horário fixo → 1º treino planejado) | ✅ feito |
 
 PR: [feat/cadastro-aberto](https://github.com/andrevisc-1209/Treino-PP/pull/20)
+
+## 6. Domínio próprio (D2)
+
+D2 = GitHub Pages com domínio próprio `treino.personalperto.com.br` (em vez de
+`andrevisc-1209.github.io/Treino-PP/`). Detalhes em `docs/DOMINIO.md`.
+
+| Item | Descrição | Status |
+|---|---|---|
+| 6.1 | Base do app na raiz (vite base, router, manifest, ícones, favicons, splash) | ✅ feito |
+| 6.2 | `public/CNAME` com `treino.personalperto.com.br` | ✅ feito |
+| 6.3 | `APP_URL` centralizada em `src/config/app.ts`, usada no `emailRedirectTo`/`redirectTo` | ✅ feito |
+| 6.4 | Logo dos templates de e-mail apontando pro domínio novo | ✅ feito |
+| 6.5 | `docs/DOMINIO.md` (DNS, Pages, Supabase Site URL/Redirect URLs, reinstalar o PWA) | ✅ feito |
+
+Pendente pra depois do deploy no domínio novo (não dá pra fazer nesta PR): apontar o
+**Site URL** e os **Redirect URLs** do Supabase pro domínio novo — ver `docs/DOMINIO.md`.
+
+`docs/CAPTCHA.md` e `docs/SMTP.md` ainda não existem nesta main — quando forem
+criados (PR `feat/auth-robusto`), atualizar os domínios do Turnstile
+(`treino.personalperto.com.br` e `localhost`) e o subdomínio verificado no Resend
+(`treino.personalperto.com.br`, não o domínio raiz `personalperto.com.br`, pra não
+mexer no SPF do e-mail principal).
+
+PR: [chore/dominio-proprio](https://github.com/andrevisc-1209/Treino-PP/pull/22)

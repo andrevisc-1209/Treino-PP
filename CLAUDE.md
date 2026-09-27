@@ -5,10 +5,10 @@
   evolução e financeiro. Uso principal no celular, na academia, com pressa e sinal ruim.
 - Stack: React + Vite + TS + Tailwind v4 + React Router + TanStack Query +
   React Hook Form/Zod + Supabase (schema "treino", RLS) + PWA. Publicado no GitHub
-  Pages com base '/Treino-PP/'.
+  Pages com domínio próprio https://treino.personalperto.com.br/ (base '/').
 - Documentos de referência: docs/BACKLOG.md (backlog e decisões), docs/BRAND.md
-  (identidade), docs/ux-audit/RELATORIO.md (auditoria de UX), docs/email-templates/
-  (e-mails do Supabase).
+  (identidade), docs/DOMINIO.md (DNS, Pages, Supabase), docs/ux-audit/RELATORIO.md
+  (auditoria de UX), docs/email-templates/ (e-mails do Supabase).
 
 ## Idioma
 - Interface, commits, PRs e documentação em português.
