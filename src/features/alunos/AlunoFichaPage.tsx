@@ -123,7 +123,7 @@ export function AlunoFichaPage() {
         {aluno.phone ? (
           <BotaoWhatsApp telefone={aluno.phone} label={`WhatsApp de ${aluno.name}`} />
         ) : (
-          <Link to={`/alunos/${aluno.id}/editar`} className="text-sm font-medium text-brand-dark">
+          <Link to={`/alunos/${aluno.id}/editar`} className="text-sm font-medium text-brand-hover">
             Adicionar telefone
           </Link>
         )}
@@ -175,7 +175,7 @@ export function AlunoFichaPage() {
 
       <Link
         to={sessaoEmAndamento ? `/alunos/${aluno.id}/sessoes/${sessaoEmAndamento.id}` : `/alunos/${aluno.id}/sessoes/nova`}
-        className="mb-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-dark"
+        className="mb-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-hover"
       >
         <Play size={18} /> {sessaoEmAndamento ? 'Continuar treino' : 'Iniciar treino'}
       </Link>

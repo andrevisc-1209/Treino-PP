@@ -40,7 +40,7 @@ export function UndoToastHost() {
       {pedidos.map((p) => (
         <div key={p.id} className="flex w-full max-w-md items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 text-sm text-white shadow-lg">
           <span>{p.mensagem}</span>
-          <button onClick={() => desfazer(p)} className="shrink-0 font-semibold text-emerald-400">
+          <button onClick={() => desfazer(p)} className="shrink-0 font-semibold text-[#5fba63]" title="Verde da marca clareado pra 7,4:1 sobre fundo escuro">
             Desfazer
           </button>
         </div>

@@ -415,7 +415,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <p className="text-sm text-slate-600">
                 Para registrar lesões, cirurgias e medicamentos, é preciso o consentimento do aluno para o tratamento desses dados de saúde.
               </p>
-              <button type="button" onClick={() => setTermoAberto(true)} className="text-sm font-medium text-brand-dark underline">
+              <button type="button" onClick={() => setTermoAberto(true)} className="text-sm font-medium text-brand-hover underline">
                 Ler termo
               </button>
               <Button type="button" onClick={() => setValue('lgpd_consent', true)} className="w-full">
@@ -424,7 +424,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+              <div className="flex items-center justify-between rounded-xl bg-brand-soft p-3 text-sm text-brand-hover">
                 <span>Consentimento LGPD dado</span>
                 <button type="button" onClick={() => setValue('lgpd_consent', false)} className="text-xs underline">
                   Desfazer
@@ -557,7 +557,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <div className="space-y-2 rounded-xl bg-slate-50 p-3">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Dados</h2>
-                <button type="button" onClick={() => setEtapa(1)} className="flex items-center gap-1 text-sm text-brand-dark">
+                <button type="button" onClick={() => setEtapa(1)} className="flex items-center gap-1 text-sm text-brand-hover">
                   <Pencil size={14} /> Editar
                 </button>
               </div>
@@ -589,7 +589,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <div className="space-y-2 rounded-xl bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold">Cobrança</h2>
-                  <button type="button" onClick={() => setEtapa(2)} className="flex items-center gap-1 text-sm text-brand-dark">
+                  <button type="button" onClick={() => setEtapa(2)} className="flex items-center gap-1 text-sm text-brand-hover">
                     <Pencil size={14} /> Editar
                   </button>
                 </div>
@@ -604,7 +604,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <div className="space-y-2 rounded-xl bg-slate-50 p-3">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Saúde</h2>
-                <button type="button" onClick={() => setEtapa(3)} className="flex items-center gap-1 text-sm text-brand-dark">
+                <button type="button" onClick={() => setEtapa(3)} className="flex items-center gap-1 text-sm text-brand-hover">
                   <Pencil size={14} /> Editar
                 </button>
               </div>

@@ -137,7 +137,7 @@ export function ModelosPage() {
                 <Link to={`/meus-treinos/planejados/${m.id}`} className="min-w-0 flex-1">
                   <p className="font-medium">{m.name}</p>
                   {vazio ? (
-                    <p className="text-sm font-medium text-brand-dark">Nenhum exercício · toque para adicionar</p>
+                    <p className="text-sm font-medium text-brand-hover">Nenhum exercício · toque para adicionar</p>
                   ) : (
                     <p className="text-sm text-slate-500">
                       {m.modelo_exercicios.length} exercícios{previa && ` · ${previa}`}

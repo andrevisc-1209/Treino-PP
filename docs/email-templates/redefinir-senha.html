@@ -1,0 +1,75 @@
+<!--
+  Assunto sugerido: Redefinir sua senha — Treino · Personal Perto
+  Colar em: Supabase → Authentication → Email Templates → Reset password
+  Variável usada: {{ .ConfirmationURL }} (padrão do Supabase pra esse template)
+-->
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redefinir sua senha — Treino · Personal Perto</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f7f6; font-family: Arial, Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f7f6; padding: 24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden;">
+            <tr>
+              <td align="center" style="background-color: #0f2537; padding: 32px 24px;">
+                <img
+                  src="https://andrevisc-1209.github.io/Treino-PP/brand/logo-email.png"
+                  alt="Personal Perto"
+                  width="180"
+                  style="display: block; width: 180px; max-width: 100%; height: auto;"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 32px 32px 8px;">
+                <h1 style="margin: 0 0 16px; font-size: 22px; color: #0f2537;">Redefinir senha</h1>
+                <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+                  Recebemos um pedido para redefinir a senha da sua conta no <strong>Treino · Personal Perto</strong>.
+                  Clique no botão abaixo para escolher uma nova senha.
+                </p>
+                <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #334155;">
+                  Se você não pediu isso, pode ignorar este e-mail — sua senha continua a mesma.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding: 8px 32px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" style="border-radius: 10px; background-color: #367c39;">
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        target="_blank"
+                        style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 10px;"
+                      >
+                        Redefinir senha
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 0 32px 32px;">
+                <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #64748b;">
+                  Se o botão não funcionar, copie e cole este link no navegador:<br />
+                  <a href="{{ .ConfirmationURL }}" style="color: #367c39; word-break: break-all;">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding: 20px 24px; background-color: #f4f7f6; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0; font-size: 12px; color: #94a3b8;">Treino · Personal Perto</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

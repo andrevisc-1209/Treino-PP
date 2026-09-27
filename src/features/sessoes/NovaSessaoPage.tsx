@@ -314,7 +314,7 @@ export function NovaSessaoPage() {
                 return (
                   <div key={p.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
                     <p className="font-medium text-slate-400">{p.name}</p>
-                    <Link to={`/alunos/${id}/planos/${p.id}`} className="text-sm font-medium text-brand-dark">
+                    <Link to={`/alunos/${id}/planos/${p.id}`} className="text-sm font-medium text-brand-hover">
                       Adicione exercícios
                     </Link>
                   </div>
@@ -359,7 +359,7 @@ export function NovaSessaoPage() {
                               Ativar e iniciar
                             </Button>
                           ) : (
-                            <Link to={`/alunos/${id}/planos/${p.id}`} className="shrink-0 text-sm font-medium text-brand-dark">
+                            <Link to={`/alunos/${id}/planos/${p.id}`} className="shrink-0 text-sm font-medium text-brand-hover">
                               Adicione exercícios
                             </Link>
                           )}
@@ -403,7 +403,7 @@ export function NovaSessaoPage() {
                         className="block rounded-2xl bg-white p-4 opacity-70 shadow-sm"
                       >
                         <p className="font-medium text-slate-400">{m.name}</p>
-                        <span className="text-sm font-medium text-brand-dark">Sem exercícios · toque para montar</span>
+                        <span className="text-sm font-medium text-brand-hover">Sem exercícios · toque para montar</span>
                       </Link>
                     )
                   }

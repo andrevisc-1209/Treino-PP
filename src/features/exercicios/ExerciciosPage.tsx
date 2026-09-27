@@ -136,7 +136,7 @@ export function ExerciciosPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{ex.name}</p>
-                  {meu && <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand-dark">Meu</span>}
+                  {meu && <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand-hover">Meu</span>}
                 </div>
                 <p className="text-sm text-slate-500">{[ex.muscle_group, ex.equipment].filter(Boolean).join(' · ') || '—'}</p>
               </div>

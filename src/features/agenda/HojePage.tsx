@@ -9,6 +9,7 @@ import { ListaSkeleton } from '@/components/Skeleton'
 import { AulaCard } from './AulaCard'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
+import iconMark from '@/assets/brand/icon-mark.png'
 
 export function HojePage() {
   useGerarAulasDiarias()
@@ -64,13 +65,16 @@ export function HojePage() {
             </p>
           )}
         </div>
-        <Link
-          to="/configuracoes"
-          className="flex size-11 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100"
-          aria-label="Configurações"
-        >
-          <Settings size={22} />
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <img src={iconMark} alt="Personal Perto" className="h-6 w-auto" />
+          <Link
+            to="/configuracoes"
+            className="flex size-11 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100"
+            aria-label="Configurações"
+          >
+            <Settings size={22} />
+          </Link>
+        </div>
       </header>
 
       {isLoading && <ListaSkeleton />}

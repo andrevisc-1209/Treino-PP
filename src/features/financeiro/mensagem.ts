@@ -2,6 +2,7 @@ import type { Peso } from '@/features/alunos/api'
 import type { SessaoDetalhada } from '@/features/evolucao/api'
 import { evolucaoExercicio, exerciciosExecutados, pseMedia, variacaoPeso } from '@/features/evolucao/calc'
 import { formatarBRL } from '@/lib/moeda'
+import { APP_NAME } from '@/config/app'
 
 export type ResumoTreinoPeriodo = {
   quantidadeTreinos: number
@@ -95,5 +96,7 @@ export function montarMensagemFatura(input: MensagemFaturaInput): string {
 
   linhas.push('')
   linhas.push('Qualquer dúvida, me chama!')
+  linhas.push('')
+  linhas.push(`Enviado pelo ${APP_NAME}`)
   return linhas.join('\n')
 }

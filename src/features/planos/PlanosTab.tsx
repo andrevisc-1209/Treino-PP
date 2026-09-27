@@ -249,7 +249,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                 <li key={m.id}>
                   <Link to={`/meus-treinos/planejados/${m.id}`} onClick={fecharNovo} className="block rounded-xl px-3 py-3 opacity-70 active:bg-slate-100">
                     <p className="font-medium text-slate-400">{m.name}</p>
-                    <span className="text-sm font-medium text-brand-dark">Sem exercícios · toque para montar</span>
+                    <span className="text-sm font-medium text-brand-hover">Sem exercícios · toque para montar</span>
                   </Link>
                 </li>
               )

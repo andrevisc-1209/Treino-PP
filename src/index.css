@@ -1,14 +1,41 @@
 @import "tailwindcss";
 
+/* Fontes carregadas via <link> no index.html (preconnect + display=swap) —
+   um @import aqui ficaria depois da expansão do Tailwind no CSS final, o
+   que é inválido (regra @import precisa vir antes de tudo, exceto
+   @charset/@layer). Identidade visual do Personal Perto — ver docs/BRAND.md para a origem de
+   cada valor (arquivos lidos no repo do PP, cores reais do código deles,
+   não só amostradas da logo) e o motivo de brand/brand-bright serem cores
+   diferentes. */
 @theme {
-  /* Contraste com texto branco ≥ 4.5:1 (WCAG AA): brand 5.02:1, brand-dark 7.13:1.
-     Ver src/lib/contraste.test.ts. */
-  --color-brand: #15803d;
-  --color-brand-dark: #166534;
+  /* Botões, chips selecionados, qualquer fundo com texto branco em cima —
+     5.12:1 com branco. É um verde mais escuro que o "verde puro" do PP
+     (#4CAF50, 2.78:1 — não passa nem no limiar de texto grande) na mesma
+     família de matiz. Ver src/lib/contraste.test.ts. */
+  --color-brand: #367c39;
+  /* hover/active — 7.48:1 */
+  --color-brand-hover: #2a602c;
+  /* fundos claros (badges, destaques) */
+  --color-brand-soft: #eaf6ea;
+  /* texto sobre fundo --color-brand */
+  --color-brand-ink: #ffffff;
+  /* verde "de marca" de verdade — o próprio Personal Perto já usa como tom
+     de hover do CTA principal deles. 4.12:1 com branco: não serve pra texto
+     normal, mas passa o limiar de 3:1 de texto grande/ícone/detalhe — é
+     onde este token deve ser usado (nunca como cor de texto de parágrafo
+     nem fundo de botão com texto normal em cima). */
+  --color-brand-bright: #388e3c;
+  /* navy do Personal Perto — cor primária de texto/fundo lá; aqui, destaque
+     secundário (ex.: fundo do splash, algum título) */
+  --color-accent: #0f2537;
+
+  --font-heading: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 html, body, #root { height: 100%; }
-body { @apply bg-slate-50 text-slate-900 antialiased; }
+body { @apply bg-slate-50 text-slate-900 antialiased font-sans; }
+h1, h2, h3, h4, h5, h6 { @apply font-heading; }
 
 /* iOS renderiza date/time com um controle nativo que ignora width/padding
    normais e pode até vazar do card. appearance:none + width:100% deixa a
