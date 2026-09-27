@@ -129,3 +129,28 @@ investigar — não teve tempo de aprofundar nesta rodada.
   → Authentication → URL Configuration → Redirect URLs (ou o padrão
   `https://treino.personalperto.com.br/**`).
   Detalhes exatos na descrição da PR `feat/social-login`.
+
+## Atualização — "8 melhorias" (PRs feat/cadastro-personal-robusto, feat/arquivar-apagar-alunos, etc.)
+
+- ✅ Cadastro do personal completo (nome, CPF, telefone, WhatsApp opt-in, senha
+  forte, confirmar senha) + onboarding pós-Google/convite exigindo esses campos
+  — `feat/cadastro-personal-robusto` (migration `20261001000000_perfil_personal.sql`,
+  já rodada).
+- ✅ Arquivar/apagar alunos com menu ⋯ e aba "Arquivados" —
+  `feat/arquivar-apagar-alunos`.
+- ✅ Logout também em Configurações (antes só existia em Alunos) —
+  `src/features/agenda/ConfiguracoesPage.tsx`.
+- ❌➡️✅ **Item "bug: campos sem espaço" — investigado, bug não existe.**
+  Audit completo em todo `src/` (todo input de texto livre, todo `onKeyDown`,
+  todo `.trim()`/`.replace()` que pudesse rodar durante a digitação): nenhum
+  handler bloqueia ou remove espaço em tempo real. O único `onKeyDown` do app
+  inteiro é em `AulaCard.tsx` (ativa o card com a tecla Espaço, padrão de
+  acessibilidade pra elemento clicável — não é um input de texto). Todo
+  `.trim()` encontrado roda em submit/salvar ou em filtro de busca, nunca no
+  `onChange` de um campo. Se alguém ainda reproduzir isso, preciso do campo
+  específico e do navegador/teclado usado pra investigar de novo.
+- ⏳ Ainda faltam: local de treino com Google Places (precisa de
+  `VITE_GOOGLE_MAPS_API_KEY`, que não existe no projeto ainda), consentimento
+  por e-mail/WhatsApp com status pendente/enviado/aceito, e slider no
+  pré/pós-treino (troca dos chips 0–10 por `<input type="range">`, mantendo a
+  cor por polaridade que já existe em `ScaleQuestion.tsx`).
