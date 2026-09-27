@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, LogOut } from 'lucide-react'
 import { Button, Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 import { normalizarChavePix, normalizarCidadePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
 import { useProfessionalConfig, useSalvarProfessionalConfig } from './api'
 
@@ -150,6 +151,10 @@ export function ConfiguracoesPage() {
           {pixSalvo && <p className="text-sm text-brand-hover">Pix salvo.</p>}
           <Button onClick={handleSalvarPix} className="w-full" disabled={salvar.isPending}>
             Salvar Pix
+          </Button>
+
+          <Button variant="ghost" className="w-full text-red-600" onClick={() => supabase.auth.signOut()}>
+            <LogOut size={18} /> Sair
           </Button>
         </div>
       )}
