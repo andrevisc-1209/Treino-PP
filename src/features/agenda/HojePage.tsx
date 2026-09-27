@@ -10,6 +10,7 @@ import { AulaCard } from './AulaCard'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 import iconMark from '@/assets/brand/icon-mark.png'
+import { OnboardingChecklist } from '@/features/onboarding/OnboardingChecklist'
 
 export function HojePage() {
   useGerarAulasDiarias()
@@ -76,6 +77,8 @@ export function HojePage() {
           </Link>
         </div>
       </header>
+
+      <OnboardingChecklist />
 
       {isLoading && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}

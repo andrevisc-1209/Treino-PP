@@ -6,6 +6,8 @@ import { AlunosPage } from '@/features/alunos/AlunosPage'
 import { AlunoFormPage } from '@/features/alunos/AlunoFormPage'
 import { AlunoFichaPage } from '@/features/alunos/AlunoFichaPage'
 import { TermoPage } from '@/features/alunos/TermoPage'
+import { TermosPage } from '@/features/legal/TermosPage'
+import { PrivacidadePage } from '@/features/legal/PrivacidadePage'
 import { ExerciciosPage } from '@/features/exercicios/ExerciciosPage'
 import { ModelosPage } from '@/features/modelos/ModelosPage'
 import { ModeloEditorPage } from '@/features/modelos/ModeloEditorPage'
@@ -28,6 +30,8 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/definir-senha" element={<DefinirSenhaPage />} />
         <Route path="/termo" element={<TermoPage />} />
+        <Route path="/termos" element={<TermosPage />} />
+        <Route path="/privacidade" element={<PrivacidadePage />} />
         <Route element={<RequireAuth />}>
           <Route path="/" element={<HojePage />} />
           <Route path="/agenda" element={<AgendaPage />} />
