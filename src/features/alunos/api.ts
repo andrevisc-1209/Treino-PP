@@ -288,3 +288,29 @@ export function useDesarquivarAluno() {
     },
   })
 }
+
+export function useAlunosArquivados() {
+  return useQuery({
+    queryKey: ['alunos', 'arquivados'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('alunos').select('*').eq('active', false).order('name')
+      if (error) throw error
+      return data as Aluno[]
+    },
+  })
+}
+
+/** Hard delete — plano/sessões/séries/pesos/consentimentos somem em cascata (ON DELETE CASCADE). Irreversível. */
+export function useApagarAluno() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('alunos').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+      qc.invalidateQueries({ queryKey: ['aluno'] })
+    },
+  })
+}

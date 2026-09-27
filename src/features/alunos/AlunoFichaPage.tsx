@@ -10,7 +10,16 @@ import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
-import { useAluno, useArquivarAluno, useConsentimentoDetalhado, useDesarquivarAluno, usePesos, useRegistrarPeso, useRevogarConsentimento } from './api'
+import {
+  useAluno,
+  useApagarAluno,
+  useArquivarAluno,
+  useConsentimentoDetalhado,
+  useDesarquivarAluno,
+  usePesos,
+  useRegistrarPeso,
+  useRevogarConsentimento,
+} from './api'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarDesfazer } from '@/components/UndoToast'
 import { rotuloBadge, rotuloObjetivos } from './format'
@@ -81,6 +90,7 @@ export function AlunoFichaPage() {
   const revogar = useRevogarConsentimento(id ?? '')
   const arquivar = useArquivarAluno()
   const desarquivar = useDesarquivarAluno()
+  const apagar = useApagarAluno()
   const tabDaUrl = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
@@ -99,6 +109,17 @@ export function AlunoFichaPage() {
         mostrarDesfazer(`${aluno.name} foi arquivado.`, () => desarquivar.mutate(aluno.id))
       },
     })
+  }
+
+  const handleApagar = async () => {
+    const ok = await confirmarAcao({
+      titulo: 'Apagar aluno',
+      mensagem: `Tem certeza? Isso apaga ${aluno.name} e todo o histórico (treinos, sessões, avaliações). Esta ação não pode ser desfeita.`,
+      textoConfirmar: 'Apagar',
+      destrutivo: true,
+    })
+    if (!ok) return
+    apagar.mutate(aluno.id, { onSuccess: () => navigate('/alunos') })
   }
 
   const handleRevogar = async () => {
@@ -254,14 +275,14 @@ export function AlunoFichaPage() {
             )}
           </div>
 
-          <Button
-            variant="ghost"
-            className="w-full text-red-600"
-            onClick={handleArquivar}
-            disabled={arquivar.isPending}
-          >
-            Arquivar aluno
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" className="flex-1 text-slate-600" onClick={handleArquivar} disabled={arquivar.isPending}>
+              Arquivar aluno
+            </Button>
+            <Button variant="ghost" className="flex-1 text-red-600" onClick={handleApagar} disabled={apagar.isPending}>
+              Apagar aluno
+            </Button>
+          </div>
         </div>
       )}
 
