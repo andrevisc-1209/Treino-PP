@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DefinirSenhaPage } from '@/features/auth/DefinirSenhaPage'
+import { AuthCallbackPage } from '@/features/auth/AuthCallbackPage'
 import { AlunosPage } from '@/features/alunos/AlunosPage'
 import { AlunoFormPage } from '@/features/alunos/AlunoFormPage'
 import { AlunoFichaPage } from '@/features/alunos/AlunoFichaPage'
@@ -29,6 +30,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/definir-senha" element={<DefinirSenhaPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/termo" element={<TermoPage />} />
         <Route path="/termos" element={<TermosPage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
