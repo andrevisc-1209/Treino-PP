@@ -4,7 +4,10 @@ dist
 .env.local
 *.local
 .DS_Store
-e2e/.seed.json
 playwright-report
 test-results
 blob-report
+
+# credenciais da conta de teste E2E
+e2e/.env.e2e
+e2e/.seed.json
