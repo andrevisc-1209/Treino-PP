@@ -11,13 +11,13 @@ export default defineConfig({
   timeout: 30_000,
   globalSetup: './e2e/global-setup.ts',
   use: {
-    baseURL: 'http://localhost:5173/Treino-PP/',
+    baseURL: 'http://localhost:5173/',
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173/Treino-PP/login',
+    url: 'http://localhost:5173/login',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
