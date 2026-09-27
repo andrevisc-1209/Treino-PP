@@ -38,6 +38,27 @@ o seu — até você reverter a ativação.
    Supabase passa a exigir e validar o `captchaToken` em todo signUp/login/
    reset/resend.
 
+## A validação já é server-side — não precisa (e não deve) duplicar
+
+O passo 4 acima **é** a validação server-side: quando "Enable Captcha
+protection" está ativo, o próprio servidor do Supabase (GoTrue) faz o POST pra
+`https://challenges.cloudflare.com/turnstile/v0/siteverify` com a Secret Key,
+antes de aceitar qualquer `signUp`/`signInWithPassword`/`resetPasswordForEmail`/
+`resend` que leve `options.captchaToken`. O token nunca é "só conferido no
+navegador" — o frontend só o obtém e repassa; quem valida de verdade é o
+Supabase.
+
+**Não crie uma Edge Function própria pra chamar o `siteverify` antes desses
+métodos.** Um token do Turnstile só pode ser verificado **uma vez** — se algo
+além do Supabase já consumir o token com um `siteverify` próprio, a chamada
+seguinte do Supabase (que faz a mesma verificação) é recusada pelo Cloudflare
+por token já usado, e login/cadastro quebram pra todo mundo, mesmo com token
+"válido". Se um dia for necessário validar o captcha fora do fluxo de auth do
+Supabase (ex.: um form que não passa por `supabase.auth`), aí sim faz sentido
+um endpoint próprio — mas nesse caso ele deve ser o *único* lugar que chama o
+`siteverify` pra aquele token, nunca em paralelo com o `captchaToken` do
+Supabase Auth.
+
 ## Se algo travar
 
 Se o login parar de funcionar depois do passo 4 (token inválido, domínio não
