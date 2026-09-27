@@ -114,16 +114,18 @@ investigar — não teve tempo de aprofundar nesta rodada.
 3. **Colar os templates de e-mail prontos** (`docs/email-templates/`) no Supabase
    Dashboard — responsável: **André** — estimativa: 15 min
 
-## Atualização — Login social (Google + Facebook)
+## Atualização — Login social (Google)
 
-- ✅ **Código implementado** (PR `feat/social-login`): botões "Continuar com
-  Google"/"Continuar com Facebook" em `LoginPage.tsx` (login e cadastro), via
+- ✅ **Código implementado** (PR `feat/social-login`): botão "Continuar com
+  Google" em `LoginPage.tsx` (login e cadastro), via
   `src/components/SocialLoginButtons.tsx` e `supabase.auth.signInWithOAuth()`;
   `src/features/auth/AuthCallbackPage.tsx` trata o retorno em `/auth/callback`
-  (pede o nome se for a primeira vez, senão manda pra `/`).
-- 🔴 **Bloqueado**: André precisa (1) ativar os providers Google e Facebook em
-  Supabase → Authentication → Providers, colando Client ID/Secret de cada um
-  (Google Cloud Console / Meta for Developers); (2) adicionar
-  `https://treino.personalperto.com.br/auth/callback` em Supabase → Authentication
-  → URL Configuration → Redirect URLs (ou o padrão `https://treino.personalperto.com.br/**`).
+  (pede o nome se for a primeira vez, senão manda pra `/`). O botão do Facebook
+  foi implementado e depois removido a pedido (PR `fix/remove-facebook-compact-turnstile`)
+  — só Google por enquanto.
+- 🔴 **Bloqueado**: André precisa (1) ativar o provider Google em Supabase →
+  Authentication → Providers, colando Client ID/Secret (Google Cloud Console);
+  (2) adicionar `https://treino.personalperto.com.br/auth/callback` em Supabase
+  → Authentication → URL Configuration → Redirect URLs (ou o padrão
+  `https://treino.personalperto.com.br/**`).
   Detalhes exatos na descrição da PR `feat/social-login`.

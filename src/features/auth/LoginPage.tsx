@@ -87,7 +87,7 @@ export function LoginPage() {
           </p>
           {msg && <p className="text-sm text-red-600">{msg}</p>}
           <div className="flex justify-center">
-            <Turnstile onToken={setCaptchaToken} size="compact" />
+            <Turnstile onToken={setCaptchaToken} />
           </div>
           <Button onClick={reenviar} variant="outline" className="w-full" disabled={reenviando || esperaReenvio > 0}>
             {esperaReenvio > 0
@@ -183,7 +183,7 @@ export function LoginPage() {
             <Input type="email" {...recuperarForm.register('email')} autoComplete="email" autoFocus />
           </Field>
           <div className="flex justify-center">
-            <Turnstile onToken={setCaptchaToken} size="compact" />
+            <Turnstile onToken={setCaptchaToken} />
           </div>
           {msg && <p className="text-sm text-slate-600">{msg}</p>}
           <Button type="submit" className="w-full" disabled={recuperarForm.formState.isSubmitting}>
@@ -248,13 +248,15 @@ export function LoginPage() {
             </label>
             {formState.errors.termosAceitos && <p className="text-xs text-red-600">{formState.errors.termosAceitos.message}</p>}
 
-            <Turnstile onToken={setCaptchaToken} />
+            <div className="flex justify-center">
+              <Turnstile onToken={setCaptchaToken} />
+            </div>
           </>
         )}
 
         {mode === 'login' && (
           <div className="flex justify-center">
-            <Turnstile onToken={setCaptchaToken} size="compact" />
+            <Turnstile onToken={setCaptchaToken} />
           </div>
         )}
 

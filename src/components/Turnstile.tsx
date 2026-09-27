@@ -39,10 +39,11 @@ function carregarScript(): Promise<void> {
 /**
  * Widget do Cloudflare Turnstile. Some sem quebrar nada se VITE_TURNSTILE_SITE_KEY
  * não estiver definida (os fluxos de auth funcionam sem captcha em dev) — ver
- * README. `size="compact"` pra usar nos formulários de login/recuperar senha/
- * reenvio, menos intrusivo que o widget normal do cadastro.
+ * README. `compact` por padrão em todos os formulários de auth pra não dominar a
+ * tela; passe `size="normal"` explicitamente se algum caller futuro precisar do
+ * widget maior.
  */
-export function Turnstile({ onToken, size = 'normal' }: { onToken: (token: string) => void; size?: 'normal' | 'compact' }) {
+export function Turnstile({ onToken, size = 'compact' }: { onToken: (token: string) => void; size?: 'normal' | 'compact' }) {
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
   const containerId = useId()
   const widgetIdRef = useRef<string | null>(null)

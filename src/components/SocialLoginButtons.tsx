@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { APP_URL } from '@/config/app'
 
-async function entrarComProvedor(provider: 'google' | 'facebook') {
+async function entrarComGoogle() {
   await supabase.auth.signInWithOAuth({
-    provider,
+    provider: 'google',
     options: { redirectTo: `${APP_URL}auth/callback` },
   })
 }
@@ -28,15 +28,7 @@ function GoogleIcon() {
   )
 }
 
-function FacebookIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="#1877F2">
-      <path d="M18 9a9 9 0 1 0-10.4 8.89v-6.29H5.31V9h2.29V7.02c0-2.26 1.35-3.51 3.41-3.51.99 0 2.02.18 2.02.18v2.22h-1.14c-1.12 0-1.47.7-1.47 1.42V9h2.5l-.4 2.6h-2.1v6.29A9 9 0 0 0 18 9Z" />
-    </svg>
-  )
-}
-
-/** Botões "Continuar com Google/Facebook" — usados no login e no cadastro. */
+/** Botão "Continuar com Google" — usado no login e no cadastro. */
 export function SocialLoginButtons() {
   return (
     <div className="space-y-3">
@@ -47,19 +39,11 @@ export function SocialLoginButtons() {
       </div>
       <button
         type="button"
-        onClick={() => entrarComProvedor('google')}
+        onClick={entrarComGoogle}
         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 active:bg-slate-50"
       >
         <GoogleIcon />
         Continuar com Google
-      </button>
-      <button
-        type="button"
-        onClick={() => entrarComProvedor('facebook')}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 active:bg-slate-50"
-      >
-        <FacebookIcon />
-        Continuar com Facebook
       </button>
     </div>
   )
