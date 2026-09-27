@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { Button, Field, Input } from '@/components/ui'
 import { useAuth } from './AuthProvider'
 import { buscarNomeProfissional, salvarNomeProfissional } from './api'
+import { mapearErroAuth } from '@/lib/errosAuth'
 
 const schema = z
   .object({
@@ -33,7 +34,7 @@ export function DefinirSenhaPage() {
     setErro(null)
     const { error } = await supabase.auth.updateUser({ password: f.senha })
     if (error) {
-      setErro(error.message)
+      setErro(mapearErroAuth(error))
       return
     }
     const nomeAtual = await buscarNomeProfissional(session.user.id).catch(() => '')
