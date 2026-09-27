@@ -16,7 +16,7 @@ function htmlAppNamePlugin(): Plugin {
 }
 
 export default defineConfig({
-  base: '/Treino-PP/',
+  base: '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -29,8 +29,8 @@ export default defineConfig({
         short_name: APP_SHORT_NAME,
         description: 'Assistente do personal trainer para gerenciar alunos e treinos.',
         lang: 'pt-BR',
-        start_url: '/Treino-PP/',
-        scope: '/Treino-PP/',
+        start_url: '/',
+        scope: '/',
         display: 'standalone',
         orientation: 'portrait',
         theme_color: '#367c39',

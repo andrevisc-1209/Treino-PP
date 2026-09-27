@@ -44,7 +44,7 @@ test('série marcada offline não se perde nem duplica ao reconectar', async ({ 
   await page.getByLabel('E-mail').fill(seed.email)
   await page.getByLabel('Senha').fill(seed.password)
   await page.getByRole('button', { name: 'Entrar' }).click()
-  await expect(page).toHaveURL(/\/Treino-PP\/?$/)
+  await expect(page).toHaveURL(/\/$/)
 
   await page.goto(`alunos/${seed.alunoId}/sessoes/${seed.sessaoId}`)
   await expect(page.getByText('E2E Supino')).toBeVisible()
