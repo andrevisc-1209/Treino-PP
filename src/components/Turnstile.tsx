@@ -65,8 +65,7 @@ export function Turnstile({ onToken, size = 'normal' }: { onToken: (token: strin
       cancelado = true
       if (widgetIdRef.current && window.turnstile) window.turnstile.remove(widgetIdRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteKey, containerId, size])
+  }, [siteKey, containerId, size, onToken])
 
   if (!siteKey) return null
   return <div id={containerId} />
