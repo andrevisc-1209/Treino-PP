@@ -24,8 +24,10 @@ Decisão de produto: o cadastro de personal é aberto (não é mais por convite)
 | 5.3 | Tela "Confirme seu e-mail" com reenvio (espera de 60s entre envios) | ✅ feito |
 | 5.4 | Anti-spam (Cloudflare Turnstile via captcha nativo do Supabase Auth) | ✅ feito no código — falta configurar site key/secret key pra ativar |
 | 5.5 | Checklist de onboarding no primeiro acesso (Pix → 1º aluno → horário fixo → 1º treino planejado) | ✅ feito |
+| 5.6 | Erros do `supabase.auth` em português (login, cadastro, recuperação, reenvio) + tela de e-mail não confirmado no login | ✅ feito |
+| 5.7 | Captcha (Turnstile) em todos os fluxos de auth (login, "esqueci minha senha", reenvio, além do cadastro) + `docs/CAPTCHA.md` e `docs/SMTP.md` | ✅ feito no código — falta configurar site key/secret key (`docs/CAPTCHA.md`) e o SMTP próprio (`docs/SMTP.md`) |
 
-PR: [feat/cadastro-aberto](https://github.com/andrevisc-1209/Treino-PP/pull/20)
+PR: [feat/cadastro-aberto](https://github.com/andrevisc-1209/Treino-PP/pull/20), [feat/auth-robusto](https://github.com/andrevisc-1209/Treino-PP/pull/23)
 
 ## 6. Domínio próprio (D2)
 
@@ -43,10 +45,8 @@ D2 = GitHub Pages com domínio próprio `treino.personalperto.com.br` (em vez de
 Pendente pra depois do deploy no domínio novo (não dá pra fazer nesta PR): apontar o
 **Site URL** e os **Redirect URLs** do Supabase pro domínio novo — ver `docs/DOMINIO.md`.
 
-`docs/CAPTCHA.md` e `docs/SMTP.md` ainda não existem nesta main — quando forem
-criados (PR `feat/auth-robusto`), atualizar os domínios do Turnstile
-(`treino.personalperto.com.br` e `localhost`) e o subdomínio verificado no Resend
-(`treino.personalperto.com.br`, não o domínio raiz `personalperto.com.br`, pra não
-mexer no SPF do e-mail principal).
+`docs/CAPTCHA.md` e `docs/SMTP.md` foram criados na PR `feat/auth-robusto` (item 5.7),
+já com o domínio novo (Turnstile: `treino.personalperto.com.br` + `localhost`; Resend:
+subdomínio `treino.personalperto.com.br`, não o domínio raiz).
 
 PR: [chore/dominio-proprio](https://github.com/andrevisc-1209/Treino-PP/pull/22)
