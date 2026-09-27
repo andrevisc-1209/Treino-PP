@@ -3,7 +3,16 @@ import { useEffect, useId, useRef } from 'react'
 declare global {
   interface Window {
     turnstile?: {
-      render: (container: HTMLElement, options: { sitekey: string; callback: (token: string) => void; 'expired-callback'?: () => void }) => string
+      render: (
+        container: HTMLElement,
+        options: {
+          sitekey: string
+          callback: (token: string) => void
+          'expired-callback'?: () => void
+          size?: 'normal' | 'compact'
+          appearance?: 'always' | 'execute' | 'interaction-only'
+        },
+      ) => string
       remove: (widgetId: string) => void
     }
   }
@@ -29,9 +38,11 @@ function carregarScript(): Promise<void> {
 
 /**
  * Widget do Cloudflare Turnstile. Some sem quebrar nada se VITE_TURNSTILE_SITE_KEY
- * não estiver definida (cadastro funciona sem captcha em dev) — ver README.
+ * não estiver definida (os fluxos de auth funcionam sem captcha em dev) — ver
+ * README. `size="compact"` pra usar nos formulários de login/recuperar senha/
+ * reenvio, menos intrusivo que o widget normal do cadastro.
  */
-export function Turnstile({ onToken }: { onToken: (token: string) => void }) {
+export function Turnstile({ onToken, size = 'normal' }: { onToken: (token: string) => void; size?: 'normal' | 'compact' }) {
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
   const containerId = useId()
   const widgetIdRef = useRef<string | null>(null)
@@ -47,6 +58,7 @@ export function Turnstile({ onToken }: { onToken: (token: string) => void }) {
         sitekey: siteKey,
         callback: onToken,
         'expired-callback': () => onToken(''),
+        size,
       })
     })
     return () => {
@@ -54,7 +66,7 @@ export function Turnstile({ onToken }: { onToken: (token: string) => void }) {
       if (widgetIdRef.current && window.turnstile) window.turnstile.remove(widgetIdRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteKey, containerId])
+  }, [siteKey, containerId, size])
 
   if (!siteKey) return null
   return <div id={containerId} />

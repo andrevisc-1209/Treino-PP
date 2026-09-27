@@ -9,6 +9,8 @@ import { Button, Field, Input } from '@/components/ui'
 import { APP_NAME, APP_URL } from '@/config/app'
 import { Turnstile } from '@/components/Turnstile'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
+import { mapearErroAuth } from '@/lib/errosAuth'
+import { mostrarInfoGlobal } from '@/components/Toast'
 import iconMark from '@/assets/brand/icon-mark.png'
 
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
@@ -36,6 +38,7 @@ export function LoginPage() {
   const [msg, setMsg] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState('')
   const [emailPendente, setEmailPendente] = useState<string | null>(null)
+  const [emailPendenteOrigem, setEmailPendenteOrigem] = useState<'signup' | 'login'>('signup')
   const [reenviando, setReenviando] = useState(false)
   const [esperaReenvio, setEsperaReenvio] = useState(0)
 
@@ -58,11 +61,16 @@ export function LoginPage() {
     const reenviar = async () => {
       setReenviando(true)
       setMsg(null)
-      const { error } = await supabase.auth.resend({ type: 'signup', email: emailPendente })
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: emailPendente,
+        options: { captchaToken: captchaToken || undefined },
+      })
       setReenviando(false)
-      if (error) setMsg(error.message)
+      setCaptchaToken('')
+      if (error) setMsg(mapearErroAuth(error))
       else {
-        setMsg('E-mail reenviado.')
+        mostrarInfoGlobal('E-mail reenviado')
         setEsperaReenvio(REENVIO_ESPERA_SEGUNDOS)
       }
     }
@@ -72,11 +80,20 @@ export function LoginPage() {
           <img src={iconMark} alt="Personal Perto" className="mx-auto h-12 w-auto" />
           <h1 className="text-xl font-bold">Confirme seu e-mail</h1>
           <p className="text-sm text-slate-600">
-            Enviamos um link de confirmação para <strong>{emailPendente}</strong>. Abra o e-mail e clique no link pra ativar sua conta.
+            {emailPendenteOrigem === 'login'
+              ? `Confirme seu e-mail antes de entrar. Enviamos um link para ${emailPendente}.`
+              : `Enviamos um link de confirmação para ${emailPendente}. Abra o e-mail e clique no link pra ativar sua conta.`}
           </p>
-          {msg && <p className="text-sm text-slate-500">{msg}</p>}
+          {msg && <p className="text-sm text-red-600">{msg}</p>}
+          <div className="flex justify-center">
+            <Turnstile onToken={setCaptchaToken} size="compact" />
+          </div>
           <Button onClick={reenviar} variant="outline" className="w-full" disabled={reenviando || esperaReenvio > 0}>
-            {esperaReenvio > 0 ? `Reenviar e-mail (${esperaReenvio}s)` : reenviando ? 'Reenviando…' : 'Reenviar e-mail'}
+            {esperaReenvio > 0
+              ? `Reenviar e-mail de confirmação (${esperaReenvio}s)`
+              : reenviando
+                ? 'Reenviando…'
+                : 'Reenviar e-mail de confirmação'}
           </Button>
           <button
             type="button"
@@ -97,8 +114,20 @@ export function LoginPage() {
   const onSubmit = async (f: Form) => {
     setMsg(null)
     if (mode === 'login') {
-      const { error } = await supabase.auth.signInWithPassword({ email: f.email, password: f.password })
-      if (error) setMsg(error.message)
+      const { error } = await supabase.auth.signInWithPassword({
+        email: f.email,
+        password: f.password,
+        options: { captchaToken: captchaToken || undefined },
+      })
+      setCaptchaToken('')
+      if (error) {
+        if (error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message)) {
+          setEmailPendenteOrigem('login')
+          setEmailPendente(f.email)
+        } else {
+          setMsg(mapearErroAuth(error))
+        }
+      }
       return
     }
 
@@ -115,13 +144,15 @@ export function LoginPage() {
         captchaToken: captchaToken || undefined,
       },
     })
+    setCaptchaToken('')
     if (error) {
-      setMsg(error.message)
+      setMsg(mapearErroAuth(error))
       return
     }
     if (!data.session) {
       // Projeto exige confirmação de e-mail — o AuthProvider ainda não tem sessão,
       // então o guard de "session" no topo deste componente não redireciona sozinho.
+      setEmailPendenteOrigem('signup')
       setEmailPendente(f.email)
     }
     // Se já veio sessão (confirmação de e-mail desligada no projeto), o
@@ -132,8 +163,10 @@ export function LoginPage() {
     setMsg(null)
     const { error } = await supabase.auth.resetPasswordForEmail(f.email, {
       redirectTo: APP_URL + 'definir-senha',
+      captchaToken: captchaToken || undefined,
     })
-    if (error) setMsg(error.message)
+    setCaptchaToken('')
+    if (error) setMsg(mapearErroAuth(error))
     else setMsg('Se o e-mail existir, enviamos um link para redefinir a senha.')
   }
 
@@ -148,6 +181,9 @@ export function LoginPage() {
           <Field label="E-mail" error={recuperarForm.formState.errors.email?.message}>
             <Input type="email" {...recuperarForm.register('email')} autoComplete="email" autoFocus />
           </Field>
+          <div className="flex justify-center">
+            <Turnstile onToken={setCaptchaToken} size="compact" />
+          </div>
           {msg && <p className="text-sm text-slate-600">{msg}</p>}
           <Button type="submit" className="w-full" disabled={recuperarForm.formState.isSubmitting}>
             Enviar link
@@ -211,6 +247,12 @@ export function LoginPage() {
 
             <Turnstile onToken={setCaptchaToken} />
           </>
+        )}
+
+        {mode === 'login' && (
+          <div className="flex justify-center">
+            <Turnstile onToken={setCaptchaToken} size="compact" />
+          </div>
         )}
 
         {msg && <p className="text-sm text-slate-600">{msg}</p>}

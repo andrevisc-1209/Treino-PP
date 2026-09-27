@@ -1,25 +1,31 @@
 import { useEffect, useState } from 'react'
-import { TriangleAlert } from 'lucide-react'
+import { CircleCheck, TriangleAlert } from 'lucide-react'
 
 // Rede de segurança global: qualquer mutation que falhe (mesmo sem onError
 // próprio, ou além dele) aparece aqui. Ver mutationCache.onError em main.tsx.
 
-type Ouvinte = (mensagem: string) => void
+type Tipo = 'erro' | 'info'
+type Ouvinte = (mensagem: string, tipo: Tipo) => void
 const ouvintes = new Set<Ouvinte>()
 
 export function mostrarErroGlobal(mensagem: string) {
-  ouvintes.forEach((fn) => fn(mensagem))
+  ouvintes.forEach((fn) => fn(mensagem, 'erro'))
 }
 
-type ToastItem = { id: number; mensagem: string }
+/** Toast neutro pra confirmações rápidas (ex.: "E-mail reenviado") — não é erro. */
+export function mostrarInfoGlobal(mensagem: string) {
+  ouvintes.forEach((fn) => fn(mensagem, 'info'))
+}
+
+type ToastItem = { id: number; mensagem: string; tipo: Tipo }
 
 export function ToastHost() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   useEffect(() => {
-    const ouvinte: Ouvinte = (mensagem) => {
+    const ouvinte: Ouvinte = (mensagem, tipo) => {
       const id = Date.now() + Math.random()
-      setToasts((t) => [...t, { id, mensagem }])
+      setToasts((t) => [...t, { id, mensagem, tipo }])
       setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 5000)
     }
     ouvintes.add(ouvinte)
@@ -36,9 +42,12 @@ export function ToastHost() {
         <div
           key={t.id}
           role="alert"
-          className="flex w-full max-w-md items-start gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-medium text-white shadow-lg"
+          className={
+            'flex w-full max-w-md items-start gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg ' +
+            (t.tipo === 'erro' ? 'bg-red-600' : 'bg-slate-900')
+          }
         >
-          <TriangleAlert size={18} className="mt-0.5 shrink-0" />
+          {t.tipo === 'erro' ? <TriangleAlert size={18} className="mt-0.5 shrink-0" /> : <CircleCheck size={18} className="mt-0.5 shrink-0" />}
           <span>{t.mensagem}</span>
         </div>
       ))}
