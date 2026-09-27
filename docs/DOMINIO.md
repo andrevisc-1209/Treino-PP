@@ -30,6 +30,10 @@ Atualizar assim que o domínio novo estiver no ar:
   `http://localhost:5173` para o dev local). O endereço antigo
   (`https://andrevisc-1209.github.io/Treino-PP/`) pode ser removido depois que o
   domínio novo estiver validado em produção.
+- Login social (Google/Facebook, ver `docs/BACKLOG.md`) usa
+  `https://treino.personalperto.com.br/auth/callback` como retorno — adicionar
+  também em **Redirect URLs** (ou usar o padrão `https://treino.personalperto.com.br/**`,
+  que já cobre a raiz e o callback).
 
 Enquanto o Site URL não for atualizado, os links de confirmação de e-mail e de
 redefinição de senha enviados pelo Supabase continuam apontando pro domínio antigo.

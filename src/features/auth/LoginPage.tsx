@@ -11,6 +11,7 @@ import { Turnstile } from '@/components/Turnstile'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import { mapearErroAuth } from '@/lib/errosAuth'
 import { mostrarInfoGlobal } from '@/components/Toast'
+import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import iconMark from '@/assets/brand/icon-mark.png'
 
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
@@ -222,6 +223,8 @@ export function LoginPage() {
         <Field label="Senha" error={formState.errors.password?.message}>
           <Input type="password" {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
         </Field>
+
+        <SocialLoginButtons />
 
         {mode === 'signup' && (
           <>
