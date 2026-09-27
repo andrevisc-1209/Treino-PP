@@ -12,20 +12,38 @@ import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import { mapearErroAuth } from '@/lib/errosAuth'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
+import { mascararCPF, validarCPF } from '@/lib/cpf'
+import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import iconMark from '@/assets/brand/icon-mark.png'
 
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
 const REENVIO_ESPERA_SEGUNDOS = 60
 
 function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
-  return z.object({
+  const base = z.object({
     name: mode === 'signup' ? z.string().min(1, 'Nome é obrigatório') : z.string().optional(),
     email: z.string().email('E-mail inválido'),
-    password: z.string().min(mode === 'signup' ? 8 : 6, mode === 'signup' ? 'Mínimo 8 caracteres' : 'Mínimo 6 caracteres'),
+    password:
+      mode === 'signup'
+        ? z
+            .string()
+            .min(8, 'Mínimo 8 caracteres')
+            .regex(/[A-Z]/, 'Precisa de 1 letra maiúscula')
+            .regex(/[0-9]/, 'Precisa de 1 número')
+            .regex(/[^A-Za-z0-9]/, 'Precisa de 1 símbolo')
+        : z.string().min(6, 'Mínimo 6 caracteres'),
+    confirmPassword: z.string().optional(),
+    cpf: mode === 'signup' ? z.string().refine(validarCPF, 'CPF inválido') : z.string().optional(),
+    phone: mode === 'signup' ? z.string().refine(validarTelefone, 'Telefone inválido') : z.string().optional(),
+    whatsappOptIn: z.boolean().optional(),
     termosAceitos:
       mode === 'signup'
         ? z.boolean().refine((v) => v === true, { message: 'Você precisa aceitar os Termos de Uso e a Política de Privacidade' })
         : z.boolean().optional(),
+  })
+  return base.refine((d) => mode !== 'signup' || d.password === d.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
   })
 }
 type Form = z.infer<ReturnType<typeof buildSchema>>
@@ -49,6 +67,9 @@ export function LoginPage() {
   })
   const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
   const termosAceitos = watch('termosAceitos')
+  const whatsappOptIn = watch('whatsappOptIn')
+  const cpfValor = watch('cpf')
+  const phoneValor = watch('phone')
 
   useEffect(() => {
     if (esperaReenvio <= 0) return
@@ -138,6 +159,9 @@ export function LoginPage() {
       options: {
         data: {
           name: f.name ?? '',
+          cpf: (f.cpf ?? '').replace(/\D/g, ''),
+          phone: (f.phone ?? '').replace(/\D/g, ''),
+          whatsapp_opt_in: f.whatsappOptIn ?? false,
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
         },
@@ -213,9 +237,27 @@ export function LoginPage() {
           <p className="text-sm text-slate-500">Assistente do personal</p>
         </div>
         {mode === 'signup' && (
-          <Field label="Nome" error={formState.errors.name?.message}>
-            <Input {...register('name')} autoComplete="name" autoFocus />
-          </Field>
+          <>
+            <Field label="Nome" error={formState.errors.name?.message}>
+              <Input {...register('name')} autoComplete="name" autoFocus />
+            </Field>
+            <Field label="CPF" error={formState.errors.cpf?.message}>
+              <Input
+                value={cpfValor ?? ''}
+                onChange={(e) => setValue('cpf', mascararCPF(e.target.value), { shouldValidate: true })}
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+              />
+            </Field>
+            <Field label="Telefone" error={formState.errors.phone?.message}>
+              <Input
+                value={phoneValor ?? ''}
+                onChange={(e) => setValue('phone', mascararTelefone(e.target.value), { shouldValidate: true })}
+                inputMode="tel"
+                placeholder="(00) 00000-0000"
+              />
+            </Field>
+          </>
         )}
         <Field label="E-mail" error={formState.errors.email?.message}>
           <Input type="email" {...register('email')} autoComplete="email" />
@@ -223,6 +265,11 @@ export function LoginPage() {
         <Field label="Senha" error={formState.errors.password?.message}>
           <Input type="password" {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
         </Field>
+        {mode === 'signup' && (
+          <Field label="Confirme a senha" error={formState.errors.confirmPassword?.message}>
+            <Input type="password" {...register('confirmPassword')} autoComplete="new-password" />
+          </Field>
+        )}
 
         <SocialLoginButtons />
 
@@ -247,6 +294,16 @@ export function LoginPage() {
               </span>
             </label>
             {formState.errors.termosAceitos && <p className="text-xs text-red-600">{formState.errors.termosAceitos.message}</p>}
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="size-5 shrink-0 accent-brand"
+                checked={!!whatsappOptIn}
+                onChange={(e) => setValue('whatsappOptIn', e.target.checked)}
+              />
+              <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
+            </label>
 
             <div className="flex justify-center">
               <Turnstile onToken={setCaptchaToken} />

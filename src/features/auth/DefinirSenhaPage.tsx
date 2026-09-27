@@ -6,7 +6,8 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Button, Field, Input } from '@/components/ui'
 import { useAuth } from './AuthProvider'
-import { buscarNomeProfissional, salvarNomeProfissional } from './api'
+import { buscarPerfilProfissional } from './api'
+import { PerfilObrigatorioForm } from './PerfilObrigatorioForm'
 import { mapearErroAuth } from '@/lib/errosAuth'
 
 const schema = z
@@ -23,9 +24,8 @@ export function DefinirSenhaPage() {
   const navigate = useNavigate()
   const { register, handleSubmit, formState } = useForm<Form>({ resolver: zodResolver(schema) })
   const [erro, setErro] = useState<string | null>(null)
-  const [etapa, setEtapa] = useState<'senha' | 'nome'>('senha')
-  const [nome, setNome] = useState('')
-  const [salvandoNome, setSalvandoNome] = useState(false)
+  const [etapa, setEtapa] = useState<'senha' | 'perfil'>('senha')
+  const [nomeInicial, setNomeInicial] = useState('')
 
   if (loading) return <div className="p-8 text-center text-slate-500">Carregando…</div>
   if (!session) return <Navigate to="/login" replace />
@@ -37,28 +37,12 @@ export function DefinirSenhaPage() {
       setErro(mapearErroAuth(error))
       return
     }
-    const nomeAtual = await buscarNomeProfissional(session.user.id).catch(() => '')
-    if (!nomeAtual.trim()) {
-      setEtapa('nome')
+    const perfil = await buscarPerfilProfissional(session.user.id).catch(() => null)
+    if (perfil && perfil.name.trim() && perfil.cpf && perfil.phone) {
+      navigate('/', { replace: true })
     } else {
-      navigate('/', { replace: true })
-    }
-  }
-
-  const salvarNome = async () => {
-    if (!nome.trim()) {
-      setErro('Informe seu nome')
-      return
-    }
-    setErro(null)
-    setSalvandoNome(true)
-    try {
-      await salvarNomeProfissional(session.user.id, nome.trim())
-      navigate('/', { replace: true })
-    } catch (e) {
-      setErro((e as Error).message)
-    } finally {
-      setSalvandoNome(false)
+      setNomeInicial(perfil?.name.trim() ?? '')
+      setEtapa('perfil')
     }
   }
 
@@ -66,9 +50,9 @@ export function DefinirSenhaPage() {
     <div className="flex min-h-full items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
         <div>
-          <h1 className="text-2xl font-bold">{etapa === 'senha' ? 'Crie sua senha' : 'Como podemos te chamar?'}</h1>
+          <h1 className="text-2xl font-bold">{etapa === 'senha' ? 'Crie sua senha' : 'Complete seu perfil'}</h1>
           <p className="text-sm text-slate-500">
-            {etapa === 'senha' ? 'Defina a senha de acesso ao Treino.' : 'Seu nome aparece para os seus alunos.'}
+            {etapa === 'senha' ? 'Defina a senha de acesso ao Treino.' : 'Só mais um passo antes de começar.'}
           </p>
         </div>
 
@@ -86,15 +70,7 @@ export function DefinirSenhaPage() {
             </Button>
           </form>
         ) : (
-          <div className="space-y-4">
-            <Field label="Nome">
-              <Input value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
-            </Field>
-            {erro && <p className="text-sm text-red-600">{erro}</p>}
-            <Button onClick={salvarNome} className="w-full" disabled={salvandoNome}>
-              Concluir
-            </Button>
-          </div>
+          <PerfilObrigatorioForm userId={session.user.id} nomeInicial={nomeInicial} onConcluido={() => navigate('/', { replace: true })} />
         )}
       </div>
     </div>
