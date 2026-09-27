@@ -34,14 +34,13 @@ informa o nome (se ainda não tiver). "Esqueci minha senha" na tela de login usa
 o mesmo fluxo (`resetPasswordForEmail`) nos dois casos.
 
 ### Anti-spam (Cloudflare Turnstile)
-Opcional. Sem `VITE_TURNSTILE_SITE_KEY` definida, o cadastro funciona sem
-captcha (bom pra dev). Pra ativar:
-1. [Cloudflare Dashboard → Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile) → crie um site widget, copie a **Site Key** e a **Secret Key**.
-2. `VITE_TURNSTILE_SITE_KEY` no `.env` (ou como GitHub variable, veja Deploy abaixo) = a Site Key.
-3. Supabase → **Authentication → Attack Protection** → ative **Enable Captcha protection**, escolha **Turnstile** e cole a Secret Key.
+Opcional. Sem `VITE_TURNSTILE_SITE_KEY` definida, cadastro, login, "esqueci
+minha senha" e reenvio de confirmação funcionam sem captcha (bom pra dev). Pra
+ativar em produção, siga a ordem exata em **`docs/CAPTCHA.md`** — inverter a
+ordem trava o login de todos.
 
-O app já manda o token do Turnstile pro Supabase (`options.captchaToken` no
-`signUp`) — o Supabase valida a Secret Key do lado dele.
+O app já manda o token do Turnstile pro Supabase (`options.captchaToken`) em
+todos esses fluxos — o Supabase valida a Secret Key do lado dele.
 
 ## Deploy (GitHub Pages)
 App publicado em **https://treino.personalperto.com.br/** (domínio próprio, GitHub
@@ -58,7 +57,8 @@ Passos manuais (uma vez só):
    `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com os valores do projeto Supabase.
    Por padrão o build usa `VITE_ALLOW_SIGNUP=true` (cadastro aberto); pra fechar,
    crie a **variable** (não secret) `VITE_ALLOW_SIGNUP` como `false`. Pra ligar o
-   anti-spam, crie a variable `VITE_TURNSTILE_SITE_KEY` com a Site Key do Turnstile.
+   anti-spam, crie o **secret** `VITE_TURNSTILE_SITE_KEY` com a Site Key do
+   Turnstile — veja a ordem certa em `docs/CAPTCHA.md`.
 3. Supabase → **Authentication → URL Configuration**:
    - **Site URL**: `https://treino.personalperto.com.br/`
    - **Redirect URLs**: adicione `https://treino.personalperto.com.br/` e
