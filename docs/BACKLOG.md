@@ -50,3 +50,16 @@ já com o domínio novo (Turnstile: `treino.personalperto.com.br` + `localhost`;
 subdomínio `treino.personalperto.com.br`, não o domínio raiz).
 
 PR: [chore/dominio-proprio](https://github.com/andrevisc-1209/Treino-PP/pull/22)
+
+## 7. Login social (Google + Facebook)
+
+| Item | Descrição | Status |
+|---|---|---|
+| 7.1 | Botões "Continuar com Google/Facebook" no login e cadastro (`SocialLoginButtons.tsx`) | ✅ feito |
+| 7.2 | `signInWithOAuth` + `/auth/callback` (`AuthCallbackPage.tsx`), pede o nome se for a primeira vez | ✅ feito |
+
+Pendente (fora do código, ver `docs/STATUS.md`): ativar os providers Google e
+Facebook no Supabase (Client ID/Secret de cada um) e adicionar
+`https://treino.personalperto.com.br/auth/callback` nos Redirect URLs.
+
+PR: [feat/social-login](https://github.com/andrevisc-1209/Treino-PP/pull/26)
