@@ -9,6 +9,7 @@ import { cn, formatarTelefone, idade } from '@/lib/utils'
 import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
 import { useAluno, useAlunos, useConsentimentoAtivo, usePesos, useSalvarAluno } from './api'
+import { LocaisTreinoBlock } from './LocaisTreinoBlock'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
 import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
@@ -383,6 +384,14 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 <Input {...register('objetivo_notes')} placeholder="Ex.: voltar a jogar futevôlei" />
               </Field>
             )}
+
+            <Field label="Local de treino">
+              {mode === 'edit' ? (
+                <LocaisTreinoBlock alunoId={id!} />
+              ) : (
+                <p className="text-sm text-slate-500">Salve o aluno primeiro pra adicionar locais de treino.</p>
+              )}
+            </Field>
           </>
         )}
 

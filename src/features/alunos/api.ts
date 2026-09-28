@@ -314,3 +314,48 @@ export function useApagarAluno() {
     },
   })
 }
+
+export const LOCAIS_TREINO_MAX = 5
+
+export type LocalTreino = { id: string; aluno_id: string; nome: string; endereco: string; maps_link: string }
+
+export function useLocaisTreino(alunoId: string | undefined) {
+  return useQuery({
+    queryKey: ['locais_treino', alunoId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('aluno_locais_treino').select('*').eq('aluno_id', alunoId!).order('created_at')
+      if (error) throw error
+      return data as LocalTreino[]
+    },
+    enabled: !!alunoId,
+  })
+}
+
+export function useAdicionarLocalTreino(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (local: { nome: string; endereco: string; mapsLink: string }) => {
+      const { data: auth } = await supabase.auth.getUser()
+      const { error } = await supabase.from('aluno_locais_treino').insert({
+        aluno_id: alunoId,
+        professional_id: auth.user!.id,
+        nome: local.nome,
+        endereco: local.endereco,
+        maps_link: local.mapsLink,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['locais_treino', alunoId] }),
+  })
+}
+
+export function useRemoverLocalTreino(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('aluno_locais_treino').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['locais_treino', alunoId] }),
+  })
+}
