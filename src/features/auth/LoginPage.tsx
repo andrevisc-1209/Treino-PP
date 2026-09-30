@@ -61,7 +61,7 @@ export function LoginPage() {
   const [reenviando, setReenviando] = useState(false)
   const [esperaReenvio, setEsperaReenvio] = useState(0)
 
-  const { register, handleSubmit, formState, setValue, watch } = useForm<Form>({
+  const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
     defaultValues: { termosAceitos: false },
   })
@@ -245,8 +245,10 @@ export function LoginPage() {
               <Input
                 value={cpfValor ?? ''}
                 onChange={(e) => setValue('cpf', mascararCPF(e.target.value), { shouldValidate: true })}
+                onBlur={() => trigger('cpf')}
                 inputMode="numeric"
                 placeholder="000.000.000-00"
+                className={formState.errors.cpf ? 'border-red-600 focus:border-red-600' : undefined}
               />
             </Field>
             <Field label="Telefone" error={formState.errors.phone?.message}>
@@ -318,7 +320,7 @@ export function LoginPage() {
         )}
 
         {msg && <p className="text-sm text-slate-600">{msg}</p>}
-        <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
+        <Button type="submit" className="w-full" disabled={formState.isSubmitting || (mode === 'signup' && !!formState.errors.cpf)}>
           {mode === 'login' ? 'Entrar' : 'Criar conta'}
         </Button>
 
