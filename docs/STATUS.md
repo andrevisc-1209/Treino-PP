@@ -243,3 +243,45 @@ investigar — não teve tempo de aprofundar nesta rodada.
   já vive desde a PR de cadastro do personal.
 
 Pendente: rodar `supabase/migrations/20261005000000_unique_cpf.sql`.
+
+## 🐛 Bug corrigido: e-mail duplicado (Google + cadastro manual) — feat/cadastro-ux-seguranca
+
+- ✅ **Causa raiz confirmada e corrigida.** `supabase.auth.signUp()` pra um e-mail
+  que já tem conta não retorna erro nesse projeto — devolve um "usuário" sem
+  identidade real (`data.user.identities: []`, sem `session`), pensado pelo
+  Supabase pra não revelar quem já tem conta. `LoginPage.tsx` tratava
+  `!error && !session` só como "precisa confirmar o e-mail", então um e-mail
+  duplicado caía na tela "Confirme seu e-mail" como se fosse cadastro novo — sem
+  nunca criar uma segunda linha em `auth.users`, só dando a falsa impressão de
+  sucesso. Corrigido checando `identities.length === 0` antes do caminho de
+  confirmação pendente.
+  - **Reproduzido e confirmado ao vivo** contra o Supabase real, com a conta de
+    teste fixa: tentei cadastro manual com o e-mail que já tem conta →
+    "Este e-mail já está cadastrado. Tente fazer login — se usou Google, clique em
+    'Continuar com Google'." aparece corretamente agora.
+- ⚠️ **Não consigo confirmar se existe alguma conta de fato duplicada** em
+  `auth.users` — não é acessível pela anon key. A query de verificação está pronta
+  em `docs/BACKLOG.md` (seção 10) pra você rodar.
+- Não criei `src/lib/validators.ts`/`traduzirErroAuth` como o pedido sugeria — o
+  mapeamento de erros do `signUp`/`signIn`/`resetPasswordForEmail` já existia e já
+  cobria "User already registered" (`mapearErroAuth`, `src/lib/errosAuth.ts`,
+  aplicado em todos os três já desde a PR `feat/auth-robusto`). O problema nunca
+  foi o mapeamento — foi essa chamada específica que não retorna erro nenhum.
+- Senha: botão de olho + checklist de 4 regras ao vivo (verde/vermelho) +
+  "Criar conta" desabilitado até tudo verde, em `LoginPage.tsx`. Eye-toggle também
+  aplicado em `DefinirSenhaPage.tsx` (sem o checklist — essa tela só exige 8
+  caracteres, mantive como estava).
+- WhatsApp: checkbox virou `Switch` (`src/components/ui.tsx`) em todos os 3 lugares
+  onde aparecia (cadastro, perfil obrigatório pós-Google/convite, e novo em
+  Configurações). Em Configurações, o toggle salva na hora (sem botão "Salvar"
+  separado) — testado ao vivo: liguei, recarreguei a página, continuou ligado
+  (persistiu no banco de verdade), depois desliguei de novo pra não sujar a conta
+  de teste.
+- CPF imutável: campo travado (cadeado, fundo cinza, borda tracejada) em
+  Configurações — só aparece se já tiver CPF salvo. **Não testado ao vivo com dado
+  real**: a conta de teste fixa foi criada antes do CPF virar obrigatório e não
+  tem CPF salvo, então não apareceu nada pra conferir visualmente. A função de
+  máscara (`mascararCPF`) já é testada unitariamente e usada (e confirmada ao
+  vivo) no formulário de cadastro. Migration nova adiciona um trigger que bloqueia
+  `UPDATE` de CPF no banco mesmo se alguém contornar o frontend — só permite
+  gravar a primeira vez (`NULL` → valor).

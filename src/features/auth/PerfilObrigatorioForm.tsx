@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Field, Input } from '@/components/ui'
+import { Button, Field, Input, Switch } from '@/components/ui'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -61,15 +61,10 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
       <Field label="Telefone">
         <Input value={telefone} onChange={(e) => setTelefone(mascararTelefone(e.target.value))} inputMode="tel" placeholder="(00) 00000-0000" />
       </Field>
-      <label className="flex items-center gap-2 text-sm text-slate-600">
-        <input
-          type="checkbox"
-          className="size-5 accent-brand"
-          checked={whatsappOptIn}
-          onChange={(e) => setWhatsappOptIn(e.target.checked)}
-        />
-        Aceito receber notificações pelo WhatsApp
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
+        <Switch checked={whatsappOptIn} onChange={setWhatsappOptIn} label="Aceito receber notificações pelo WhatsApp" />
+      </div>
       {erro && <p className="text-sm text-red-600">{erro}</p>}
       <Button onClick={salvar} className="w-full" disabled={salvando || cpfInvalido}>
         Concluir

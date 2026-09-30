@@ -29,6 +29,9 @@ export function mapearErroSupabase(erro: unknown): string {
     if (textoCompleto.includes('email')) return 'E-mail já cadastrado. Tente fazer login ou use outro e-mail.'
     return 'Já existe um registro com esses dados.'
   }
+  if (code === 'P0001' && msgMin.includes('cpf não pode ser alterado')) {
+    return 'CPF não pode ser alterado depois do cadastro.'
+  }
   if (code === '23514' || msgMin.includes('violates check constraint')) {
     return 'Valor inválido para este campo.'
   }

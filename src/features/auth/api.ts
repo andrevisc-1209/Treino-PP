@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
 export async function buscarNomeProfissional(userId: string): Promise<string> {
@@ -29,4 +30,24 @@ export async function salvarPerfilProfissional(
     .update({ name: perfil.name, cpf: perfil.cpf, phone: perfil.phone, whatsapp_opt_in: perfil.whatsappOptIn })
     .eq('id', userId)
   if (error) throw error
+}
+
+export function usePerfilProfissional(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['perfil-profissional', userId],
+    queryFn: () => buscarPerfilProfissional(userId!),
+    enabled: !!userId,
+  })
+}
+
+/** Só o toggle de WhatsApp — salva na hora, sem passar pelo formulário completo. Nunca mexe no CPF (ver migration de imutabilidade). */
+export function useAtualizarWhatsappOptIn(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (valor: boolean) => {
+      const { error } = await supabase.from('professionals').update({ whatsapp_opt_in: valor }).eq('id', userId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['perfil-profissional', userId] }),
+  })
 }

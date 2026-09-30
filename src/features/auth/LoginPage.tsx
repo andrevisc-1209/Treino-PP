@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthProvider'
-import { Button, Field, Input } from '@/components/ui'
+import { Button, Field, Input, Switch } from '@/components/ui'
 import { APP_NAME, APP_URL } from '@/config/app'
 import { Turnstile } from '@/components/Turnstile'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
@@ -14,6 +14,8 @@ import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
+import { PasswordInput } from '@/components/PasswordInput'
+import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
 
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
@@ -70,6 +72,7 @@ export function LoginPage() {
   const whatsappOptIn = watch('whatsappOptIn')
   const cpfValor = watch('cpf')
   const phoneValor = watch('phone')
+  const senhaValor = watch('password')
 
   useEffect(() => {
     if (esperaReenvio <= 0) return
@@ -174,6 +177,16 @@ export function LoginPage() {
       setMsg(mapearErroAuth(error))
       return
     }
+    // E-mail já cadastrado (ex.: criado antes via Google): quando "Confirm
+    // email"/"Confirm phone" estão ativos no projeto, o Supabase não retorna
+    // erro nenhum pra não vazar quem já tem conta — devolve um user "fake",
+    // com identities: [] e sem sessão. Sem essa checagem, isso parecia um
+    // cadastro novo que só precisava confirmar o e-mail (bug real relatado:
+    // um e-mail que já existia via Google foi "aceito" pelo cadastro manual).
+    if (data.user && data.user.identities?.length === 0) {
+      setMsg('Este e-mail já está cadastrado. Tente fazer login — se usou Google, clique em "Continuar com Google".')
+      return
+    }
     if (!data.session) {
       // Projeto exige confirmação de e-mail — o AuthProvider ainda não tem sessão,
       // então o guard de "session" no topo deste componente não redireciona sozinho.
@@ -264,12 +277,13 @@ export function LoginPage() {
         <Field label="E-mail" error={formState.errors.email?.message}>
           <Input type="email" {...register('email')} autoComplete="email" />
         </Field>
-        <Field label="Senha" error={formState.errors.password?.message}>
-          <Input type="password" {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+        <Field label="Senha" error={mode === 'login' ? formState.errors.password?.message : undefined}>
+          <PasswordInput {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
         </Field>
+        {mode === 'signup' && <PasswordChecklist senha={senhaValor ?? ''} />}
         {mode === 'signup' && (
           <Field label="Confirme a senha" error={formState.errors.confirmPassword?.message}>
-            <Input type="password" {...register('confirmPassword')} autoComplete="new-password" />
+            <PasswordInput {...register('confirmPassword')} autoComplete="new-password" />
           </Field>
         )}
 
@@ -297,15 +311,14 @@ export function LoginPage() {
             </label>
             {formState.errors.termosAceitos && <p className="text-xs text-red-600">{formState.errors.termosAceitos.message}</p>}
 
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="size-5 shrink-0 accent-brand"
-                checked={!!whatsappOptIn}
-                onChange={(e) => setValue('whatsappOptIn', e.target.checked)}
-              />
+            <div className="flex items-center justify-between gap-2">
               <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
-            </label>
+              <Switch
+                checked={!!whatsappOptIn}
+                onChange={(v) => setValue('whatsappOptIn', v)}
+                label="Aceito receber notificações pelo WhatsApp"
+              />
+            </div>
 
             <div className="flex justify-center">
               <Turnstile onToken={setCaptchaToken} />
@@ -320,7 +333,13 @@ export function LoginPage() {
         )}
 
         {msg && <p className="text-sm text-slate-600">{msg}</p>}
-        <Button type="submit" className="w-full" disabled={formState.isSubmitting || (mode === 'signup' && !!formState.errors.cpf)}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={
+            formState.isSubmitting || (mode === 'signup' && (!!formState.errors.cpf || !senhaAtendeTodasRegras(senhaValor ?? '')))
+          }
+        >
           {mode === 'login' ? 'Entrar' : 'Criar conta'}
         </Button>
 
