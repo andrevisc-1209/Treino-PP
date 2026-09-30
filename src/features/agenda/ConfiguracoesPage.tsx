@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, LogOut } from 'lucide-react'
 import { Button, Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { normalizarChavePix, normalizarCidadePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
+import { buscarMunicipios, UFS } from '@/lib/ibge'
 import { useProfessionalConfig, useSalvarProfessionalConfig } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -28,8 +30,15 @@ export function ConfiguracoesPage() {
   const [pixChave, setPixChave] = useState('')
   const [pixNome, setPixNome] = useState('')
   const [pixCidade, setPixCidade] = useState('')
+  const [pixUf, setPixUf] = useState('')
   const [erroPix, setErroPix] = useState<string | null>(null)
   const [pixSalvo, setPixSalvo] = useState(false)
+
+  const { data: municipios, isLoading: carregandoMunicipios } = useQuery({
+    queryKey: ['ibge-municipios', pixUf],
+    queryFn: () => buscarMunicipios(pixUf),
+    enabled: !!pixUf,
+  })
 
   useEffect(() => {
     if (config) {
@@ -143,8 +152,40 @@ export function ConfiguracoesPage() {
             <Input value={pixNome} onChange={(e) => setPixNome(e.target.value)} placeholder="Como aparece no Pix, até 25 caracteres" />
           </Field>
 
+          {pixCidade && !pixUf && <p className="text-sm text-slate-500">Cidade atual: {pixCidade}. Pra trocar, escolha o estado abaixo.</p>}
+
+          <Field label="Estado">
+            <select
+              value={pixUf}
+              onChange={(e) => {
+                setPixUf(e.target.value)
+                setPixCidade('')
+              }}
+              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
+            >
+              <option value="">Selecione o estado</option>
+              {UFS.map((uf) => (
+                <option key={uf.sigla} value={uf.sigla}>
+                  {uf.nome}
+                </option>
+              ))}
+            </select>
+          </Field>
+
           <Field label="Cidade">
-            <Input value={pixCidade} onChange={(e) => setPixCidade(e.target.value)} placeholder="Sua cidade" />
+            <select
+              value={pixCidade}
+              onChange={(e) => setPixCidade(e.target.value)}
+              disabled={!pixUf || carregandoMunicipios}
+              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              <option value="">{!pixUf ? 'Selecione o estado' : carregandoMunicipios ? 'Carregando…' : 'Selecione a cidade'}</option>
+              {municipios?.map((cidade) => (
+                <option key={cidade} value={cidade}>
+                  {cidade}
+                </option>
+              ))}
+            </select>
           </Field>
 
           {erroPix && <p className="text-sm text-red-600">{erroPix}</p>}
