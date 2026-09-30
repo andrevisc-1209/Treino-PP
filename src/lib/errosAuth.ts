@@ -51,6 +51,11 @@ const PADROES_DE_MENSAGEM: [RegExp, string][] = [
   [/password should be at least/i, 'Senha fraca. Use pelo menos 8 caracteres.'],
   [/email rate limit exceeded/i, 'Muitos e-mails enviados. Aguarde alguns minutos e tente de novo.'],
   [/captcha/i, 'Verificação de segurança falhou. Recarregue a página e tente de novo.'],
+  // Erro genérico que o Supabase devolve quando o trigger handle_new_user()
+  // falha no signUp (ex.: CPF já cadastrado — o unique index dispara dentro
+  // do trigger, e o GoTrue não repassa o detalhe original do Postgres pra
+  // cá, só essa mensagem genérica).
+  [/database error saving new user/i, 'Não foi possível concluir o cadastro. Se o CPF ou e-mail já estiverem cadastrados, tente entrar ou recuperar a senha.'],
 ]
 
 export function mapearErroAuth(erro: unknown): string {

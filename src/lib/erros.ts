@@ -2,16 +2,18 @@
 // português que fazem sentido pro personal, em vez do texto técnico cru
 // (ex.: "duplicate key value violates unique constraint ...").
 
-type ErroComoObjeto = { message?: unknown; code?: unknown; status?: unknown }
+type ErroComoObjeto = { message?: unknown; code?: unknown; status?: unknown; details?: unknown }
 
 function comoObjeto(erro: unknown): ErroComoObjeto {
   return typeof erro === 'object' && erro !== null ? (erro as ErroComoObjeto) : {}
 }
 
 export function mapearErroSupabase(erro: unknown): string {
-  const { message, code, status } = comoObjeto(erro)
+  const { message, code, status, details } = comoObjeto(erro)
   const msg = typeof message === 'string' ? message : String(erro ?? '')
   const msgMin = msg.toLowerCase()
+  const detailsMin = (typeof details === 'string' ? details : '').toLowerCase()
+  const textoCompleto = `${msgMin} ${detailsMin}`
 
   if (msgMin.includes('failed to fetch') || msgMin.includes('network') || msgMin.includes('load failed')) {
     return 'Sem conexão com a internet. Verifique o sinal e tente de novo.'
@@ -23,6 +25,8 @@ export function mapearErroSupabase(erro: unknown): string {
     return 'Você não tem permissão para fazer isso.'
   }
   if (code === '23505' || msgMin.includes('duplicate key') || msgMin.includes('already exists')) {
+    if (textoCompleto.includes('cpf')) return 'CPF já cadastrado. Cada personal só pode ter uma conta.'
+    if (textoCompleto.includes('email')) return 'E-mail já cadastrado. Tente fazer login ou use outro e-mail.'
     return 'Já existe um registro com esses dados.'
   }
   if (code === '23514' || msgMin.includes('violates check constraint')) {
