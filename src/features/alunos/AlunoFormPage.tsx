@@ -15,7 +15,7 @@ import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
 import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
-import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
+import { hojeSP, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
 import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
@@ -27,7 +27,7 @@ const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? 
 const schema = z
   .object({
     name: z.string().min(1, 'Nome é obrigatório'),
-    birth_date: z.string().optional(),
+    birth_date: z.string().min(1, 'Data de nascimento é obrigatória'),
     sex: z.enum(['M', 'F', 'outro']).optional(),
     height_cm: z.preprocess(numOrUndef, z.number().int().min(50, 'Altura inválida').max(250, 'Altura inválida').optional()),
     weight_kg: z.preprocess(numOrUndef, z.number().positive('Peso inválido').optional()),
@@ -55,6 +55,18 @@ const schema = z
     medications: z.string().optional(),
   })
   .superRefine((val, ctx) => {
+    if (val.birth_date) {
+      const nascimento = new Date(val.birth_date + 'T00:00:00')
+      if (Number.isNaN(nascimento.getTime())) {
+        ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'Data inválida' })
+      } else if (nascimento.getTime() > Date.now()) {
+        ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'Data não pode ser no futuro' })
+      } else {
+        const anos = idade(val.birth_date) ?? 0
+        if (anos < 14) ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'O aluno deve ter pelo menos 14 anos' })
+        else if (anos > 100) ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'Data de nascimento inválida' })
+      }
+    }
     if (val.objetivos.includes('Outros') && !val.objetivo_notes?.trim())
       ctx.addIssue({ code: 'custom', path: ['objetivo_notes'], message: 'Descreva o objetivo' })
     if (val.lgpd_consent) {
@@ -327,8 +339,11 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <Input {...register('name')} autoComplete="name" autoFocus />
             </Field>
 
-            <Field label={`Data de nascimento${idade(birthDate ?? null) != null ? ` · ${idade(birthDate ?? null)} anos` : ''}`}>
-              <Input type="date" {...register('birth_date')} />
+            <Field
+              label={`Data de nascimento *${idade(birthDate ?? null) != null ? ` · ${idade(birthDate ?? null)} anos` : ''}`}
+              error={formState.errors.birth_date?.message}
+            >
+              <Input type="date" {...register('birth_date')} max={hojeSP()} />
             </Field>
 
             <Field label="Sexo">
