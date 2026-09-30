@@ -3,6 +3,7 @@ import { Button, Field, Input, Switch } from '@/components/ui'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { mapearErroSupabase } from '@/lib/erros'
+import { ERROS } from '@/lib/mensagens'
 import { salvarPerfilProfissional } from './api'
 
 /**
@@ -24,7 +25,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
 
   const salvar = async () => {
     if (!nome.trim()) return setErro('Informe seu nome')
-    if (!validarCPF(cpf)) return setErro('CPF inválido')
+    if (!validarCPF(cpf)) return setErro(ERROS.CPF.invalido)
     if (!validarTelefone(telefone)) return setErro('Telefone inválido')
     setErro(null)
     setSalvando(true)
@@ -48,7 +49,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
       <Field label="Nome">
         <Input value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
       </Field>
-      <Field label="CPF" error={cpfTocado && cpfInvalido ? 'CPF inválido' : undefined}>
+      <Field label="CPF" error={cpfTocado && cpfInvalido ? ERROS.CPF.invalido : undefined}>
         <Input
           value={cpf}
           onChange={(e) => setCpf(mascararCPF(e.target.value))}

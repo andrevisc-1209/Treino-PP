@@ -13,6 +13,7 @@ import { mapearErroAuth } from '@/lib/errosAuth'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
+import { ERROS } from '@/lib/mensagens'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { PasswordInput } from '@/components/PasswordInput'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
@@ -35,7 +36,7 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
             .regex(/[^A-Za-z0-9]/, 'Precisa de 1 símbolo')
         : z.string().min(6, 'Mínimo 6 caracteres'),
     confirmPassword: z.string().optional(),
-    cpf: mode === 'signup' ? z.string().refine(validarCPF, 'CPF inválido') : z.string().optional(),
+    cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
     phone: mode === 'signup' ? z.string().refine(validarTelefone, 'Telefone inválido') : z.string().optional(),
     whatsappOptIn: z.boolean().optional(),
     termosAceitos:

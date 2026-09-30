@@ -62,6 +62,27 @@ redefinição de senha, convite) pelo Resend, com esse remetente.
 3. Confira o remetente, o assunto e se os links (`{{ .ConfirmationURL }}`)
    apontam pro domínio certo — ver `docs/email-templates/`.
 
+## Templates dos e-mails
+
+Este projeto não tem Edge Function própria de envio de e-mail — o Supabase
+manda os e-mails de auth direto (via SMTP do Resend, configurado acima),
+usando o HTML configurado em **Authentication → Email Templates** no
+Dashboard. Os três templates ficam versionados em `docs/email-templates/`
+(HTML pronto pra colar lá, nunca aplicado automaticamente — ver o aviso no
+`README.md` dessa pasta sobre a falta de acesso ao Dashboard/Management API):
+
+| Tipo (Supabase) | Arquivo | Assunto |
+|---|---|---|
+| Confirm signup | `confirmacao-cadastro.html` | Confirme seu cadastro — Treino · Personal Perto |
+| Reset password | `redefinir-senha.html` | Redefinir sua senha — Treino · Personal Perto |
+| Invite user | `convite.html` | Você foi convidado(a) para o Treino · Personal Perto |
+
+Todos usam o mesmo layout: cabeçalho navy (`#0f2537`) com a logo
+(`https://treino.personalperto.com.br/brand/logo-email.png`, 180px, centrada),
+botão verde `#367c39` (não o `#4CAF50` puro — fica em 2,78:1 de contraste
+contra fundo branco, abaixo do mínimo AA de 4,5:1; `#367c39` é a correção já
+adotada em `docs/BRAND.md`), texto de saudação com emoji, e rodapé simples.
+
 ## 6. Aumentar o limite de e-mails por hora
 
 Depois que o SMTP próprio estiver ativo e testado: **Supabase →
