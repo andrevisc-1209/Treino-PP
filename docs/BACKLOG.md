@@ -142,3 +142,26 @@ Se aparecer algum e-mail com `COUNT(*) > 1`, me avisa qual — decido com você 
 resolver (provavelmente apagar a conta mais recente/sem dados pelo Dashboard).
 
 PR: [feat/cadastro-ux-seguranca](https://github.com/andrevisc-1209/Treino-PP/pull/36)
+
+## 11. UX de treino: Places no horário, sliders de toque, cronômetro opcional, nascimento obrigatório
+
+| Item | Descrição | Status |
+|---|---|---|
+| 11.1 | Google Places no campo "Local" do horário fixo | ✅ feito |
+| 11.2 | **Bug real corrigido**: sliders de pré/pós-treino reagiam a qualquer tap, sem distinguir de arraste | ✅ corrigido |
+| 11.3 | Cronômetro opcional no treino (pergunta ao entrar, pausa/retoma, persiste ao navegar) | ✅ feito |
+| 11.4 | Data de nascimento obrigatória no cadastro do aluno (14–100 anos) | ✅ feito |
+
+**Item 11.2 tem dois bugs reais, não só o pedido original**: além do tap simples
+mudando o valor (o pedido), a reescrita inicial (pra resolver isso) introduziu um bug
+novo — `onChange` disparava a cada `pointermove` durante o arraste, e o
+`NovaSessaoPage.tsx` avança de pergunta a cada `onChange`, então um arraste só
+conseguia "pular" várias perguntas de uma vez (testei ao vivo, reproduzi, só a
+primeira pergunta ficava respondida). Corrigido chamando `onChange` só uma vez, no
+`pointerup`.
+
+**Não criei a migration do item 4** (`data_nascimento`) — o pedido presumia que a
+coluna não existia; `treino.alunos.birth_date` já existe desde a migration inicial
+do schema. Só estendi a validação (obrigatório, 14–100 anos, sem data futura).
+
+PR: [feat/ux-treino-ajustes](https://github.com/andrevisc-1209/Treino-PP/pull/37)
