@@ -204,3 +204,42 @@ investigar — não teve tempo de aprofundar nesta rodada.
 - [ ] Edge Function `create-preference` — cria preferência de pagamento MP
 - [ ] Webhook `/auth/mp-webhook` — recebe notificação de pagamento e atualiza assinatura
 - [ ] Testar fluxo completo em sandbox antes de ir pra produção
+
+## 🎨 UX: Pix, acesso ao perfil, CPF (feat/ux-perfil-pix-cpf)
+
+- ✅ Seletor UF → Cidade no Pix (`src/lib/ibge.ts`, API pública do IBGE,
+  `ConfiguracoesPage.tsx`) — testado ao vivo, seleção de estado carrega as
+  cidades de verdade (ex.: RJ → Niterói confirmado).
+- ✅ Card "Receber via Pix" na Hoje (`src/features/agenda/PixCard.tsx`):
+  chave mascarada (`mascararChavePix` em `src/lib/pix.ts`), copiar
+  (clipboard + toast "Copiado!"), compartilhar (`navigator.share`, com
+  fallback pra clipboard se o navegador não suportar). Mostra "Configurar
+  Pix" quando ainda não tem chave salva.
+  - **Achado corrigido durante o teste ao vivo**: a primeira versão tratava
+    "professional sem linha em `professional_config` ainda" (query retorna
+    `null`, não erro) igual a "carregando" — o card não aparecia nem o link
+    "Configurar Pix". Corrigido pra distinguir `isLoading` de `data: null`.
+- ✅ "Perfil" no bottom nav → `/configuracoes` (6º item). Não dupliquei com
+  um avatar clicável no header da Hoje — o ícone de engrenagem que já
+  existia lá cobre o mesmo destino.
+- ✅ CPF: borda vermelha + "CPF inválido" no blur, botão de submit
+  desabilitado enquanto inválido — tanto no cadastro aberto (`LoginPage.tsx`)
+  quanto no perfil obrigatório pós-Google/convite (`PerfilObrigatorioForm.tsx`).
+- ✅ Unicidade de CPF: `idx_professionals_cpf` (unique index parcial, só
+  quando `cpf IS NOT NULL`) + `mapearErroSupabase` reconhece a violação e
+  devolve "CPF já cadastrado..." (mesmo tratamento pra e-mail, se algum dia
+  tiver constraint).
+  - **Limitação honesta**: no fluxo de cadastro aberto, o CPF é gravado
+    *dentro* do trigger `handle_new_user()` durante o `signUp()`. Se ele
+    colidir com o índice único, o Supabase Auth devolve um erro genérico
+    ("Database error saving new user"), não o `23505` com o detalhe da
+    coluna — o GoTrue não repassa o erro original do Postgres pra cá. Mapeei
+    esse padrão em `mapearErroAuth` com uma mensagem honesta ("CPF ou
+    e-mail já cadastrados"), mas não é tão preciso quanto o caminho que
+    passa por uma `UPDATE` normal (ex.: `PerfilObrigatorioForm.tsx`), onde o
+    erro chega limpo.
+- ⚠️ Corrigi o nome da tabela do pedido original: pedia `treino.perfis`
+  (não existe) — usei `treino.professionals`, que é onde o campo `cpf`
+  já vive desde a PR de cadastro do personal.
+
+Pendente: rodar `supabase/migrations/20261005000000_unique_cpf.sql`.
