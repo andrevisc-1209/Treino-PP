@@ -1,9 +1,15 @@
+import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { Descritor } from '@/features/sessoes/descritores'
 
 // Rampa de 5 cores: ruim → bom (vermelho → verde). Para perguntas de
 // polaridade negativa (alto = ruim) a rampa é percorrida ao contrário.
 const RAMPA = ['#e34948', '#eb6834', '#eda100', '#1baf7a', '#008300']
+
+// Distância mínima (px) que o ponteiro precisa se mover antes de um toque
+// virar "arraste" — abaixo disso é considerado um tap estático e não muda
+// o valor (pedido explícito: não reagir a qualquer tap simples).
+const LIMIAR_ARRASTE_PX = 8
 
 function corDoValor(valor: number, polaridade: 'positiva' | 'negativa'): string {
   const passo = Math.min(4, Math.floor(valor / 2.2))
@@ -15,6 +21,12 @@ function corDoValor(valor: number, polaridade: 'positiva' | 'negativa'): string 
 function gradienteDaBarra(polaridade: 'positiva' | 'negativa'): string {
   const cores = polaridade === 'positiva' ? RAMPA : [...RAMPA].reverse()
   return `linear-gradient(to right, ${cores.join(', ')})`
+}
+
+function valorNaPosicao(clientX: number, track: HTMLDivElement): number {
+  const rect = track.getBoundingClientRect()
+  const fracao = (clientX - rect.left) / rect.width
+  return Math.round(Math.min(1, Math.max(0, fracao)) * 10)
 }
 
 export function ScaleQuestion({
@@ -32,9 +44,62 @@ export function ScaleQuestion({
   value: number | null
   onChange: (v: number) => void
 }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const inicioRef = useRef<{ x: number; y: number; arrastando: boolean } | null>(null)
+  const arrastoRef = useRef<number | null>(null)
+  const [arrastando, setArrastando] = useState(false)
+  // Valor "ao vivo" só durante o arraste em curso — onChange (que dispara o
+  // avanço automático de pergunta no NovaSessaoPage) só é chamado UMA vez,
+  // no pointerup. Chamar onChange em todo pointermove (como numa primeira
+  // versão) disparava vários avanços de pergunta dentro do mesmo gesto de
+  // arrastar, pulando perguntas sem o aluno perceber — bug real encontrado
+  // ao testar ao vivo.
+  const [valorArrasto, setValorArrasto] = useState<number | null>(null)
+
+  // "Neutro" (centro, 5) só como posição de descanso antes de qualquer
+  // interação — value continua null até o aluno de fato soltar o dedo tendo
+  // arrastado, então o botão "Continuar" (gated em value != null lá em cima)
+  // não libera sozinho.
+  const posicaoAtual = valorArrasto ?? value ?? 5
   const descritorAtual = value != null ? descritores.find((d) => value >= d.min && value <= d.max) : null
-  const valorAtual = value ?? 0
-  const cor = corDoValor(valorAtual, polaridade)
+  const cor = corDoValor(posicaoAtual, polaridade)
+
+  const moverPara = (clientX: number) => {
+    if (!trackRef.current) return
+    const v = valorNaPosicao(clientX, trackRef.current)
+    arrastoRef.current = v
+    setValorArrasto(v)
+  }
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    inicioRef.current = { x: e.clientX, y: e.clientY, arrastando: false }
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const inicio = inicioRef.current
+    if (!inicio) return
+    if (!inicio.arrastando) {
+      const dist = Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y)
+      if (dist < LIMIAR_ARRASTE_PX) return
+      inicio.arrastando = true
+      setArrastando(true)
+      if ('vibrate' in navigator) navigator.vibrate(10)
+    }
+    moverPara(e.clientX)
+  }
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const inicio = inicioRef.current
+    inicioRef.current = null
+    setArrastando(false)
+    ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
+    if (inicio?.arrastando && arrastoRef.current != null) {
+      onChange(arrastoRef.current)
+    }
+    arrastoRef.current = null
+    setValorArrasto(null)
+  }
 
   return (
     <div className="space-y-4">
@@ -54,24 +119,35 @@ export function ScaleQuestion({
         </p>
       </div>
 
-      <div className="px-1">
-        <input
-          type="range"
-          min={0}
-          max={10}
-          step={1}
-          value={valorAtual}
-          onChange={(e) => {
-            onChange(Number(e.target.value))
-            if ('vibrate' in navigator) navigator.vibrate(10)
-          }}
-          className="h-3 w-full touch-none appearance-none rounded-full outline-none [&::-moz-range-thumb]:size-8 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-4 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-current [&::-moz-range-thumb]:shadow-md [&::-webkit-slider-thumb]:size-8 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-4 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-current [&::-webkit-slider-thumb]:shadow-md"
-          style={{ background: gradienteDaBarra(polaridade), color: cor }}
+      <div className="relative px-1 pt-8">
+        {arrastando && (
+          <div
+            className="absolute top-0 -translate-x-1/2 rounded-lg px-2 py-1 text-sm font-bold text-white shadow"
+            style={{ left: `${posicaoAtual * 10}%`, backgroundColor: cor }}
+          >
+            {posicaoAtual}/10
+          </div>
+        )}
+        <div
+          ref={trackRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          role="slider"
           aria-label={titulo}
           aria-valuenow={value ?? undefined}
           aria-valuemin={0}
           aria-valuemax={10}
-        />
+          className="relative flex h-11 items-center"
+          style={{ touchAction: 'none' }}
+        >
+          <div className="h-3 w-full rounded-full" style={{ background: gradienteDaBarra(polaridade) }} />
+          <div
+            className="absolute top-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white shadow-md"
+            style={{ left: `${posicaoAtual * 10}%`, backgroundColor: cor, opacity: value == null ? 0.5 : 1 }}
+          />
+        </div>
         <div className="mt-1 flex justify-between text-xs text-slate-400">
           <span>{descritores[0]?.label}</span>
           <span>{descritores[descritores.length - 1]?.label}</span>

@@ -58,9 +58,18 @@ export type LocalSelecionado = { nome: string; endereco: string; mapsLink: strin
 export function GooglePlacesAutocomplete({
   onSelecionar,
   placeholder,
+  defaultValue,
+  limparAoSelecionar = true,
+  onChangeTexto,
 }: {
   onSelecionar: (local: LocalSelecionado) => void
   placeholder?: string
+  /** Valor inicial do campo (ex.: editando algo que já tem um texto de local salvo). */
+  defaultValue?: string
+  /** false pra campo único que deve mostrar "nome — endereço" depois de selecionar, em vez de limpar pra adicionar outro (ver LocaisTreinoBlock pro caso padrão). */
+  limparAoSelecionar?: boolean
+  /** Digitação livre, pra quando o campo também aceita texto sem passar pelo autocomplete. */
+  onChangeTexto?: (texto: string) => void
 }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined
   const inputRef = useRef<HTMLInputElement>(null)
@@ -77,12 +86,17 @@ export function GooglePlacesAutocomplete({
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace()
         if (!place.formatted_address) return
-        onSelecionar({
+        const local: LocalSelecionado = {
           nome: place.name ?? place.formatted_address,
           endereco: place.formatted_address,
           mapsLink: place.url ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.formatted_address)}`,
-        })
-        if (inputRef.current) inputRef.current.value = ''
+        }
+        onSelecionar(local)
+        if (inputRef.current) {
+          const textoFinal = limparAoSelecionar ? '' : `${local.nome} — ${local.endereco}`
+          inputRef.current.value = textoFinal
+          onChangeTexto?.(textoFinal)
+        }
       })
     })
     return () => {
@@ -91,5 +105,14 @@ export function GooglePlacesAutocomplete({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey])
 
-  return <Input ref={inputRef} id={inputId} placeholder={placeholder ?? 'Digite pra buscar um endereço'} autoComplete="off" />
+  return (
+    <Input
+      ref={inputRef}
+      id={inputId}
+      defaultValue={defaultValue}
+      onChange={onChangeTexto ? (e) => onChangeTexto(e.target.value) : undefined}
+      placeholder={placeholder ?? 'Digite pra buscar um endereço'}
+      autoComplete="off"
+    />
+  )
 }

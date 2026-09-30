@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clock, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clock, Pause, Play, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
 import { useExercicios, type Exercicio } from '@/features/exercicios/api'
@@ -242,7 +242,6 @@ function ExercicioBlock({
 function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }) {
   const navigate = useNavigate()
   const { data: aluno } = useAluno(alunoId)
-  const { data: sessao } = useSessao(sessionId)
   const { data: itens, isLoading } = useSessaoExercicios(sessionId)
   const { data: ultimosUsos } = useUltimosUsosExercicios(alunoId)
   const { data: exercicios } = useExercicios()
@@ -251,15 +250,59 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
   const fila = useFilaOffline(sessionId)
   const [avisoFilaAberto, setAvisoFilaAberto] = useState(false)
 
-  const [segundos, setSegundos] = useState(0)
+  // Cronômetro opcional: pergunta uma vez ao entrar na tela, dá pra pausar/
+  // retomar a qualquer momento, e só o tempo de fato "rodando" conta (pausas
+  // não somam) — diferente do cálculo antigo, que era sempre "agora menos
+  // criação da sessão" e contava até intervalo/pausa como treino.
+  //
+  // Lê o sessionStorage já na inicialização (não num useEffect): se o
+  // personal sair da tela de execução e voltar (a sessão continua
+  // "em_andamento"), esse componente desmonta e remonta do zero — sem isso,
+  // o cronômetro perguntava de novo e zerava o tempo já contado.
+  const cronometroSalvo = (() => {
+    try {
+      const raw = sessionStorage.getItem(`cronometro:${sessionId}`)
+      return raw ? (JSON.parse(raw) as { usado: boolean; segundos: number }) : null
+    } catch {
+      return null
+    }
+  })()
+  const [perguntaCronometro, setPerguntaCronometro] = useState(!cronometroSalvo)
+  const [cronometroUsado, setCronometroUsado] = useState(cronometroSalvo?.usado ?? false)
+  const [rodando, setRodando] = useState(false)
+  const [segundos, setSegundos] = useState(cronometroSalvo?.segundos ?? 0)
+  const acumuladoRef = useRef(cronometroSalvo?.segundos ?? 0)
+  const inicioAtualRef = useRef<number | null>(null)
+
   useEffect(() => {
-    if (!sessao) return
-    const inicio = new Date(sessao.created_at).getTime()
-    const tick = () => setSegundos(Math.max(0, Math.floor((Date.now() - inicio) / 1000)))
+    if (!rodando) return
+    const tick = () => setSegundos(acumuladoRef.current + (inicioAtualRef.current ? (Date.now() - inicioAtualRef.current) / 1000 : 0))
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [sessao])
+  }, [rodando])
+
+  const iniciarCronometro = () => {
+    setCronometroUsado(true)
+    inicioAtualRef.current = Date.now()
+    setRodando(true)
+  }
+
+  const pausarCronometro = () => {
+    if (inicioAtualRef.current) acumuladoRef.current += (Date.now() - inicioAtualRef.current) / 1000
+    inicioAtualRef.current = null
+    setSegundos(acumuladoRef.current)
+    setRodando(false)
+  }
+
+  // Grava o tempo acumulado pra PosTreino (rota separada, sem esse estado em
+  // memória) usar como sugestão de duração — só se o cronômetro foi de fato
+  // usado, senão deixa o campo em branco pra preencher à mão.
+  useEffect(() => {
+    if (!cronometroUsado) return
+    const total = Math.round(acumuladoRef.current + (inicioAtualRef.current ? (Date.now() - inicioAtualRef.current) / 1000 : 0))
+    sessionStorage.setItem(`cronometro:${sessionId}`, JSON.stringify({ usado: true, segundos: total }))
+  }, [segundos, cronometroUsado, sessionId])
 
   // Barra de descanso: dispara ao marcar uma série, conta pra baixo até 0 e vibra.
   const [descanso, setDescanso] = useState<{ segundos: number } | null>(null)
@@ -319,6 +362,10 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
       setAvisoFilaAberto(true)
       return
     }
+    if (cronometroUsado) {
+      const total = Math.round(acumuladoRef.current + (inicioAtualRef.current ? (Date.now() - inicioAtualRef.current) / 1000 : 0))
+      sessionStorage.setItem(`cronometro:${sessionId}`, JSON.stringify({ usado: true, segundos: total }))
+    }
     navigate(`/alunos/${alunoId}/sessoes/${sessionId}/finalizar`)
   }
 
@@ -326,8 +373,36 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
     <div className="space-y-4 pb-28">
       <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
         <span className="text-sm text-slate-500">Tempo de treino</span>
-        <span className="font-mono text-xl font-semibold">{formatarDuracao(segundos)}</span>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xl font-semibold">{cronometroUsado ? formatarDuracao(Math.floor(segundos)) : '--:--'}</span>
+          <button
+            type="button"
+            onClick={rodando ? pausarCronometro : iniciarCronometro}
+            aria-label={rodando ? 'Pausar cronômetro' : 'Iniciar cronômetro'}
+            className="flex size-11 items-center justify-center rounded-full bg-slate-100 text-slate-700 active:bg-slate-200"
+          >
+            {rodando ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+        </div>
       </div>
+
+      <BottomSheet open={perguntaCronometro} onClose={() => setPerguntaCronometro(false)} title="Cronometrar o treino?">
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">Acompanha o tempo total do treino enquanto você executa.</p>
+          <Button
+            className="w-full"
+            onClick={() => {
+              iniciarCronometro()
+              setPerguntaCronometro(false)
+            }}
+          >
+            Sim, iniciar
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => setPerguntaCronometro(false)}>
+            Não
+          </Button>
+        </div>
+      </BottomSheet>
 
       {aluno && avisoSaude(aluno) && (
         <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">

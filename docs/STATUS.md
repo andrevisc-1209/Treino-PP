@@ -285,3 +285,46 @@ Pendente: rodar `supabase/migrations/20261005000000_unique_cpf.sql`.
   vivo) no formulário de cadastro. Migration nova adiciona um trigger que bloqueia
   `UPDATE` de CPF no banco mesmo se alguém contornar o frontend — só permite
   gravar a primeira vez (`NULL` → valor).
+
+## 🐛 Bug real corrigido: sliders de pré/pós-treino pulavam perguntas — feat/ux-treino-ajustes
+
+- ✅ **Pedido original**: os sliders (então um `<input type="range">` nativo)
+  reagiam a qualquer tap, posicionando o valor na hora — reescrevi
+  `ScaleQuestion.tsx` com pointer events (`onPointerDown/Move/Up`), limiar de 8px
+  antes de contar como arraste, thumb de 44×44px, bolha com o valor ao vivo
+  durante o arraste, posição neutra (centro) antes de qualquer interação.
+- ✅ **Bug novo que a própria reescrita introduziu, encontrado testando ao vivo**:
+  a primeira versão chamava `onChange` em todo `pointermove` (não só no fim do
+  arraste). `NovaSessaoPage.tsx` avança pra próxima pergunta a cada `onChange`
+  (`responderMobile`, com um `setTimeout` de 300ms) — então um único gesto de
+  arrastar disparava vários avanços de pergunta em sequência, e só a primeira
+  pergunta (Sono) acabava respondida de verdade; as outras 3 ficavam puladas/
+  vazias. **Reproduzi isso 2 vezes ao vivo antes de identificar a causa.**
+  Corrigido: o valor "ao vivo" durante o arraste agora é só um estado local pra
+  mostrar a posição/bolha — `onChange` (que o pai usa pra avançar de pergunta) só
+  é chamado uma vez, no `pointerup`.
+- ✅ **Cronômetro opcional**: bottom sheet "Cronometrar o treino?" ao entrar na
+  tela de execução, botão ▶/⏸ pra pausar/retomar, só o tempo "rodando" conta
+  (pausas não somam). **Achado e corrigido durante o teste ao vivo**: como a tela
+  de execução desmonta/remonta ao navegar pra outra tela e voltar (a rota muda),
+  a primeira versão perguntava de novo e zerava o tempo contado. Agora o estado é
+  restaurado de um `sessionStorage` gravado continuamente — confirmado ao vivo:
+  saí da tela, voltei, não perguntou de novo e o tempo continuou de onde parou
+  (pausado, esperando play).
+- ✅ Ao finalizar, a duração sugerida em "Pós-treino" vem do tempo do cronômetro
+  (se foi usado) em vez do cálculo antigo (agora menos criação da sessão, que
+  superestimava quando tinha pausa no meio). Confirmado ao vivo com um teste
+  isolado: 2 segundos de cronômetro → campo "Duração" mostrou "1" (minuto,
+  arredondado) corretamente.
+- ✅ Google Places no campo "Local" do horário fixo — reaproveitei
+  `GooglePlacesAutocomplete.tsx` (já existente), estendido com `defaultValue`/
+  `onChangeTexto`/`limparAoSelecionar` pra funcionar como campo único (em vez do
+  padrão "adicionar à lista" usado em locais de treino do aluno). Testado ao
+  vivo: degradação graciosa confirmada (sem `VITE_GOOGLE_MAPS_API_KEY` local,
+  vira input de texto comum, sem quebrar).
+- ✅ Data de nascimento obrigatória no cadastro do aluno, 14–100 anos, idade
+  calculada ao vivo — **não criei a migration do pedido** (`data_nascimento`):
+  `treino.alunos.birth_date` já existia desde a migration inicial do schema, só
+  faltava a validação. Testado ao vivo: bloqueia sem preencher, rejeita 13 anos
+  com a mensagem exata pedida, idade calculada aparece corretamente ao digitar.
+- Sem migration nesta PR (nada mudou no schema).

@@ -95,6 +95,10 @@ export function PosTreino({
   const [resumo, setResumo] = useState<ResumoConcluido | null>(null)
   const resumoPendenteRef = useRef<ResumoConcluido | null>(null)
 
+  // Se o cronômetro (tela de execução) foi usado, a duração sugerida vem do
+  // tempo de fato "rodando" (pausas não contam) — ver sessionStorage gravado
+  // em SessaoPage.tsx. Sem isso, cai de volta pro cálculo antigo (criação da
+  // sessão até agora), que superestima quando teve pausa/intervalo no meio.
   const minutosDecorridos = sessao ? Math.max(1, Math.round((Date.now() - new Date(sessao.created_at).getTime()) / 60000)) : 0
 
   const [pse, setPse] = useState<number | null>(null)
@@ -105,7 +109,21 @@ export function PosTreino({
   const [explicarCarga, setExplicarCarga] = useState(false)
 
   useEffect(() => {
-    if (sessao) setDuracao(String(minutosDecorridos))
+    if (!sessao) return
+    const raw = sessionStorage.getItem(`cronometro:${sessionId}`)
+    if (raw) {
+      sessionStorage.removeItem(`cronometro:${sessionId}`)
+      try {
+        const dados = JSON.parse(raw) as { usado: boolean; segundos: number }
+        if (dados.usado) {
+          setDuracao(String(Math.max(1, Math.round(dados.segundos / 60))))
+          return
+        }
+      } catch {
+        // dado corrompido, cai no fallback abaixo
+      }
+    }
+    setDuracao(String(minutosDecorridos))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!sessao])
 
