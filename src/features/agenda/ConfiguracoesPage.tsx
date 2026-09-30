@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, LogOut } from 'lucide-react'
-import { Button, Field, Input } from '@/components/ui'
+import { ArrowLeft, Lock, LogOut } from 'lucide-react'
+import { Button, Field, Input, Switch } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { normalizarChavePix, normalizarCidadePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
+import { mascararCPF } from '@/lib/cpf'
 import { buscarMunicipios, UFS } from '@/lib/ibge'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { useAtualizarWhatsappOptIn, usePerfilProfissional } from '@/features/auth/api'
 import { useProfessionalConfig, useSalvarProfessionalConfig } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -18,8 +21,11 @@ const TIPOS_PIX: { value: PixTipo; label: string }[] = [
 ]
 
 export function ConfiguracoesPage() {
+  const { session } = useAuth()
   const { data: config, isLoading } = useProfessionalConfig()
   const salvar = useSalvarProfessionalConfig()
+  const { data: perfil } = usePerfilProfissional(session?.user.id)
+  const atualizarWhatsapp = useAtualizarWhatsappOptIn(session?.user.id ?? '')
 
   const [cobrarFalta, setCobrarFalta] = useState(true)
   const [cobrarCancel, setCobrarCancel] = useState(false)
@@ -119,6 +125,32 @@ export function ConfiguracoesPage() {
           <Button onClick={handleSalvar} className="w-full" disabled={salvar.isPending}>
             Salvar
           </Button>
+        </div>
+      )}
+
+      {!isLoading && (
+        <div className="mt-4 space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="font-semibold">Dados pessoais</h2>
+
+          {perfil?.cpf && (
+            <Field label="CPF">
+              <div className="relative">
+                <Input value={mascararCPF(perfil.cpf)} disabled readOnly className="cursor-not-allowed border-dashed bg-slate-100 pr-10 text-slate-500" />
+                <Lock size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              </div>
+              <p className="text-xs text-slate-400">CPF não editável após o cadastro.</p>
+            </Field>
+          )}
+
+          <div className="flex min-h-11 items-center justify-between gap-3">
+            <span className="font-medium">Alertas de aulas via WhatsApp</span>
+            <Switch
+              checked={perfil?.whatsappOptIn ?? false}
+              onChange={(v) => atualizarWhatsapp.mutate(v)}
+              disabled={!session || atualizarWhatsapp.isPending}
+              label="Alertas de aulas via WhatsApp"
+            />
+          </div>
         </div>
       )}
 
