@@ -104,3 +104,41 @@ engrenagem que já existe lá já cobre esse acesso, e agora o bottom nav també
 Pendente: rodar a migration `20261005000000_unique_cpf.sql`.
 
 PR: [feat/ux-perfil-pix-cpf](https://github.com/andrevisc-1209/Treino-PP/pull/35)
+
+## 10. Segurança e UX de cadastro (senha, WhatsApp, CPF imutável, e-mail duplicado)
+
+| Item | Descrição | Status |
+|---|---|---|
+| 10.1 | Botão de olho na senha + checklist ao vivo (4 regras) + botão desabilitado até tudo verde | ✅ feito |
+| 10.2 | Toggle de WhatsApp como switch (liga/desliga na hora, sem confirmação) | ✅ feito |
+| 10.3 | CPF não editável em Configurações (campo travado) + trigger no banco bloqueando UPDATE | ✅ feito |
+| 10.4 | **Bug real corrigido**: e-mail já cadastrado (via Google) era aceito silenciosamente no cadastro manual | ✅ corrigido |
+
+**Item 10.4 é o mais importante desta leva** — bug de verdade, reproduzido e confirmado
+ao vivo contra o Supabase real antes e depois da correção. Causa: quando o Supabase
+tem alguma proteção de confirmação ativa, `signUp()` pra um e-mail que já existe não
+retorna erro — devolve um "usuário" falso com `identities: []` e sem sessão, pra não
+vazar quem já tem conta. O código tratava `!error && !session` só como "precisa
+confirmar o e-mail", então um e-mail duplicado passava pela tela "Confirme seu
+e-mail" como se fosse um cadastro novo — sem nunca criar de fato uma segunda conta
+(a chamada não erra, mas também não duplica nada no banco), só dando a falsa
+impressão de sucesso. Corrigido detectando `identities.length === 0` antes de cair
+no caminho de "aguardando confirmação". Não usei o `traduzirErroAuth` novo do
+pedido — o mapeamento de erros já existia e já cobria "User already registered"
+(`mapearErroAuth`, `src/lib/errosAuth.ts`); o problema nunca foi o mapeamento de
+erro, foi essa chamada específica que não retorna erro nenhum.
+
+**Não consigo verificar duplicatas eu mesmo** — `auth.users` não é acessível pela
+anon key (nem deveria ser). Pela mecânica do bug (o Supabase devolve um "usuário
+fake" sem criar linha nova, não uma duplicata de verdade), a suspeita é de que não
+exista nenhuma linha duplicada — mas isso precisa ser confirmado rodando a query
+abaixo no SQL Editor:
+
+```sql
+SELECT email, COUNT(*) FROM auth.users GROUP BY email HAVING COUNT(*) > 1;
+```
+
+Se aparecer algum e-mail com `COUNT(*) > 1`, me avisa qual — decido com você como
+resolver (provavelmente apagar a conta mais recente/sem dados pelo Dashboard).
+
+PR: [feat/cadastro-ux-seguranca](https://github.com/andrevisc-1209/Treino-PP/pull/36)
