@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Button, Field, Input } from '@/components/ui'
+import { Button, Field } from '@/components/ui'
+import { PasswordInput } from '@/components/PasswordInput'
 import { useAuth } from './AuthProvider'
 import { buscarPerfilProfissional } from './api'
 import { PerfilObrigatorioForm } from './PerfilObrigatorioForm'
@@ -59,10 +60,10 @@ export function DefinirSenhaPage() {
         {etapa === 'senha' ? (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Field label="Senha" error={formState.errors.senha?.message}>
-              <Input type="password" {...register('senha')} autoComplete="new-password" autoFocus />
+              <PasswordInput {...register('senha')} autoComplete="new-password" autoFocus />
             </Field>
             <Field label="Confirme a senha" error={formState.errors.confirmacao?.message}>
-              <Input type="password" {...register('confirmacao')} autoComplete="new-password" />
+              <PasswordInput {...register('confirmacao')} autoComplete="new-password" />
             </Field>
             {erro && <p className="text-sm text-red-600">{erro}</p>}
             <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
