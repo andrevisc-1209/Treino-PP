@@ -14,6 +14,9 @@ describe('mapearErroSupabase', () => {
   it('mapeia duplicidade (unique constraint)', () => {
     expect(mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint' })).toMatch(/já existe/i)
   })
+  it('mapeia tentativa de alterar CPF (trigger tg_bloquear_cpf)', () => {
+    expect(mapearErroSupabase({ code: 'P0001', message: 'CPF não pode ser alterado após o cadastro' })).toMatch(/não pode ser alterado/i)
+  })
   it('mapeia CPF duplicado pelo nome do índice/coluna nos details', () => {
     expect(
       mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint "idx_professionals_cpf"', details: 'Key (cpf)=(11144477735) already exists.' }),
