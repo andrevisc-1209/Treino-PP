@@ -184,8 +184,19 @@ investigar — não teve tempo de aprofundar nesta rodada.
   Pago entrar, a confirmação de pagamento também precisa ser uma function/
   Edge Function `SECURITY DEFINER` (webhook), nunca um UPDATE vindo do
   client.
-- 🔴 **Bloqueado**: rodar a migration (ver abaixo) e você me passar o número
-  real de WhatsApp pra colar em `PlanoModal.tsx`.
+- ⚠️ **Achado durante o merge**: `treino.assinaturas` já existia no banco —
+  criada fora do histórico de migrations (provavelmente colando o SQL do
+  rascunho original direto no SQL Editor antes de pedir pra eu implementar),
+  **com o RLS inseguro (`FOR ALL`)** descrito acima já ativo em produção.
+  Confirmamos junto (colunas, constraints e grants) e reescrevi a migration
+  pra corrigir com `ALTER`/`DROP POLICY`/`REVOKE` em vez de `CREATE TABLE` —
+  remove a policy insegura, revoga os grants de escrita que o default
+  privilege do schema deu de graça pra `authenticated`, renomeia `criado_em`
+  → `created_at`, corrige a FK (apontava pra `auth.users`, agora aponta pra
+  `treino.professionals` como o resto do schema) e adiciona os `NOT NULL`
+  que faltavam. Sem perda de dado — a tabela não tinha nenhuma linha ainda.
+- 🔴 **Bloqueado**: rodar a migration corrigida (ver abaixo) e você me passar
+  o número real de WhatsApp pra colar em `PlanoModal.tsx`.
 
 ## 💳 Pagamento — Mercado Pago (pendente)
 - [ ] Criar conta Mercado Pago do app em https://www.mercadopago.com.br/developers

@@ -4,41 +4,59 @@
 -- Trial de 15 dias + assinatura (mensal/trimestral/semestral). O
 -- pagamento em si (Mercado Pago) fica pra depois — aqui só o trial
 -- automático no cadastro e a estrutura pra guardar o status.
+--
+-- NOTA: treino.assinaturas já existia no banco antes desta migration
+-- (criada fora do histórico de migrations, com o RLS inseguro do
+-- rascunho original — policy "assinaturas_own" em FOR ALL, que deixava
+-- qualquer profissional logado se auto-declarar "ativa" via PATCH na
+-- REST API). Por isso esta migration usa ALTER em vez de CREATE TABLE:
+-- corrige o que já está lá (RLS, grants, coluna, constraints) em vez
+-- de tentar criar de novo.
 -- ============================================================
 
 BEGIN;
 
-CREATE TABLE treino.assinaturas (
-  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  professional_id     UUID NOT NULL UNIQUE REFERENCES treino.professionals(id) ON DELETE CASCADE,
-  status              TEXT NOT NULL CHECK (status IN ('trial', 'ativa', 'expirada', 'cancelada')),
-  plano               TEXT CHECK (plano IN ('mensal', 'trimestral', 'semestral')),
-  trial_inicio        TIMESTAMPTZ NOT NULL DEFAULT now(),
-  trial_fim           TIMESTAMPTZ NOT NULL DEFAULT now() + INTERVAL '15 days',
-  assinatura_inicio   TIMESTAMPTZ NULL,
-  assinatura_fim      TIMESTAMPTZ NULL,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- ----- GRANTS -----
--- Só SELECT pro professional — ver nota de segurança abaixo.
-GRANT SELECT ON treino.assinaturas TO authenticated;
-
--- ----- RLS -----
-ALTER TABLE treino.assinaturas ENABLE ROW LEVEL SECURITY;
+-- ----- RLS: remove a policy insegura (FOR ALL) -----
+DROP POLICY IF EXISTS assinaturas_own ON treino.assinaturas;
 
 CREATE POLICY assinaturas_self_read ON treino.assinaturas
   FOR SELECT TO authenticated
   USING (professional_id = (SELECT auth.uid()));
 
--- Propositalmente SEM policy de INSERT/UPDATE/DELETE pra authenticated: o
--- professional só LÊ o próprio status. Se déssemos FOR ALL (como o rascunho
--- original pedia), qualquer pessoa logada poderia dar PATCH direto na REST
--- API e setar status = 'ativa' nela mesma, sem pagar nada. A única escrita
--- hoje é o trial automático (trigger abaixo, SECURITY DEFINER, roda como
--- dono da tabela, ignora RLS). Quando a integração com o Mercado Pago entrar,
--- a confirmação de pagamento também deve ser uma function/Edge Function
--- SECURITY DEFINER (webhook), nunca um UPDATE vindo do client.
+-- ----- GRANTS: revoga a escrita que o default privilege do schema deu
+-- de graça pra authenticated (INSERT/UPDATE/DELETE/TRUNCATE), deixa só
+-- SELECT -----
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON treino.assinaturas FROM authenticated;
+
+-- Propositalmente SEM policy nem grant de escrita pra authenticated: o
+-- professional só LÊ o próprio status. A única escrita é o trigger abaixo
+-- (SECURITY DEFINER, roda como dono da tabela, ignora RLS/grants). Quando a
+-- integração com o Mercado Pago entrar, a confirmação de pagamento também
+-- deve ser uma function/Edge Function SECURITY DEFINER (webhook), nunca um
+-- UPDATE vindo do client.
+
+-- ----- Coluna e constraints: alinha com o resto do schema -----
+ALTER TABLE treino.assinaturas RENAME COLUMN criado_em TO created_at;
+
+-- Backfill defensivo antes de exigir NOT NULL (não deveria ter linha
+-- nenhuma ainda, mas por garantia).
+UPDATE treino.assinaturas SET trial_inicio = created_at WHERE trial_inicio IS NULL;
+UPDATE treino.assinaturas SET trial_fim = created_at + INTERVAL '15 days' WHERE trial_fim IS NULL;
+
+ALTER TABLE treino.assinaturas
+  ALTER COLUMN professional_id SET NOT NULL,
+  ALTER COLUMN trial_inicio SET NOT NULL,
+  ALTER COLUMN trial_inicio SET DEFAULT now(),
+  ALTER COLUMN trial_fim SET NOT NULL,
+  ALTER COLUMN trial_fim SET DEFAULT now() + INTERVAL '15 days';
+
+-- FK apontava pra auth.users(id) direto; troca pra treino.professionals(id)
+-- pra seguir o mesmo padrão do resto do schema (professionals.id = auth.uid(),
+-- então não muda nenhum dado — só o alvo da referência).
+ALTER TABLE treino.assinaturas DROP CONSTRAINT IF EXISTS assinaturas_professional_id_fkey;
+ALTER TABLE treino.assinaturas
+  ADD CONSTRAINT assinaturas_professional_id_fkey
+  FOREIGN KEY (professional_id) REFERENCES treino.professionals(id) ON DELETE CASCADE;
 
 -- ----- TRIGGER: cria o trial junto com o professional no cadastro -----
 -- Estende o handle_new_user() já existente (mesma função usada pra criar o
