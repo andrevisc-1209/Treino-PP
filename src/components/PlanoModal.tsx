@@ -2,10 +2,7 @@ import { BottomSheet } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import type { Plano } from '@/features/assinatura/useAssinatura'
 
-// TODO: número de suporte placeholder — trocar pelo WhatsApp real do
-// Personal Perto antes de publicar (não existe em nenhum outro lugar do
-// código ainda, então não tinha como puxar de um valor já existente).
-const WHATSAPP_SUPORTE = '5521999999999'
+const WHATSAPP_SUPORTE = '5521986521747'
 
 const PLANOS: { id: Plano; nome: string; preco: string; equivale?: string; badge?: string }[] = [
   { id: 'mensal', nome: 'Mensal', preco: 'R$ 10/mês' },
