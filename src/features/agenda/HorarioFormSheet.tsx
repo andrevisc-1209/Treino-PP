@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
 import { cn, desambiguarPorNome } from '@/lib/utils'
 import { ORDEM_SEMANA_SEG_DOM, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { horariosFixosSobrepoe } from './conflitos'
@@ -116,7 +117,13 @@ export function HorarioFormSheet({
         </div>
 
         <Field label="Local">
-          <Input value={valor.local} onChange={(e) => setValor((v) => ({ ...v, local: e.target.value }))} placeholder="Opcional" />
+          <GooglePlacesAutocomplete
+            defaultValue={valor.local}
+            onChangeTexto={(texto) => setValor((v) => ({ ...v, local: texto }))}
+            onSelecionar={() => {}}
+            limparAoSelecionar={false}
+            placeholder="Opcional — busque um endereço"
+          />
         </Field>
 
         {outrosAlunos.length > 0 && (
