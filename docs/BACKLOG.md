@@ -66,3 +66,20 @@ Supabase (Client ID/Secret) e adicionar
 `https://treino.personalperto.com.br/auth/callback` nos Redirect URLs.
 
 PR: [feat/social-login](https://github.com/andrevisc-1209/Treino-PP/pull/26)
+
+## 8. Trial + assinaturas
+
+| Item | Descrição | Status |
+|---|---|---|
+| 8.1 | Trial de 15 dias automático no cadastro (`treino.assinaturas` + trigger) | ✅ feito |
+| 8.2 | `useAssinatura()`, `TrialBanner.tsx`, `PlanoModal.tsx`, `AssinaturaGuard.tsx` | ✅ feito |
+| 8.3 | Pagamento (Mercado Pago) | ❌ não iniciado — ver checklist em `docs/STATUS.md` |
+
+RLS de `treino.assinaturas` é só leitura pro professional (decisão de segurança,
+detalhada em `docs/STATUS.md` — o pedido original permitia escrita, o que deixaria
+qualquer um se auto-declarar "assinatura ativa" de graça).
+
+Pendente: rodar a migration `20261004000000_assinaturas.sql` e definir o número de
+WhatsApp real em `PlanoModal.tsx` (hoje é um placeholder).
+
+PR: [feat/trial-assinatura](https://github.com/andrevisc-1209/Treino-PP/pull/34)

@@ -149,8 +149,47 @@ investigar — não teve tempo de aprofundar nesta rodada.
   `.trim()` encontrado roda em submit/salvar ou em filtro de busca, nunca no
   `onChange` de um campo. Se alguém ainda reproduzir isso, preciso do campo
   específico e do navegador/teclado usado pra investigar de novo.
-- ⏳ Ainda faltam: local de treino com Google Places (precisa de
-  `VITE_GOOGLE_MAPS_API_KEY`, que não existe no projeto ainda), consentimento
-  por e-mail/WhatsApp com status pendente/enviado/aceito, e slider no
-  pré/pós-treino (troca dos chips 0–10 por `<input type="range">`, mantendo a
-  cor por polaridade que já existe em `ScaleQuestion.tsx`).
+- ✅ Local de treino com Google Places autocomplete — `feat/local-treino-places`
+  (migration `20261002000000_locais_treino.sql`, já rodada;
+  `VITE_GOOGLE_MAPS_API_KEY` já está no GitHub Secrets).
+- ✅ Slider no pré/pós-treino (troca dos chips 0–10 por `<input
+  type="range">`, mantendo a cor por polaridade) — `feat/slider-pre-pos-treino`.
+- ⏳ Ainda falta: consentimento por e-mail/WhatsApp com status
+  pendente/enviado/aceito (extensão de `treino.consentimentos`).
+
+## 💰 Trial + Assinaturas (feat/trial-assinatura)
+
+- ✅ **Trial de 15 dias automático no cadastro**: migration
+  `20261004000000_assinaturas.sql` cria `treino.assinaturas` e estende o
+  trigger `handle_new_user()` (já existente) pra inserir a linha de trial
+  junto com o professional — sem precisar de Edge Function separada. Inclui
+  backfill pra quem já tinha conta antes desta migration.
+- ✅ `useAssinatura()` (`src/features/assinatura/useAssinatura.ts`):
+  `status`, `diasRestantesTrial`, `plano`, `assinaturaFim`, `estaAtivo`.
+- ✅ `TrialBanner.tsx`: aparece no topo enquanto em trial ativo, some quando
+  expira ou já tem assinatura.
+- ✅ `PlanoModal.tsx`: os 3 planos (mensal/trimestral/semestral), botão
+  "Assinar" abre WhatsApp com a mensagem pré-preenchida (placeholder —
+  **falta o número real do WhatsApp de suporte**, ver TODO no arquivo).
+- ✅ `AssinaturaGuard.tsx`: bloqueia o app inteiro (tela "Seu trial expirou" +
+  modal de planos) quando `estaAtivo === false`. Aplicado uma vez só em
+  `RequireAuth.tsx` (todas as rotas autenticadas passam por lá), não em cada
+  página separadamente.
+- **Decisão de segurança que difere do prompt original**: a tabela
+  `treino.assinaturas` tem RLS **só de leitura** pra `authenticated` (sem
+  INSERT/UPDATE/DELETE via client). O pedido original tinha uma policy `FOR
+  ALL`, que deixaria qualquer profissional logado dar `PATCH` direto na REST
+  API e setar `status = 'ativa'` nele mesmo, de graça. A única escrita hoje é
+  o trigger (`SECURITY DEFINER`, roda como dono da tabela). Quando o Mercado
+  Pago entrar, a confirmação de pagamento também precisa ser uma function/
+  Edge Function `SECURITY DEFINER` (webhook), nunca um UPDATE vindo do
+  client.
+- 🔴 **Bloqueado**: rodar a migration (ver abaixo) e você me passar o número
+  real de WhatsApp pra colar em `PlanoModal.tsx`.
+
+## 💳 Pagamento — Mercado Pago (pendente)
+- [ ] Criar conta Mercado Pago do app em https://www.mercadopago.com.br/developers
+- [ ] Obter PUBLIC_KEY + ACCESS_TOKEN (sandbox primeiro)
+- [ ] Edge Function `create-preference` — cria preferência de pagamento MP
+- [ ] Webhook `/auth/mp-webhook` — recebe notificação de pagamento e atualiza assinatura
+- [ ] Testar fluxo completo em sandbox antes de ir pra produção
