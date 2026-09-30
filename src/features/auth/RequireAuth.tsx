@@ -1,5 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from '@/components/BottomNav'
+import { AssinaturaGuard } from '@/components/AssinaturaGuard'
+import { TrialBanner } from '@/components/TrialBanner'
 import { useAuth } from './AuthProvider'
 
 // Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
@@ -17,7 +19,14 @@ export function RequireAuth() {
 
   return (
     <div className={modoFoco ? '' : 'pb-16'}>
-      <Outlet />
+      <AssinaturaGuard>
+        {!modoFoco && (
+          <div className="mx-auto max-w-2xl px-4 pt-4">
+            <TrialBanner />
+          </div>
+        )}
+        <Outlet />
+      </AssinaturaGuard>
       {!modoFoco && <BottomNav />}
     </div>
   )
