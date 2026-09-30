@@ -165,3 +165,34 @@ coluna não existia; `treino.alunos.birth_date` já existe desde a migration ini
 do schema. Só estendi a validação (obrigatório, 14–100 anos, sem data futura).
 
 PR: [feat/ux-treino-ajustes](https://github.com/andrevisc-1209/Treino-PP/pull/37)
+
+## 12. Template de e-mail de confirmação de cadastro + centralização de mensagens de erro
+
+| Item | Descrição | Status |
+|---|---|---|
+| 12.1 | Novo template "Confirm signup" (`confirmacao-cadastro.html`) — não existia, só havia convite/reset | ✅ feito |
+| 12.2 | Saudação com emoji nos templates de reset/confirmação (padronizado com o pedido) | ✅ feito |
+| 12.3 | `src/lib/mensagens.ts` com `ERROS.{AUTH,CPF,REDE,FORM}`, usado por `errosAuth.ts`/`erros.ts` e nas validações de CPF/idade | ✅ feito |
+
+**Correções ao pedido original** (premissas que não conferiam com o repo):
+- Não existe `public/logo.png`, e `https://treino.personalperto.com.br/logo.png`
+  dá 404. A logo já está (e continua) em `public/brand/logo-email.png`, já
+  referenciada nos três templates com `width="180"` no cabeçalho navy — o
+  pedido de "adicionar a logo" já estava atendido antes desta PR.
+- O botão dos e-mails usa `#367c39`, não o `#4CAF50` pedido — `#4CAF50` tem
+  contraste de 2,78:1 contra fundo branco (abaixo do mínimo AA de 4,5:1);
+  `#367c39` é a correção de acessibilidade já registrada em `docs/BRAND.md`.
+  Mantive `#367c39` nos três templates.
+- Não existe Edge Function de envio de e-mail neste projeto (Supabase manda
+  os e-mails de auth direto via SMTP do Resend, template colado no Dashboard)
+  — não criei `supabase/functions/send-email/templates/`.
+- Não centralizei **todas** as strings de erro/validação de `src/` — só as
+  categorias pedidas (AUTH/CPF/REDE/FORM) e seus pontos de uso reais. Dezenas
+  de mensagens de validação de formulário (ex.: `AlunoFormPage.tsx`) já são
+  específicas por campo e claras; migrá-las pra um texto genérico teria
+  piorado a UX sem necessidade.
+- Não tenho acesso ao Supabase Dashboard nem à Management API — não consegui
+  fazer o levantamento do texto "antes" nem aplicar os templates; ficam
+  documentados em `docs/email-templates/` pra colagem manual.
+
+PR: [feat/mensagens-email-erros](https://github.com/andrevisc-1209/Treino-PP/pull/38)

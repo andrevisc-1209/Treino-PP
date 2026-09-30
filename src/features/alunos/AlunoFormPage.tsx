@@ -21,13 +21,14 @@ import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/fe
 import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { linkWhatsApp } from '@/lib/whatsapp'
+import { ERROS } from '@/lib/mensagens'
 
 const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : Number(v))
 
 const schema = z
   .object({
-    name: z.string().min(1, 'Nome é obrigatório'),
-    birth_date: z.string().min(1, 'Data de nascimento é obrigatória'),
+    name: z.string().min(1, ERROS.FORM.obrigatorio),
+    birth_date: z.string().min(1, ERROS.FORM.obrigatorio),
     sex: z.enum(['M', 'F', 'outro']).optional(),
     height_cm: z.preprocess(numOrUndef, z.number().int().min(50, 'Altura inválida').max(250, 'Altura inválida').optional()),
     weight_kg: z.preprocess(numOrUndef, z.number().positive('Peso inválido').optional()),
@@ -58,12 +59,12 @@ const schema = z
     if (val.birth_date) {
       const nascimento = new Date(val.birth_date + 'T00:00:00')
       if (Number.isNaN(nascimento.getTime())) {
-        ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'Data inválida' })
+        ctx.addIssue({ code: 'custom', path: ['birth_date'], message: ERROS.FORM.dataInvalida })
       } else if (nascimento.getTime() > Date.now()) {
         ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'Data não pode ser no futuro' })
       } else {
         const anos = idade(val.birth_date) ?? 0
-        if (anos < 14) ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'O aluno deve ter pelo menos 14 anos' })
+        if (anos < 14) ctx.addIssue({ code: 'custom', path: ['birth_date'], message: ERROS.FORM.idadeMinima })
         else if (anos > 100) ctx.addIssue({ code: 'custom', path: ['birth_date'], message: 'Data de nascimento inválida' })
       }
     }

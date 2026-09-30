@@ -1,6 +1,9 @@
 // Traduz os erros mais comuns do Supabase/PostgREST pra mensagens em
 // português que fazem sentido pro personal, em vez do texto técnico cru
-// (ex.: "duplicate key value violates unique constraint ...").
+// (ex.: "duplicate key value violates unique constraint ..."). Textos
+// centralizados em mensagens.ts.
+
+import { ERROS } from './mensagens'
 
 type ErroComoObjeto = { message?: unknown; code?: unknown; status?: unknown; details?: unknown }
 
@@ -16,21 +19,21 @@ export function mapearErroSupabase(erro: unknown): string {
   const textoCompleto = `${msgMin} ${detailsMin}`
 
   if (msgMin.includes('failed to fetch') || msgMin.includes('network') || msgMin.includes('load failed')) {
-    return 'Sem conexão com a internet. Verifique o sinal e tente de novo.'
+    return ERROS.REDE.semConexao
   }
   if (msgMin.includes('sessão expirada') || msgMin.includes('jwt expired') || status === 401) {
-    return 'Sua sessão expirou. Saia e entre de novo.'
+    return ERROS.AUTH.sessaoExpirada
   }
   if (code === '42501' || msgMin.includes('row-level security') || msgMin.includes('permission denied') || status === 403) {
     return 'Você não tem permissão para fazer isso.'
   }
   if (code === '23505' || msgMin.includes('duplicate key') || msgMin.includes('already exists')) {
-    if (textoCompleto.includes('cpf')) return 'CPF já cadastrado. Cada personal só pode ter uma conta.'
-    if (textoCompleto.includes('email')) return 'E-mail já cadastrado. Tente fazer login ou use outro e-mail.'
+    if (textoCompleto.includes('cpf')) return ERROS.CPF.duplicado
+    if (textoCompleto.includes('email')) return ERROS.AUTH.emailDuplicado
     return 'Já existe um registro com esses dados.'
   }
   if (code === 'P0001' && msgMin.includes('cpf não pode ser alterado')) {
-    return 'CPF não pode ser alterado depois do cadastro.'
+    return ERROS.CPF.imutavel
   }
   if (code === '23514' || msgMin.includes('violates check constraint')) {
     return 'Valor inválido para este campo.'
@@ -39,8 +42,8 @@ export function mapearErroSupabase(erro: unknown): string {
     return 'Esse item está sendo usado em outro lugar e não pode ser alterado assim.'
   }
   if (msgMin.includes('violates not-null constraint')) {
-    return 'Preencha todos os campos obrigatórios.'
+    return ERROS.FORM.obrigatorio
   }
 
-  return 'Algo deu errado. Tente de novo.'
+  return ERROS.REDE.generico
 }

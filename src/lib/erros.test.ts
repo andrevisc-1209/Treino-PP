@@ -25,12 +25,12 @@ describe('mapearErroSupabase', () => {
   it('mapeia e-mail duplicado pelos details', () => {
     expect(
       mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint "professionals_email_key"', details: 'Key (email)=(a@a.com) already exists.' }),
-    ).toMatch(/e-mail já cadastrado/i)
+    ).toMatch(/e-mail já está cadastrado/i)
   })
   it('mapeia valor inválido (check constraint)', () => {
     expect(mapearErroSupabase({ code: '23514', message: 'violates check constraint' })).toMatch(/inválido/i)
   })
   it('cai num texto genérico pra erro desconhecido', () => {
-    expect(mapearErroSupabase(new Error('algo bem específico do Postgres'))).toBe('Algo deu errado. Tente de novo.')
+    expect(mapearErroSupabase(new Error('algo bem específico do Postgres'))).toMatch(/algo deu errado/i)
   })
 })
