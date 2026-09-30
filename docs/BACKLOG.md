@@ -83,3 +83,24 @@ Pendente: rodar a migration `20261004000000_assinaturas.sql` e definir o número
 WhatsApp real em `PlanoModal.tsx` (hoje é um placeholder).
 
 PR: [feat/trial-assinatura](https://github.com/andrevisc-1209/Treino-PP/pull/34)
+
+## 9. UX: Pix (UF/cidade + card na Hoje), acesso ao perfil, validação de CPF
+
+| Item | Descrição | Status |
+|---|---|---|
+| 9.1 | Seletor UF → Cidade no Pix (API do IBGE), troca o campo de texto livre | ✅ feito |
+| 9.2 | Card "Receber via Pix" na Hoje (chave mascarada, copiar, compartilhar) | ✅ feito |
+| 9.3 | Acesso a Configurações no bottom nav ("Perfil") | ✅ feito |
+| 9.4 | CPF: borda vermelha + mensagem no blur, botão desabilitado enquanto inválido | ✅ feito |
+| 9.5 | Unicidade de CPF (`idx_professionals_cpf`) + mensagens de erro específicas | ✅ feito |
+
+O pedido original referenciava `treino.perfis` (não existe neste projeto — é
+`treino.professionals`) e pedia um `src/lib/validators.ts` novo — `validarCPF` já
+existia em `src/lib/cpf.ts` desde a PR de cadastro do personal, não dupliquei.
+Não adicionei um avatar clicável no header da Hoje (item pedido) porque o ícone de
+engrenagem que já existe lá já cobre esse acesso, e agora o bottom nav também tem
+"Perfil" — um terceiro caminho pra mesma tela pareceu redundante.
+
+Pendente: rodar a migration `20261005000000_unique_cpf.sql`.
+
+PR: [feat/ux-perfil-pix-cpf](https://github.com/andrevisc-1209/Treino-PP/pull/35)

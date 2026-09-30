@@ -35,6 +35,9 @@ describe('mapearErroAuth', () => {
   it('mapeia falha de rede', () => {
     expect(mapearErroAuth(new Error('Failed to fetch'))).toMatch(/conexão/i)
   })
+  it('mapeia falha do trigger no signUp (CPF/e-mail já cadastrado)', () => {
+    expect(mapearErroAuth(new Error('Database error saving new user'))).toMatch(/cpf ou e-mail/i)
+  })
   it('cai num texto genérico pra erro desconhecido', () => {
     expect(mapearErroAuth(new Error('algo bem específico do GoTrue'))).toBe('Não foi possível concluir. Tente de novo.')
   })

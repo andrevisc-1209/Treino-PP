@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { CalendarDays, ClipboardList, DollarSign, Sun, Users } from 'lucide-react'
+import { CalendarDays, ClipboardList, DollarSign, Settings, Sun, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ITEMS = [
@@ -8,6 +8,7 @@ const ITEMS = [
   { to: '/alunos', label: 'Alunos', icon: Users, end: false },
   { to: '/financeiro', label: 'Financeiro', icon: DollarSign, end: false },
   { to: '/meus-treinos', label: 'Meus treinos', icon: ClipboardList, end: false },
+  { to: '/configuracoes', label: 'Perfil', icon: Settings, end: false },
 ]
 
 export function BottomNav() {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Field, Input } from '@/components/ui'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
+import { mapearErroSupabase } from '@/lib/erros'
 import { salvarPerfilProfissional } from './api'
 
 /**
@@ -13,10 +14,13 @@ import { salvarPerfilProfissional } from './api'
 export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }: { userId: string; nomeInicial?: string; onConcluido: () => void }) {
   const [nome, setNome] = useState(nomeInicial)
   const [cpf, setCpf] = useState('')
+  const [cpfTocado, setCpfTocado] = useState(false)
   const [telefone, setTelefone] = useState('')
   const [whatsappOptIn, setWhatsappOptIn] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
+
+  const cpfInvalido = !!cpf && !validarCPF(cpf)
 
   const salvar = async () => {
     if (!nome.trim()) return setErro('Informe seu nome')
@@ -33,7 +37,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
       })
       onConcluido()
     } catch (e) {
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     } finally {
       setSalvando(false)
     }
@@ -44,8 +48,15 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
       <Field label="Nome">
         <Input value={nome} onChange={(e) => setNome(e.target.value)} autoFocus />
       </Field>
-      <Field label="CPF">
-        <Input value={cpf} onChange={(e) => setCpf(mascararCPF(e.target.value))} inputMode="numeric" placeholder="000.000.000-00" />
+      <Field label="CPF" error={cpfTocado && cpfInvalido ? 'CPF inválido' : undefined}>
+        <Input
+          value={cpf}
+          onChange={(e) => setCpf(mascararCPF(e.target.value))}
+          onBlur={() => setCpfTocado(true)}
+          inputMode="numeric"
+          placeholder="000.000.000-00"
+          className={cpfTocado && cpfInvalido ? 'border-red-600 focus:border-red-600' : undefined}
+        />
       </Field>
       <Field label="Telefone">
         <Input value={telefone} onChange={(e) => setTelefone(mascararTelefone(e.target.value))} inputMode="tel" placeholder="(00) 00000-0000" />
@@ -60,7 +71,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
         Aceito receber notificações pelo WhatsApp
       </label>
       {erro && <p className="text-sm text-red-600">{erro}</p>}
-      <Button onClick={salvar} className="w-full" disabled={salvando}>
+      <Button onClick={salvar} className="w-full" disabled={salvando || cpfInvalido}>
         Concluir
       </Button>
     </div>

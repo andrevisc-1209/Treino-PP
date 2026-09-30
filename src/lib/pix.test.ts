@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { crc16, gerarPayloadPix, normalizarCidadePix, normalizarChavePix, normalizarNomePix } from './pix'
+import { crc16, gerarPayloadPix, mascararChavePix, normalizarCidadePix, normalizarChavePix, normalizarNomePix } from './pix'
+
+describe('mascararChavePix', () => {
+  it('cpf: mostra 3 primeiros e 2 últimos', () => {
+    expect(mascararChavePix('cpf', '06312345646')).toBe('063.***.***-46')
+  })
+  it('cnpj: mostra 2 primeiros e 2 últimos', () => {
+    expect(mascararChavePix('cnpj', '12345678000190')).toBe('12.***.***/****-90')
+  })
+  it('email: mostra 2 primeiros caracteres do usuário e o domínio inteiro', () => {
+    expect(mascararChavePix('email', 'andre@personalperto.com.br')).toBe('an***@personalperto.com.br')
+  })
+  it('telefone: mostra só os 4 últimos dígitos', () => {
+    expect(mascararChavePix('telefone', '+5521988887777')).toBe('+*********7777')
+  })
+  it('aleatoria: mostra início e fim, esconde o meio', () => {
+    expect(mascararChavePix('aleatoria', '123e4567-e89b-12d3-a456-426614174000')).toBe('123e' + '*'.repeat(28) + '4000')
+  })
+})
 
 describe('crc16', () => {
   it('calcula o valor de referência de "123456789"', () => {

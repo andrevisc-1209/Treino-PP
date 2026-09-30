@@ -20,6 +20,21 @@ export function normalizarChavePix(tipo: PixTipo, valor: string): string {
   return v
 }
 
+/** Mascara a chave Pix (já normalizada) pra exibir sem expor tudo — ex.: CPF "063.***.***-46". */
+export function mascararChavePix(tipo: PixTipo, chave: string): string {
+  if (tipo === 'cpf' && chave.length === 11) return `${chave.slice(0, 3)}.***.***-${chave.slice(9)}`
+  if (tipo === 'cnpj' && chave.length === 14) return `${chave.slice(0, 2)}.***.***/****-${chave.slice(12)}`
+  if (tipo === 'email') {
+    const [usuario, dominio] = chave.split('@')
+    if (!dominio) return chave
+    return `${usuario.slice(0, 2)}${'*'.repeat(Math.max(usuario.length - 2, 1))}@${dominio}`
+  }
+  if (tipo === 'telefone') return chave.length > 4 ? `${chave.slice(0, -4).replace(/\d/g, '*')}${chave.slice(-4)}` : chave
+  // aleatoria: mostra só o começo e o fim
+  if (chave.length > 8) return `${chave.slice(0, 4)}${'*'.repeat(chave.length - 8)}${chave.slice(-4)}`
+  return chave
+}
+
 /** Nome do recebedor para o BR Code: sem acento, maiúsculo, até 25 caracteres. */
 export function normalizarNomePix(nome: string): string {
   return removerAcentos(nome).toUpperCase().slice(0, 25)

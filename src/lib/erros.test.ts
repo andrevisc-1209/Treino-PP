@@ -14,6 +14,16 @@ describe('mapearErroSupabase', () => {
   it('mapeia duplicidade (unique constraint)', () => {
     expect(mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint' })).toMatch(/já existe/i)
   })
+  it('mapeia CPF duplicado pelo nome do índice/coluna nos details', () => {
+    expect(
+      mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint "idx_professionals_cpf"', details: 'Key (cpf)=(11144477735) already exists.' }),
+    ).toMatch(/cpf já cadastrado/i)
+  })
+  it('mapeia e-mail duplicado pelos details', () => {
+    expect(
+      mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint "professionals_email_key"', details: 'Key (email)=(a@a.com) already exists.' }),
+    ).toMatch(/e-mail já cadastrado/i)
+  })
   it('mapeia valor inválido (check constraint)', () => {
     expect(mapearErroSupabase({ code: '23514', message: 'violates check constraint' })).toMatch(/inválido/i)
   })
