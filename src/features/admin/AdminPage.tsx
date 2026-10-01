@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { Settings } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button, Field, Input } from '@/components/ui'
 import { montarDataHoraSP, hojeSP } from '@/lib/datas'
+import { validarCPF, mascararCPF } from '@/lib/cpf'
 import { mapearErroSupabase } from '@/lib/erros'
+import { ERROS } from '@/lib/mensagens'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { APP_NAME } from '@/config/app'
+import { useIsAdmin } from './useIsAdmin'
 import {
+  useAdminAlterarCpf,
   useAdminAlterarPlano,
   useAdminAlterarTrial,
   useAdminPersonais,
@@ -30,20 +32,6 @@ const ROTULO_STATUS: Record<StatusAssinatura, string> = {
   ativa: 'Ativa',
   expirada: 'Expirada',
   cancelada: 'Cancelada',
-}
-
-function useIsAdmin() {
-  const { session, loading: authLoading } = useAuth()
-  const query = useQuery({
-    queryKey: ['admin', 'sou-admin', session?.user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('professionals').select('is_admin').eq('id', session!.user.id).single()
-      if (error) throw error
-      return data.is_admin as boolean
-    },
-    enabled: !!session,
-  })
-  return { isAdmin: query.data ?? false, loading: authLoading || (!!session && query.isLoading) }
 }
 
 export function AdminPage() {
@@ -197,11 +185,13 @@ function CardResumo({ icone, label, valor }: { icone: string; label: string; val
 function GerenciarPersonalSheet({ personal, onClose }: { personal: PersonalAdmin; onClose: () => void }) {
   const alterarTrial = useAdminAlterarTrial()
   const alterarPlano = useAdminAlterarPlano()
+  const alterarCpf = useAdminAlterarCpf()
   const resetSenha = useAdminResetSenha()
   const [novoTrialFim, setNovoTrialFim] = useState(hojeSP())
   const [novaAssinaturaFim, setNovaAssinaturaFim] = useState(hojeSP())
   const [plano, setPlano] = useState<Plano>('mensal')
   const [linkReset, setLinkReset] = useState<string | null>(null)
+  const [novoCpf, setNovoCpf] = useState('')
 
   const salvarTrial = async () => {
     try {
@@ -216,6 +206,17 @@ function GerenciarPersonalSheet({ personal, onClose }: { personal: PersonalAdmin
     try {
       await alterarPlano.mutateAsync({ professionalId: personal.id, assinaturaFim: montarDataHoraSP(novaAssinaturaFim, '23:59').toISOString(), plano })
       mostrarInfoGlobal('Assinatura atualizada.')
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  const salvarCpf = async () => {
+    if (!validarCPF(novoCpf)) return mostrarErroGlobal(ERROS.CPF.invalido)
+    try {
+      await alterarCpf.mutateAsync({ professionalId: personal.id, cpf: novoCpf })
+      mostrarInfoGlobal('CPF atualizado.')
+      setNovoCpf('')
     } catch (e) {
       mostrarErroGlobal(mapearErroSupabase(e))
     }
@@ -286,6 +287,17 @@ function GerenciarPersonalSheet({ personal, onClose }: { personal: PersonalAdmin
           </Field>
           <Button variant="outline" onClick={salvarPlano} disabled={alterarPlano.isPending} className="w-full">
             Salvar assinatura
+          </Button>
+        </div>
+
+        <div className="space-y-2 border-t border-slate-100 pt-4">
+          <h3 className="text-sm font-semibold text-slate-700">Corrigir CPF</h3>
+          <p className="text-xs text-slate-500">O CPF não pode ser alterado pelo próprio personal depois do cadastro — use só pra corrigir erro de digitação.</p>
+          <Field label="Novo CPF">
+            <Input value={novoCpf} onChange={(e) => setNovoCpf(mascararCPF(e.target.value))} inputMode="numeric" placeholder="000.000.000-00" />
+          </Field>
+          <Button variant="outline" onClick={salvarCpf} disabled={alterarCpf.isPending || !novoCpf} className="w-full">
+            Salvar CPF
           </Button>
         </div>
 
