@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { usePesos } from '@/features/alunos/api'
+import { useAluno, usePesos } from '@/features/alunos/api'
 import { cn } from '@/lib/utils'
 import { useSessoesDetalhadas } from './api'
 import {
@@ -39,8 +39,21 @@ const COR = {
   maiorCarga: '#4a3aa7',
   rm1: '#e34948',
   volume: '#1baf7a',
-  peso: '#e87ba4',
+  // Verde "de marca" (#4CAF50) tem 2,78:1 de contraste contra o fundo
+  // branco do card — abaixo do mínimo de 3:1 pra elementos gráficos (linha
+  // de gráfico). #367c39 é o mesmo ajuste de acessibilidade já usado em
+  // botões/CTAs no resto do app (ver docs/BRAND.md).
+  avaliacao: '#367c39',
 }
+
+type MetricaAvaliacao = 'peso' | 'gordura' | 'cintura' | 'imc'
+
+const METRICAS_AVALIACAO: { value: MetricaAvaliacao; label: string; unidade: string }[] = [
+  { value: 'peso', label: 'Peso', unidade: 'kg' },
+  { value: 'gordura', label: '% Gordura', unidade: '%' },
+  { value: 'cintura', label: 'Cintura', unidade: 'cm' },
+  { value: 'imc', label: 'IMC', unidade: '' },
+]
 
 const PERIODOS: { value: Periodo; label: string }[] = [
   { value: '30', label: '30 dias' },
@@ -93,9 +106,11 @@ function CardResumo({ label, valor, sub }: { label: string; valor: string; sub?:
 export function EvolucaoTab({ alunoId }: { alunoId: string }) {
   const { data: sessoesTodas, isLoading } = useSessoesDetalhadas(alunoId)
   const { data: pesosTodos } = usePesos(alunoId)
+  const { data: aluno } = useAluno(alunoId)
   const [periodo, setPeriodo] = useState<Periodo>('30')
   const [bemEstarDetalhado, setBemEstarDetalhado] = useState(false)
   const [exercicioId, setExercicioId] = useState<string | null>(null)
+  const [metricaAvaliacao, setMetricaAvaliacao] = useState<MetricaAvaliacao>('peso')
 
   const sessoes = useMemo(() => filtrarPorPeriodo(sessoesTodas ?? [], periodo, (s) => s.session_date), [sessoesTodas, periodo])
   const pesos = useMemo(() => filtrarPorPeriodo(pesosTodos ?? [], periodo, (p) => p.measured_at), [pesosTodos, periodo])
@@ -130,9 +145,23 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
     [sessoes, exercicioId],
   )
 
-  const dadosPeso = useMemo(
-    () => [...pesos].sort((a, b) => a.measured_at.localeCompare(b.measured_at)).map((p) => ({ data: p.measured_at, peso: p.weight_kg })),
-    [pesos],
+  const alturaM = aluno?.height_cm ? aluno.height_cm / 100 : null
+  const dadosAvaliacao = useMemo(
+    () =>
+      [...pesos]
+        .sort((a, b) => a.measured_at.localeCompare(b.measured_at))
+        .map((p) => ({
+          data: p.measured_at,
+          peso: p.weight_kg,
+          gordura: p.gordura_pct,
+          cintura: p.cintura_cm,
+          imc: alturaM ? Math.round((p.weight_kg / (alturaM * alturaM)) * 10) / 10 : null,
+        })),
+    [pesos, alturaM],
+  )
+  const dadosMetricaSelecionada = useMemo(
+    () => dadosAvaliacao.filter((d) => d[metricaAvaliacao] != null),
+    [dadosAvaliacao, metricaAvaliacao],
   )
 
   const { atual, mediaAnterior } = useMemo(() => tendenciaCargaSemanal(sessoesTodas ?? []), [sessoesTodas])
@@ -320,17 +349,48 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
       </div>
 
       <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Peso corporal</h2>
-        {dadosPeso.length < 2 ? (
-          <EmptyMsg>Registre 2 pesos para ver a evolução.</EmptyMsg>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Avaliação física</h2>
+        </div>
+        <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+          {METRICAS_AVALIACAO.map((m) => (
+            <button
+              key={m.value}
+              onClick={() => setMetricaAvaliacao(m.value)}
+              className={cn(
+                'min-h-9 flex-1 rounded-lg text-xs font-medium transition',
+                metricaAvaliacao === m.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        {metricaAvaliacao === 'imc' && !alturaM && (
+          <p className="text-xs text-amber-600">Sem altura cadastrada — edite o aluno pra calcular o IMC.</p>
+        )}
+        {dadosMetricaSelecionada.length < 2 ? (
+          <EmptyMsg>Adicione pelo menos 2 avaliações para ver a evolução.</EmptyMsg>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={dadosPeso} margin={{ left: -20 }}>
+            <LineChart data={dadosMetricaSelecionada} margin={{ left: -20 }}>
               <GradeLeve />
               <EixoData dataKey="data" />
-              <EixoValor />
-              <Tooltip labelFormatter={(v) => formatarDataCurta(String(v))} formatter={tooltipFormatter({ peso: 'Peso (kg)' })} />
-              <Line type="monotone" dataKey="peso" stroke={COR.peso} strokeWidth={2} dot={{ r: 3 }} />
+              {/* Domínio automático com folga (não fixo em 0): peso/cintura/IMC variam pouco
+                  mês a mês perto de um valor absoluto grande — um eixo começando em 0
+                  deixaria a linha quase reta e escondia a variação real. */}
+              <YAxis
+                domain={[(min: number) => Math.floor(min - 1), (max: number) => Math.ceil(max + 1)]}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 11, fill: '#64748b' }}
+                width={32}
+              />
+              <Tooltip
+                labelFormatter={(v) => formatarDataCurta(String(v))}
+                formatter={tooltipFormatter({ [metricaAvaliacao]: METRICAS_AVALIACAO.find((m) => m.value === metricaAvaliacao)!.label })}
+              />
+              <Line type="monotone" dataKey={metricaAvaliacao} stroke={COR.avaliacao} strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
