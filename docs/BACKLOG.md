@@ -224,3 +224,25 @@ PR: [feat/mensagens-email-erros](https://github.com/andrevisc-1209/Treino-PP/pul
   enviado".
 
 PR: [feat/admin-panel](https://github.com/andrevisc-1209/Treino-PP/pull/39)
+PR (redirecionamento + corrigir CPF): [feat/admin-redirect-cpf](https://github.com/andrevisc-1209/Treino-PP/pull/40)
+PR (redesign de UX): [feat/admin-redirect-cpf](https://github.com/andrevisc-1209/Treino-PP/pull/41)
+
+### 13.1 Visão geral + inadimplentes no dashboard
+
+- Bloco "Visão geral" (5 cards: profissionais ativos, em trial, trial
+  expirando em 3 dias, inadimplentes, total de alunos) e seção colapsável
+  "Atenção: Inadimplentes" (lista com dias vencidos coloridos por faixa +
+  ação rápida "+ 7 dias de trial"), antes da tabela de personais.
+- **Sem migration nova**: os dados já vêm de `treino.admin_listar_personais()`
+  (existente desde o item 13); os 5 cards e a lista de inadimplentes são
+  derivados no frontend (`useInadimplentes.ts`) a partir do que essa function
+  já retorna, em vez de uma query/JOIN nova — o pedido original sugeria um
+  hook com JOIN próprio, mas isso duplicaria uma consulta que o painel já faz.
+- Status corrigidos: o pedido usava `'ativo'`/`'expirado'` — os valores reais
+  de `treino.assinaturas.status` são `'ativa'`/`'expirada'` (ver
+  `src/features/assinatura/useAssinatura.ts`).
+- "+ 7 dias de trial" soma 7 dias a partir de **agora** (não a partir da data
+  de expiração antiga, que pode estar bem no passado) — reativação de fato,
+  não só "mover a data vencida um pouco pra frente".
+
+PR: [feat/admin-visao-geral-inadimplentes](https://github.com/andrevisc-1209/Treino-PP/pull/42)
