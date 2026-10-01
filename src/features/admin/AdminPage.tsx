@@ -1,6 +1,20 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { CalendarClock, CreditCard, GraduationCap, KeyRound, LogOut, MapPin, Pencil, Search, Users } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarClock,
+  ChevronDown,
+  ChevronUp,
+  CircleCheck,
+  CreditCard,
+  GraduationCap,
+  Hourglass,
+  KeyRound,
+  LogOut,
+  Pencil,
+  Search,
+  UserCheck,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button, Field, Input } from '@/components/ui'
@@ -12,6 +26,7 @@ import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { APP_NAME } from '@/config/app'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { useIsAdmin } from './useIsAdmin'
+import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import {
   useAdminAlterarCpf,
   useAdminAlterarPlano,
@@ -78,6 +93,7 @@ function AdminDashboard() {
   const resumo = useAdminResumo()
   const personais = useAdminPersonais()
   const regioes = useAdminRegioes()
+  const { inadimplentes } = useInadimplentes()
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'' | StatusAssinatura>('')
   const [acao, setAcao] = useState<{ tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin } | null>(null)
@@ -91,20 +107,40 @@ function AdminDashboard() {
     })
   }, [personais.data, busca, filtroStatus])
 
+  const visaoGeral = useMemo(() => {
+    const lista = personais.data ?? []
+    const agora = Date.now()
+    const emTresDias = agora + 3 * 86_400_000
+    return {
+      ativos: lista.filter((p) => p.status === 'trial' || p.status === 'ativa').length,
+      emTrial: lista.filter((p) => p.status === 'trial').length,
+      trialExpirando3Dias: lista.filter((p) => p.status === 'trial' && p.trial_fim && new Date(p.trial_fim).getTime() <= emTresDias).length,
+      inadimplentes: lista.filter((p) => p.status === 'expirada').length,
+    }
+  }, [personais.data])
+
   return (
     <div className="min-h-full bg-slate-50 pb-10">
       <AdminHeader />
 
       <div className="mx-auto max-w-5xl space-y-6 p-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <CardResumo icone={<Users size={20} />} label="Total de personais" valor={resumo.data?.total_personais} />
-          <CardResumo icone={<GraduationCap size={20} />} label="Total de alunos" valor={resumo.data?.total_alunos} />
-          <CardResumo icone={<MapPin size={20} />} label="Cidades com Pix configurado" valor={resumo.data?.regioes_ativas} />
+        <div>
+          <h2 className="mb-3 font-heading font-semibold text-accent">Visão geral</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <CardResumo icone={<UserCheck size={20} />} label="Profissionais ativos" valor={visaoGeral.ativos} />
+            <CardResumo icone={<Hourglass size={20} />} label="Em trial" valor={visaoGeral.emTrial} />
+            <CardResumo
+              icone={<AlertTriangle size={20} />}
+              label="Trial expirando em 3 dias"
+              valor={visaoGeral.trialExpirando3Dias}
+              alerta="laranja"
+            />
+            <CardResumo icone={<AlertTriangle size={20} />} label="Inadimplentes" valor={visaoGeral.inadimplentes} alerta="vermelho" />
+            <CardResumo icone={<GraduationCap size={20} />} label="Total de alunos" valor={resumo.data?.total_alunos} />
+          </div>
         </div>
-        <p className="-mt-3 text-xs text-slate-400">
-          "Cidades com Pix configurado" é uma aproximação: não existe hoje um campo de região de atuação no cadastro do personal, só a cidade informada
-          opcionalmente pra receber Pix.
-        </p>
+
+        <InadimplentesSection inadimplentes={inadimplentes} onAjustarTrial={(p) => setAcao({ tipo: 'trial', personal: p })} />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="mb-3 font-heading font-semibold text-accent">Personais</h2>
@@ -201,7 +237,10 @@ function AdminDashboard() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por Pix configurado)</h2>
+          <h2 className="font-heading font-semibold text-accent">Cidades (por Pix configurado) — {resumo.data?.regioes_ativas ?? '—'}</h2>
+          <p className="mb-3 text-xs text-slate-400">
+            Aproximação: não existe hoje um campo de região de atuação no cadastro do personal, só a cidade informada opcionalmente pra receber Pix.
+          </p>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[280px] text-left text-sm">
               <thead>
@@ -240,14 +279,112 @@ function StatusBadge({ status }: { status: StatusAssinatura | null }) {
   return <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${BADGE_STATUS[status]}`}>{ROTULO_STATUS[status]}</span>
 }
 
-function CardResumo({ icone, label, valor }: { icone: ReactNode; label: string; valor: number | undefined }) {
+const BORDA_ALERTA: Record<'laranja' | 'vermelho', string> = {
+  laranja: 'border-l-4 border-l-amber-500',
+  vermelho: 'border-l-4 border-l-red-500',
+}
+const ICONE_ALERTA: Record<'laranja' | 'vermelho', string> = {
+  laranja: 'bg-amber-50 text-amber-600',
+  vermelho: 'bg-red-50 text-red-600',
+}
+
+function CardResumo({
+  icone,
+  label,
+  valor,
+  alerta,
+}: {
+  icone: ReactNode
+  label: string
+  valor: number | undefined
+  /** Card de atenção: borda colorida à esquerda + ícone na mesma cor. */
+  alerta?: 'laranja' | 'vermelho'
+}) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center">
-      <div className="mx-auto mb-1 flex size-9 items-center justify-center rounded-full bg-brand-soft text-brand-hover">{icone}</div>
-      <p className="text-3xl font-bold text-accent">{valor ?? '—'}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+    <div className={`flex items-start justify-between rounded-2xl border border-slate-200 bg-white p-4 ${alerta ? BORDA_ALERTA[alerta] : ''}`}>
+      <div>
+        <p className="text-3xl font-bold text-accent">{valor ?? '—'}</p>
+        <p className="text-xs text-slate-500">{label}</p>
+      </div>
+      <div className={`flex size-9 shrink-0 items-center justify-center rounded-full ${alerta ? ICONE_ALERTA[alerta] : 'bg-brand-soft text-brand-hover'}`}>
+        {icone}
+      </div>
     </div>
   )
+}
+
+function InadimplentesSection({ inadimplentes, onAjustarTrial }: { inadimplentes: Inadimplente[]; onAjustarTrial: (p: PersonalAdmin) => void }) {
+  const [aberto, setAberto] = useState(inadimplentes.length > 0)
+  const estenderTrial = useAdminAlterarTrial()
+
+  const estenderRapido = async (item: Inadimplente) => {
+    try {
+      const novoFim = new Date(Date.now() + 7 * 86_400_000).toISOString()
+      await estenderTrial.mutateAsync({ professionalId: item.personal.id, novoFim })
+      mostrarInfoGlobal(`Trial de ${item.personal.name || item.personal.email} estendido por mais 7 dias.`)
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <button type="button" onClick={() => setAberto((v) => !v)} className="flex w-full items-center justify-between gap-2 text-left">
+        <h2 className="flex items-center gap-2 font-heading font-semibold text-accent">
+          <AlertTriangle size={18} className="text-red-500" /> Atenção: Inadimplentes
+          {inadimplentes.length > 0 && <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">{inadimplentes.length}</span>}
+        </h2>
+        {aberto ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+      </button>
+
+      {aberto && (
+        <div className="mt-4">
+          {inadimplentes.length === 0 ? (
+            <p className="flex items-center gap-2 py-4 text-sm text-slate-500">
+              <CircleCheck size={18} className="text-brand-hover" /> Nenhum profissional inadimplente no momento.
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {inadimplentes.map((item) => (
+                <li key={item.personal.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">{item.personal.name || '—'}</p>
+                    <p className="truncate text-xs text-slate-500">{item.personal.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${COR_DIAS_VENCIDO[item.cor]}`}>
+                      vencido há {item.diasVencido} {item.diasVencido === 1 ? 'dia' : 'dias'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => estenderRapido(item)}
+                      disabled={estenderTrial.isPending}
+                      className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 active:bg-slate-100 disabled:opacity-50"
+                    >
+                      + 7 dias de trial
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onAjustarTrial(item.personal)}
+                      className="whitespace-nowrap text-xs font-medium text-brand-hover underline"
+                    >
+                      outra data
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const COR_DIAS_VENCIDO: Record<Inadimplente['cor'], string> = {
+  amarelo: 'bg-amber-50 text-amber-700',
+  laranja: 'bg-orange-50 text-orange-700',
+  vermelho: 'bg-red-50 text-red-700',
 }
 
 function AcoesPersonal({ personal, onEscolher }: { personal: PersonalAdmin; onEscolher: (tipo: 'reset' | 'trial' | 'plano' | 'cpf') => void }) {
