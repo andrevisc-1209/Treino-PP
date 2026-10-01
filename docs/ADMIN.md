@@ -69,6 +69,24 @@ em tabelas de treino/sessão/peso. A contagem "Total de alunos" é só
 `COUNT(*)`, agregada dentro da function — nunca uma linha de aluno sai do
 banco pro cliente do admin.
 
+## Login redireciona direto pro painel
+
+Contas com `is_admin = true` são redirecionadas pra `/admin` automaticamente
+sempre que logam (ou sempre que abrem o app já logadas) — não ficam vendo a
+home de personal (Hoje/Agenda/bottom nav). Isso é checado em
+`RequireAuth.tsx`, que é o ponto de entrada de toda a parte "normal" do app.
+
+## Corrigir CPF pelo painel
+
+`treino.professionals` tem um trigger (`tg_bloquear_cpf`) que impede qualquer
+`UPDATE` de CPF depois do primeiro preenchimento — proteção pedida numa PR
+anterior, que vale até pra admin. A migration
+`20261008000000_admin_alterar_cpf.sql` abre uma exceção controlada: só a
+function `treino.admin_alterar_cpf` (que já checa `is_admin()` antes de
+qualquer coisa) consegue passar por ela, ligando uma configuração de sessão
+que o trigger reconhece — nenhum outro caminho (nem outro `UPDATE` direto)
+consegue burlar a trava.
+
 ## Limitação conhecida: "cidade" não é "região de atuação"
 
 Não existe hoje um campo no cadastro do personal pra onde ele atua. O painel

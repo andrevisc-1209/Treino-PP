@@ -73,6 +73,17 @@ export function useAdminAlterarPlano() {
   })
 }
 
+export function useAdminAlterarCpf() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ professionalId, cpf }: { professionalId: string; cpf: string }) => {
+      const { error } = await supabase.rpc('admin_alterar_cpf', { p_professional_id: professionalId, p_novo_cpf: cpf.replace(/\D/g, '') })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'personais'] }),
+  })
+}
+
 export function useAdminResetSenha() {
   return useMutation({
     mutationFn: async (email: string) => {
