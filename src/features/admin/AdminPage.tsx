@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Navigate } from 'react-router-dom'
-import { Settings } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { CalendarClock, CreditCard, GraduationCap, KeyRound, LogOut, MapPin, Pencil, Search, Users } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button, Field, Input } from '@/components/ui'
 import { montarDataHoraSP, hojeSP } from '@/lib/datas'
@@ -9,6 +10,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { ERROS } from '@/lib/mensagens'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { APP_NAME } from '@/config/app'
+import iconMark from '@/assets/brand/icon-mark.png'
 import { useIsAdmin } from './useIsAdmin'
 import {
   useAdminAlterarCpf,
@@ -34,6 +36,13 @@ const ROTULO_STATUS: Record<StatusAssinatura, string> = {
   cancelada: 'Cancelada',
 }
 
+const BADGE_STATUS: Record<StatusAssinatura, string> = {
+  trial: 'bg-amber-50 text-amber-700',
+  ativa: 'bg-brand-soft text-brand-hover',
+  expirada: 'bg-red-50 text-red-700',
+  cancelada: 'bg-slate-100 text-slate-500',
+}
+
 export function AdminPage() {
   const { session, loading: authLoading } = useAuth()
   const { isAdmin, loading: adminLoading } = useIsAdmin()
@@ -46,13 +55,32 @@ export function AdminPage() {
   return <AdminDashboard />
 }
 
+function AdminHeader() {
+  const navigate = useNavigate()
+  const sair = async () => {
+    await supabase.auth.signOut()
+    navigate('/')
+  }
+  return (
+    <header className="sticky top-0 z-30 flex items-center justify-between bg-accent px-4 py-3 text-white">
+      <div className="flex items-center gap-2">
+        <img src={iconMark} alt={APP_NAME} className="h-8 w-auto" />
+        <h1 className="font-heading text-lg font-bold">Painel Admin</h1>
+      </div>
+      <Button variant="ghost" onClick={sair} className="min-h-9 px-3 text-white hover:bg-white/10 active:bg-white/10">
+        <LogOut size={16} /> Sair
+      </Button>
+    </header>
+  )
+}
+
 function AdminDashboard() {
   const resumo = useAdminResumo()
   const personais = useAdminPersonais()
   const regioes = useAdminRegioes()
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'' | StatusAssinatura>('')
-  const [gerenciando, setGerenciando] = useState<PersonalAdmin | null>(null)
+  const [acao, setAcao] = useState<{ tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin } | null>(null)
 
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -64,165 +92,238 @@ function AdminDashboard() {
   }, [personais.data, busca, filtroStatus])
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4">
-      <div>
-        <h1 className="text-xl font-bold text-[#0f2537]">Painel administrativo</h1>
-        <p className="text-sm text-slate-500">{APP_NAME} — visão geral dos personais cadastrados</p>
-      </div>
+    <div className="min-h-full bg-slate-50 pb-10">
+      <AdminHeader />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <CardResumo icone="👥" label="Total de personais" valor={resumo.data?.total_personais} />
-        <CardResumo icone="🎓" label="Total de alunos" valor={resumo.data?.total_alunos} />
-        <CardResumo icone="🗺️" label="Cidades com Pix configurado" valor={resumo.data?.regioes_ativas} />
-      </div>
-      <p className="-mt-3 text-xs text-slate-400">
-        "Cidades com Pix configurado" é uma aproximação: não existe hoje um campo de região de atuação no cadastro do personal, só a cidade informada
-        opcionalmente pra receber Pix.
-      </p>
+      <div className="mx-auto max-w-5xl space-y-6 p-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <CardResumo icone={<Users size={20} />} label="Total de personais" valor={resumo.data?.total_personais} />
+          <CardResumo icone={<GraduationCap size={20} />} label="Total de alunos" valor={resumo.data?.total_alunos} />
+          <CardResumo icone={<MapPin size={20} />} label="Cidades com Pix configurado" valor={resumo.data?.regioes_ativas} />
+        </div>
+        <p className="-mt-3 text-xs text-slate-400">
+          "Cidades com Pix configurado" é uma aproximação: não existe hoje um campo de região de atuação no cadastro do personal, só a cidade informada
+          opcionalmente pra receber Pix.
+        </p>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 font-semibold text-[#0f2537]">Personais</h2>
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row">
-          <Input placeholder="Buscar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} className="sm:max-w-xs" />
-          <select
-            value={filtroStatus}
-            onChange={(e) => setFiltroStatus(e.target.value as '' | StatusAssinatura)}
-            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"
-          >
-            <option value="">Todos os status</option>
-            <option value="trial">Trial</option>
-            <option value="ativa">Ativa</option>
-            <option value="expirada">Expirada</option>
-            <option value="cancelada">Cancelada</option>
-          </select>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 font-heading font-semibold text-accent">Personais</h2>
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+            <div className="relative sm:max-w-xs sm:flex-1">
+              <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input placeholder="Buscar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-9" />
+            </div>
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value as '' | StatusAssinatura)}
+              className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"
+            >
+              <option value="">Todos os status</option>
+              <option value="trial">Trial</option>
+              <option value="ativa">Ativa</option>
+              <option value="expirada">Expirada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+
+          {/* Desktop/tablet: tabela com zebra + hover. Mobile: cards empilhados (abaixo). */}
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500">
+                  <th className="py-2 pr-3">Nome</th>
+                  <th className="py-2 pr-3">E-mail</th>
+                  <th className="py-2 pr-3">Cidade (Pix)</th>
+                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3">Trial/plano até</th>
+                  <th className="py-2 pr-3">Alunos</th>
+                  <th className="py-2 pr-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listaFiltrada.map((p, i) => (
+                  <tr key={p.id} className={`border-b border-slate-100 transition-colors hover:bg-slate-50 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
+                    <td className="py-2.5 pr-3 font-medium text-slate-800">{p.name || '—'}</td>
+                    <td className="py-2.5 pr-3 text-slate-600">{p.email ?? '—'}</td>
+                    <td className="py-2.5 pr-3 text-slate-600">{p.cidade ?? '—'}</td>
+                    <td className="py-2.5 pr-3">
+                      <StatusBadge status={p.status} />
+                    </td>
+                    <td className="py-2.5 pr-3 text-slate-600">{formatarDataHoraBR(p.status === 'ativa' ? p.assinatura_fim : p.trial_fim)}</td>
+                    <td className="py-2.5 pr-3 text-slate-600">{p.qtd_alunos}</td>
+                    <td className="py-2.5 pr-3">
+                      <AcoesPersonal personal={p} onEscolher={(tipo) => setAcao({ tipo, personal: p })} />
+                    </td>
+                  </tr>
+                ))}
+                {listaFiltrada.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-slate-400">
+                      Nenhum personal encontrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-3 sm:hidden">
+            {listaFiltrada.map((p) => (
+              <div key={p.id} className="rounded-xl border border-slate-200 p-3">
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">{p.name || '—'}</p>
+                    <p className="truncate text-xs text-slate-500">{p.email ?? '—'}</p>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+                <dl className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-500">
+                  <div>
+                    <dt className="inline">Cidade (Pix): </dt>
+                    <dd className="inline text-slate-700">{p.cidade ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="inline">Alunos: </dt>
+                    <dd className="inline text-slate-700">{p.qtd_alunos}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="inline">Trial/plano até: </dt>
+                    <dd className="inline text-slate-700">{formatarDataHoraBR(p.status === 'ativa' ? p.assinatura_fim : p.trial_fim)}</dd>
+                  </div>
+                </dl>
+                <div className="mt-3">
+                  <AcoesPersonal personal={p} onEscolher={(tipo) => setAcao({ tipo, personal: p })} />
+                </div>
+              </div>
+            ))}
+            {listaFiltrada.length === 0 && <p className="py-6 text-center text-sm text-slate-400">Nenhum personal encontrado.</p>}
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
-                <th className="py-2 pr-3">Nome</th>
-                <th className="py-2 pr-3">E-mail</th>
-                <th className="py-2 pr-3">Cidade (Pix)</th>
-                <th className="py-2 pr-3">Status</th>
-                <th className="py-2 pr-3">Trial expira / plano até</th>
-                <th className="py-2 pr-3">Alunos</th>
-                <th className="py-2 pr-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listaFiltrada.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100">
-                  <td className="py-2 pr-3 font-medium text-slate-800">{p.name || '—'}</td>
-                  <td className="py-2 pr-3 text-slate-600">{p.email ?? '—'}</td>
-                  <td className="py-2 pr-3 text-slate-600">{p.cidade ?? '—'}</td>
-                  <td className="py-2 pr-3 text-slate-600">{p.status ? ROTULO_STATUS[p.status] : '—'}</td>
-                  <td className="py-2 pr-3 text-slate-600">{formatarDataHoraBR(p.status === 'ativa' ? p.assinatura_fim : p.trial_fim)}</td>
-                  <td className="py-2 pr-3 text-slate-600">{p.qtd_alunos}</td>
-                  <td className="py-2 pr-3">
-                    <Button variant="outline" className="min-h-9 px-3 text-xs" onClick={() => setGerenciando(p)}>
-                      <Settings size={14} /> Gerenciar
-                    </Button>
-                  </td>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por Pix configurado)</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[280px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500">
+                  <th className="py-2 pr-3">Cidade</th>
+                  <th className="py-2 pr-3">Personais</th>
                 </tr>
-              ))}
-              {listaFiltrada.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-6 text-center text-slate-400">
-                    Nenhum personal encontrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(regioes.data ?? []).map((r, i) => (
+                  <tr key={r.cidade} className={`border-b border-slate-100 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
+                    <td className="py-2 pr-3 text-slate-700">{r.cidade}</td>
+                    <td className="py-2 pr-3 text-slate-600">{r.qtd}</td>
+                  </tr>
+                ))}
+                {(regioes.data ?? []).length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="py-6 text-center text-slate-400">
+                      Nenhum personal com cidade de Pix configurada ainda.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="mb-3 font-semibold text-[#0f2537]">Cidades (por Pix configurado)</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[320px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-500">
-                <th className="py-2 pr-3">Cidade</th>
-                <th className="py-2 pr-3">Personais</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(regioes.data ?? []).map((r) => (
-                <tr key={r.cidade} className="border-b border-slate-100">
-                  <td className="py-2 pr-3 text-slate-700">{r.cidade}</td>
-                  <td className="py-2 pr-3 text-slate-600">{r.qtd}</td>
-                </tr>
-              ))}
-              {(regioes.data ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={2} className="py-6 text-center text-slate-400">
-                    Nenhum personal com cidade de Pix configurada ainda.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {gerenciando && <GerenciarPersonalSheet personal={gerenciando} onClose={() => setGerenciando(null)} />}
+      {acao && <ModalAcao tipo={acao.tipo} personal={acao.personal} onFechar={() => setAcao(null)} />}
     </div>
   )
 }
 
-function CardResumo({ icone, label, valor }: { icone: string; label: string; valor: number | undefined }) {
+function StatusBadge({ status }: { status: StatusAssinatura | null }) {
+  if (!status) return <span className="text-slate-400">—</span>
+  return <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${BADGE_STATUS[status]}`}>{ROTULO_STATUS[status]}</span>
+}
+
+function CardResumo({ icone, label, valor }: { icone: ReactNode; label: string; valor: number | undefined }) {
   return (
-    <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
-      <p className="text-2xl">{icone}</p>
-      <p className="text-2xl font-bold text-[#0f2537]">{valor ?? '—'}</p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center">
+      <div className="mx-auto mb-1 flex size-9 items-center justify-center rounded-full bg-brand-soft text-brand-hover">{icone}</div>
+      <p className="text-3xl font-bold text-accent">{valor ?? '—'}</p>
       <p className="text-xs text-slate-500">{label}</p>
     </div>
   )
 }
 
-function GerenciarPersonalSheet({ personal, onClose }: { personal: PersonalAdmin; onClose: () => void }) {
-  const alterarTrial = useAdminAlterarTrial()
-  const alterarPlano = useAdminAlterarPlano()
-  const alterarCpf = useAdminAlterarCpf()
+function AcoesPersonal({ personal, onEscolher }: { personal: PersonalAdmin; onEscolher: (tipo: 'reset' | 'trial' | 'plano' | 'cpf') => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <BotaoAcao icone={<KeyRound size={13} />} label="Reset senha" onClick={() => onEscolher('reset')} />
+      <BotaoAcao icone={<CalendarClock size={13} />} label="Ajustar trial" onClick={() => onEscolher('trial')} />
+      <BotaoAcao icone={<CreditCard size={13} />} label="Ajustar plano" onClick={() => onEscolher('plano')} />
+      <BotaoAcao icone={<Pencil size={13} />} label="Corrigir CPF" onClick={() => onEscolher('cpf')} />
+      <span className="sr-only">{personal.name}</span>
+    </div>
+  )
+}
+
+function BotaoAcao({ icone, label, onClick }: { icone: ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition-colors active:bg-slate-100"
+    >
+      {icone} {label}
+    </button>
+  )
+}
+
+/** Container padrão de modal de ação: título, conteúdo e Cancelar/Confirmar com loading. */
+function ModalBase({
+  titulo,
+  children,
+  onCancelar,
+  onConfirmar,
+  confirmando,
+  confirmarDesabilitado,
+  textoConfirmar = 'Confirmar',
+}: {
+  titulo: string
+  children: ReactNode
+  onCancelar: () => void
+  onConfirmar?: () => void
+  confirmando: boolean
+  confirmarDesabilitado?: boolean
+  textoConfirmar?: string
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancelar}>
+      <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <h2 className="font-heading text-lg font-semibold text-accent">{titulo}</h2>
+        <div className="space-y-3">{children}</div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancelar} className="flex-1" disabled={confirmando}>
+            Cancelar
+          </Button>
+          {onConfirmar && (
+            <Button onClick={onConfirmar} className="flex-1" disabled={confirmando || confirmarDesabilitado}>
+              {confirmando ? 'Salvando…' : textoConfirmar}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ModalAcao({ tipo, personal, onFechar }: { tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin; onFechar: () => void }) {
+  if (tipo === 'reset') return <ModalResetSenha personal={personal} onFechar={onFechar} />
+  if (tipo === 'trial') return <ModalAjustarTrial personal={personal} onFechar={onFechar} />
+  if (tipo === 'plano') return <ModalAjustarPlano personal={personal} onFechar={onFechar} />
+  return <ModalCorrigirCpf personal={personal} onFechar={onFechar} />
+}
+
+function ModalResetSenha({ personal, onFechar }: { personal: PersonalAdmin; onFechar: () => void }) {
   const resetSenha = useAdminResetSenha()
-  const [novoTrialFim, setNovoTrialFim] = useState(hojeSP())
-  const [novaAssinaturaFim, setNovaAssinaturaFim] = useState(hojeSP())
-  const [plano, setPlano] = useState<Plano>('mensal')
   const [linkReset, setLinkReset] = useState<string | null>(null)
-  const [novoCpf, setNovoCpf] = useState('')
 
-  const salvarTrial = async () => {
-    try {
-      await alterarTrial.mutateAsync({ professionalId: personal.id, novoFim: montarDataHoraSP(novoTrialFim, '23:59').toISOString() })
-      mostrarInfoGlobal('Trial atualizado.')
-    } catch (e) {
-      mostrarErroGlobal(mapearErroSupabase(e))
-    }
-  }
-
-  const salvarPlano = async () => {
-    try {
-      await alterarPlano.mutateAsync({ professionalId: personal.id, assinaturaFim: montarDataHoraSP(novaAssinaturaFim, '23:59').toISOString(), plano })
-      mostrarInfoGlobal('Assinatura atualizada.')
-    } catch (e) {
-      mostrarErroGlobal(mapearErroSupabase(e))
-    }
-  }
-
-  const salvarCpf = async () => {
-    if (!validarCPF(novoCpf)) return mostrarErroGlobal(ERROS.CPF.invalido)
-    try {
-      await alterarCpf.mutateAsync({ professionalId: personal.id, cpf: novoCpf })
-      mostrarInfoGlobal('CPF atualizado.')
-      setNovoCpf('')
-    } catch (e) {
-      mostrarErroGlobal(mapearErroSupabase(e))
-    }
-  }
-
-  const enviarReset = async () => {
+  const gerar = async () => {
     if (!personal.email) return mostrarErroGlobal('Este personal não tem e-mail cadastrado.')
     try {
       const resultado = await resetSenha.mutateAsync(personal.email)
@@ -234,77 +335,114 @@ function GerenciarPersonalSheet({ personal, onClose }: { personal: PersonalAdmin
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 pt-10" onClick={onClose}>
-      <div className="w-full max-w-md space-y-5 rounded-2xl bg-white p-5 shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <div>
-          <h2 className="font-semibold text-[#0f2537]">Gerenciar — {personal.name || personal.email}</h2>
-          <p className="text-xs text-slate-500">{personal.email}</p>
-        </div>
-
-        <div className="space-y-2 border-t border-slate-100 pt-4">
-          <h3 className="text-sm font-semibold text-slate-700">Reset de senha</h3>
-          <Button onClick={enviarReset} disabled={resetSenha.isPending} className="w-full">
-            {resetSenha.isPending ? 'Gerando…' : 'Gerar link de reset de senha'}
-          </Button>
-          {linkReset && (
-            <div className="space-y-1">
-              <p className="break-all rounded-lg bg-slate-50 p-2 text-xs text-slate-600">{linkReset}</p>
-              <Button
-                variant="outline"
-                className="w-full text-xs"
-                onClick={() => {
-                  navigator.clipboard?.writeText(linkReset)
-                  mostrarInfoGlobal('Link copiado.')
-                }}
-              >
-                Copiar link
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2 border-t border-slate-100 pt-4">
-          <h3 className="text-sm font-semibold text-slate-700">Trial</h3>
-          <Field label="Novo fim do trial">
-            <Input type="date" value={novoTrialFim} onChange={(e) => setNovoTrialFim(e.target.value)} />
-          </Field>
-          <Button variant="outline" onClick={salvarTrial} disabled={alterarTrial.isPending} className="w-full">
-            Salvar trial
+    <ModalBase
+      titulo={`Reset de senha — ${personal.name || personal.email}`}
+      onCancelar={onFechar}
+      onConfirmar={linkReset ? undefined : gerar}
+      confirmando={resetSenha.isPending}
+      textoConfirmar="Gerar link"
+    >
+      <p className="text-sm text-slate-600">Gera um link de redefinição de senha pra {personal.email}. Não envia e-mail sozinho — você copia e manda pro personal.</p>
+      {linkReset && (
+        <div className="space-y-2">
+          <p className="break-all rounded-lg bg-slate-50 p-2 text-xs text-slate-600">{linkReset}</p>
+          <Button
+            variant="outline"
+            className="w-full text-xs"
+            onClick={() => {
+              navigator.clipboard?.writeText(linkReset)
+              mostrarInfoGlobal('Link copiado.')
+            }}
+          >
+            Copiar link
           </Button>
         </div>
+      )}
+    </ModalBase>
+  )
+}
 
-        <div className="space-y-2 border-t border-slate-100 pt-4">
-          <h3 className="text-sm font-semibold text-slate-700">Plano pago</h3>
-          <Field label="Novo fim da assinatura">
-            <Input type="date" value={novaAssinaturaFim} onChange={(e) => setNovaAssinaturaFim(e.target.value)} />
-          </Field>
-          <Field label="Plano">
-            <select value={plano} onChange={(e) => setPlano(e.target.value as Plano)} className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3">
-              <option value="mensal">Mensal</option>
-              <option value="trimestral">Trimestral</option>
-              <option value="semestral">Semestral</option>
-            </select>
-          </Field>
-          <Button variant="outline" onClick={salvarPlano} disabled={alterarPlano.isPending} className="w-full">
-            Salvar assinatura
-          </Button>
-        </div>
+function ModalAjustarTrial({ personal, onFechar }: { personal: PersonalAdmin; onFechar: () => void }) {
+  const alterarTrial = useAdminAlterarTrial()
+  const [novoTrialFim, setNovoTrialFim] = useState(hojeSP())
 
-        <div className="space-y-2 border-t border-slate-100 pt-4">
-          <h3 className="text-sm font-semibold text-slate-700">Corrigir CPF</h3>
-          <p className="text-xs text-slate-500">O CPF não pode ser alterado pelo próprio personal depois do cadastro — use só pra corrigir erro de digitação.</p>
-          <Field label="Novo CPF">
-            <Input value={novoCpf} onChange={(e) => setNovoCpf(mascararCPF(e.target.value))} inputMode="numeric" placeholder="000.000.000-00" />
-          </Field>
-          <Button variant="outline" onClick={salvarCpf} disabled={alterarCpf.isPending || !novoCpf} className="w-full">
-            Salvar CPF
-          </Button>
-        </div>
+  const salvar = async () => {
+    try {
+      await alterarTrial.mutateAsync({ professionalId: personal.id, novoFim: montarDataHoraSP(novoTrialFim, '23:59').toISOString() })
+      mostrarInfoGlobal('Trial atualizado.')
+      onFechar()
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
 
-        <Button variant="ghost" onClick={onClose} className="w-full">
-          Fechar
-        </Button>
-      </div>
-    </div>
+  return (
+    <ModalBase titulo={`Ajustar trial — ${personal.name || personal.email}`} onCancelar={onFechar} onConfirmar={salvar} confirmando={alterarTrial.isPending}>
+      <Field label="Novo fim do trial">
+        <Input type="date" value={novoTrialFim} onChange={(e) => setNovoTrialFim(e.target.value)} />
+      </Field>
+    </ModalBase>
+  )
+}
+
+function ModalAjustarPlano({ personal, onFechar }: { personal: PersonalAdmin; onFechar: () => void }) {
+  const alterarPlano = useAdminAlterarPlano()
+  const [novaAssinaturaFim, setNovaAssinaturaFim] = useState(hojeSP())
+  const [plano, setPlano] = useState<Plano>('mensal')
+
+  const salvar = async () => {
+    try {
+      await alterarPlano.mutateAsync({ professionalId: personal.id, assinaturaFim: montarDataHoraSP(novaAssinaturaFim, '23:59').toISOString(), plano })
+      mostrarInfoGlobal('Assinatura atualizada.')
+      onFechar()
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  return (
+    <ModalBase titulo={`Ajustar plano — ${personal.name || personal.email}`} onCancelar={onFechar} onConfirmar={salvar} confirmando={alterarPlano.isPending}>
+      <Field label="Novo fim da assinatura">
+        <Input type="date" value={novaAssinaturaFim} onChange={(e) => setNovaAssinaturaFim(e.target.value)} />
+      </Field>
+      <Field label="Plano">
+        <select value={plano} onChange={(e) => setPlano(e.target.value as Plano)} className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3">
+          <option value="mensal">Mensal</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="semestral">Semestral</option>
+        </select>
+      </Field>
+    </ModalBase>
+  )
+}
+
+function ModalCorrigirCpf({ personal, onFechar }: { personal: PersonalAdmin; onFechar: () => void }) {
+  const alterarCpf = useAdminAlterarCpf()
+  const [novoCpf, setNovoCpf] = useState('')
+
+  const salvar = async () => {
+    if (!validarCPF(novoCpf)) return mostrarErroGlobal(ERROS.CPF.invalido)
+    try {
+      await alterarCpf.mutateAsync({ professionalId: personal.id, cpf: novoCpf })
+      mostrarInfoGlobal('CPF atualizado.')
+      onFechar()
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  return (
+    <ModalBase
+      titulo={`Corrigir CPF — ${personal.name || personal.email}`}
+      onCancelar={onFechar}
+      onConfirmar={salvar}
+      confirmando={alterarCpf.isPending}
+      confirmarDesabilitado={!novoCpf}
+    >
+      <p className="text-xs text-slate-500">O CPF não pode ser alterado pelo próprio personal depois do cadastro — use só pra corrigir erro de digitação.</p>
+      <Field label="Novo CPF">
+        <Input value={novoCpf} onChange={(e) => setNovoCpf(mascararCPF(e.target.value))} inputMode="numeric" placeholder="000.000.000-00" autoFocus />
+      </Field>
+    </ModalBase>
   )
 }
