@@ -271,4 +271,4 @@ com o André e decidimos:
   treino" — calculado no frontend a partir de `treino.sessoes` (status
   `concluida`), sem function nova no banco.
 
-PR: [feat/metricas-alunos](https://github.com/andrevisc-1209/Treino-PP/pull/43)
+PR: [feat/admin-metricas-alunos](https://github.com/andrevisc-1209/Treino-PP/pull/43)
