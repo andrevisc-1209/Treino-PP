@@ -328,3 +328,38 @@ Pendente: rodar `supabase/migrations/20261005000000_unique_cpf.sql`.
   faltava a validação. Testado ao vivo: bloqueia sem preencher, rejeita 13 anos
   com a mensagem exata pedida, idade calculada aparece corretamente ao digitar.
 - Sem migration nesta PR (nada mudou no schema).
+
+## 🔐 Painel administrativo (feat/admin-panel)
+
+- **Rota `/admin`**, fora do fluxo normal do app (sem bottom nav, sem banner de
+  trial, sem `AssinaturaGuard` — o admin não é um personal pagante). A própria
+  `AdminPage.tsx` faz o guard: sem sessão → `/login`; sessão mas sem
+  `is_admin = true` → redireciona pra `/` sem mostrar nada (nem uma tela de "sem
+  permissão"). Confirmado ao vivo com a conta de teste fixa (não-admin): guard
+  falha fechado mesmo com a migration ainda não aplicada (coluna `is_admin`
+  inexistente → erro 400 da REST API → tratado como "não é admin" → redireciona).
+- **Todas as leituras do painel passam por functions `SECURITY DEFINER`**
+  (`treino.admin_resumo`, `admin_listar_personais`, `admin_regioes`), não por
+  RLS "admin vê tudo" direto nas tabelas — decisão deliberada pra nunca abrir uma
+  policy de leitura ampla em `treino.alunos` (que tem dados de saúde). Nenhuma
+  função retorna linha de aluno, só contagens agregadas.
+- **Reset de senha**: `generateLink` (Admin Auth API) não manda e-mail sozinho —
+  só gera o link. Corrigi o pedido original ("mostrar toast: link enviado") pra
+  gerar o link via Edge Function (`admin-actions`, service_role só aí) e deixar o
+  admin copiar/enviar manualmente — evita depender de captcha (pensado pra
+  formulário público, não ação de admin) e do SMTP já estar 100% configurado.
+- **Correções ao pedido original** (detalhes completos no PR): não existe
+  `professional_id` em `treino.professionals` (é `id`, igual auth.uid());
+  não existe coluna de UF/região de atuação — "Regiões ativas" virou "cidades
+  com Pix configurado" (`professional_config.pix_cidade`), aproximação marcada
+  como tal na UI; a conta do admin não é criada por `INSERT` direto em
+  `auth.users` com senha em texto puro na migration (inseguro e frágil) — vira
+  convite por e-mail via `scripts/admin-convite.mjs`, rodado localmente pelo
+  André com a própria `service_role` key (nunca vista por mim).
+- **Não testado**: o dashboard com uma conta admin de verdade (dependeria da
+  migration rodada + conta criada — ambos passos manuais, ver `docs/ADMIN.md`),
+  nem o fluxo completo de reset de senha (idem, depende da Edge Function
+  implantada). Testado: build/lint/test limpos, guard de não-admin ao vivo.
+
+Migration: `supabase/migrations/20261007000000_admin_role.sql` — **rodar no SQL
+Editor antes do merge**, depois de criar a conta do admin (ver `docs/ADMIN.md`).

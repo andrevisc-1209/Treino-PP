@@ -196,3 +196,31 @@ PR: [feat/ux-treino-ajustes](https://github.com/andrevisc-1209/Treino-PP/pull/37
   documentados em `docs/email-templates/` pra colagem manual.
 
 PR: [feat/mensagens-email-erros](https://github.com/andrevisc-1209/Treino-PP/pull/38)
+
+## 13. Painel administrativo (`/admin`)
+
+| Item | Descrição | Status |
+|---|---|---|
+| 13.1 | Rota `/admin` com guard próprio (sessão + `is_admin`), fora do bottom nav | ✅ feito |
+| 13.2 | Dashboard: cards de resumo, tabela de personais com filtro/busca, tabela de cidades | ✅ feito |
+| 13.3 | Ações: reset de senha, alterar trial, alterar plano — com log em `treino.admin_logs` | ✅ feito |
+| 13.4 | Todas as leituras via functions `SECURITY DEFINER`, nunca RLS "admin vê tudo" em `alunos` | ✅ feito |
+
+**Correções ao pedido original** (ver `docs/STATUS.md` pra mais detalhes):
+- Não criei a conta do admin com `INSERT` direto em `auth.users` + senha em
+  texto puro numa migration versionada — commitar uma senha real no git é
+  inseguro, e o `INSERT` do pedido nem preenchia colunas que o GoTrue exige
+  (teria criado um usuário quebrado). Troquei por convite por e-mail
+  (`scripts/admin-convite.mjs`, rodado localmente pelo André com a própria
+  `service_role` key, nunca vista por mim) — decisão feita junto com o André.
+- `treino.professionals` não tem coluna `professional_id` (é `id`, igual
+  `auth.uid()`) — corrigido nas functions.
+- Não existe campo de UF/região de atuação no cadastro do personal. "Regiões
+  ativas" virou "cidades com Pix configurado"
+  (`professional_config.pix_cidade`), aproximação parcial e opcional, marcada
+  como tal na UI — decisão feita junto com o André.
+- Reset de senha: `generateLink` (Admin Auth API) não manda e-mail sozinho, só
+  gera o link — o painel mostra o link pra copiar, em vez de prometer "e-mail
+  enviado".
+
+PR: [feat/admin-panel](https://github.com/andrevisc-1209/Treino-PP/pull/39)
