@@ -19,6 +19,7 @@ import {
   usePesos,
   useRegistrarPeso,
   useRevogarConsentimento,
+  type Peso,
 } from './api'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarDesfazer } from '@/components/UndoToast'
@@ -34,11 +35,27 @@ function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{children}</span>
 }
 
-function RegistrarPesoForm({ alunoId, onDone }: { alunoId: string; onDone: () => void }) {
+const CAMPOS_MEDIDA = [
+  { campo: 'cintura_cm', label: 'Cintura (cm)' },
+  { campo: 'quadril_cm', label: 'Quadril (cm)' },
+  { campo: 'peito_cm', label: 'Peito (cm)' },
+  { campo: 'braco_dir_cm', label: 'Braço direito (cm)' },
+  { campo: 'coxa_dir_cm', label: 'Coxa direita (cm)' },
+] as const
+
+function NovaAvaliacaoForm({ alunoId, alturaCm, onDone }: { alunoId: string; alturaCm: number | null; onDone: () => void }) {
   const [weight, setWeight] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [gordura, setGordura] = useState('')
+  const [medidas, setMedidas] = useState<Record<string, string>>({})
   const [erro, setErro] = useState<string | null>(null)
   const registrar = useRegistrarPeso(alunoId)
+
+  const numOrUndef = (v: string) => {
+    if (!v.trim()) return undefined
+    const n = Number(v.replace(',', '.'))
+    return Number.isFinite(n) && n > 0 ? n : undefined
+  }
 
   return (
     <form
@@ -52,7 +69,16 @@ function RegistrarPesoForm({ alunoId, onDone }: { alunoId: string; onDone: () =>
         }
         setErro(null)
         registrar.mutate(
-          { weight_kg: kg, measured_at: date },
+          {
+            weight_kg: kg,
+            measured_at: date,
+            gordura_pct: numOrUndef(gordura),
+            cintura_cm: numOrUndef(medidas.cintura_cm ?? ''),
+            quadril_cm: numOrUndef(medidas.quadril_cm ?? ''),
+            peito_cm: numOrUndef(medidas.peito_cm ?? ''),
+            braco_dir_cm: numOrUndef(medidas.braco_dir_cm ?? ''),
+            coxa_dir_cm: numOrUndef(medidas.coxa_dir_cm ?? ''),
+          },
           { onSuccess: onDone },
         )
       }}
@@ -65,6 +91,27 @@ function RegistrarPesoForm({ alunoId, onDone }: { alunoId: string; onDone: () =>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
       </div>
+      <Field label="% Gordura (opcional)">
+        <Input type="number" step="0.1" inputMode="decimal" value={gordura} onChange={(e) => setGordura(e.target.value)} />
+      </Field>
+      {alturaCm ? (
+        <p className="text-xs text-slate-400">Altura cadastrada: {alturaCm} cm — usada pra calcular o IMC na aba Evolução.</p>
+      ) : (
+        <p className="text-xs text-amber-600">Sem altura cadastrada — edite o aluno pra poder calcular o IMC.</p>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        {CAMPOS_MEDIDA.map(({ campo, label }) => (
+          <Field key={campo} label={label}>
+            <Input
+              type="number"
+              step="0.1"
+              inputMode="decimal"
+              value={medidas[campo] ?? ''}
+              onChange={(e) => setMedidas((m) => ({ ...m, [campo]: e.target.value }))}
+            />
+          </Field>
+        ))}
+      </div>
       {erro && <p className="text-sm text-red-600">{erro}</p>}
       {registrar.error && <p className="text-sm text-red-600">{(registrar.error as Error).message}</p>}
       <div className="flex gap-2">
@@ -76,6 +123,38 @@ function RegistrarPesoForm({ alunoId, onDone }: { alunoId: string; onDone: () =>
         </Button>
       </div>
     </form>
+  )
+}
+
+function AvaliacaoItem({ peso }: { peso: Peso }) {
+  const [aberto, setAberto] = useState(false)
+  const detalhes = CAMPOS_MEDIDA.map(({ campo, label }) => ({ label, valor: peso[campo as keyof Peso] as number | null })).filter(
+    (d) => d.valor != null,
+  )
+
+  return (
+    <li className="py-2 text-sm">
+      <button type="button" onClick={() => setAberto((v) => !v)} className="flex w-full items-center justify-between gap-2 text-left">
+        <span className="text-slate-500">{formatarDataBR(peso.measured_at)}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-medium">{formatarPesoKg(peso.weight_kg)}</span>
+          {peso.gordura_pct != null && <span className="text-slate-500">· {peso.gordura_pct}% gordura</span>}
+        </span>
+      </button>
+      {aberto && (
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
+          {detalhes.length === 0 ? (
+            <span className="col-span-2 text-slate-400">Sem medidas adicionais nesta avaliação.</span>
+          ) : (
+            detalhes.map((d) => (
+              <span key={d.label}>
+                {d.label}: <strong>{d.valor} cm</strong>
+              </span>
+            ))
+          )}
+        </div>
+      )}
+    </li>
   )
 }
 
@@ -252,26 +331,23 @@ export function AlunoFichaPage() {
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2 font-semibold">
-                <Scale size={18} /> Peso
+                <Scale size={18} /> Avaliações
               </h2>
               {!registrandoPeso && (
                 <Button variant="ghost" onClick={() => setRegistrandoPeso(true)}>
-                  Registrar peso
+                  Nova avaliação
                 </Button>
               )}
             </div>
-            {registrandoPeso && <RegistrarPesoForm alunoId={aluno.id} onDone={() => setRegistrandoPeso(false)} />}
+            {registrandoPeso && <NovaAvaliacaoForm alunoId={aluno.id} alturaCm={aluno.height_cm} onDone={() => setRegistrandoPeso(false)} />}
             {pesos && pesos.length > 0 ? (
               <ul className="divide-y divide-slate-100">
                 {pesos.map((p) => (
-                  <li key={p.id} className="flex justify-between py-2 text-sm">
-                    <span className="text-slate-500">{formatarDataBR(p.measured_at)}</span>
-                    <span className="font-medium">{formatarPesoKg(p.weight_kg)}</span>
-                  </li>
+                  <AvaliacaoItem key={p.id} peso={p} />
                 ))}
               </ul>
             ) : (
-              !registrandoPeso && <p className="text-sm text-slate-500">Nenhum registro de peso ainda.</p>
+              !registrandoPeso && <p className="text-sm text-slate-500">Nenhuma avaliação registrada ainda.</p>
             )}
           </div>
 

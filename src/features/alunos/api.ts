@@ -31,6 +31,23 @@ export type Peso = {
   aluno_id: string
   weight_kg: number
   measured_at: string
+  gordura_pct: number | null
+  cintura_cm: number | null
+  quadril_cm: number | null
+  peito_cm: number | null
+  braco_dir_cm: number | null
+  coxa_dir_cm: number | null
+}
+
+export type NovaAvaliacaoInput = {
+  weight_kg: number
+  measured_at: string
+  gordura_pct?: number
+  cintura_cm?: number
+  quadril_cm?: number
+  peito_cm?: number
+  braco_dir_cm?: number
+  coxa_dir_cm?: number
 }
 
 export function useAlunos() {
@@ -248,7 +265,7 @@ export function useSalvarAluno() {
 export function useRegistrarPeso(alunoId: string | undefined) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { weight_kg: number; measured_at: string }) => {
+    mutationFn: async (input: NovaAvaliacaoInput) => {
       if (!alunoId) throw new Error('Aluno inválido')
       const { error } = await supabase.from('pesos').insert({ aluno_id: alunoId, ...input })
       if (error) throw error

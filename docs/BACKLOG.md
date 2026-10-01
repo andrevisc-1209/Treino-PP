@@ -272,3 +272,35 @@ com o André e decidimos:
   `concluida`), sem function nova no banco.
 
 PR: [feat/admin-metricas-alunos](https://github.com/andrevisc-1209/Treino-PP/pull/43)
+
+## 15. Avaliação física + gráfico de evolução
+
+Investiguei o schema antes de implementar (`information_schema.columns`
+mental via leitura das migrations, já que não tenho acesso ao SQL Editor) e
+encontrei sobreposição grande com o que já existe — conversei com o André
+antes de criar tabela nova:
+
+- **Sem tabela `treino.avaliacoes` nova.** Já existia `treino.pesos`
+  (peso + data), com UI própria na ficha do aluno e já alimentando o
+  gráfico "Peso corporal" da aba Evolução. Uma tabela nova duplicaria o
+  peso em dois lugares. Em vez disso, uma migration estende `treino.pesos`
+  com as colunas novas (`gordura_pct`, `cintura_cm`, `quadril_cm`,
+  `peito_cm`, `braco_dir_cm`, `coxa_dir_cm`) — sem mudança de RLS (a
+  policy já existente é por linha).
+- **Sem coluna de altura na avaliação.** Já existe `treino.alunos.height_cm`
+  (definida uma vez no cadastro) — o IMC usa esse campo.
+- **Seção "Peso" virou "Avaliações"** na ficha do aluno (mesmo lugar,
+  mesmo componente, botão "Nova avaliação"), com os campos novos opcionais
+  e lista expansível (tap mostra as medidas).
+- **Gráfico de evolução**: em vez de um componente novo
+  (`EvolucaoChart.tsx`) coexistindo com o gráfico "Peso corporal" que já
+  existe na aba Evolução, troquei esse gráfico por um com seletor de
+  métrica (Peso/% Gordura/Cintura/IMC) — mesmo lugar, sem duplicar.
+- **Achado ao testar ao vivo**: o eixo Y desses gráficos (peso/IMC/cintura)
+  por padrão começa em 0, deixando a linha quase reta pra variações
+  pequenas num valor absoluto grande (IMC ~25, por exemplo, numa escala
+  0–28). Corrigido com domínio automático com folga (`dataMin`/`dataMax`
+  ± 1) só nesse gráfico — os outros gráficos da aba (PSE, carga) não
+  tinham esse problema e não foram alterados.
+
+PR: [feat/avaliacoes-fisicas](https://github.com/andrevisc-1209/Treino-PP/pull/44)
