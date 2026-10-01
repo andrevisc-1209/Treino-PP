@@ -246,3 +246,29 @@ PR (redesign de UX): [feat/admin-redirect-cpf](https://github.com/andrevisc-1209
   não só "mover a data vencida um pouco pra frente".
 
 PR: [feat/admin-visao-geral-inadimplentes](https://github.com/andrevisc-1209/Treino-PP/pull/42)
+
+## 14. Retenção e engajamento — métricas em "Meus alunos"
+
+Pedido original tinha 3 partes (onboarding wizard, métricas, agenda semanal).
+Investiguei antes de implementar e **duas das três já existiam** — conversei
+com o André e decidimos:
+
+- **Onboarding guiado**: não criei o wizard fullscreen nem a coluna
+  `onboarding_concluido`. Já existe `OnboardingChecklist.tsx` (mostrado na
+  Home) cobrindo a mesma necessidade — calculado ao vivo a partir dos dados
+  reais (Pix configurado, 1º aluno, horário fixo, treino planejado), sem flag
+  no banco que pudesse ficar desatualizada.
+- **Agenda semanal**: não criei nada novo. `/agenda` (`AgendaPage.tsx`) já
+  tem visão Dia/Semana, navegação por setas, botão "Hoje", toque na aula abre
+  ações (inclui ir pro aluno) — o pedido descrevia uma feature que já existe,
+  baseada numa tabela `treino.treinos` que nunca existiu (o real é
+  `treino.sessoes` + `treino.aulas`).
+- **Métricas do personal**: implementado — 3 cards (Alunos ativos, Treinos
+  essa semana, Sem treino há +7 dias) no topo de `AlunosPage.tsx` (não existe
+  `DashboardPage.tsx`; a lista de alunos de verdade é essa tela). Sem
+  migration: `treino.alunos` usa `professional_id`/`active` (não
+  `personal_id`/`ativo`, como o pedido assumia) e não há coluna de "último
+  treino" — calculado no frontend a partir de `treino.sessoes` (status
+  `concluida`), sem function nova no banco.
+
+PR: [feat/admin-metricas-alunos](https://github.com/andrevisc-1209/Treino-PP/pull/43)

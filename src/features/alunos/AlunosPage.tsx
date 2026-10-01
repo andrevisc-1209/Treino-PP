@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, MoreVertical, Plus, Search } from 'lucide-react'
+import { CalendarCheck, LogOut, MoreVertical, Plus, Search, TriangleAlert, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { Button, BottomSheet, Input } from '@/components/ui'
@@ -12,12 +12,15 @@ import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarDesfazer } from '@/components/UndoToast'
 import { useAlunosComCobranca } from '@/features/financeiro/api'
 import { useAlunos, useAlunosArquivados, useApagarAluno, useArquivarAluno, useDesarquivarAluno, type Aluno } from './api'
+import { useAlunosSemTreinoRecente, useTreinosEstaSemana } from './useMetricas'
 
 export function AlunosPage() {
   const [aba, setAba] = useState<'ativos' | 'arquivados'>('ativos')
   const { data: alunosAtivos, isLoading, error } = useAlunos()
   const { data: alunosArquivados, isLoading: carregandoArquivados } = useAlunosArquivados()
   const { data: alunosComCobranca } = useAlunosComCobranca()
+  const { data: treinosEstaSemana } = useTreinosEstaSemana()
+  const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
   const [busca, setBusca] = useState('')
   const [menuAberto, setMenuAberto] = useState<Aluno | null>(null)
 
@@ -65,6 +68,12 @@ export function AlunosPage() {
       </header>
 
       <InstallBanner />
+
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <CardMetrica icone={<Users size={16} />} valor={alunosAtivos?.length} label="Alunos ativos" />
+        <CardMetrica icone={<CalendarCheck size={16} />} valor={treinosEstaSemana} label="Treinos essa semana" />
+        <CardMetrica icone={<TriangleAlert size={16} />} valor={semTreinoRecente} label="Sem treino há +7 dias" alerta={(semTreinoRecente ?? 0) > 0} />
+      </div>
 
       <div className="mb-4 flex gap-1 rounded-xl bg-slate-100 p-1">
         <button
@@ -171,6 +180,16 @@ export function AlunosPage() {
           </button>
         </div>
       </BottomSheet>
+    </div>
+  )
+}
+
+function CardMetrica({ icone, valor, label, alerta }: { icone: ReactNode; valor: number | undefined; label: string; alerta?: boolean }) {
+  return (
+    <div className={cn('rounded-xl border bg-white p-2.5', alerta ? 'border-l-4 border-amber-500' : 'border-slate-200')}>
+      <div className={cn('mb-0.5', alerta ? 'text-amber-600' : 'text-brand-hover')}>{icone}</div>
+      <p className="text-lg font-bold text-accent">{valor ?? '—'}</p>
+      <p className="text-[11px] leading-tight text-slate-500">{label}</p>
     </div>
   )
 }
