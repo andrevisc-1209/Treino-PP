@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaValida, fimDoPeriodo, planoPorFrequencia, statusDoMP } from './mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido } from './mp.ts'
 
 async function assinar(secret: string, manifest: string) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -40,5 +40,30 @@ describe('assinaturaValida', () => {
     expect(await assinaturaValida({ ...base, xSignature: `ts=1700000000,v1=${v1.replace(/.$/, '0')}` })).toBe(false)
     expect(await assinaturaValida({ ...base, secret: 'outro', xSignature: `ts=1700000000,v1=${v1}` })).toBe(false)
     expect(await assinaturaValida({ ...base, xSignature: null })).toBe(false)
+  })
+})
+
+describe('tokenDeCartaoValido', () => {
+  it('aceita só 32 hex', () => {
+    expect(tokenDeCartaoValido('a'.repeat(32))).toBe(true)
+    expect(tokenDeCartaoValido('abc')).toBe(false)
+    expect(tokenDeCartaoValido('g'.repeat(32))).toBe(false)
+    expect(tokenDeCartaoValido(undefined)).toBe(false)
+  })
+})
+
+describe('atualizacaoDoPreapproval', () => {
+  const id = '11111111-2222-3333-4444-555555555555'
+  it('authorized -> ativa com plano e fim do período', () => {
+    const r = atualizacaoDoPreapproval({ id: 'abc', status: 'authorized', external_reference: id, next_payment_date: '2026-11-01T00:00:00.000Z', auto_recurring: { frequency: 3 } })
+    expect(r).toEqual({ professionalId: id, atualizacao: { status: 'ativa', mp_subscription_id: 'abc', plano: 'trimestral', assinatura_fim: '2026-11-06T00:00:00.000Z' } })
+  })
+  it('cancelled -> cancelada, sem tocar em plano/fim', () => {
+    expect(atualizacaoDoPreapproval({ id: 'abc', status: 'cancelled', external_reference: id })?.atualizacao).toEqual({ status: 'cancelada', mp_subscription_id: 'abc' })
+  })
+  it('ignora pending, external_reference ausente ou que não é uuid', () => {
+    expect(atualizacaoDoPreapproval({ id: 'a', status: 'pending', external_reference: id })).toBeNull()
+    expect(atualizacaoDoPreapproval({ id: 'a', status: 'authorized' })).toBeNull()
+    expect(atualizacaoDoPreapproval({ id: 'a', status: 'authorized', external_reference: 'x' })).toBeNull()
   })
 })

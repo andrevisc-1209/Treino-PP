@@ -12,9 +12,7 @@
 // 500 em falha nossa (MP/DB) — o MP reenvia nesses casos.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { assinaturaValida, fimDoPeriodo, planoPorFrequencia, statusDoMP } from '../_shared/mp.ts'
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+import { assinaturaValida, atualizacaoDoPreapproval } from '../_shared/mp.ts'
 
 const ok = (msg = 'ok') => new Response(msg, { status: 200 })
 
@@ -60,20 +58,13 @@ Deno.serve(async (req) => {
     }
 
     const pre = await mpGet(`/preapproval/${preapprovalId}`, token)
-    const status = statusDoMP(pre.status)
-    const professionalId: string | undefined = pre.external_reference
-    if (!status || !professionalId || !UUID.test(professionalId)) return ok('nada a atualizar')
-
-    const atualizacao: Record<string, unknown> = { status, mp_subscription_id: String(pre.id) }
-    if (status === 'ativa') {
-      atualizacao.plano = planoPorFrequencia(pre.auto_recurring?.frequency)
-      atualizacao.assinatura_fim = fimDoPeriodo(pre.next_payment_date)
-    }
+    const alvo = atualizacaoDoPreapproval(pre)
+    if (!alvo) return ok('nada a atualizar')
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
-    const { data, error } = await supabase.from('assinaturas').update(atualizacao).eq('professional_id', professionalId).select('professional_id')
+    const { data, error } = await supabase.from('assinaturas').update(alvo.atualizacao).eq('professional_id', alvo.professionalId).select('professional_id')
     if (error) throw error
-    if (!data?.length) console.warn('mp-webhook: nenhuma assinatura para', professionalId)
+    if (!data?.length) console.warn('mp-webhook: nenhuma assinatura para', alvo.professionalId)
     return ok()
   } catch (e) {
     console.error('mp-webhook:', e)

@@ -37,6 +37,36 @@ export function fimDoPeriodo(nextPaymentDate: string | undefined, folgaDias = 5)
   return new Date(t + folgaDias * 86_400_000).toISOString()
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** card_token do MP (Bricks): 32 caracteres hexadecimais. */
+export function tokenDeCartaoValido(v: unknown): v is string {
+  return typeof v === 'string' && /^[a-f0-9]{32}$/i.test(v)
+}
+
+export type PreapprovalMP = {
+  id?: string | number
+  status?: string
+  external_reference?: string
+  next_payment_date?: string
+  auto_recurring?: { frequency?: number }
+}
+
+/** O que gravar em treino.assinaturas a partir de um preapproval do MP. null = nada a fazer. */
+export function atualizacaoDoPreapproval(
+  pre: PreapprovalMP,
+): { professionalId: string; atualizacao: Record<string, unknown> } | null {
+  const status = statusDoMP(pre.status)
+  const professionalId = pre.external_reference
+  if (!status || !professionalId || !UUID.test(professionalId)) return null
+  const atualizacao: Record<string, unknown> = { status, mp_subscription_id: String(pre.id) }
+  if (status === 'ativa') {
+    atualizacao.plano = planoPorFrequencia(pre.auto_recurring?.frequency)
+    atualizacao.assinatura_fim = fimDoPeriodo(pre.next_payment_date)
+  }
+  return { professionalId, atualizacao }
+}
+
 function hex(buf: ArrayBuffer): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }

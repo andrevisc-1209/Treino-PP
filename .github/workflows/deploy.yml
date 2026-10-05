@@ -38,6 +38,7 @@ jobs:
           VITE_ALLOW_SIGNUP: ${{ vars.VITE_ALLOW_SIGNUP || 'true' }}
           VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_MP_PUBLIC_KEY: ${{ secrets.VITE_MP_PUBLIC_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
