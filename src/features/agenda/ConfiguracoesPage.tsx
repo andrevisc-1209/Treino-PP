@@ -9,7 +9,8 @@ import { normalizarChavePix, normalizarCidadePix, normalizarNomePix, type PixTip
 import { mascararCPF } from '@/lib/cpf'
 import { buscarMunicipios, UFS } from '@/lib/ibge'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { useAtualizarWhatsappOptIn, usePerfilProfissional } from '@/features/auth/api'
+import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarLocalidade } from '@/features/auth/api'
+import { SeletorCidade } from '@/components/SeletorCidade'
 import { useProfessionalConfig, useSalvarProfessionalConfig } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -26,6 +27,11 @@ export function ConfiguracoesPage() {
   const salvar = useSalvarProfessionalConfig()
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const atualizarWhatsapp = useAtualizarWhatsappOptIn(session?.user.id ?? '')
+  const salvarLocalidade = useSalvarLocalidade(session?.user.id ?? '')
+  const [locUf, setLocUf] = useState('')
+  const [locCidade, setLocCidade] = useState('')
+  const [locSalvo, setLocSalvo] = useState(false)
+  const [erroLoc, setErroLoc] = useState<string | null>(null)
 
   const [cobrarFalta, setCobrarFalta] = useState(true)
   const [cobrarCancel, setCobrarCancel] = useState(false)
@@ -45,6 +51,13 @@ export function ConfiguracoesPage() {
     queryFn: () => buscarMunicipios(pixUf),
     enabled: !!pixUf,
   })
+
+  useEffect(() => {
+    if (perfil) {
+      setLocUf(perfil.uf ?? '')
+      setLocCidade(perfil.cidade ?? '')
+    }
+  }, [perfil])
 
   useEffect(() => {
     if (config) {
@@ -141,6 +154,31 @@ export function ConfiguracoesPage() {
               <p className="text-xs text-slate-400">CPF não editável após o cadastro.</p>
             </Field>
           )}
+
+          <SeletorCidade
+            uf={locUf}
+            cidade={locCidade}
+            onChange={(uf, cidade) => {
+              setLocUf(uf)
+              setLocCidade(cidade)
+              setLocSalvo(false)
+            }}
+          />
+          {!perfil?.uf && <p className="text-sm text-amber-700">Informe seu estado e cidade — são obrigatórios no cadastro.</p>}
+          {erroLoc && <p className="text-sm text-red-600">{erroLoc}</p>}
+          {locSalvo && <p className="text-sm text-brand-hover">Localização salva.</p>}
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={salvarLocalidade.isPending}
+            onClick={() => {
+              if (!locUf || !locCidade) return setErroLoc('Selecione o estado e a cidade')
+              setErroLoc(null)
+              salvarLocalidade.mutate({ uf: locUf, cidade: locCidade }, { onSuccess: () => setLocSalvo(true) })
+            }}
+          >
+            Salvar localização
+          </Button>
 
           <div className="flex min-h-11 items-center justify-between gap-3">
             <span className="font-medium">Alertas de aulas via WhatsApp</span>
