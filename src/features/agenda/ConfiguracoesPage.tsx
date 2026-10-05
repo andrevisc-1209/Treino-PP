@@ -4,7 +4,7 @@ import { ArrowLeft, Lock, LogOut } from 'lucide-react'
 import { Button, Field, Input, Switch } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import { normalizarChavePix, normalizarCidadePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
+import { normalizarChavePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
 import { mascararCPF } from '@/lib/cpf'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarLocalidade } from '@/features/auth/api'
@@ -90,9 +90,6 @@ export function ConfiguracoesPage() {
         pix_tipo: pixTipo,
         pix_chave: chave,
         pix_nome: normalizarNomePix(pixNome),
-        // A cidade do QR vem dos Dados pessoais (perfil). Esta cópia só mantém o painel admin
-        // (que agrupa por professional_config.pix_cidade) alimentado; não é lida pra gerar o QR.
-        ...(perfil?.cidade ? { pix_cidade: normalizarCidadePix(perfil.cidade) } : {}),
       },
       { onSuccess: () => setPixSalvo(true), onError: (e) => setErroPix((e as Error).message) },
     )

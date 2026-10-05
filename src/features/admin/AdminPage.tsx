@@ -169,7 +169,7 @@ function AdminDashboard() {
                 <tr className="border-b border-slate-200 text-slate-500">
                   <th className="py-2 pr-3">Nome</th>
                   <th className="py-2 pr-3">E-mail</th>
-                  <th className="py-2 pr-3">Cidade (Pix)</th>
+                  <th className="py-2 pr-3">Cidade</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Trial/plano até</th>
                   <th className="py-2 pr-3">Alunos</th>
@@ -215,7 +215,7 @@ function AdminDashboard() {
                 </div>
                 <dl className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-500">
                   <div>
-                    <dt className="inline">Cidade (Pix): </dt>
+                    <dt className="inline">Cidade: </dt>
                     <dd className="inline text-slate-700">{p.cidade ?? '—'}</dd>
                   </div>
                   <div>
@@ -237,10 +237,7 @@ function AdminDashboard() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="font-heading font-semibold text-accent">Cidades (por Pix configurado) — {resumo.data?.regioes_ativas ?? '—'}</h2>
-          <p className="mb-3 text-xs text-slate-400">
-            Aproximação: não existe hoje um campo de região de atuação no cadastro do personal, só a cidade informada opcionalmente pra receber Pix.
-          </p>
+          <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por cadastro) — {resumo.data?.regioes_ativas ?? '—'}</h2>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[280px] text-left text-sm">
               <thead>
@@ -259,7 +256,7 @@ function AdminDashboard() {
                 {(regioes.data ?? []).length === 0 && (
                   <tr>
                     <td colSpan={2} className="py-6 text-center text-slate-400">
-                      Nenhum personal com cidade de Pix configurada ainda.
+                      Nenhum personal com cidade cadastrada ainda.
                     </td>
                   </tr>
                 )}

@@ -2,7 +2,7 @@
 
 Rota escondida — nunca aparece no bottom nav, só acessível por URL direta, e só
 pra quem tem `is_admin = true` em `treino.professionals`. Mostra dados
-administrativos (personal, e-mail, assinatura, cidade do Pix) e números
+administrativos (personal, e-mail, assinatura, cidade do cadastro) e números
 agregados — **nunca** dados de aluno (treinos, peso, saúde).
 
 ## 1. Criar a conta do admin
@@ -87,9 +87,9 @@ qualquer coisa) consegue passar por ela, ligando uma configuração de sessão
 que o trigger reconhece — nenhum outro caminho (nem outro `UPDATE` direto)
 consegue burlar a trava.
 
-## Limitação conhecida: "cidade" não é "região de atuação"
+## Cidade
 
-Não existe hoje um campo no cadastro do personal pra onde ele atua. O painel
-usa `professional_config.pix_cidade` como aproximação (é opcional, só
-preenchido por quem configurou cobrança via Pix, limitado a 15 caracteres) —
-é melhor que nada, mas não é um dado confiável de cobertura geográfica.
+A cidade dos personais vem do cadastro (`professionals.cidade` / `uf`, exibida como "Niterói/RJ").
+O agrupamento é por UF + cidade. Só quem se cadastrou depois da PR de Cidade/UF (ou preencheu em
+Configurações) aparece; os demais ficam sem cidade (`—`). `professional_config.pix_cidade` foi
+removida: o QR Pix também usa a cidade do cadastro.
