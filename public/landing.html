@@ -431,7 +431,7 @@ h2.section-title {
   flex-direction: column;
   gap: 4px;
 }
-.plan-card.pop {
+.plan-card.pop, .plan-card:has(.plan-badge) {
   border-color: var(--green-d);
   border-width: 2px;
   background: var(--white);
@@ -584,6 +584,24 @@ footer .container {
   .fade-up:nth-child(5) { transition-delay: .32s; }
   .fade-up:nth-child(6) { transition-delay: .40s; }
 }
+
+/* ─── Banner de consentimento ─────────────────────────── */
+.consent {
+  position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 200;
+  max-width: 720px; margin-inline: auto;
+  background: #0F2537; color: #fff; border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+  padding: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.4);
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+}
+.consent[hidden] { display: none; }
+.consent p { font-size: 13px; line-height: 1.5; flex: 1 1 280px; color: rgba(255,255,255,.85); }
+.consent a { text-decoration: underline; }
+.consent-actions { display: flex; gap: 8px; }
+.consent-btn {
+  font: 700 13px var(--display); min-height: 44px; padding: 0 20px; border-radius: 10px; cursor: pointer;
+  background: #367c39; color: #fff; border: 1px solid #367c39;
+}
+.consent-btn.ghost { background: transparent; border-color: rgba(255,255,255,.3); }
 </style>
 </head>
 <body>
@@ -607,7 +625,7 @@ footer .container {
       <p class="hero-sub">Treino PP é o app para personal trainer que quer focar no que importa. Ficha de treino, avaliação física, evolução do aluno e cobrança — tudo em um lugar só.</p>
       <div class="hero-actions">
         <a href="/login?modo=cadastro" class="btn-hero">Criar conta grátis →</a>
-        <span class="hero-note">14 dias grátis · sem cartão de crédito</span>
+        <span class="hero-note">15 dias grátis · sem cartão de crédito</span>
       </div>
     </div>
     <div class="hero-phone" aria-hidden="true">
@@ -650,7 +668,7 @@ footer .container {
 <section class="proof">
   <div class="container">
     <div class="proof-item fade-up">
-      <div class="num">14 dias</div>
+      <div class="num">15 dias</div>
       <div class="desc">de trial gratuito, sem cartão</div>
     </div>
     <div class="proof-item fade-up">
@@ -705,7 +723,7 @@ footer .container {
       <div class="feat-item fade-up">
         <div class="fi-icon">🏋️</div>
         <h3>Fichas de treino digitais</h3>
-        <p>Prescreva com séries, repetições e carga. O aluno acessa no celular. Você atualiza a qualquer hora.</p>
+        <p>Prescreva com séries, repetições e carga. Você atualiza a qualquer hora. <strong>Em breve:</strong> o aluno acessa no celular.</p>
         <span class="feat-badge">Core</span>
       </div>
       <div class="feat-item fade-up">
@@ -751,7 +769,7 @@ footer .container {
       <div class="how-step fade-up">
         <div class="how-num">1</div>
         <h3>Cadastre o aluno</h3>
-        <p>Nome, contato e plano. O aluno recebe um convite por e-mail com acesso imediato ao app.</p>
+        <p>Nome, contato e plano. <strong>Em breve:</strong> o aluno recebe um convite por e-mail com acesso ao app.</p>
       </div>
       <div class="how-step fade-up">
         <div class="how-num">2</div>
@@ -776,24 +794,25 @@ footer .container {
     <div class="pricing-inner">
       <div class="plan-card fade-up">
         <div class="plan-name">Mensal</div>
-        <div class="plan-price">R$39<small>/mês</small></div>
+        <div class="plan-price">R$ 10<small>/mês</small></div>
         <p>Pague mês a mês, sem compromisso.</p>
       </div>
       <div class="plan-card pop fade-up">
         <div class="plan-badge">Mais popular</div>
-        <div class="plan-name">Semestral</div>
-        <div class="plan-price">R$29<small>/mês</small></div>
-        <div class="plan-save">26% de desconto</div>
-        <p>Pague a cada 6 meses e economize.</p>
+        <div class="plan-name">Trimestral</div>
+        <div class="plan-price">R$ 27</div>
+        <div class="plan-save">R$ 9/mês · 10% de desconto</div>
+        <p>Pague a cada 3 meses e economize.</p>
       </div>
       <div class="plan-card fade-up">
-        <div class="plan-name">Anual</div>
-        <div class="plan-price">R$24<small>/mês</small></div>
-        <div class="plan-save">38% de desconto</div>
-        <p>Melhor custo-benefício do ano.</p>
+        <div class="plan-badge">Melhor valor</div>
+        <div class="plan-name">Semestral</div>
+        <div class="plan-price">R$ 50</div>
+        <div class="plan-save">R$ 8,33/mês · 17% de desconto</div>
+        <p>Menor custo por mês.</p>
       </div>
     </div>
-    <p class="pricing-note"><strong>14 dias grátis em qualquer plano.</strong> Sem cartão de crédito no início. Cancele quando quiser. Com 10 alunos pagando R$200/mês você fatura R$2.000 — a assinatura representa menos de 2% disso.</p>
+    <p class="pricing-note"><strong>15 dias grátis em qualquer plano.</strong> Sem cartão de crédito no início. Cancele quando quiser. Com 10 alunos pagando R$200/mês você fatura R$2.000 — a assinatura representa menos de 1% disso.<br>Pagamento via Mercado Pago.</p>
   </div>
 </section>
 
@@ -801,7 +820,7 @@ footer .container {
 <section class="cta-section">
   <div class="container">
     <div class="cta-tag">Para personal trainers</div>
-    <h2>Comece hoje.<br><em>14 dias grátis.</em></h2>
+    <h2>Comece hoje.<br><em>15 dias grátis.</em></h2>
     <p>Sem cartão de crédito. Sem instalação. Acesse do celular ou computador.</p>
     <a href="/login?modo=cadastro" class="btn-cta">Criar minha conta grátis →</a>
     <div class="cta-sub">Já tem conta? <a href="/login" style="color:rgba(255,255,255,.55);text-decoration:underline">Entrar</a></div>
@@ -821,66 +840,83 @@ footer .container {
   </div>
 </footer>
 
+<div class="consent" id="consent" role="dialog" aria-label="Aviso de cookies" hidden>
+  <p>Usamos cookies e gravação de sessão (PostHog) para entender como a página é usada e melhorá-la. Só começam depois do seu aceite. Veja a <a href="/privacidade">Política de Privacidade</a>.</p>
+  <div class="consent-actions">
+    <button type="button" id="consent-no" class="consent-btn ghost">Recusar</button>
+    <button type="button" id="consent-yes" class="consent-btn">Aceitar</button>
+  </div>
+</div>
+
 <script>
-// ─── PostHog ───────────────────────────────────────────────
-!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init bs ws ge fs capture register register_once register_for_session unregister unregister_for_session opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId setPersonProperties".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+// ─── Consentimento (LGPD): PostHog só carrega depois do aceite ───
+var CONSENT_KEY = 'treino_cookie_consent';
+function lerConsent() { try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; } }
+function salvarConsent(v) { try { localStorage.setItem(CONSENT_KEY, v); } catch (e) {} }
 
-// 🔑 Substitua pela sua Project API Key do PostHog
-posthog.init('phc_ADSqKHpnPUTMktbKN9MKDTCVfjM4AZ8ikor9N6ygMqt7', {
-  api_host: 'https://us.i.posthog.com',
-  capture_pageview: true,
-  capture_pageleave: true,
-  session_recording: { maskAllInputs: false }
-});
+var analyticsAtivo = false;
+function iniciarAnalytics() {
+  if (analyticsAtivo) return;
+  analyticsAtivo = true;
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init bs ws ge fs capture register register_once register_for_session unregister unregister_for_session opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId setPersonProperties".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 
-// ─── Helpers de rastreamento ──────────────────────────────
-function trackCTA(section, label) {
-  posthog.capture('cta_click', { section, label });
-}
+  posthog.init('phc_ADSqKHpnPUTMktbKN9MKDTCVfjM4AZ8ikor9N6ygMqt7', {
+    api_host: 'https://us.i.posthog.com',
+    capture_pageview: true,
+    capture_pageleave: true,
+    session_recording: { maskAllInputs: true }
+  });
 
-// Lê UTM params da URL e registra como propriedades do usuário
-(function trackUTMs() {
-  const params = new URLSearchParams(window.location.search);
-  const utm = {};
-  ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(k => {
+  // UTMs da URL como propriedades
+  var params = new URLSearchParams(window.location.search);
+  var utm = {};
+  ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(function (k) {
     if (params.get(k)) utm[k] = params.get(k);
   });
   if (Object.keys(utm).length) posthog.register(utm);
+}
+
+function trackCTA(section, label) {
+  if (analyticsAtivo) posthog.capture('cta_click', { section: section, label: label });
+}
+
+(function consentimento() {
+  var estado = lerConsent();
+  var banner = document.getElementById('consent');
+  if (estado === 'accepted') { iniciarAnalytics(); return; }
+  if (estado === 'declined') return;
+  banner.hidden = false;
+  document.getElementById('consent-yes').addEventListener('click', function () {
+    salvarConsent('accepted'); banner.hidden = true; iniciarAnalytics();
+  });
+  document.getElementById('consent-no').addEventListener('click', function () {
+    salvarConsent('declined'); banner.hidden = true;
+  });
 })();
 
-// ─── Scroll depth ─────────────────────────────────────────
+// ─── Scroll depth (só registra se houve aceite) ───
 (function trackScrollDepth() {
-  const milestones = [25, 50, 75, 100];
-  const fired = new Set();
-  window.addEventListener('scroll', () => {
-    const pct = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
-    milestones.forEach(m => {
+  var milestones = [25, 50, 75, 100];
+  var fired = new Set();
+  window.addEventListener('scroll', function () {
+    if (!analyticsAtivo) return;
+    var pct = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+    milestones.forEach(function (m) {
       if (pct >= m && !fired.has(m)) { fired.add(m); posthog.capture('scroll_depth', { percent: m }); }
     });
   }, { passive: true });
 })();
 
-// ─── Intersection observer para fade-up ──────────────────
-const obs = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+// ─── Fade-up ───
+var obs = new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
 }, { threshold: 0.1 });
-document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+document.querySelectorAll('.fade-up').forEach(function (el) { obs.observe(el); });
 
-// ─── Tag em todos os CTAs ─────────────────────────────────
-document.querySelectorAll('a[href="/login?modo=cadastro"]').forEach(el => {
-  const section = el.closest('[id]')?.id
-    || el.closest('nav') && 'nav'
-    || el.closest('header') && 'hero'
-    || el.closest('section')?.className?.split(' ')[0]
-    || 'unknown';
-  el.addEventListener('click', () => trackCTA(section, el.textContent.trim()));
-});
-
-// Seleção de plano
-document.querySelectorAll('.price-card').forEach(card => {
-  const plan = card.querySelector('.plan-name')?.textContent?.trim() || 'unknown';
-  const cta = card.querySelector('a[href="/login?modo=cadastro"]');
-  if (cta) cta.addEventListener('click', () => posthog.capture('plan_select', { plan }));
+// ─── Tag nos CTAs de cadastro ───
+document.querySelectorAll('a[href="/login?modo=cadastro"]').forEach(function (el) {
+  var section = (el.closest('header') && 'nav') || (el.closest('section') && el.closest('section').className.split(' ')[0]) || (el.closest('footer') && 'footer') || 'unknown';
+  el.addEventListener('click', function () { trackCTA(section, el.textContent.trim()); });
 });
 </script>
 </body>

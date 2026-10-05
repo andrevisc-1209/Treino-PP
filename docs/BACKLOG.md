@@ -316,11 +316,12 @@ PR: [feat/avaliacoes-fisicas](https://github.com/andrevisc-1209/Treino-PP/pull/4
   service worker devolveria o `index.html` do app no lugar da landing.
 - Botões da landing: `#4CAF50` → `#367c39` (branco sobre `#4CAF50` = 2,78:1,
   reprova AA; mesmo ajuste já documentado em `docs/BRAND.md`).
-- **Pendente de decisão do André antes do merge** (conteúdo da landing diverge
-  do produto): trial (landing 14 dias × app 15), preços (landing R$39/29/24 com
-  plano anual × app R$10 mensal / R$27 trimestral / R$50 semestral), e dois
-  textos que descrevem acesso do aluno ao app ("aluno recebe convite", "aluno
-  acessa no celular") — o aluno não tem login no produto. PostHog com gravação
-  de sessão carrega na landing: falta aviso/consentimento (LGPD) e citar na
-  Política de Privacidade.
-
+- Conteúdo alinhado com o produto: trial 15 dias; planos do app (Mensal R$10,
+  Trimestral R$27, Semestral R$50, sem anual); frases sobre acesso do aluno
+  marcadas "Em breve" (feature confirmada, ainda não lançada).
+- LGPD: PostHog só carrega depois do "Aceitar" no banner (consentimento em
+  `localStorage`, chave `treino_cookie_consent`); "Recusar" também é
+  lembrado. Gravação de sessão com inputs mascarados.
+- **Pendente**: citar o PostHog na Política de Privacidade (`/privacidade`);
+  texto "Pagamento via Mercado Pago" na landing antes da integração existir
+  (hoje os planos são contratados via WhatsApp no `PlanoModal`).
