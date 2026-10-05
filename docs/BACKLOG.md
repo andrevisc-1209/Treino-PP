@@ -325,3 +325,15 @@ PR: [feat/avaliacoes-fisicas](https://github.com/andrevisc-1209/Treino-PP/pull/4
 - **Pendente**: citar o PostHog na Política de Privacidade (`/privacidade`);
   texto "Pagamento via Mercado Pago" na landing antes da integração existir
   (hoje os planos são contratados via WhatsApp no `PlanoModal`).
+
+### 16.1 Política de Privacidade + testes da landing
+
+- `src/features/legal/textos.ts`: nova seção sobre o PostHog na landing
+  (consentimento explícito, gravação anônima com campos mascarados, recusar no
+  banner ou revogar limpando o `localStorage`, link da política do PostHog).
+  `PRIVACIDADE_VERSAO` 1.0 → 1.1 (só afeta a versão registrada em novos
+  aceites).
+- Testado em build de produção (service worker ativo): logado em `/` → home;
+  PWA standalone sem sessão → `/login`; service worker antigo → vê o app
+  antigo (`/login`) até aceitar a atualização, depois cai na landing.
+
