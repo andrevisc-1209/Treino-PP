@@ -1,0 +1,8 @@
+# Só o que o deploy das Edge Functions precisa. O projeto é remoto (não usamos
+# `supabase start`), então não há mais nada aqui de propósito.
+project_id = "treino-pp"
+
+# Quem chama o webhook é o Mercado Pago, que não manda JWT do Supabase. Fixar aqui
+# evita que um `supabase functions deploy` sem --no-verify-jwt reative a exigência.
+[functions.mp-webhook]
+verify_jwt = false

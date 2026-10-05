@@ -18,6 +18,20 @@ o nosso código e o nosso servidor só veem um **token** de uso único.
 - O webhook busca o estado na API do MP (o evento só traz o id) e valida o
   `x-signature` quando `MP_WEBHOOK_SECRET` existe.
 
+## Assinatura do webhook (`x-signature`)
+
+| Ambiente | Regra |
+|---|---|
+| Produção (`MP_ACCESS_TOKEN` definido) | HMAC obrigatório. Inválida/ausente → 401. Sem `MP_WEBHOOK_SECRET` → 500 (falha fechada). |
+| Sandbox (só `MP_ACCESS_TOKEN_TEST`) | Válida → processa. Ausente/inválida/sem segredo → **loga aviso e processa**. |
+
+Mesmo sem assinatura o estado nunca vem do corpo do webhook: a function faz GET na
+API do MP pelo `data.id`. Todo evento recebido loga `action`, `type` e `data_id`
+(Supabase → Edge Functions → mp-webhook → Logs).
+
+`supabase/config.toml` fixa `verify_jwt = false` pro `mp-webhook`, então o deploy
+não precisa mais de `--no-verify-jwt` (sem isso, o MP receberia 401).
+
 ## Configuração
 
 Projeto Supabase: `avgrnvpvjhymsrnapfgu`.

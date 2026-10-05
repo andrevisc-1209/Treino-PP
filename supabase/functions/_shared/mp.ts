@@ -67,6 +67,23 @@ export function atualizacaoDoPreapproval(
   return { professionalId, atualizacao }
 }
 
+export type DecisaoWebhook = 'processar' | 'processar_com_aviso' | 'rejeitar_assinatura' | 'rejeitar_sem_segredo'
+
+/**
+ * Política de validação do webhook.
+ * - Produção (token de produção configurado): assinatura HMAC é obrigatória; sem
+ *   MP_WEBHOOK_SECRET configurado não há como validar, então rejeita (falha fechada).
+ * - Sandbox: assinatura válida processa normalmente; ausente/inválida/sem segredo
+ *   processa com aviso no log (o MP de teste nem sempre assina, e o estado real vem
+ *   de GET na API do MP, não do corpo do webhook).
+ */
+export function decidirWebhook(args: { producao: boolean; temSegredo: boolean; assinaturaOk: boolean }): DecisaoWebhook {
+  const { producao, temSegredo, assinaturaOk } = args
+  if (temSegredo && assinaturaOk) return 'processar'
+  if (producao) return temSegredo ? 'rejeitar_assinatura' : 'rejeitar_sem_segredo'
+  return 'processar_com_aviso'
+}
+
 function hex(buf: ArrayBuffer): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
