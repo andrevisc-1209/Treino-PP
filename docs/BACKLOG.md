@@ -360,6 +360,24 @@ pessoa digitava.
 
 PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/48)
 
+<<<<<<< HEAD
+## 19. Recibo de fechamento de ciclo
+
+- `ReciboCiclo.tsx` (tela cheia, via portal): cabeçalho, 4 cartões (aulas, dias, locais, valor),
+  timeline de aulas (presença ✓/✗, local, valor), gráficos (frequência semanal, PSE médio por
+  semana, nota do personal por treino) e rodapé. Abre sozinho após fechar o ciclo
+  (`/financeiro/:id?recibo=1`) e pelo botão "Ver recibo" na fatura.
+- "Baixar PDF" = `window.print()` + `@media print` (sem lib externa/CDN). "Compartilhar" = Web
+  Share com **texto** (não link: não existe link público e a página exige login do personal),
+  com fallback pra copiar o texto.
+- LGPD: só PSE e nota do personal (pós-treino). Prontidão/bem-estar fica de fora, e o texto
+  compartilhado leva só cobrança e volume de aulas.
+- Limite conhecido: `window.print()` pode não funcionar no PWA instalado do iOS (não testado).
+- Visual defeito conhecido, **fora desta PR**: os gráficos de `EvolucaoTab.tsx` usam
+  `margin={{ left: -20 }}` e cortam o primeiro dígito do eixo Y.
+
+PR: [feat/recibo-ciclo](https://github.com/andrevisc-1209/Treino-PP/pull/51)
+=======
 ## 18. Cidade e UF obrigatórias no cadastro do personal
 
 - `professionals.uf` / `professionals.cidade` (migration `20261011000000`), NULL-áveis no banco
@@ -373,4 +391,5 @@ PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/4
   o painel admin ainda mostra a cidade do Pix, não `professionals.cidade`.
 
 PR: [feat/cadastro-uf-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/50)
+>>>>>>> origin/main
 

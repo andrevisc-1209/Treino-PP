@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import type { ItemRecibo } from './recibo'
 
 export type ModeloCobranca = 'por_aula' | 'mensal'
 
@@ -337,5 +338,41 @@ export function useCancelarFatura() {
       qc.invalidateQueries({ queryKey: ['participacoes-abertas'] })
       qc.invalidateQueries({ queryKey: ['participacoes-cobraveis-todas'] })
     },
+  })
+}
+
+type LinhaRecibo = {
+  id: string
+  status: ItemRecibo['status']
+  valor: number | null
+  aula: { starts_at: string; duration_min: number; local: string | null } | null
+  sessao: { session_date: string; post_pse: number | null; prof_rating: number | null } | null
+}
+
+/** Aulas de um ciclo fechado (as ligadas à fatura), com local, PSE e nota do personal. Sem dados de prontidão. */
+export function useItensRecibo(faturaId: string | undefined) {
+  return useQuery({
+    queryKey: ['recibo', faturaId],
+    queryFn: async (): Promise<ItemRecibo[]> => {
+      const { data, error } = await supabase
+        .from('aula_participantes')
+        .select('id, status, valor, aula:aulas(starts_at, duration_min, local), sessao:sessoes(session_date, post_pse, prof_rating)')
+        .eq('fatura_id', faturaId!)
+      if (error) throw error
+      return (data as unknown as LinhaRecibo[])
+        .filter((l) => l.aula)
+        .map((l) => ({
+          id: l.id,
+          status: l.status,
+          valor: l.valor,
+          starts_at: l.aula!.starts_at,
+          duration_min: l.aula!.duration_min,
+          local: l.aula!.local,
+          pse: l.sessao?.post_pse ?? null,
+          nota: l.sessao?.prof_rating ?? null,
+          data_sessao: l.sessao?.session_date ?? null,
+        }))
+    },
+    enabled: !!faturaId,
   })
 }

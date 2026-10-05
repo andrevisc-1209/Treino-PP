@@ -84,7 +84,7 @@ export function FecharCicloPage() {
         itemIds: itensIncluidos.map((i) => i.id),
       },
       {
-        onSuccess: (faturaId) => navigate(`/financeiro/${faturaId}`, { replace: true }),
+        onSuccess: (faturaId) => navigate(`/financeiro/${faturaId}?recibo=1`, { replace: true }),
         onError: (e) => setErro((e as Error).message),
       },
     )
