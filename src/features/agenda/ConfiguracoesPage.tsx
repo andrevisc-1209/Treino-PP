@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Lock, LogOut } from 'lucide-react'
 import { Button, Field, Input, Switch } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { normalizarChavePix, normalizarCidadePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
 import { mascararCPF } from '@/lib/cpf'
-import { buscarMunicipios, UFS } from '@/lib/ibge'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarLocalidade } from '@/features/auth/api'
 import { SeletorCidade } from '@/components/SeletorCidade'
@@ -41,16 +39,8 @@ export function ConfiguracoesPage() {
   const [pixTipo, setPixTipo] = useState<PixTipo>('cpf')
   const [pixChave, setPixChave] = useState('')
   const [pixNome, setPixNome] = useState('')
-  const [pixCidade, setPixCidade] = useState('')
-  const [pixUf, setPixUf] = useState('')
   const [erroPix, setErroPix] = useState<string | null>(null)
   const [pixSalvo, setPixSalvo] = useState(false)
-
-  const { data: municipios, isLoading: carregandoMunicipios } = useQuery({
-    queryKey: ['ibge-municipios', pixUf],
-    queryFn: () => buscarMunicipios(pixUf),
-    enabled: !!pixUf,
-  })
 
   useEffect(() => {
     if (perfil) {
@@ -67,7 +57,6 @@ export function ConfiguracoesPage() {
       setPixTipo((config.pix_tipo as PixTipo) ?? 'cpf')
       setPixChave(config.pix_chave ?? '')
       setPixNome(config.pix_nome ?? '')
-      setPixCidade(config.pix_cidade ?? '')
     }
   }, [config])
 
@@ -86,8 +75,8 @@ export function ConfiguracoesPage() {
   const handleSalvarPix = () => {
     setErroPix(null)
     setPixSalvo(false)
-    if (!pixChave.trim() || !pixNome.trim() || !pixCidade.trim()) {
-      setErroPix('Preencha a chave, o nome e a cidade')
+    if (!pixChave.trim() || !pixNome.trim()) {
+      setErroPix('Preencha a chave e o nome')
       return
     }
     const chave = normalizarChavePix(pixTipo, pixChave)
@@ -101,7 +90,9 @@ export function ConfiguracoesPage() {
         pix_tipo: pixTipo,
         pix_chave: chave,
         pix_nome: normalizarNomePix(pixNome),
-        pix_cidade: normalizarCidadePix(pixCidade),
+        // A cidade do QR vem dos Dados pessoais (perfil). Esta cópia só mantém o painel admin
+        // (que agrupa por professional_config.pix_cidade) alimentado; não é lida pra gerar o QR.
+        ...(perfil?.cidade ? { pix_cidade: normalizarCidadePix(perfil.cidade) } : {}),
       },
       { onSuccess: () => setPixSalvo(true), onError: (e) => setErroPix((e as Error).message) },
     )
@@ -222,41 +213,13 @@ export function ConfiguracoesPage() {
             <Input value={pixNome} onChange={(e) => setPixNome(e.target.value)} placeholder="Como aparece no Pix, até 25 caracteres" />
           </Field>
 
-          {pixCidade && !pixUf && <p className="text-sm text-slate-500">Cidade atual: {pixCidade}. Pra trocar, escolha o estado abaixo.</p>}
-
-          <Field label="Estado">
-            <select
-              value={pixUf}
-              onChange={(e) => {
-                setPixUf(e.target.value)
-                setPixCidade('')
-              }}
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand"
-            >
-              <option value="">Selecione o estado</option>
-              {UFS.map((uf) => (
-                <option key={uf.sigla} value={uf.sigla}>
-                  {uf.nome}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Cidade">
-            <select
-              value={pixCidade}
-              onChange={(e) => setPixCidade(e.target.value)}
-              disabled={!pixUf || carregandoMunicipios}
-              className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand disabled:bg-slate-100 disabled:text-slate-400"
-            >
-              <option value="">{!pixUf ? 'Selecione o estado' : carregandoMunicipios ? 'Carregando…' : 'Selecione a cidade'}</option>
-              {municipios?.map((cidade) => (
-                <option key={cidade} value={cidade}>
-                  {cidade}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {perfil?.cidade ? (
+            <p className="text-sm text-slate-500">
+              O QR Code Pix usa a cidade dos seus Dados pessoais: <span className="font-medium text-slate-700">{perfil.cidade}</span>.
+            </p>
+          ) : (
+            <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Cadastre sua cidade nos Dados pessoais acima para habilitar o QR Code Pix.</p>
+          )}
 
           {erroPix && <p className="text-sm text-red-600">{erroPix}</p>}
           {pixSalvo && <p className="text-sm text-brand-hover">Pix salvo.</p>}

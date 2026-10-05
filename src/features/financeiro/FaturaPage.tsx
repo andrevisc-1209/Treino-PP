@@ -4,10 +4,12 @@ import { ArrowLeft, Check, Copy, FileText, MessageCircle } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useAluno, usePesos } from '@/features/alunos/api'
 import { useProfessionalConfig } from '@/features/agenda/api'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { usePerfilProfissional } from '@/features/auth/api'
 import { useSessoesDetalhadas } from '@/features/evolucao/api'
 import { formatarBRL } from '@/lib/moeda'
 import { formatarDataCurta, hojeSP } from '@/lib/datas'
-import { gerarPayloadPix } from '@/lib/pix'
+import { gerarPayloadPix, normalizarCidadePix } from '@/lib/pix'
 import { linkWhatsApp } from '@/lib/whatsapp'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
@@ -41,6 +43,8 @@ export function FaturaPage() {
   const { data: fatura, isLoading } = useFatura(faturaId)
   const { data: aluno } = useAluno(fatura?.aluno_id)
   const { data: config } = useProfessionalConfig()
+  const { session } = useAuth()
+  const { data: perfil } = usePerfilProfissional(session?.user.id)
   const { data: sessoesTodas } = useSessoesDetalhadas(fatura?.aluno_id)
   const { data: pesosTodos } = usePesos(fatura?.aluno_id)
 
@@ -67,17 +71,19 @@ export function FaturaPage() {
       { replace: true },
     )
 
-  const pixDisponivel = !!(config?.pix_chave && config.pix_nome && config.pix_cidade)
+  // Cidade do QR = cidade do perfil (Dados pessoais), não mais um campo separado do Pix.
+  const cidadePix = perfil?.cidade ? normalizarCidadePix(perfil.cidade) : null
+  const pixDisponivel = !!(config?.pix_chave && config.pix_nome && cidadePix)
   const pixPayload = useMemo(() => {
     if (!fatura || !pixDisponivel || !config) return null
     return gerarPayloadPix({
       chave: config.pix_chave!,
       nome: config.pix_nome!,
-      cidade: config.pix_cidade!,
+      cidade: cidadePix!,
       valor: fatura.total,
       txid: fatura.id.replace(/-/g, '').slice(0, 25),
     })
-  }, [fatura, pixDisponivel, config])
+  }, [fatura, pixDisponivel, config, cidadePix])
 
   useEffect(() => {
     if (!pixPayload) {
@@ -245,6 +251,16 @@ export function FaturaPage() {
             <Button variant="ghost" onClick={confirmarCancelar} disabled={cancelar.isPending} className="text-red-600">
               Cancelar fatura
             </Button>
+          </div>
+        )}
+
+        {config?.pix_chave && config.pix_nome && perfil && !cidadePix && (
+          <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">
+            Pra gerar o QR Code Pix, cadastre sua cidade em{' '}
+            <Link to="/configuracoes" className="font-medium underline">
+              Configurações → Dados pessoais
+            </Link>
+            .
           </div>
         )}
 
