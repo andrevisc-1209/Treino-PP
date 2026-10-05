@@ -408,8 +408,17 @@ Removidos Estado/Cidade da seção "Recebimento via Pix" (Configurações): o QR
 `professionals.cidade` (Dados pessoais). Sem cidade no perfil: aviso na seção Pix e na fatura (QR
 não é gerado). `professional_config.pix_cidade` deixou de ser lida pelo QR; segue sendo gravada
 (derivada do perfil, quando existe) só para o painel admin, que ainda agrupa por ela.
-Pendente: o admin passar a usar `professionals.uf/cidade` (migration das RPCs `admin_*`) e então
-parar de gravar `pix_cidade`.
+Concluído em 18.2.
 
 PR: [fix/pix-usa-cidade-do-perfil](https://github.com/andrevisc-1209/Treino-PP/pull/53)
+
+### 18.2 Remoção de `professional_config.pix_cidade`
+
+Migration `20261012000000`: reescreve `admin_resumo`, `admin_listar_personais` e `admin_regioes`
+para usar `professionals.cidade/uf` ("Niterói/RJ", agrupado por UF + cidade) e dropa a coluna.
+Front: tira a escrita de `pix_cidade` ao salvar o Pix e ajusta os rótulos do admin
+("Cidade", "Cidades (por cadastro)"). **Ordem: mergear → esperar o deploy → rodar a migration.**
+A coluna estava em `professional_config` (não em `professionals`, como o pedido dizia).
+
+PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54)
 

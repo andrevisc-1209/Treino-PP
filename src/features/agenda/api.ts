@@ -46,7 +46,6 @@ export type ProfessionalConfig = {
   pix_chave: string | null
   pix_tipo: string | null
   pix_nome: string | null
-  pix_cidade: string | null
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
