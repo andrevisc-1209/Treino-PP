@@ -349,3 +349,14 @@ secrets, deploy, cadastra o webhook e faz o teste de pagamento no checkout.
 
 PR: [feat/mercadopago-assinaturas](https://github.com/andrevisc-1209/Treino-PP/pull/47)
 
+### 17.1 Checkout Transparente (Bricks)
+
+Redirect pro `init_point` substituído pelo Card Payment Brick dentro do
+`PlanoModal` (`CheckoutMP.tsx`, carregado sob demanda). `mp-subscribe` agora
+recebe `{plano, card_token}` e cria a assinatura `authorized`; a confirmação
+aparece no próprio modal. Bug achado testando ao vivo: props/callbacks do Brick
+sem identidade estável faziam o SDK recriar o formulário e apagar o que a
+pessoa digitava.
+
+PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/48)
+

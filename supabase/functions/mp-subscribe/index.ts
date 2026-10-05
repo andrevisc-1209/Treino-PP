@@ -1,18 +1,18 @@
-// Edge Function: mp-subscribe
+// Edge Function: mp-subscribe  (Checkout Bricks / Checkout Transparente)
 //
-// Cria uma assinatura "pending" no Mercado Pago e devolve o init_point
-// (checkout hospedado do MP) pro frontend redirecionar.
+// Recebe { plano, card_token } — o card_token é gerado no navegador pelo Brick
+// do Mercado Pago (os dados do cartão nunca passam por aqui) — e cria a
+// assinatura JÁ autorizada no MP. Devolve { subscription_id, status }.
 //
-// Segurança: o cliente só informa o NOME do plano. Valor, periodicidade,
-// e-mail e identidade do personal vêm do servidor (tabela PLANOS + JWT) —
-// nada que o cliente mande decide quanto cobrar nem quem recebe a assinatura.
-// O vínculo com o personal é external_reference = auth.uid(), que o webhook
-// usa pra achar a linha em treino.assinaturas.
+// Segurança: o cliente só informa o NOME do plano e o token do cartão. Valor,
+// periodicidade, e-mail e identidade do personal vêm do servidor (tabela PLANOS
+// + JWT). O vínculo é external_reference = auth.uid(). Quem já tem assinatura
+// ativa no MP é barrado (evita cobrança em duplicidade).
 //
 // Segredo: MP_ACCESS_TOKEN_TEST (sandbox) ou MP_ACCESS_TOKEN (produção).
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { ehPlano, PLANOS } from '../_shared/mp.ts'
+import { atualizacaoDoPreapproval, ehPlano, PLANOS, tokenDeCartaoValido } from '../_shared/mp.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const ORIGENS_PERMITIDAS = [APP_URL, 'http://localhost:5173']
@@ -46,39 +46,51 @@ Deno.serve(async (req) => {
   if (userError || !userData.user?.email) return json(req, { error: 'Não autenticado.' }, 401)
   const user = userData.user
   // Sandbox: o MP só aceita comprador que também seja usuário de TESTE
-  // ("Both payer and collector must be real or test users"), então o e-mail de
-  // login do app é recusado. MP_TEST_PAYER_EMAIL só vale sem MP_ACCESS_TOKEN
-  // (ou seja, nunca em produção).
+  // ("Both payer and collector must be real or test users"). MP_TEST_PAYER_EMAIL
+  // só vale sem MP_ACCESS_TOKEN (ou seja, nunca em produção).
   const payerEmail = (!tokenProducao && Deno.env.get('MP_TEST_PAYER_EMAIL')) || user.email
 
-  let body: { plano?: unknown }
+  let body: { plano?: unknown; card_token?: unknown }
   try {
     body = await req.json()
   } catch {
     return json(req, { error: 'Corpo da requisição inválido.' }, 400)
   }
   if (!ehPlano(body.plano)) return json(req, { error: 'Plano inválido.' }, 400)
+  if (!tokenDeCartaoValido(body.card_token)) return json(req, { error: 'Dados do cartão inválidos.' }, 400)
   const plano = PLANOS[body.plano]
 
-  // Obs.: assinatura COM plano associado (preapproval_plan_id) exige card_token_id
-  // (cartão tokenizado no frontend via MP.js). Sem plano, o MP devolve o
-  // init_point de checkout hospedado — é o fluxo usado aqui.
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
+
+  const { data: atual } = await admin.from('assinaturas').select('status, mp_subscription_id').eq('professional_id', user.id).maybeSingle()
+  if (atual?.status === 'ativa' && atual.mp_subscription_id) {
+    return json(req, { error: 'Você já tem uma assinatura ativa.' }, 409)
+  }
+
   const resp = await fetch('https://api.mercadopago.com/preapproval', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'X-Idempotency-Key': crypto.randomUUID() },
     body: JSON.stringify({
       reason: plano.reason,
       external_reference: user.id,
       payer_email: payerEmail,
-      back_url: `${APP_URL}/login?plano=${body.plano}&status=sucesso`,
-      status: 'pending',
+      card_token_id: body.card_token,
+      back_url: `${APP_URL}/`,
+      status: 'authorized',
       auto_recurring: { frequency: plano.frequency, frequency_type: 'months', transaction_amount: plano.amount, currency_id: 'BRL' },
     }),
   })
   const mp = await resp.json().catch(() => ({}))
-  if (!resp.ok || !mp.init_point) {
-    console.error('mp-subscribe: falha no MP', resp.status, mp?.message)
-    return json(req, { error: 'Não foi possível iniciar o pagamento. Tente de novo.' }, 502)
+  if (!resp.ok || !mp.id) {
+    console.error('mp-subscribe: falha no MP', resp.status, mp?.message, JSON.stringify(mp?.cause ?? null))
+    return json(req, { error: 'Pagamento não aprovado. Confira os dados do cartão ou tente outro cartão.' }, 402)
   }
-  return json(req, { init_point: mp.init_point })
+
+  // Libera o acesso na hora; o webhook confirma/atualiza depois (idempotente).
+  const alvo = atualizacaoDoPreapproval(mp)
+  if (alvo) {
+    const { error } = await admin.from('assinaturas').update(alvo.atualizacao).eq('professional_id', alvo.professionalId)
+    if (error) console.error('mp-subscribe: falha ao gravar assinatura', error.message)
+  }
+  return json(req, { subscription_id: String(mp.id), status: mp.status })
 })
