@@ -36,6 +36,16 @@ Projeto Supabase: `avgrnvpvjhymsrnapfgu`.
    **Planos e assinaturas** (`subscription_preapproval`) e **Pagamentos
    recorrentes** (`subscription_authorized_payment`).
 
+## Sandbox: e-mail do comprador
+
+No sandbox o MP exige que o comprador também seja usuário de teste (`Both payer
+and collector must be real or test users`), então o e-mail de login do app é
+recusado. Para testar, defina o secret `MP_TEST_PAYER_EMAIL` com o e-mail do
+comprador de teste; ele **só vale quando `MP_ACCESS_TOKEN` (produção) não
+existe**, nunca em produção. Em produção o `payer_email` é o e-mail de login do
+personal — se não for uma conta do Mercado Pago, o MP pode recusar
+(`User bad request`); a ser validado no primeiro teste real.
+
 ## Mapeamento de status
 
 | MP (`preapproval.status`) | `treino.assinaturas.status` |

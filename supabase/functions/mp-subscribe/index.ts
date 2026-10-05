@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) })
   if (req.method !== 'POST') return json(req, { error: 'Método não permitido.' }, 405)
 
-  const token = Deno.env.get('MP_ACCESS_TOKEN') ?? Deno.env.get('MP_ACCESS_TOKEN_TEST')
+  const tokenProducao = Deno.env.get('MP_ACCESS_TOKEN')
+  const token = tokenProducao ?? Deno.env.get('MP_ACCESS_TOKEN_TEST')
   if (!token) return json(req, { error: 'Pagamento indisponível no momento.' }, 503)
 
   const auth = req.headers.get('Authorization')
@@ -44,6 +45,11 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await cliente.auth.getUser()
   if (userError || !userData.user?.email) return json(req, { error: 'Não autenticado.' }, 401)
   const user = userData.user
+  // Sandbox: o MP só aceita comprador que também seja usuário de TESTE
+  // ("Both payer and collector must be real or test users"), então o e-mail de
+  // login do app é recusado. MP_TEST_PAYER_EMAIL só vale sem MP_ACCESS_TOKEN
+  // (ou seja, nunca em produção).
+  const payerEmail = (!tokenProducao && Deno.env.get('MP_TEST_PAYER_EMAIL')) || user.email
 
   let body: { plano?: unknown }
   try {
@@ -63,7 +69,7 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       reason: plano.reason,
       external_reference: user.id,
-      payer_email: user.email,
+      payer_email: payerEmail,
       back_url: `${APP_URL}/login?plano=${body.plano}&status=sucesso`,
       status: 'pending',
       auto_recurring: { frequency: plano.frequency, frequency_type: 'months', transaction_amount: plano.amount, currency_id: 'BRL' },
