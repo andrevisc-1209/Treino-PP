@@ -1,5 +1,5 @@
 export const TERMOS_USO_VERSAO = '1.0'
-export const PRIVACIDADE_VERSAO = '1.0'
+export const PRIVACIDADE_VERSAO = '1.1'
 
 export const AVISO_MODELO_INICIAL = 'Modelo inicial — revisar com assessoria jurídica.'
 
@@ -33,6 +33,9 @@ Lesões, cirurgias, medicamentos e respostas de bem-estar de alunos só são col
 
 Para que usamos
 Para viabilizar as funcionalidades do app: cadastro de alunos, montagem e execução de treinos, agenda e cobrança. Não vendemos nem compartilhamos dados com terceiros para fins de marketing.
+
+Análise de uso da página inicial (PostHog)
+Na página inicial pública (landing page) usamos o PostHog para entender como a página é usada: visitas, cliques nos botões, rolagem e gravação de sessão. Só coletamos esses dados depois do seu consentimento explícito, dado no aviso de cookies da página. A gravação de sessão é anônima e os campos de formulário são mascarados. Você pode recusar no próprio aviso ou revogar o consentimento limpando os dados do site (localStorage) no seu navegador. Mais informações na política de privacidade do PostHog: https://posthog.com/privacy
 
 Onde ficam armazenados
 Os dados ficam armazenados em banco de dados com acesso restrito, segregado por profissional (você só acessa os dados dos seus próprios alunos).
