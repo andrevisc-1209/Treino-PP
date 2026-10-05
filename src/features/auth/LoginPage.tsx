@@ -17,6 +17,7 @@ import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { ERROS } from '@/lib/mensagens'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { PasswordInput } from '@/components/PasswordInput'
+import { SeletorCidade } from '@/components/SeletorCidade'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
 
@@ -39,6 +40,8 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
     confirmPassword: z.string().optional(),
     cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
     phone: mode === 'signup' ? z.string().refine(validarTelefone, 'Telefone inválido') : z.string().optional(),
+    uf: mode === 'signup' ? z.string().min(1, 'Selecione o estado') : z.string().optional(),
+    cidade: mode === 'signup' ? z.string().min(1, 'Selecione a cidade') : z.string().optional(),
     whatsappOptIn: z.boolean().optional(),
     termosAceitos:
       mode === 'signup'
@@ -71,13 +74,15 @@ export function LoginPage() {
 
   const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
-    defaultValues: { termosAceitos: false },
+    defaultValues: { termosAceitos: false, uf: '', cidade: '' },
   })
   const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
   const termosAceitos = watch('termosAceitos')
   const whatsappOptIn = watch('whatsappOptIn')
   const cpfValor = watch('cpf')
   const phoneValor = watch('phone')
+  const ufValor = watch('uf')
+  const cidadeValor = watch('cidade')
   const senhaValor = watch('password')
 
   useEffect(() => {
@@ -170,6 +175,8 @@ export function LoginPage() {
           name: f.name ?? '',
           cpf: (f.cpf ?? '').replace(/\D/g, ''),
           phone: (f.phone ?? '').replace(/\D/g, ''),
+          uf: f.uf ?? '',
+          cidade: f.cidade ?? '',
           whatsapp_opt_in: f.whatsappOptIn ?? false,
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
@@ -278,6 +285,16 @@ export function LoginPage() {
                 placeholder="(00) 00000-0000"
               />
             </Field>
+            <SeletorCidade
+              uf={ufValor ?? ''}
+              cidade={cidadeValor ?? ''}
+              onChange={(uf, cidade) => {
+                setValue('uf', uf, { shouldValidate: true })
+                setValue('cidade', cidade, { shouldValidate: true })
+              }}
+              erroUf={formState.errors.uf?.message}
+              erroCidade={formState.errors.cidade?.message}
+            />
           </>
         )}
         <Field label="E-mail" error={formState.errors.email?.message}>

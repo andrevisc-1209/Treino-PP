@@ -360,6 +360,7 @@ pessoa digitava.
 
 PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/48)
 
+<<<<<<< HEAD
 ## 19. Recibo de fechamento de ciclo
 
 - `ReciboCiclo.tsx` (tela cheia, via portal): cabeçalho, 4 cartões (aulas, dias, locais, valor),
@@ -376,4 +377,19 @@ PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/4
   `margin={{ left: -20 }}` e cortam o primeiro dígito do eixo Y.
 
 PR: [feat/recibo-ciclo](https://github.com/andrevisc-1209/Treino-PP/pull/51)
+=======
+## 18. Cidade e UF obrigatórias no cadastro do personal
+
+- `professionals.uf` / `professionals.cidade` (migration `20261011000000`), NULL-áveis no banco
+  (contas antigas e login social não têm o dado), obrigatórias no app: cadastro
+  aberto (`LoginPage`) e formulário de perfil de convite/login social
+  (`PerfilObrigatorioForm`). Editável em Configurações → Dados pessoais.
+- `SeletorCidade` (UF → municípios do IBGE) é novo: o seletor do Pix era código
+  inline em `ConfiguracoesPage`, não um componente; o do Pix **não foi mexido**
+  (tem tratamento próprio de "cidade antiga sem UF" e limite de 15 caracteres).
+- Pendente: quem já tem conta não é forçado a preencher (só aviso em Configurações);
+  o painel admin ainda mostra a cidade do Pix, não `professionals.cidade`.
+
+PR: [feat/cadastro-uf-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/50)
+>>>>>>> origin/main
 
