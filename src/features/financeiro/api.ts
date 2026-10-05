@@ -235,6 +235,16 @@ export function useFecharCiclo() {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
 
+      // Remove fatura cancelada anterior (mesmo aluno + período) para permitir refechamento:
+      // UNIQUE (aluno_id, periodo_inicio) vale mesmo para faturas canceladas.
+      const { error: errLimpeza } = await supabase
+        .from('faturas')
+        .delete()
+        .eq('aluno_id', input.aluno_id)
+        .eq('periodo_inicio', input.periodo_inicio)
+        .eq('status', 'cancelada')
+      if (errLimpeza) throw errLimpeza
+
       const { data: fatura, error } = await supabase
         .from('faturas')
         .insert({
