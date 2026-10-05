@@ -48,3 +48,16 @@ input[type="time"] {
   min-width: 0;
   max-width: 100%;
 }
+
+/* Recibo de fechamento de ciclo (financeiro/ReciboCiclo.tsx): ao imprimir / salvar
+   como PDF, some tudo menos o recibo, que é renderizado num portal em <body>. */
+@media print {
+  body > *:not(#recibo-print-root) { display: none !important; }
+  #recibo-print-root { position: static !important; overflow: visible !important; background: #fff !important; }
+  #recibo-print-root #recibo-conteudo { position: static !important; inset: auto !important; overflow: visible !important; background: #fff !important; }
+  #recibo-print-root .recibo-sem-impressao { display: none !important; }
+  #recibo-print-root .recibo-bloco { break-inside: avoid; box-shadow: none !important; }
+  #recibo-print-root * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { margin: 12mm; }
+}
+

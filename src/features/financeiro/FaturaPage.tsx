@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, Copy, MessageCircle } from 'lucide-react'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Check, Copy, FileText, MessageCircle } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useAluno, usePesos } from '@/features/alunos/api'
 import { useProfessionalConfig } from '@/features/agenda/api'
@@ -13,6 +13,7 @@ import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
+import { ReciboCiclo } from './ReciboCiclo'
 import {
   useCancelarFatura,
   useDesfazerPagamentoFatura,
@@ -36,6 +37,7 @@ function periodoLabel(inicio: string, fim: string): string {
 
 export function FaturaPage() {
   const { faturaId } = useParams<{ faturaId: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { data: fatura, isLoading } = useFatura(faturaId)
   const { data: aluno } = useAluno(fatura?.aluno_id)
   const { data: config } = useProfessionalConfig()
@@ -53,6 +55,17 @@ export function FaturaPage() {
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>('pix')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copiado, setCopiado] = useState<'mensagem' | 'pix' | null>(null)
+  // O recibo abre sozinho logo depois de fechar o ciclo (?recibo=1) e pelo botão "Ver recibo".
+  const reciboAberto = searchParams.get('recibo') === '1'
+  const definirRecibo = (aberto: boolean) =>
+    setSearchParams(
+      (p) => {
+        if (aberto) p.set('recibo', '1')
+        else p.delete('recibo')
+        return p
+      },
+      { replace: true },
+    )
 
   const pixDisponivel = !!(config?.pix_chave && config.pix_nome && config.pix_cidade)
   const pixPayload = useMemo(() => {
@@ -210,6 +223,11 @@ export function FaturaPage() {
             <p className="text-sm text-slate-500">Total</p>
             <p className="text-2xl font-bold">{formatarBRL(fatura.total)}</p>
           </div>
+          {fatura.status !== 'cancelada' && (
+            <Button variant="outline" className="mt-3 w-full" onClick={() => definirRecibo(true)}>
+              <FileText size={18} /> Ver recibo
+            </Button>
+          )}
         </div>
 
         {fatura.status !== 'cancelada' && (
@@ -289,6 +307,9 @@ export function FaturaPage() {
           </Button>
         </div>
       </BottomSheet>
+      {reciboAberto && fatura.status !== 'cancelada' && (
+        <ReciboCiclo fatura={fatura} alunoNome={aluno?.name ?? fatura.aluno?.name ?? 'Aluno'} onFechar={() => definirRecibo(false)} />
+      )}
     </div>
   )
 }
