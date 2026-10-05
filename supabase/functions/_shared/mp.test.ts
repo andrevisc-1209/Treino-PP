@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaValida, atualizacaoDoPreapproval, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido } from './mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido } from './mp.ts'
 
 async function assinar(secret: string, manifest: string) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -65,5 +65,20 @@ describe('atualizacaoDoPreapproval', () => {
     expect(atualizacaoDoPreapproval({ id: 'a', status: 'pending', external_reference: id })).toBeNull()
     expect(atualizacaoDoPreapproval({ id: 'a', status: 'authorized' })).toBeNull()
     expect(atualizacaoDoPreapproval({ id: 'a', status: 'authorized', external_reference: 'x' })).toBeNull()
+  })
+})
+
+describe('decidirWebhook', () => {
+  it('assinatura válida processa em qualquer ambiente', () => {
+    expect(decidirWebhook({ producao: true, temSegredo: true, assinaturaOk: true })).toBe('processar')
+    expect(decidirWebhook({ producao: false, temSegredo: true, assinaturaOk: true })).toBe('processar')
+  })
+  it('produção: assinatura inválida/ausente rejeita; sem segredo também (falha fechada)', () => {
+    expect(decidirWebhook({ producao: true, temSegredo: true, assinaturaOk: false })).toBe('rejeitar_assinatura')
+    expect(decidirWebhook({ producao: true, temSegredo: false, assinaturaOk: false })).toBe('rejeitar_sem_segredo')
+  })
+  it('sandbox: assinatura ausente/inválida/sem segredo processa com aviso', () => {
+    expect(decidirWebhook({ producao: false, temSegredo: true, assinaturaOk: false })).toBe('processar_com_aviso')
+    expect(decidirWebhook({ producao: false, temSegredo: false, assinaturaOk: false })).toBe('processar_com_aviso')
   })
 })
