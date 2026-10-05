@@ -393,3 +393,12 @@ PR: [feat/recibo-ciclo](https://github.com/andrevisc-1209/Treino-PP/pull/51)
 PR: [feat/cadastro-uf-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/50)
 >>>>>>> origin/main
 
+### 19.1 Refechar ciclo após cancelar a fatura
+
+`useFecharCiclo` apaga a fatura `cancelada` do mesmo aluno + `periodo_inicio` antes de inserir a nova
+(a constraint `UNIQUE (aluno_id, periodo_inicio)` vale também para faturas canceladas). Consequência
+assumida: o registro da fatura cancelada deixa de existir ao refechar. Alternativa que preservaria o
+histórico: trocar o UNIQUE por índice único parcial `WHERE status <> 'cancelada'` (exige migration).
+
+PR: [fix/fechar-ciclo-duplicado](https://github.com/andrevisc-1209/Treino-PP/pull/52)
+
