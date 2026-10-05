@@ -304,3 +304,24 @@ antes de criar tabela nova:
   tinham esse problema e não foram alterados.
 
 PR: [feat/avaliacoes-fisicas](https://github.com/andrevisc-1209/Treino-PP/pull/44)
+
+## 16. Landing page de marketing em "/"
+
+- `public/landing.html` (estática, isolada do CSS do app). Visitante **deslogado**
+  em `/` é levado pra ela; logado continua na home. App instalado (PWA, modo
+  standalone) deslogado vai direto pro `/login`, não pra landing.
+- CTAs "Criar conta" apontam pra `/login?modo=cadastro` (abre direto na aba de
+  cadastro) — `/register` não existe, o cadastro é uma aba do `/login`.
+- `vite.config.ts`: `navigateFallbackDenylist` pra `/landing.html`, senão o
+  service worker devolveria o `index.html` do app no lugar da landing.
+- Botões da landing: `#4CAF50` → `#367c39` (branco sobre `#4CAF50` = 2,78:1,
+  reprova AA; mesmo ajuste já documentado em `docs/BRAND.md`).
+- Conteúdo alinhado com o produto: trial 15 dias; planos do app (Mensal R$10,
+  Trimestral R$27, Semestral R$50, sem anual); frases sobre acesso do aluno
+  marcadas "Em breve" (feature confirmada, ainda não lançada).
+- LGPD: PostHog só carrega depois do "Aceitar" no banner (consentimento em
+  `localStorage`, chave `treino_cookie_consent`); "Recusar" também é
+  lembrado. Gravação de sessão com inputs mascarados.
+- **Pendente**: citar o PostHog na Política de Privacidade (`/privacidade`);
+  texto "Pagamento via Mercado Pago" na landing antes da integração existir
+  (hoje os planos são contratados via WhatsApp no `PlanoModal`).

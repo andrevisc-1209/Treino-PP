@@ -42,6 +42,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // /landing.html é página estática à parte, não uma rota do React — sem isso o
+        // service worker devolveria o index.html do app no lugar dela (e entraria em loop).
+        navigateFallbackDenylist: [/^\/landing\.html$/],
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         runtimeCaching: [
           {
