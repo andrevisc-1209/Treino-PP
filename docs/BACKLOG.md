@@ -402,3 +402,14 @@ histórico: trocar o UNIQUE por índice único parcial `WHERE status <> 'cancela
 
 PR: [fix/fechar-ciclo-duplicado](https://github.com/andrevisc-1209/Treino-PP/pull/52)
 
+### 18.1 Pix usa a cidade do perfil
+
+Removidos Estado/Cidade da seção "Recebimento via Pix" (Configurações): o QR/BR Code usa
+`professionals.cidade` (Dados pessoais). Sem cidade no perfil: aviso na seção Pix e na fatura (QR
+não é gerado). `professional_config.pix_cidade` deixou de ser lida pelo QR; segue sendo gravada
+(derivada do perfil, quando existe) só para o painel admin, que ainda agrupa por ela.
+Pendente: o admin passar a usar `professionals.uf/cidade` (migration das RPCs `admin_*`) e então
+parar de gravar `pix_cidade`.
+
+PR: [fix/pix-usa-cidade-do-perfil](https://github.com/andrevisc-1209/Treino-PP/pull/53)
+
