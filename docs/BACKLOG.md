@@ -337,3 +337,15 @@ PR: [feat/avaliacoes-fisicas](https://github.com/andrevisc-1209/Treino-PP/pull/4
   PWA standalone sem sessão → `/login`; service worker antigo → vê o app
   antigo (`/login`) até aceitar a atualização, depois cai na landing.
 
+## 17. Mercado Pago Assinaturas
+
+Ver `docs/MERCADOPAGO.md`. Desvios do pedido original (todos explicados no PR):
+tabela é `treino.assinaturas` (não `subscriptions`), status `ativa`/`cancelada`/
+`expirada`; assinatura sem `preapproval_plan_id` (plano exige `card_token_id`);
+a Edge Function deriva e-mail e identidade do JWT em vez de aceitar do cliente;
+o webhook busca o estado na API do MP (o evento só traz o id); sem
+`VITE_MP_PLAN_*` (valores ficam no servidor). Pendente: André roda migration,
+secrets, deploy, cadastra o webhook e faz o teste de pagamento no checkout.
+
+PR: [feat/mercadopago-assinaturas](https://github.com/andrevisc-1209/Treino-PP/pull/47)
+

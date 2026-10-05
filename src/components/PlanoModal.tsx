@@ -1,8 +1,10 @@
+import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { BottomSheet } from '@/components/ui'
+import { mostrarErroGlobal } from '@/components/Toast'
+import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import type { Plano } from '@/features/assinatura/useAssinatura'
-
-const WHATSAPP_SUPORTE = '5521986521747'
 
 const PLANOS: { id: Plano; nome: string; preco: string; equivale?: string; badge?: string }[] = [
   { id: 'mensal', nome: 'Mensal', preco: 'R$ 10/mês' },
@@ -10,19 +12,30 @@ const PLANOS: { id: Plano; nome: string; preco: string; equivale?: string; badge
   { id: 'semestral', nome: 'Semestral', preco: 'R$ 50', equivale: 'R$ 8,33/mês', badge: 'Melhor valor' },
 ]
 
-function assinar(planoNome: string) {
-  // TODO: integrar Mercado Pago Checkout Pro
-  // Docs: https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/landing
-  // Variáveis necessárias (adicionar ao .env quando for implementar):
-  //   VITE_MP_PUBLIC_KEY=
-  //   MP_ACCESS_TOKEN=        ← só no backend/Edge Function, nunca no client
-  // Fluxo previsto: criar preferência via Edge Function → redirecionar pro
-  // MP Checkout → webhook confirma pagamento → atualiza treino.assinaturas
-  const texto = encodeURIComponent(`Quero assinar o plano ${planoNome}`)
-  window.open(`https://wa.me/${WHATSAPP_SUPORTE}?text=${texto}`, '_blank', 'noopener')
+/** Pede o link de checkout ao servidor (preço e identidade vêm de lá) e redireciona pro Mercado Pago. */
+async function iniciarAssinatura(plano: Plano): Promise<void> {
+  const { data, error } = await supabase.functions.invoke<{ init_point?: string }>('mp-subscribe', { body: { plano } })
+  const destino = data?.init_point
+  if (error || !destino || !destino.startsWith('https://www.mercadopago.com')) {
+    throw new Error('Não foi possível iniciar o pagamento. Tente de novo.')
+  }
+  window.location.href = destino
 }
 
 export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [carregando, setCarregando] = useState<Plano | null>(null)
+
+  const assinar = async (plano: Plano) => {
+    setCarregando(plano)
+    try {
+      await iniciarAssinatura(plano)
+    } catch (e) {
+      mostrarErroGlobal((e as Error).message)
+      setCarregando(null)
+    }
+    // sucesso: a página navega pro Mercado Pago, o botão segue travado até lá
+  }
+
   return (
     <BottomSheet open={open} onClose={onClose} title="Escolha seu plano">
       <div className="space-y-3">
@@ -47,15 +60,22 @@ export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => vo
               </div>
               <button
                 type="button"
-                onClick={() => assinar(p.nome)}
-                className="shrink-0 rounded-xl bg-brand px-4 py-3 font-medium text-white active:bg-brand-hover"
+                onClick={() => assinar(p.id)}
+                disabled={carregando !== null}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 font-medium text-white active:bg-brand-hover disabled:opacity-60"
               >
-                Assinar
+                {carregando === p.id ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Abrindo…
+                  </>
+                ) : (
+                  'Assinar'
+                )}
               </button>
             </div>
           </div>
         ))}
-        <p className="text-center text-xs text-slate-400">Pagamento via WhatsApp por enquanto — Mercado Pago em breve.</p>
+        <p className="text-center text-xs text-slate-400">Pagamento seguro via Mercado Pago. Cancele quando quiser.</p>
       </div>
     </BottomSheet>
   )
