@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Treino PP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* ─── Tokens ──────────────────────────────────────────── */
+:root {
+  --navy:   #0F2537;
+  --navy-2: #17334e;
+  --green:  #4CAF50;
+  --green-d:#2E7D32;
+  --green-s:#E8F5E9;
+  --white:  #FFFFFF;
+  --ground: #F5F7F6;
+  --muted:  #56687A;
+  --line:   rgba(15,37,55,.1);
+  --ink:    #0F2537;
+  --display: 'Montserrat', system-ui, sans-serif;
+  --body:    'Inter', system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0c1f2e;
+    --white:  #122030;
+    --ink:    #E8EFF4;
+    --muted:  #7A96AE;
+    --line:   rgba(255,255,255,.08);
+    --green-s:#0d2e14;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0c1f2e;
+  --white:  #122030;
+  --ink:    #E8EFF4;
+  --muted:  #7A96AE;
+  --line:   rgba(255,255,255,.08);
+  --green-s:#0d2e14;
+  color-scheme: dark;
+}
+
+/* ─── Reset ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+
+/* ─── Utility ─────────────────────────────────────────── */
+.container { width: 100%; max-width: 1100px; margin-inline: auto; padding-inline: clamp(16px, 5vw, 48px); }
+.eyebrow {
+  font: 700 11px/1 var(--display);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--green-d);
+  display: block;
+  margin-bottom: 14px;
+}
+.dark .eyebrow { color: var(--green); }
+h2.section-title {
+  font: 800 clamp(28px, 4vw, 44px)/1.1 var(--display);
+  letter-spacing: -.02em;
+  text-wrap: balance;
+  margin-bottom: 14px;
+}
+.section-lede {
+  font-size: clamp(16px, 1.6vw, 19px);
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 52ch;
+}
+.dark .section-lede { color: rgba(255,255,255,.6); }
+
+/* ─── NAV ─────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  background: var(--navy);
+  padding-block: 14px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+}
+.nav .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.nav-logo {
+  font: 800 20px/1 var(--display);
+  color: #fff;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+.nav-logo em { font-style: normal; color: var(--green); }
+.nav-links { display: flex; align-items: center; gap: 8px; }
+.nav-ghost {
+  font: 600 13px var(--display);
+  color: rgba(255,255,255,.7);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.14);
+  transition: border-color .2s, color .2s;
+}
+.nav-ghost:hover { color: #fff; border-color: rgba(255,255,255,.35); }
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 13px var(--display);
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: #367c39;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  white-space: nowrap;
+}
+.btn-primary:hover { background: #2a602c; transform: translateY(-1px); }
+
+/* ─── HERO ────────────────────────────────────────────── */
+.hero {
+  background: var(--navy);
+  padding-block: clamp(64px, 10vw, 120px) clamp(48px, 8vw, 96px);
+  overflow: hidden;
+  position: relative;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 70% 60%, rgba(76,175,80,.09) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero .container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 48px;
+  align-items: center;
+}
+.hero-text { position: relative; z-index: 1; }
+.hero h1 {
+  font: 900 clamp(36px, 5.5vw, 66px)/1.05 var(--display);
+  letter-spacing: -.03em;
+  color: #fff;
+  text-wrap: balance;
+  margin-bottom: 20px;
+}
+.hero h1 em {
+  font-style: normal;
+  color: var(--green);
+}
+.hero-sub {
+  font-size: clamp(16px, 1.6vw, 19px);
+  color: rgba(255,255,255,.65);
+  max-width: 46ch;
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.btn-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 15px/1 var(--display);
+  padding: 16px 28px;
+  border-radius: 10px;
+  background: #367c39;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+}
+.btn-hero:hover { background: #2a602c; transform: translateY(-2px); }
+.hero-note {
+  font: 500 13px var(--body);
+  color: rgba(255,255,255,.45);
+}
+/* phone mockup */
+.hero-phone {
+  position: relative;
+  z-index: 1;
+  width: 240px;
+  flex-shrink: 0;
+}
+.phone-shell {
+  width: 240px;
+  aspect-ratio: 9/19;
+  background: #060f18;
+  border-radius: 34px;
+  padding: 10px;
+  box-shadow: 0 40px 80px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.07);
+}
+.phone-screen {
+  height: 100%;
+  border-radius: 26px;
+  background: var(--ground);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 12px 12px;
+}
+.ps-bar {
+  height: 30px;
+  border-radius: 8px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 6px;
+  font: 600 10px var(--display);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.ps-bar b { color: var(--ink); }
+.ps-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.ps-av {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1B4FA0, #4CAF50);
+}
+.ps-av.r { background: linear-gradient(135deg, #E91E63, #FF5722); }
+.ps-av.y { background: linear-gradient(135deg, #FF9800, #FFC107); }
+.ps-card b { font: 700 10px var(--display); color: var(--ink); display: block; }
+.ps-card span { font-size: 9px; color: var(--muted); }
+.ps-card .tag { font: 700 9px var(--display); color: var(--green-d); background: var(--green-s); padding: 2px 6px; border-radius: 999px; }
+.ps-tag-warn { color: #e65100 !important; background: #fff3e0 !important; }
+.ps-chart {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ps-chart .label { font: 700 9px var(--display); color: var(--muted); }
+.ps-chart svg { width: 100%; flex: 1; }
+.ps-cta {
+  height: 34px;
+  border-radius: 9px;
+  background: var(--green);
+  color: #fff;
+  font: 700 11px var(--display);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* ─── PROOF BAR ───────────────────────────────────────── */
+.proof {
+  background: var(--white);
+  border-block: 1px solid var(--line);
+  padding-block: 28px;
+}
+.proof .container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+}
+.proof-item {
+  flex: 1;
+  min-width: 160px;
+  text-align: center;
+  padding: 8px 24px;
+  border-right: 1px solid var(--line);
+}
+.proof-item:last-child { border-right: none; }
+.proof-item .num {
+  font: 900 clamp(28px, 3.5vw, 40px)/1 var(--display);
+  color: var(--navy);
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .proof-item .num { color: #fff; }
+}
+:root[data-theme="dark"] .proof-item .num { color: #fff; }
+.proof-item .num em { font-style: normal; color: var(--green); }
+.proof-item .desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* ─── PAIN ────────────────────────────────────────────── */
+.pain-section {
+  padding-block: clamp(64px, 9vw, 100px);
+  background: var(--ground);
+}
+.pain-section .container { display: flex; flex-direction: column; align-items: flex-start; gap: 48px; }
+.pain-intro { max-width: 540px; }
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+.pain-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+}
+.pain-icon { font-size: 28px; margin-bottom: 12px; }
+.pain-card h3 { font: 700 16px/1.3 var(--display); color: var(--ink); margin-bottom: 8px; }
+.pain-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ─── FEATURES ────────────────────────────────────────── */
+.feat-section {
+  background: var(--navy);
+  padding-block: clamp(64px, 9vw, 100px);
+}
+.feat-section .section-title { color: #fff; }
+.feat-grid {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255,255,255,.07);
+}
+.feat-item {
+  padding: 32px 28px;
+  background: rgba(255,255,255,.03);
+  transition: background .2s;
+}
+.feat-item:hover { background: rgba(255,255,255,.06); }
+.feat-item .fi-icon { font-size: 30px; margin-bottom: 16px; }
+.feat-item h3 { font: 700 16px/1.3 var(--display); color: #fff; margin-bottom: 8px; }
+.feat-item p { font-size: 14px; color: rgba(255,255,255,.55); line-height: 1.6; }
+.feat-badge {
+  display: inline-block;
+  margin-top: 14px;
+  font: 700 10px var(--display);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(76,175,80,.15);
+  color: var(--green);
+}
+
+/* ─── HOW IT WORKS ────────────────────────────────────── */
+.how-section { padding-block: clamp(64px, 9vw, 100px); background: var(--ground); }
+.how-grid {
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  position: relative;
+}
+.how-grid::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(50% / 3);
+  right: calc(50% / 3);
+  height: 2px;
+  background: var(--line);
+  pointer-events: none;
+}
+.how-step { padding: 0 24px 0 0; }
+.how-step:last-child { padding-right: 0; }
+.how-num {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font: 800 22px var(--display);
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.how-step h3 { font: 700 17px/1.3 var(--display); margin-bottom: 8px; color: var(--ink); }
+.how-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ─── PRICING ─────────────────────────────────────────── */
+.pricing-section {
+  background: var(--white);
+  padding-block: clamp(64px, 9vw, 100px);
+  border-block: 1px solid var(--line);
+}
+.pricing-inner {
+  margin-top: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  max-width: 800px;
+}
+.plan-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  background: var(--ground);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.plan-card.pop {
+  border-color: var(--green-d);
+  border-width: 2px;
+  background: var(--white);
+}
+.plan-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: 800 9px var(--display);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: var(--green-d);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.plan-name { font: 700 11px var(--display); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.plan-price { font: 900 32px/1 var(--display); color: var(--ink); letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.plan-price small { font-size: 13px; font-weight: 600; color: var(--muted); }
+.plan-save {
+  display: inline-block;
+  margin-top: 8px;
+  font: 700 10px var(--display);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--green-s);
+  color: var(--green-d);
+}
+.plan-card p { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+.pricing-note {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.pricing-note strong { color: var(--ink); }
+
+/* ─── CTA FINAL ───────────────────────────────────────── */
+.cta-section {
+  background: var(--navy);
+  padding-block: clamp(72px, 10vw, 120px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 70% at 50% 110%, rgba(76,175,80,.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+.cta-section .container { position: relative; z-index: 1; }
+.cta-tag {
+  display: inline-block;
+  font: 700 11px var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 20px;
+}
+.cta-section h2 {
+  font: 900 clamp(32px, 5vw, 60px)/1.05 var(--display);
+  letter-spacing: -.03em;
+  color: #fff;
+  text-wrap: balance;
+  margin-bottom: 18px;
+}
+.cta-section h2 em { font-style: normal; color: var(--green); }
+.cta-section p { font-size: 17px; color: rgba(255,255,255,.55); margin-bottom: 36px; }
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 800 16px/1 var(--display);
+  padding: 18px 36px;
+  border-radius: 12px;
+  background: #367c39;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+}
+.btn-cta:hover { background: #2a602c; transform: translateY(-2px); }
+.cta-sub {
+  margin-top: 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,.35);
+}
+
+/* ─── FOOTER ──────────────────────────────────────────── */
+footer {
+  background: #080f17;
+  padding-block: 36px 28px;
+}
+footer .container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+.footer-logo {
+  font: 800 16px/1 var(--display);
+  color: rgba(255,255,255,.5);
+  letter-spacing: -.01em;
+}
+.footer-logo em { font-style: normal; color: var(--green); }
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer-links a {
+  font-size: 13px;
+  color: rgba(255,255,255,.35);
+  transition: color .2s;
+}
+.footer-links a:hover { color: rgba(255,255,255,.7); }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,.2); }
+
+/* ─── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero .container { grid-template-columns: 1fr; }
+  .hero-phone { display: none; }
+  .pain-grid { grid-template-columns: 1fr; }
+  .feat-grid { grid-template-columns: 1fr; }
+  .how-grid { grid-template-columns: 1fr; gap: 32px; }
+  .how-grid::before { display: none; }
+  .how-step { padding: 0; }
+  .pricing-inner { grid-template-columns: 1fr; max-width: 360px; }
+  .nav-ghost { display: none; }
+  .proof .container { gap: 0; }
+  .proof-item { border-right: none; border-bottom: 1px solid var(--line); padding: 16px 24px; }
+  .proof-item:last-child { border-bottom: none; }
+}
+@media (max-width: 500px) {
+  .feat-section .section-title { font-size: 26px; }
+}
+
+/* ─── Motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-up { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+  .fade-up.visible { opacity: 1; transform: none; }
+  .fade-up:nth-child(2) { transition-delay: .08s; }
+  .fade-up:nth-child(3) { transition-delay: .16s; }
+  .fade-up:nth-child(4) { transition-delay: .24s; }
+  .fade-up:nth-child(5) { transition-delay: .32s; }
+  .fade-up:nth-child(6) { transition-delay: .40s; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav">
+  <div class="container">
+    <a href="/landing.html" class="nav-logo">Treino<em>PP</em></a>
+    <div class="nav-links">
+      <a href="/login" class="nav-ghost">Já tenho conta</a>
+      <a href="/login?modo=cadastro" class="btn-primary">Começar grátis →</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-text">
+      <h1>Gerencie seus alunos<br>sem <em>papel,</em> planilha<br>ou WhatsApp.</h1>
+      <p class="hero-sub">Treino PP é o app para personal trainer que quer focar no que importa. Ficha de treino, avaliação física, evolução do aluno e cobrança — tudo em um lugar só.</p>
+      <div class="hero-actions">
+        <a href="/login?modo=cadastro" class="btn-hero">Criar conta grátis →</a>
+        <span class="hero-note">14 dias grátis · sem cartão de crédito</span>
+      </div>
+    </div>
+    <div class="hero-phone" aria-hidden="true">
+      <div class="phone-shell">
+        <div class="phone-screen">
+          <div class="ps-bar"><b>Meus alunos</b></div>
+          <div class="ps-card">
+            <div class="ps-av"></div>
+            <div><b>Carlos Silva</b><span>Treino A · atualizado hoje</span></div>
+            <span class="tag">ativo</span>
+          </div>
+          <div class="ps-card">
+            <div class="ps-av r"></div>
+            <div><b>Marina Souza</b><span>Sem ficha prescrita</span></div>
+            <span class="tag ps-tag-warn">atenção</span>
+          </div>
+          <div class="ps-card">
+            <div class="ps-av y"></div>
+            <div><b>Rafael Lima</b><span>Avaliação: ↓2,1kg</span></div>
+            <span class="tag">ativo</span>
+          </div>
+          <div class="ps-chart">
+            <div class="label">Evolução · Peso (kg)</div>
+            <svg viewBox="0 0 180 60" preserveAspectRatio="none">
+              <polyline points="0,52 36,46 72,40 108,34 144,26 180,18"
+                fill="none" stroke="#4CAF50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="0,52 36,46 72,40 108,34 144,26 180,18"
+                fill="none" stroke="rgba(76,175,80,.15)" stroke-width="16"/>
+              <circle cx="180" cy="18" r="4" fill="#4CAF50"/>
+            </svg>
+          </div>
+          <div class="ps-cta">Ver todos os alunos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF BAR -->
+<section class="proof">
+  <div class="container">
+    <div class="proof-item fade-up">
+      <div class="num">14 dias</div>
+      <div class="desc">de trial gratuito, sem cartão</div>
+    </div>
+    <div class="proof-item fade-up">
+      <div class="num"><em>100%</em></div>
+      <div class="desc">do valor da mensalidade fica com você</div>
+    </div>
+    <div class="proof-item fade-up">
+      <div class="num">5 min</div>
+      <div class="desc">para cadastrar o primeiro aluno</div>
+    </div>
+    <div class="proof-item fade-up">
+      <div class="num">0</div>
+      <div class="desc">papel, planilha ou WhatsApp necessários</div>
+    </div>
+  </div>
+</section>
+
+<!-- PAIN POINTS -->
+<section class="pain-section">
+  <div class="container">
+    <div class="pain-intro">
+      <span class="eyebrow">O problema</span>
+      <h2 class="section-title">Você ainda gerencia assim?</h2>
+      <p class="section-lede">A maioria dos personais perde horas por semana em tarefas que não são treinar. É tempo que poderia ir para seus alunos — ou para você.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card fade-up">
+        <div class="pain-icon">📝</div>
+        <h3>Ficha no papel ou PDF</h3>
+        <p>O aluno perde, você precisa reimprimir. Qualquer ajuste vira trabalho dobrado. Histórico? Nenhum.</p>
+      </div>
+      <div class="pain-card fade-up">
+        <div class="pain-icon">📊</div>
+        <h3>Evolução no caderno</h3>
+        <p>Peso e medidas anotados, mas sem gráfico, sem comparativo, sem nada visual para mostrar ao aluno que vale a pena continuar.</p>
+      </div>
+      <div class="pain-card fade-up">
+        <div class="pain-icon">💬</div>
+        <h3>Cobrança pelo WhatsApp</h3>
+        <p>Constrangimento. Inadimplência invisível. O personal não virou personal para ficar cobrando — virou para treinar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="feat-section">
+  <div class="container">
+    <span class="eyebrow">O que você ganha</span>
+    <h2 class="section-title">Tudo que você precisa, sem nada que não precisa.</h2>
+    <div class="feat-grid">
+      <div class="feat-item fade-up">
+        <div class="fi-icon">🏋️</div>
+        <h3>Fichas de treino digitais</h3>
+        <p>Prescreva com séries, repetições e carga. O aluno acessa no celular. Você atualiza a qualquer hora.</p>
+        <span class="feat-badge">Core</span>
+      </div>
+      <div class="feat-item fade-up">
+        <div class="fi-icon">📈</div>
+        <h3>Gráfico de evolução</h3>
+        <p>Peso, % gordura, cintura e IMC em gráfico de linha automático. Cada avaliação vira um ponto na curva.</p>
+        <span class="feat-badge">Core</span>
+      </div>
+      <div class="feat-item fade-up">
+        <div class="fi-icon">📋</div>
+        <h3>Avaliação física integrada</h3>
+        <p>Formulário com medidas antropométricas, cálculo automático de IMC e histórico por aluno.</p>
+        <span class="feat-badge">Core</span>
+      </div>
+      <div class="feat-item fade-up">
+        <div class="fi-icon">✍️</div>
+        <h3>Anamnese + LGPD</h3>
+        <p>O aluno preenche digital com aceite de termo de consentimento. Conformidade garantida desde o primeiro dia.</p>
+        <span class="feat-badge">Compliance</span>
+      </div>
+      <div class="feat-item fade-up">
+        <div class="fi-icon">💰</div>
+        <h3>Controle de inadimplência</h3>
+        <p>Dashboard mostra quem está em atraso, quem está no trial e quando vence cada plano — tudo visível de relance.</p>
+        <span class="feat-badge">Gestão</span>
+      </div>
+      <div class="feat-item fade-up">
+        <div class="fi-icon">📊</div>
+        <h3>Dashboard do personal</h3>
+        <p>Alunos ativos, treinos desta semana, inadimplentes e alunos sem treino prescrito — resumo do dia em segundos.</p>
+        <span class="feat-badge">Gestão</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="container">
+    <span class="eyebrow">Como funciona</span>
+    <h2 class="section-title">Do cadastro ao treino em 3 passos.</h2>
+    <div class="how-grid">
+      <div class="how-step fade-up">
+        <div class="how-num">1</div>
+        <h3>Cadastre o aluno</h3>
+        <p>Nome, contato e plano. O aluno recebe um convite por e-mail com acesso imediato ao app.</p>
+      </div>
+      <div class="how-step fade-up">
+        <div class="how-num">2</div>
+        <h3>Prescreva o treino</h3>
+        <p>Monte a ficha com exercícios, séries e cargas. Duplique e adapte entre alunos em segundos.</p>
+      </div>
+      <div class="how-step fade-up">
+        <div class="how-num">3</div>
+        <h3>Acompanhe a evolução</h3>
+        <p>Registre avaliações físicas e veja o gráfico de progresso de cada aluno atualizado automaticamente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section">
+  <div class="container">
+    <span class="eyebrow">Preço</span>
+    <h2 class="section-title">Simples. Sem taxa sobre os seus alunos.</h2>
+    <p class="section-lede">Você paga uma assinatura mensal. O valor que cobra de cada aluno é 100% seu — sempre.</p>
+    <div class="pricing-inner">
+      <div class="plan-card fade-up">
+        <div class="plan-name">Mensal</div>
+        <div class="plan-price">R$39<small>/mês</small></div>
+        <p>Pague mês a mês, sem compromisso.</p>
+      </div>
+      <div class="plan-card pop fade-up">
+        <div class="plan-badge">Mais popular</div>
+        <div class="plan-name">Semestral</div>
+        <div class="plan-price">R$29<small>/mês</small></div>
+        <div class="plan-save">26% de desconto</div>
+        <p>Pague a cada 6 meses e economize.</p>
+      </div>
+      <div class="plan-card fade-up">
+        <div class="plan-name">Anual</div>
+        <div class="plan-price">R$24<small>/mês</small></div>
+        <div class="plan-save">38% de desconto</div>
+        <p>Melhor custo-benefício do ano.</p>
+      </div>
+    </div>
+    <p class="pricing-note"><strong>14 dias grátis em qualquer plano.</strong> Sem cartão de crédito no início. Cancele quando quiser. Com 10 alunos pagando R$200/mês você fatura R$2.000 — a assinatura representa menos de 2% disso.</p>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-tag">Para personal trainers</div>
+    <h2>Comece hoje.<br><em>14 dias grátis.</em></h2>
+    <p>Sem cartão de crédito. Sem instalação. Acesse do celular ou computador.</p>
+    <a href="/login?modo=cadastro" class="btn-cta">Criar minha conta grátis →</a>
+    <div class="cta-sub">Já tem conta? <a href="/login" style="color:rgba(255,255,255,.55);text-decoration:underline">Entrar</a></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <span class="footer-logo">Treino<em>PP</em></span>
+    <div class="footer-links">
+      <a href="/login">Entrar</a>
+      <a href="/login?modo=cadastro">Cadastrar</a>
+      <a href="https://personalperto.com.br">Personal Perto</a>
+    </div>
+    <span class="footer-copy">© 2026 Personal Perto · Rio de Janeiro</span>
+  </div>
+</footer>
+
+<script>
+// ─── PostHog ───────────────────────────────────────────────
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init bs ws ge fs capture register register_once register_for_session unregister unregister_for_session opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId setPersonProperties".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+// 🔑 Substitua pela sua Project API Key do PostHog
+posthog.init('phc_ADSqKHpnPUTMktbKN9MKDTCVfjM4AZ8ikor9N6ygMqt7', {
+  api_host: 'https://us.i.posthog.com',
+  capture_pageview: true,
+  capture_pageleave: true,
+  session_recording: { maskAllInputs: false }
+});
+
+// ─── Helpers de rastreamento ──────────────────────────────
+function trackCTA(section, label) {
+  posthog.capture('cta_click', { section, label });
+}
+
+// Lê UTM params da URL e registra como propriedades do usuário
+(function trackUTMs() {
+  const params = new URLSearchParams(window.location.search);
+  const utm = {};
+  ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(k => {
+    if (params.get(k)) utm[k] = params.get(k);
+  });
+  if (Object.keys(utm).length) posthog.register(utm);
+})();
+
+// ─── Scroll depth ─────────────────────────────────────────
+(function trackScrollDepth() {
+  const milestones = [25, 50, 75, 100];
+  const fired = new Set();
+  window.addEventListener('scroll', () => {
+    const pct = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+    milestones.forEach(m => {
+      if (pct >= m && !fired.has(m)) { fired.add(m); posthog.capture('scroll_depth', { percent: m }); }
+    });
+  }, { passive: true });
+})();
+
+// ─── Intersection observer para fade-up ──────────────────
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+// ─── Tag em todos os CTAs ─────────────────────────────────
+document.querySelectorAll('a[href="/login?modo=cadastro"]').forEach(el => {
+  const section = el.closest('[id]')?.id
+    || el.closest('nav') && 'nav'
+    || el.closest('header') && 'hero'
+    || el.closest('section')?.className?.split(' ')[0]
+    || 'unknown';
+  el.addEventListener('click', () => trackCTA(section, el.textContent.trim()));
+});
+
+// Seleção de plano
+document.querySelectorAll('.price-card').forEach(card => {
+  const plan = card.querySelector('.plan-name')?.textContent?.trim() || 'unknown';
+  const cta = card.querySelector('a[href="/login?modo=cadastro"]');
+  if (cta) cta.addEventListener('click', () => posthog.capture('plan_select', { plan }));
+});
+</script>
+</body>
+</html>

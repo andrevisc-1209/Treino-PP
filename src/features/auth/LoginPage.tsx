@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -56,7 +57,11 @@ type FormRecuperar = z.infer<typeof schemaRecuperar>
 
 export function LoginPage() {
   const { session } = useAuth()
-  const [mode, setMode] = useState<'login' | 'signup' | 'recuperar'>('login')
+  const [searchParams] = useSearchParams()
+  // A landing aponta pra /login?modo=cadastro — abre direto na aba de criar conta.
+  const [mode, setMode] = useState<'login' | 'signup' | 'recuperar'>(
+    ALLOW_SIGNUP && searchParams.get('modo') === 'cadastro' ? 'signup' : 'login',
+  )
   const [msg, setMsg] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState('')
   const [emailPendente, setEmailPendente] = useState<string | null>(null)

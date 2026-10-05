@@ -304,3 +304,23 @@ antes de criar tabela nova:
   tinham esse problema e não foram alterados.
 
 PR: [feat/avaliacoes-fisicas](https://github.com/andrevisc-1209/Treino-PP/pull/44)
+
+## 16. Landing page de marketing em "/"
+
+- `public/landing.html` (estática, isolada do CSS do app). Visitante **deslogado**
+  em `/` é levado pra ela; logado continua na home. App instalado (PWA, modo
+  standalone) deslogado vai direto pro `/login`, não pra landing.
+- CTAs "Criar conta" apontam pra `/login?modo=cadastro` (abre direto na aba de
+  cadastro) — `/register` não existe, o cadastro é uma aba do `/login`.
+- `vite.config.ts`: `navigateFallbackDenylist` pra `/landing.html`, senão o
+  service worker devolveria o `index.html` do app no lugar da landing.
+- Botões da landing: `#4CAF50` → `#367c39` (branco sobre `#4CAF50` = 2,78:1,
+  reprova AA; mesmo ajuste já documentado em `docs/BRAND.md`).
+- **Pendente de decisão do André antes do merge** (conteúdo da landing diverge
+  do produto): trial (landing 14 dias × app 15), preços (landing R$39/29/24 com
+  plano anual × app R$10 mensal / R$27 trimestral / R$50 semestral), e dois
+  textos que descrevem acesso do aluno ao app ("aluno recebe convite", "aluno
+  acessa no celular") — o aluno não tem login no produto. PostHog com gravação
+  de sessão carrega na landing: falta aviso/consentimento (LGPD) e citar na
+  Política de Privacidade.
+
