@@ -5,7 +5,7 @@
 // O token fica em treino.consentimento_saude_tokens (só service_role): nunca volta ao cliente.
 //
 // Segredos: RESEND_API_KEY (a mesma API key do SMTP do Resend), SITE_URL (opcional),
-// CONSENTIMENTO_FROM (opcional; padrão "Treino · Personal Perto <nao-responda@treino.personalperto.com.br>").
+// (remetente fixo: "Treino PP <noreply@personalperto.com.br>").
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { emailValido, expiraEm, montarEmailConsentimento, podeEnviarAgora } from '../_shared/consentimento.ts'
@@ -13,7 +13,7 @@ import { emailValido, expiraEm, montarEmailConsentimento, podeEnviarAgora } from
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
 const ORIGENS_PERMITIDAS = [APP_URL, 'http://localhost:5173']
-const FROM = Deno.env.get('CONSENTIMENTO_FROM') || 'Treino · Personal Perto <nao-responda@treino.personalperto.com.br>'
+const FROM = 'Treino PP <noreply@personalperto.com.br>'
 
 function cors(req: Request) {
   const origem = req.headers.get('Origin') ?? ''

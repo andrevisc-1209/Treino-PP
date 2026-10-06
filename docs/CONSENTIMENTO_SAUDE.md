@@ -34,8 +34,8 @@ app libera (ou bloqueia) os campos de lesão, cirurgia e medicamentos.
 ## Configuração
 
 1. Rodar a migration (SQL Editor) **antes** do merge.
-2. Secret novo: `RESEND_API_KEY` (a mesma API key do SMTP do Resend). Opcionais: `SITE_URL`, `CONSENTIMENTO_FROM`
-   (padrão `Treino · Personal Perto <nao-responda@treino.personalperto.com.br>`, domínio já verificado no Resend).
+2. Secret novo: `RESEND_API_KEY` (a mesma API key do SMTP do Resend). Opcional: `SITE_URL`.
+   Remetente fixo: `Treino PP <noreply@personalperto.com.br>` — **o domínio `personalperto.com.br` precisa estar verificado no Resend**.
 3. Deploy:
    ```bash
    supabase functions deploy enviar-consentimento-saude --project-ref avgrnvpvjhymsrnapfgu
