@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Clock, Flame, Info, ListChecks, Share2, Star } from 'lucide-react'
+import { X, ArrowRight, Clock, Flame, Info, ListChecks, Share2, Star } from 'lucide-react'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
@@ -26,6 +26,22 @@ import {
   type SessaoHistorico,
 } from './resumoSessao'
 import { compartilharResumo } from './imagemResumo'
+
+const CHIPS_PSE = [
+  { valor: 1, label: 'Repouso' },
+  { valor: 3, label: 'Leve' },
+  { valor: 5, label: 'Moderado' },
+  { valor: 8, label: 'Forte' },
+  { valor: 10, label: 'Máximo' },
+]
+
+const CHIPS_NOTA = [
+  { valor: 1, label: 'Fraco' },
+  { valor: 3, label: 'Razoável' },
+  { valor: 5, label: 'Bom' },
+  { valor: 8, label: 'Ótimo' },
+  { valor: 10, label: 'Excelente' },
+]
 
 type ResumoConcluido = { duracaoMin: number; pse: number; nota: number | null; cargaInterna: number }
 
@@ -316,8 +332,16 @@ export function PosTreino({
   if (resumo) return <TreinoConcluidoResumo alunoId={alunoId} sessionId={sessionId} resumo={resumo} />
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+    <div className="md:fixed md:inset-0 md:z-40 md:flex md:items-center md:justify-center md:bg-slate-900/50 md:p-4">
+      <div role="dialog" aria-label="Pós-treino" className="space-y-6 md:max-h-full md:w-full md:max-w-lg md:overflow-y-auto md:rounded-2xl md:bg-white md:p-6 md:shadow-xl">
+      <div className="hidden items-center justify-between md:flex">
+        <h2 className="text-xl font-bold">Pós-treino</h2>
+        <Link to={`/alunos/${alunoId}/sessoes/${sessionId}`} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Fechar">
+          <X size={20} />
+        </Link>
+      </div>
+
+      <div className="rounded-2xl bg-white p-4 shadow-sm md:rounded-none md:bg-transparent md:p-0 md:shadow-none">
         <ScaleQuestion
           titulo="Esforço percebido (PSE)"
           subtitulo="Como o aluno sentiu o treino?"
@@ -325,16 +349,17 @@ export function PosTreino({
           polaridade="negativa"
           value={pse}
           onChange={setPse}
+          chips={CHIPS_PSE}
         />
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-white p-4 shadow-sm md:rounded-none md:bg-transparent md:p-0 md:shadow-none">
         <Field label="Duração (minutos)">
           <Input type="number" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value)} />
         </Field>
       </div>
 
-      <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+      <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm md:rounded-none md:bg-transparent md:p-0 md:shadow-none">
         <ScaleQuestion
           titulo="Avaliação do personal"
           subtitulo="Como você avalia a sessão?"
@@ -342,6 +367,7 @@ export function PosTreino({
           polaridade="positiva"
           value={nota}
           onChange={setNota}
+          chips={CHIPS_NOTA}
         />
         <Field label="Observação">
           <textarea
@@ -378,6 +404,7 @@ export function PosTreino({
       <Button onClick={concluir} className="w-full" disabled={atualizar.isPending}>
         Concluir treino
       </Button>
+      </div>
 
       <BottomSheet open={perguntaAulaAvulsa} onClose={() => responderAulaAvulsa(false)} title="Registrar como aula avulsa?">
         <div className="space-y-3">
