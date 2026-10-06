@@ -427,11 +427,11 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | PR | Módulo | Status |
 |---|---|---|
 | 1 | Navegação global (bottom nav 5 itens + FAB padrão) | ✅ feito |
-| 2 | Hoje / Home (micro-dashboard + Pix colapsável) | ✅ em revisão |
-| 3 | Alunos | pendente |
-| 4 | Financeiro | pendente |
-| 5 | Meus treinos / Exercícios | pendente |
-| 6 | Configurações | pendente |
+| 2 | Hoje / Home (micro-dashboard + Pix colapsável) | ✅ feito |
+| 3 | Alunos (busca fixa, swipe, treino no rodapé, pull-to-refresh) | ✅ em revisão — `docs/ux-modulos/03-alunos.md` |
+| 4 | Financeiro (carrossel, chips rolável, gráfico) | ✅ em revisão — `docs/ux-modulos/04-financeiro.md` |
+| 5 | Meus treinos / Exercícios (sistema × meus, chips) | ✅ em revisão — `docs/ux-modulos/05-exercicios.md` |
+| 6 | Configurações (acordeões, salvar único, teclado) | ✅ em revisão — `docs/ux-modulos/06-configuracoes.md` |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
