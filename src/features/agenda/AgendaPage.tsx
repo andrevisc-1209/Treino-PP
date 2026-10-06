@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { Button } from '@/components/ui'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Fab } from '@/components/ui'
+import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { cn } from '@/lib/utils'
 import {
   dataSP,
@@ -126,12 +127,10 @@ export function AgendaPage() {
   const navegar = (direcao: 1 | -1) => setDataAtual((d) => somarDias(d, direcao * (modo === 'dia' ? 1 : 7)))
 
   return (
-    <div className="mx-auto max-w-2xl p-4 md:max-w-4xl">
+    <div className="mx-auto max-w-2xl p-4 pb-24 md:max-w-4xl">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Agenda</h1>
-        <Button onClick={() => setNovaAulaAberta(true)} className="px-3">
-          <Plus size={20} />
-        </Button>
+        <LinkConfiguracoes />
       </header>
 
       <div className="mb-4 flex items-center justify-between gap-2">
@@ -170,6 +169,7 @@ export function AgendaPage() {
         <VisaoSemana inicioSemana={inicioSemana} onAbrirAula={setAulaAberta} />
       )}
 
+      <Fab onClick={() => setNovaAulaAberta(true)} label="Nova aula" />
       <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} />
       <NovaAulaAvulsaSheet open={novaAulaAberta} onClose={() => setNovaAulaAberta(false)} dataInicial={dataAtual} />
     </div>

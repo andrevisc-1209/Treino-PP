@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
-import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { BottomSheet, Button, Fab, Field, Input } from '@/components/ui'
+import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -85,12 +86,10 @@ export function ExerciciosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4">
+    <div className="mx-auto max-w-2xl p-4 pb-24">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Exercícios</h1>
-        <Button onClick={abrirCriar} aria-label="Novo exercício" className="px-3">
-          <Plus size={20} />
-        </Button>
+        <LinkConfiguracoes />
       </header>
 
       <ExerciciosTabs />
@@ -153,6 +152,8 @@ export function ExerciciosPage() {
           )
         })}
       </ul>
+
+      <Fab onClick={abrirCriar} label="Novo exercício" />
 
       <BottomSheet open={criando || !!editando} onClose={fechar} title={editando ? 'Editar exercício' : 'Novo exercício'}>
         <div className="space-y-4">

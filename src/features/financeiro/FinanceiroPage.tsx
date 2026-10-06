@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { Link } from 'react-router-dom'
 import { formatarBRL } from '@/lib/moeda'
 import { hojeSP } from '@/lib/datas'
@@ -83,8 +84,9 @@ export function FinanceiroPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-4">
-      <header className="mb-4">
+      <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Financeiro</h1>
+        <LinkConfiguracoes />
       </header>
 
       {(alunosLoading || faturasLoading) && <p className="text-slate-500">Carregando…</p>}
