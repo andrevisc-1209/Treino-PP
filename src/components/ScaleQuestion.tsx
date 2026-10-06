@@ -36,6 +36,7 @@ export function ScaleQuestion({
   polaridade,
   value,
   onChange,
+  chips,
 }: {
   titulo: string
   subtitulo?: string
@@ -43,6 +44,8 @@ export function ScaleQuestion({
   polaridade: 'positiva' | 'negativa'
   value: number | null
   onChange: (v: number) => void
+  /** Atalhos de seleção rápida abaixo da barra; arrastar a barra para outro valor desmarca. */
+  chips?: { valor: number; label: string }[]
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const inicioRef = useRef<{ x: number; y: number; arrastando: boolean } | null>(null)
@@ -101,6 +104,8 @@ export function ScaleQuestion({
     setValorArrasto(null)
   }
 
+  const descritorArrasto = descritores.find((d) => posicaoAtual >= d.min && posicaoAtual <= d.max)
+
   return (
     <div className="space-y-4">
       <div className="text-center">
@@ -108,24 +113,13 @@ export function ScaleQuestion({
         {subtitulo && <p className="text-sm text-slate-500">{subtitulo}</p>}
       </div>
 
-      <div className="text-center">
-        {value != null && (
-          <p className="text-5xl font-bold tabular-nums" style={{ color: cor }}>
-            {value}
-          </p>
-        )}
-        <p className={cn('font-medium text-slate-500', value != null ? 'mt-1 text-sm' : 'py-2 text-base')}>
-          {descritorAtual ? descritorAtual.label : 'Arraste pra escolher um valor'}
-        </p>
-      </div>
-
-      <div className="relative px-1 pt-8">
+      <div className="relative px-1 pt-12">
         {arrastando && (
           <div
-            className="absolute top-0 -translate-x-1/2 rounded-lg px-2 py-1 text-sm font-bold text-white shadow"
-            style={{ left: `${posicaoAtual * 10}%`, backgroundColor: cor }}
+            className="pointer-events-none absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-xl bg-accent px-3 py-1.5 text-lg font-bold text-white shadow-lg"
+            style={{ left: `clamp(24%, ${posicaoAtual * 10}%, 76%)` }}
           >
-            {posicaoAtual}/10
+            {posicaoAtual} / 10{descritorArrasto ? ` · ${descritorArrasto.label}` : ''}
           </div>
         )}
         <div
@@ -148,11 +142,46 @@ export function ScaleQuestion({
             style={{ left: `${posicaoAtual * 10}%`, backgroundColor: cor, opacity: value == null ? 0.5 : 1 }}
           />
         </div>
-        <div className="mt-1 flex justify-between text-xs text-slate-400">
+        <div className="mt-1 flex justify-between text-xs text-slate-500">
           <span>{descritores[0]?.label}</span>
           <span>{descritores[descritores.length - 1]?.label}</span>
         </div>
       </div>
+
+      {/* valor escolhido: label fixo abaixo da barra (o balão acima some ao soltar) */}
+      <div className="text-center" aria-live="polite">
+        {value != null ? (
+          <p className="flex items-center justify-center gap-2 text-lg font-bold text-slate-900">
+            <span className="size-3 rounded-full" style={{ backgroundColor: cor }} aria-hidden />
+            {value} / 10 · <span className="font-semibold">{descritorAtual?.label}</span>
+          </p>
+        ) : (
+          <p className="text-base font-medium text-slate-500">{chips ? 'Arraste ou escolha uma opção' : 'Arraste pra escolher um valor'}</p>
+        )}
+      </div>
+
+      {chips && (
+        <div className="grid grid-cols-5 gap-1.5">
+          {chips.map((c) => {
+            const selecionado = valorArrasto == null && value === c.valor
+            return (
+              <button
+                key={c.valor}
+                type="button"
+                onClick={() => onChange(c.valor)}
+                aria-pressed={selecionado}
+                className={cn(
+                  'flex min-h-14 flex-col items-center justify-center rounded-xl border px-0.5 text-center transition active:scale-95',
+                  selecionado ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700 active:bg-slate-50',
+                )}
+              >
+                <span className="text-base font-bold leading-tight">{c.valor}</span>
+                <span className="text-[11px] leading-tight">{c.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
