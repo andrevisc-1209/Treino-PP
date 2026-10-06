@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAlunos } from '@/features/alunos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { cn, desambiguarPorNome } from '@/lib/utils'
-import { hojeSP, limitesDoDiaSP, montarDataHoraSP } from '@/lib/datas'
+import { hojeSP, horaMinimaSP, limitesDoDiaSP, montarDataHoraSP } from '@/lib/datas'
 import { aulasSobrepoe } from './conflitos'
 import { useAulasNoIntervalo, useCriarAulaAvulsa, useProfessionalConfig, type Aula } from './api'
 
@@ -35,8 +35,12 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
   const criar = useCriarAulaAvulsa()
 
   const [alunoIds, setAlunoIds] = useState<string[]>([])
-  const [data, setData] = useState(dataInicial ?? hojeSP())
-  const [hora, setHora] = useState('07:00')
+  // aula avulsa é sempre para agora ou depois: dia passado vira hoje, e a hora padrão some se já passou
+  const [data, setData] = useState(() => (dataInicial && dataInicial > hojeSP() ? dataInicial : hojeSP()))
+  const [hora, setHora] = useState(() => {
+    const minima = horaMinimaSP(dataInicial && dataInicial > hojeSP() ? dataInicial : hojeSP())
+    return minima && '07:00' < minima ? '' : '07:00'
+  })
   const [duracao, setDuracao] = useState(String(config?.duracao_padrao_min ?? 60))
   const [local, setLocal] = useState('')
   const [erro, setErro] = useState<string | null>(null)
@@ -51,6 +55,14 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
     const encontrada = (aulasDoDia as Aula[]).find((a) => a.status !== 'cancelada' && aulasSobrepoe(nova, a))
     return encontrada ?? null
   }, [startsAt, duracao, aulasDoDia])
+
+  const horaMinima = horaMinimaSP(data)
+
+  const mudarData = (nova: string) => {
+    setData(nova)
+    const minima = horaMinimaSP(nova)
+    if (minima && hora && hora < minima) setHora('')
+  }
 
   const toggleAluno = (id: string) => setAlunoIds((v) => (v.includes(id) ? v.filter((x) => x !== id) : [...v, id]))
 
@@ -68,6 +80,10 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
     }
     if (!startsAt || !duracao.trim() || Number(duracao) <= 0) {
       setErro('Informe data, hora e duração')
+      return
+    }
+    if (startsAt.getTime() < Date.now() - 60_000) {
+      setErro('Essa data e hora já passaram. Escolha um horário a partir de agora.')
       return
     }
     setErro(null)
@@ -104,10 +120,10 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
 
         <div className="flex gap-2">
           <Field label="Data">
-            <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            <Input type="date" value={data} min={hojeSP()} onChange={(e) => mudarData(e.target.value)} />
           </Field>
           <Field label="Hora">
-            <Input type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+            <Input type="time" value={hora} min={horaMinima} onChange={(e) => setHora(e.target.value)} />
           </Field>
         </div>
 
