@@ -70,27 +70,44 @@ Deno.serve(async (req) => {
     return json(req, { error: 'Você já tem uma assinatura recorrente ativa.' }, 409)
   }
 
+  const preferencia = {
+    items: [{ id: slug, title: plano.reason, quantity: 1, unit_price: plano.amount, currency_id: 'BRL' }],
+    payer: { email: payerEmail },
+    external_reference: user.id,
+    metadata: { user_id: user.id, plan_slug: slug, period_days: plano.periodDays },
+    back_urls: {
+      success: `${SITE_URL}/checkout/success`,
+      failure: `${SITE_URL}/checkout/failure`,
+      pending: `${SITE_URL}/checkout/pending`,
+    },
+    auto_return: 'approved',
+    notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mp-webhook`,
+    statement_descriptor: 'TREINO PP',
+  }
+  // Diagnóstico: o payload vai pro log SEM o e-mail do comprador (só o domínio) e sem token.
+  // token_tipo só diz o formato do token (TEST- / APP_USR-); nenhum trecho do token vai pro log.
+  console.log(
+    'mp-subscribe: criando preferência',
+    JSON.stringify({
+      ambiente: tokenProducao ? 'MP_ACCESS_TOKEN (produção)' : 'MP_ACCESS_TOKEN_TEST (sandbox)',
+      token_tipo: token.startsWith('TEST-') ? 'TEST-' : token.startsWith('APP_USR-') ? 'APP_USR-' : 'outro',
+      payer_dominio: payerEmail.split('@')[1] ?? null,
+      payer_email_de_teste: !tokenProducao && !!Deno.env.get('MP_TEST_PAYER_EMAIL'),
+      preferencia: { ...preferencia, payer: { email: '***@' + (payerEmail.split('@')[1] ?? '') } },
+    }),
+  )
   const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'X-Idempotency-Key': crypto.randomUUID() },
-    body: JSON.stringify({
-      items: [{ id: slug, title: plano.reason, quantity: 1, unit_price: plano.amount, currency_id: 'BRL' }],
-      payer: { email: payerEmail },
-      external_reference: user.id,
-      metadata: { user_id: user.id, plan_slug: slug, period_days: plano.periodDays },
-      back_urls: {
-        success: `${SITE_URL}/checkout/success`,
-        failure: `${SITE_URL}/checkout/failure`,
-        pending: `${SITE_URL}/checkout/pending`,
-      },
-      auto_return: 'approved',
-      notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mp-webhook`,
-      statement_descriptor: 'TREINO PP',
-    }),
+    body: JSON.stringify(preferencia),
   })
   const mp = await resp.json().catch(() => ({}))
   // Em sandbox (token de teste) o checkout correto é o sandbox_init_point.
   const link: unknown = tokenProducao ? mp.init_point : (mp.sandbox_init_point ?? mp.init_point)
+  console.log(
+    'mp-subscribe: resposta do MP',
+    JSON.stringify({ status: resp.status, preference_id: mp.id ?? null, collector_id: mp.collector_id ?? null, live_mode: mp.live_mode ?? null, usou: tokenProducao ? 'init_point' : mp.sandbox_init_point ? 'sandbox_init_point' : 'init_point', host: typeof link === 'string' ? new URL(link).host : null }),
+  )
   if (!resp.ok || typeof link !== 'string') {
     console.error('mp-subscribe: falha ao criar preferência', resp.status, mp?.message, JSON.stringify(mp?.cause ?? null))
     return json(req, { error: 'Não foi possível abrir o pagamento. Tente novamente.' }, 502)
