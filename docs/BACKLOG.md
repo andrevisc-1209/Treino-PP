@@ -438,6 +438,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 12 | Landing com identidade Personal Perto (logo, seção "Quem faz", contatos, rodapé) | ✅ feito |
 | 13 | Preços novos (15/39/60) + selo Mercado Pago + logo PP no checkout | ✅ em revisão |
 | 14 | Checkout Pro (Pix/cartão/boleto) no lugar do Preapproval — `docs/MERCADOPAGO.md` | ✅ em revisão — **rodar migration `20261013…` antes do merge** |
+| 15 | Consentimento LGPD de saúde por e-mail com confirmação por link — `docs/CONSENTIMENTO_SAUDE.md` | ✅ em revisão — **rodar migration `20261014…` antes do merge** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

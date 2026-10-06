@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
+import { mostrarErroGlobal } from '@/components/Toast'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { cn, formatarTelefone, idade } from '@/lib/utils'
+import { dataSP } from '@/lib/datas'
 import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
-import { useAluno, useAlunos, useConsentimentoAtivo, usePesos, useSalvarAluno } from './api'
+import { enviarConsentimentoSaude, useAluno, useAlunos, useConsentimentoAtivo, useConsentimentoSaude, usePesos, useSalvarAluno } from './api'
+import { ConsentimentoSaudeBloco } from './ConsentimentoSaudeBloco'
 import { LocaisTreinoBlock } from './LocaisTreinoBlock'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
 import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
@@ -163,15 +167,22 @@ const SIM_NAO = [
 export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const qc = useQueryClient()
+  const [searchParams] = useSearchParams()
   const { data: aluno, isLoading: alunoLoading } = useAluno(mode === 'edit' ? id : undefined)
   const { data: hadActiveConsent, isLoading: consentLoading } = useConsentimentoAtivo(mode === 'edit' ? id : undefined)
   const { data: pesos } = usePesos(mode === 'edit' ? id : undefined)
+  const { data: consentimentoSaude } = useConsentimentoSaude(mode === 'edit' ? id : undefined)
   const salvar = useSalvarAluno()
   const salvarCobranca = useSalvarAlunoCobranca()
   const { data: outrosAlunosRaw } = useAlunos()
   const { data: horariosDoPersonal } = useHorariosFixos()
 
-  const [etapa, setEtapa] = useState(1)
+  // ?etapa=3 abre direto na Saúde (usado ao voltar depois de criar o aluno só para enviar o consentimento)
+  const [etapa, setEtapa] = useState(() => {
+    const e = Number(searchParams.get('etapa'))
+    return mode === 'edit' && e >= 1 && e <= 5 ? e : 1
+  })
   const [termoAberto, setTermoAberto] = useState(false)
   const [horariosPendentes, setHorariosPendentes] = useState<HorarioFormValor[]>([])
   const [novoHorarioAberto, setNovoHorarioAberto] = useState(false)
@@ -220,6 +231,14 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, aluno, hadActiveConsent, consentLoading, pesos, reset])
 
+  // O aluno confirmou pelo link: o aceite já foi gravado em consentimentos — recarrega para liberar os campos.
+  const statusConsentimento = consentimentoSaude?.status
+  useEffect(() => {
+    if (mode === 'edit' && id && statusConsentimento === 'confirmado' && !hadActiveConsent && !consentLoading) {
+      qc.invalidateQueries({ queryKey: ['consentimento-ativo', id] })
+    }
+  }, [mode, id, statusConsentimento, hadActiveConsent, consentLoading, qc])
+
   const birthDate = watch('birth_date')
   const sex = watch('sex')
   const objetivos = watch('objetivos')
@@ -252,7 +271,8 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     if (ok) setEtapa((e) => Math.min(5, e + 1))
   }
 
-  const onSubmit = async (f: FormOutput) => {
+  // Salva o aluno (+ cobrança e horários, no cadastro novo) e devolve o id. Não navega.
+  const persistir = async (f: FormOutput): Promise<string> => {
     const alunoId = await salvar.mutateAsync({
       id: mode === 'edit' ? id : undefined,
       ...f,
@@ -293,8 +313,42 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         setErroHorarios(`Aluno salvo, mas houve um erro ao criar os horários: ${(e as Error).message}`)
       }
     }
+    return alunoId
+  }
+
+  const onSubmit = async (f: FormOutput) => {
+    const alunoId = await persistir(f)
     navigate(`/alunos/${alunoId}`)
   }
+
+  // Etapa Saúde: pede o consentimento por e-mail. No cadastro novo o aluno ainda não existe — salva primeiro
+  // (o e-mail é opcional para cadastrar, obrigatório só para enviar) e segue na edição, já na etapa 3.
+  const enviarSolicitacao = async (email: string) => {
+    if (mode === 'edit' && id) {
+      await enviarConsentimentoSaude(id, email)
+      qc.invalidateQueries({ queryKey: ['consentimento-saude', id] })
+      return
+    }
+    let erroEnvio: Error | null = null
+    let novoId: string | null = null
+    const salvou = await trigger(STEP1_FIELDS as unknown as (keyof FormInput)[])
+    if (!salvou) {
+      setEtapa(1)
+      throw new Error('Complete os dados do aluno (etapa 1) antes de enviar a solicitação.')
+    }
+    await handleSubmit(async (f) => {
+      novoId = await persistir({ ...f, email })
+      try {
+        await enviarConsentimentoSaude(novoId, email)
+      } catch (e) {
+        erroEnvio = e as Error
+      }
+    })()
+    if (!novoId) throw new Error('Não foi possível salvar o aluno. Confira os dados e tente de novo.')
+    navigate(`/alunos/${novoId}/editar?etapa=3`, { replace: true })
+    if (erroEnvio) mostrarErroGlobal(`Aluno salvo, mas o e-mail não foi enviado: ${(erroEnvio as Error).message}`)
+  }
+
 
   const outrosAlunos = (outrosAlunosRaw ?? [])
     .filter((a) => a.id !== id)
@@ -436,25 +490,28 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
 
         {etapa === 3 &&
           (!lgpdConsent ? (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-600">
-                Para registrar lesões, cirurgias e medicamentos, é preciso o consentimento do aluno para o tratamento desses dados de saúde.
-              </p>
-              <button type="button" onClick={() => setTermoAberto(true)} className="text-sm font-medium text-brand-hover underline">
-                Ler termo
-              </button>
-              <Button type="button" onClick={() => setValue('lgpd_consent', true)} className="w-full">
-                O aluno consentiu
-              </Button>
-            </div>
+            <ConsentimentoSaudeBloco
+              email={String(watch('email') ?? '')}
+              onEmailChange={(v) => setValue('email', v, { shouldDirty: true })}
+              consentimento={consentimentoSaude}
+              onEnviar={enviarSolicitacao}
+              onTermo={() => setTermoAberto(true)}
+              onJaConsentiu={() => setValue('lgpd_consent', true)}
+            />
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-xl bg-brand-soft p-3 text-sm text-brand-hover">
-                <span>Consentimento LGPD dado</span>
-                <button type="button" onClick={() => setValue('lgpd_consent', false)} className="text-xs underline">
-                  Desfazer
-                </button>
-              </div>
+              {consentimentoSaude?.status === 'confirmado' && consentimentoSaude.confirmadoAt ? (
+                <div className="rounded-xl bg-brand-soft p-3 text-sm text-brand-hover" role="status">
+                  ✓ Consentimento confirmado pelo aluno em {formatarDataBR(dataSP(consentimentoSaude.confirmadoAt))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between rounded-xl bg-brand-soft p-3 text-sm text-brand-hover">
+                  <span>Consentimento LGPD dado</span>
+                  <button type="button" onClick={() => setValue('lgpd_consent', false)} className="text-xs underline">
+                    Desfazer
+                  </button>
+                </div>
+              )}
 
               <Field label="Possui lesão?">
                 <OptionButtons
