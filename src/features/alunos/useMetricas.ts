@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { hojeSP, inicioDaSemanaSP } from '@/lib/datas'
-import { useAlunos } from './api'
+import { useAlunos, type Aluno } from './api'
 
 const DIAS_SEM_TREINO_ALERTA = 7
 
@@ -17,8 +17,7 @@ export function useTreinosEstaSemana() {
   })
 }
 
-/** Quantos alunos ativos não têm sessão concluída nos últimos 7 dias (ou nunca tiveram nenhuma). */
-export function useAlunosSemTreinoRecente() {
+function useSemTreinoRecente<T>(select: (alunos: Aluno[]) => T) {
   const alunosAtivos = useAlunos()
 
   return useQuery({
@@ -40,8 +39,19 @@ export function useAlunosSemTreinoRecente() {
       return (alunosAtivos.data ?? []).filter((a) => {
         const ultima = ultimaPorAluno.get(a.id)
         return !ultima || new Date(ultima + 'T00:00:00').getTime() < limite
-      }).length
+      })
     },
+    select,
     enabled: !!alunosAtivos.data,
   })
+}
+
+/** Quantos alunos ativos não têm sessão concluída nos últimos 7 dias (ou nunca tiveram nenhuma). */
+export function useAlunosSemTreinoRecente() {
+  return useSemTreinoRecente((alunos) => alunos.length)
+}
+
+/** Os alunos ativos sem sessão concluída nos últimos 7 dias (ou que nunca tiveram nenhuma). */
+export function useListaAlunosSemTreino() {
+  return useSemTreinoRecente((alunos) => alunos)
 }
