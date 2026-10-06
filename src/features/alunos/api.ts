@@ -96,6 +96,68 @@ export function useConsentimentoAtivo(alunoId: string | undefined) {
   })
 }
 
+export type ConsentimentoSaude = {
+  status: 'pendente' | 'confirmado' | 'negado' | null
+  enviadoAt: string | null
+  confirmadoAt: string | null
+  email: string | null
+}
+
+/** Estado do consentimento por e-mail. Consulta à parte do `useAluno` de propósito: a tela de edição reinicia o formulário quando o aluno recarrega. */
+export function useConsentimentoSaude(alunoId: string | undefined) {
+  return useQuery({
+    queryKey: ['consentimento-saude', alunoId],
+    queryFn: async (): Promise<ConsentimentoSaude> => {
+      const { data, error } = await supabase
+        .from('alunos')
+        .select('email, saude_consentimento_status, saude_consentimento_enviado_at, saude_consentimento_confirmado_at')
+        .eq('id', alunoId!)
+        .single()
+      if (error) throw error
+      return {
+        status: data.saude_consentimento_status,
+        enviadoAt: data.saude_consentimento_enviado_at,
+        confirmadoAt: data.saude_consentimento_confirmado_at,
+        email: data.email,
+      }
+    },
+    enabled: !!alunoId,
+    // enquanto aguarda o aluno clicar no e-mail, consulta de tempos em tempos
+    refetchInterval: (q) => (q.state.data?.status === 'pendente' ? 15_000 : false),
+  })
+}
+
+/** Mensagem em português que a Edge Function devolve em { error } (status não-2xx). */
+async function mensagemDoErroFuncao(error: unknown): Promise<string> {
+  const contexto = (error as { context?: Response })?.context
+  if (contexto && typeof contexto.json === 'function') {
+    try {
+      const corpo = await contexto.json()
+      if (typeof corpo?.error === 'string') return corpo.error
+    } catch {
+      // corpo ausente ou não-JSON
+    }
+  }
+  return 'Não foi possível enviar a solicitação. Tente novamente.'
+}
+
+export async function enviarConsentimentoSaude(alunoId: string, email?: string): Promise<void> {
+  const { error } = await supabase.functions.invoke('enviar-consentimento-saude', {
+    body: { aluno_id: alunoId, email: email?.trim() || undefined },
+  })
+  if (error) throw new Error(await mensagemDoErroFuncao(error))
+}
+
+export function useEnviarConsentimentoSaude(alunoId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (email?: string) => enviarConsentimentoSaude(alunoId, email),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['consentimento-saude', alunoId] })
+    },
+  })
+}
+
 export type ConsentimentoAtivo = { id: string; consented_at: string; consent_version: string }
 
 export function useConsentimentoDetalhado(alunoId: string | undefined) {
@@ -128,13 +190,22 @@ export function useRevogarConsentimento(alunoId: string) {
       if (e1) throw e1
       const { error: e2 } = await supabase
         .from('alunos')
-        .update({ injury: false, injury_notes: null, medications: null })
+        .update({
+          injury: false,
+          injury_notes: null,
+          medications: null,
+          // volta ao zero para poder pedir de novo (o banco só deixa o cliente ZERAR esses campos)
+          saude_consentimento_status: null,
+          saude_consentimento_enviado_at: null,
+          saude_consentimento_confirmado_at: null,
+        })
         .eq('id', alunoId)
       if (e2) throw e2
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['consentimento-ativo', alunoId] })
       qc.invalidateQueries({ queryKey: ['consentimento-detalhado', alunoId] })
+      qc.invalidateQueries({ queryKey: ['consentimento-saude', alunoId] })
       qc.invalidateQueries({ queryKey: ['aluno', alunoId] })
     },
   })
