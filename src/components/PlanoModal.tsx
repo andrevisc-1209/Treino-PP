@@ -1,15 +1,24 @@
-import { lazy, Suspense, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CircleCheck } from 'lucide-react'
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { BottomSheet } from '@/components/ui'
 import { SeloMercadoPago } from '@/components/SeloMercadoPago'
 import logoPP from '@/assets/brand/logo-personal-perto-sm.png'
 import { cn } from '@/lib/utils'
 import type { Plano } from '@/features/assinatura/useAssinatura'
-import type { ResultadoAssinatura } from './CheckoutMP'
 
-// O SDK do Mercado Pago só é baixado quando a pessoa escolhe um plano.
-const CheckoutMP = lazy(() => import('./CheckoutMP'))
+/** Extrai a mensagem em português que a Edge Function devolve em { error } (status não-2xx). */
+async function mensagemDoErro(error: unknown): Promise<string> {
+  const contexto = (error as { context?: Response })?.context
+  if (contexto && typeof contexto.json === 'function') {
+    try {
+      const corpo = await contexto.json()
+      if (typeof corpo?.error === 'string') return corpo.error
+    } catch {
+      // corpo ausente ou não-JSON: cai na mensagem genérica
+    }
+  }
+  return 'Não foi possível abrir o pagamento. Tente de novo.'
+}
 
 function CabecalhoConfianca() {
   return (
@@ -19,68 +28,31 @@ function CabecalhoConfianca() {
   )
 }
 
-const PLANOS: { id: Plano; nome: string; valor: number; preco: string; equivale?: string; badge?: string }[] = [
-  { id: 'mensal', nome: 'Mensal', valor: 15, preco: 'R$ 15/mês' },
-  { id: 'trimestral', nome: 'Trimestral', valor: 39, preco: 'R$ 39', equivale: 'R$ 13/mês — economize 13%', badge: 'Mais popular' },
-  { id: 'semestral', nome: 'Semestral', valor: 60, preco: 'R$ 60', equivale: 'R$ 10/mês — economize 33%', badge: 'Melhor valor' },
+const PLANOS: { id: Plano; nome: string; preco: string; dias: number; equivale?: string; badge?: string }[] = [
+  { id: 'mensal', nome: 'Mensal', preco: 'R$ 15', dias: 30 },
+  { id: 'trimestral', nome: 'Trimestral', preco: 'R$ 39', dias: 90, equivale: 'R$ 13/mês — economize 13%', badge: 'Mais popular' },
+  { id: 'semestral', nome: 'Semestral', preco: 'R$ 60', dias: 180, equivale: 'R$ 10/mês — economize 33%', badge: 'Melhor valor' },
 ]
 
 export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const qc = useQueryClient()
-  const [escolhido, setEscolhido] = useState<(typeof PLANOS)[number] | null>(null)
-  const [resultado, setResultado] = useState<ResultadoAssinatura | null>(null)
+  const [abrindo, setAbrindo] = useState<Plano | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
 
-  const fechar = () => {
-    setEscolhido(null)
-    setResultado(null)
-    onClose()
-  }
-
-  const concluido = (r: ResultadoAssinatura) => {
-    setResultado(r)
-    // o app destrava assim que a assinatura vira "ativa" no banco
-    qc.invalidateQueries({ queryKey: ['assinatura'] })
-  }
-
-  if (resultado) {
-    const aprovada = resultado.status === 'authorized'
-    return (
-      <BottomSheet open={open} onClose={fechar} title={aprovada ? 'Assinatura confirmada' : 'Pagamento em análise'}>
-        <div className="space-y-4 text-center">
-          <CircleCheck size={40} className={cn('mx-auto', aprovada ? 'text-brand' : 'text-amber-500')} />
-          <p className="text-sm text-slate-600">
-            {aprovada
-              ? `Plano ${escolhido?.nome} ativo. Obrigado por assinar o Treino!`
-              : 'O Mercado Pago está analisando o pagamento. Assim que for aprovado, seu acesso é liberado automaticamente.'}
-          </p>
-          <button type="button" onClick={fechar} className="min-h-11 w-full rounded-xl bg-brand px-4 py-3 font-medium text-white active:bg-brand-hover">
-            Continuar
-          </button>
-        </div>
-      </BottomSheet>
-    )
-  }
-
-  if (escolhido) {
-    return (
-      <BottomSheet open={open} onClose={fechar} title={`Plano ${escolhido.nome} — ${escolhido.preco}`}>
-        <div className="space-y-3">
-          <CabecalhoConfianca />
-          <button type="button" onClick={() => setEscolhido(null)} className="flex min-h-11 items-center gap-1 text-sm text-brand-hover">
-            <ArrowLeft size={16} /> Trocar de plano
-          </button>
-          <Suspense fallback={<p className="py-6 text-center text-sm text-slate-500">Carregando pagamento seguro…</p>}>
-            <CheckoutMP plano={escolhido.id} valor={escolhido.valor} onSucesso={concluido} />
-          </Suspense>
-          <SeloMercadoPago />
-          <p className="text-center text-xs text-slate-500">Cancele quando quiser.</p>
-        </div>
-      </BottomSheet>
-    )
+  // Checkout Pro: o servidor cria a preferência e devolve o link do Mercado Pago (Pix, cartão ou boleto).
+  const assinar = async (plano: Plano) => {
+    setErro(null)
+    setAbrindo(plano)
+    const { data, error } = await supabase.functions.invoke<{ init_point: string }>('mp-subscribe', { body: { plano } })
+    if (error || !data?.init_point) {
+      setErro(await mensagemDoErro(error))
+      setAbrindo(null)
+      return
+    }
+    window.location.assign(data.init_point)
   }
 
   return (
-    <BottomSheet open={open} onClose={fechar} title="Escolha seu plano">
+    <BottomSheet open={open} onClose={onClose} title="Escolha seu plano">
       <div className="space-y-3">
         <CabecalhoConfianca />
         {PLANOS.map((p) => (
@@ -100,20 +72,23 @@ export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => vo
               <div>
                 <p className="font-semibold">{p.nome}</p>
                 <p className="text-2xl font-bold">{p.preco}</p>
+                <p className="text-xs text-slate-500">{p.dias} dias de acesso</p>
                 {p.equivale && <p className="text-sm font-medium text-brand-hover">{p.equivale}</p>}
               </div>
               <button
                 type="button"
-                onClick={() => setEscolhido(p)}
-                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-brand px-4 py-3 font-medium text-white active:bg-brand-hover"
+                onClick={() => assinar(p.id)}
+                disabled={abrindo !== null}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-brand px-4 py-3 font-medium text-white active:bg-brand-hover disabled:opacity-60"
               >
-                Assinar
+                {abrindo === p.id ? 'Abrindo…' : 'Assinar'}
               </button>
             </div>
           </div>
         ))}
+        {erro && <p className="text-sm text-red-600">{erro}</p>}
         <SeloMercadoPago />
-        <p className="text-center text-xs text-slate-500">Cancele quando quiser.</p>
+        <p className="text-center text-xs text-slate-500">Pagamento único, sem renovação automática. Você paga no site do Mercado Pago.</p>
       </div>
     </BottomSheet>
   )

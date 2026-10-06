@@ -1,22 +1,40 @@
-# Mercado Pago — Assinaturas (Checkout Transparente / Bricks)
+# Mercado Pago — Checkout Pro (Pix, cartão e boleto)
 
-Fluxo: `PlanoModal` (escolhe o plano) → `CheckoutMP` (Card Payment Brick, dentro
-do app) → Edge Function `mp-subscribe` → assinatura criada **já autorizada** no
-MP → `treino.assinaturas` atualizada na hora; o webhook `mp-webhook` confirma e
-mantém tudo em dia nas renovações/cancelamentos.
+Fluxo: `PlanoModal` (escolhe o plano) → Edge Function `mp-subscribe` cria uma
+**Preference** (`POST /checkout/preferences`) e devolve `{ init_point }` → o app
+redireciona para a tela hospedada pelo Mercado Pago → o MP volta para
+`/checkout/success|failure|pending` (`RetornoCheckoutPage`) e avisa o
+`mp-webhook` (`type: payment`), que ativa o plano em `treino.assinaturas`.
 
-O cartão é digitado em iframes seguros do Mercado Pago (campos `secure-fields`):
-o nosso código e o nosso servidor só veem um **token** de uso único.
+É **pagamento avulso**: não há renovação automática. Cada pagamento aprovado
+compra `periodDays` (Mensal 30, Trimestral 90, Semestral 180); pagar de novo
+antes do fim soma ao que resta. Nenhum dado de cartão passa pelo nosso código.
+
+> Substitui o fluxo anterior (Preapproval + Card Payment Brick). Assinaturas
+> recorrentes já existentes continuam sendo sincronizadas pelo webhook
+> (`subscription_preapproval` / `subscription_authorized_payment`) durante a
+> transição.
 
 ## Segurança
 
-- O cliente manda só `{ plano, card_token }`. Valor, periodicidade, e-mail e
-  identidade vêm do servidor (`PLANOS` em `supabase/functions/_shared/mp.ts` +
-  JWT). Vínculo: `external_reference = auth.uid()`.
-- Quem já tem assinatura `ativa` com `mp_subscription_id` leva 409 (evita
-  cobrança em duplicidade).
-- O webhook busca o estado na API do MP (o evento só traz o id) e valida o
-  `x-signature` quando `MP_WEBHOOK_SECRET` existe.
+- O cliente manda só `{ plano }`. Valor e período vêm do servidor (`PLANOS` em
+  `supabase/functions/_shared/mp.ts` + JWT). Vínculo: `external_reference` e
+  `metadata.user_id = auth.uid()`.
+- Quem ainda tem assinatura **recorrente** ativa (`mp_subscription_id`) leva 409.
+- O webhook busca o pagamento na API do MP (`GET /v1/payments/{id}`; o evento só
+  traz o id), confere que o valor pago ≥ preço do plano e valida o `x-signature`
+  quando `MP_WEBHOOK_SECRET` existe (regras abaixo).
+- Idempotência: `treino.assinaturas.mp_payment_id` guarda o último pagamento
+  aplicado; o mesmo `payment_id` reenviado não soma o período duas vezes.
+
+## O que cada status de pagamento faz
+
+| `payment.status` | Efeito em `treino.assinaturas` |
+|---|---|
+| `approved` | `status = ativa`, `plano`, `assinatura_fim` = max(agora, fim atual) + período, `mp_payment_id` |
+| `pending` / `in_process` (Pix/boleto aguardando) | nada — o acesso atual (trial/ativa) é mantido; libera quando virar `approved` |
+| `rejected` / `cancelled` | nada — uma tentativa que falhou não derruba quem já tem acesso |
+| `refunded` / `charged_back` | `status = cancelada`, só se for o pagamento vigente (`mp_payment_id`) |
 
 ## Assinatura do webhook (`x-signature`)
 
@@ -25,63 +43,35 @@ o nosso código e o nosso servidor só veem um **token** de uso único.
 | Produção (`MP_ACCESS_TOKEN` definido) | HMAC obrigatório. Inválida/ausente → 401. Sem `MP_WEBHOOK_SECRET` → 500 (falha fechada). |
 | Sandbox (só `MP_ACCESS_TOKEN_TEST`) | Válida → processa. Ausente/inválida/sem segredo → **loga aviso e processa**. |
 
-Mesmo sem assinatura o estado nunca vem do corpo do webhook: a function faz GET na
-API do MP pelo `data.id`. Todo evento recebido loga `action`, `type` e `data_id`
-(Supabase → Edge Functions → mp-webhook → Logs).
-
-`supabase/config.toml` fixa `verify_jwt = false` pro `mp-webhook`, então o deploy
-não precisa mais de `--no-verify-jwt` (sem isso, o MP receberia 401).
+`supabase/config.toml` fixa `verify_jwt = false` pro `mp-webhook`.
 
 ## Configuração
 
 Projeto Supabase: `avgrnvpvjhymsrnapfgu`.
 
-1. **Migration** (SQL Editor): `supabase/migrations/20261010000000_mp_subscription_id.sql`
-2. **Secrets do Supabase** (nunca em arquivo/PR):
-   ```bash
-   supabase secrets set --project-ref avgrnvpvjhymsrnapfgu MP_ACCESS_TOKEN_TEST=<access token de teste>
-   supabase secrets set --project-ref avgrnvpvjhymsrnapfgu MP_TEST_PAYER_EMAIL=<e-mail do comprador de teste>   # só sandbox
-   supabase secrets set --project-ref avgrnvpvjhymsrnapfgu MP_WEBHOOK_SECRET=<assinatura secreta do webhook>
-   ```
-   Em produção use `MP_ACCESS_TOKEN` (tem prioridade sobre `_TEST`; com ele,
-   `MP_TEST_PAYER_EMAIL` é ignorado).
-3. **Chave pública no front** — `VITE_MP_PUBLIC_KEY`:
-   - Dev: em `.env.local` (já ignorado pelo git).
-   - Deploy (GitHub Pages): secret de repositório `VITE_MP_PUBLIC_KEY`
-     (Settings → Secrets and variables → Actions); `deploy.yml` já repassa.
-   - **Precisa ser do mesmo par do access token**: chave de teste ↔
-     `MP_ACCESS_TOKEN_TEST`; chave de produção ↔ `MP_ACCESS_TOKEN`. Misturar dá
-     erro no pagamento. É pública por design, mas nunca ponha o access token aqui.
-   - Sem a variável, o checkout mostra "Pagamento indisponível".
-4. **Deploy das functions**:
+1. **Migration** (SQL Editor, **antes do merge**): `supabase/migrations/20261013000000_assinaturas_mp_payment_id.sql`
+   (além da `20261010000000_mp_subscription_id.sql`, se ainda não rodou).
+2. **Secrets do Supabase** (nunca em arquivo/PR): `MP_ACCESS_TOKEN` (produção) ou
+   `MP_ACCESS_TOKEN_TEST` (sandbox), `MP_WEBHOOK_SECRET`; `MP_TEST_PAYER_EMAIL` só no sandbox.
+   `SITE_URL` é opcional (padrão `https://treino.personalperto.com.br`; usado nas `back_urls`).
+   **A chave pública do MP (`VITE_MP_PUBLIC_KEY`) não é mais usada.**
+3. **Deploy das functions**:
    ```bash
    supabase functions deploy mp-subscribe --project-ref avgrnvpvjhymsrnapfgu
    supabase functions deploy mp-webhook --no-verify-jwt --project-ref avgrnvpvjhymsrnapfgu
    ```
-5. **Painel do MP** → Webhooks, eventos *Planos e assinaturas* e *Pagamentos
-   recorrentes*: `https://avgrnvpvjhymsrnapfgu.supabase.co/functions/v1/mp-webhook`
+4. **Painel do MP** → Webhooks: marque o evento **Pagamentos** (além dos de assinatura,
+   enquanto houver recorrentes) em `https://avgrnvpvjhymsrnapfgu.supabase.co/functions/v1/mp-webhook`.
+   A preferência também manda `notification_url` com esse endereço.
 
 ## Sandbox
 
-- O MP exige comprador de teste quando o vendedor é de teste (`Both payer and
-  collector must be real or test users`) → `MP_TEST_PAYER_EMAIL`.
-- Criar comprador: `POST https://api.mercadopago.com/users/test_user` com
-  `{"site_id":"MLB"}` (leva alguns segundos pra propagar).
-- Cartão que funcionou neste sandbox: **Visa 4509 9535 6623 3704**, CVV 123,
-  validade futura (11/30), titular `APRO` (aprovado), CPF `12345678909`. O
-  Mastercard 5031 4332 1540 6351 da doc antiga **não é reconhecido** (a API de
-  BIN não o encontra e o Brick recusa o número).
-
-## Mapeamento de status
-
-| MP (`preapproval.status`) | `treino.assinaturas.status` |
-|---|---|
-| `authorized` | `ativa` (+ `plano` pela periodicidade, `assinatura_fim` = próxima cobrança + 5 dias) |
-| `cancelled` | `cancelada` |
-| `paused` | `expirada` |
-| `pending` | ignorado |
+- Com token de teste a function devolve `sandbox_init_point`. O MP exige comprador
+  de teste (`MP_TEST_PAYER_EMAIL`); crie via `POST https://api.mercadopago.com/users/test_user`
+  com `{"site_id":"MLB"}`.
+- Cartão de teste que funcionou: **Visa 4509 9535 6623 3704**, CVV 123, validade futura,
+  titular `APRO`, CPF `12345678909`.
 
 ## Por que sem `preapproval_plan_id`
 
-Os 3 planos criados na API do MP não são usados: preço e periodicidade ficam no
-servidor (`PLANOS`). Podem ser desativados no painel.
+Preço e período ficam no servidor (`PLANOS`); os planos criados na API do MP não são usados.
