@@ -56,6 +56,11 @@ export function hojeSP(): string {
   return dataSP(new Date())
 }
 
+/** Menor hora ('HH:mm', SP) aceitável para a data: a hora atual se for hoje; sem limite nos outros dias. */
+export function horaMinimaSP(dataISO: string, agora: Date = new Date()): string | undefined {
+  return dataISO === dataSP(agora) ? horaSP(agora) : undefined
+}
+
 /**
  * 0 (domingo) a 6 (sábado) de uma data-calendário 'YYYY-MM-DD', igual ao
  * EXTRACT(DOW) do Postgres. O dia da semana de uma data-calendário não
