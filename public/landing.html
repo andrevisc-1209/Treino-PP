@@ -105,6 +105,9 @@ h2.section-title {
   white-space: nowrap;
 }
 .nav-logo em { font-style: normal; color: var(--green); }
+/* logo do Personal Perto tem texto navy: vai sobre uma pílula branca para ler bem no header escuro */
+.nav-logo-pp { display: inline-flex; align-items: center; background: #fff; border-radius: 10px; padding: 4px 12px; }
+.nav-logo-pp img { height: 40px; width: auto; }
 .nav-links { display: flex; align-items: center; gap: 8px; }
 .nav-ghost {
   font: 600 13px var(--display);
@@ -549,12 +552,33 @@ footer .container {
 }
 .footer-links a {
   font-size: 13px;
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.62);
   transition: color .2s;
 }
-.footer-links a:hover { color: rgba(255,255,255,.7); }
-.footer-copy { font-size: 12px; color: rgba(255,255,255,.2); }
+.footer-links a:hover { color: #fff; }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,.5); }
 
+/* ─── SOBRE / QUEM FAZ ────────────────────────────────── */
+.about-section { padding-block: clamp(56px, 8vw, 96px); background: var(--ground); }
+.about-inner { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px; }
+.about-logo { background: #fff; border-radius: 18px; padding: 14px 24px; box-shadow: 0 1px 0 var(--line), 0 8px 28px rgba(15,37,55,.08); }
+.about-logo img { height: clamp(64px, 12vw, 96px); width: auto; }
+.about-text { max-width: 56ch; font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); line-height: 1.6; }
+.about-text strong { color: var(--ink); }
+.contact-chips { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 8px; }
+.contact-chip {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 10px 14px; border-radius: 12px;
+  background: var(--white); border: 1px solid var(--line); color: var(--ink);
+  font: 600 14px var(--display); overflow-wrap: anywhere; text-align: center;
+  transition: border-color .2s, transform .15s;
+}
+.contact-chip:hover { border-color: var(--green-d); transform: translateY(-1px); }
+.about-site { font: 600 15px var(--display); color: var(--green-d); text-decoration: underline; text-underline-offset: 3px; }
+.dark .about-site, :root[data-theme="dark"] .about-site { color: var(--green); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .about-site { color: var(--green); } }
+@media (max-width: 900px) { .contact-chips { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .contact-chips { grid-template-columns: 1fr; } }
 /* ─── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .hero .container { grid-template-columns: 1fr; }
@@ -609,7 +633,7 @@ footer .container {
 <!-- NAV -->
 <header class="nav">
   <div class="container">
-    <a href="/landing.html" class="nav-logo">Treino<em>PP</em></a>
+    <a href="/landing.html" class="nav-logo-pp" aria-label="Treino PP, um produto Personal Perto"><img src="/brand/logo-personal-perto.png" alt="Personal Perto" width="105" height="40"></a>
     <div class="nav-links">
       <a href="/login" class="nav-ghost">Já tenho conta</a>
       <a href="/login?modo=cadastro" class="btn-primary">Começar grátis →</a>
@@ -816,6 +840,22 @@ footer .container {
   </div>
 </section>
 
+<!-- SOBRE / QUEM FAZ -->
+<section class="about-section" id="sobre">
+  <div class="container about-inner">
+    <span class="eyebrow">Quem faz</span>
+    <div class="about-logo"><img src="/brand/logo-personal-perto.png" alt="Personal Perto" width="240" height="91" loading="lazy"></div>
+    <p class="about-text">O Treino PP é um produto da <strong>Personal Perto</strong> — plataforma que conecta personal trainers e alunos. Treino no seu ritmo, onde você estiver.</p>
+    <div class="contact-chips">
+      <a class="contact-chip" href="mailto:contato@personalperto.com.br"><span aria-hidden="true">📧</span> contato@personalperto.com.br</a>
+      <a class="contact-chip" href="https://wa.me/5521986521747" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">📱</span> WhatsApp (21) 98652-1747</a>
+      <a class="contact-chip" href="https://instagram.com/personalperto" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">📸</span> Instagram @personalperto</a>
+      <a class="contact-chip" href="https://linkedin.com/company/personalperto" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">💼</span> LinkedIn</a>
+    </div>
+    <a class="about-site" href="https://personalperto.com.br" target="_blank" rel="noopener noreferrer">personalperto.com.br</a>
+  </div>
+</section>
+
 <!-- CTA FINAL -->
 <section class="cta-section">
   <div class="container">
@@ -834,9 +874,12 @@ footer .container {
     <div class="footer-links">
       <a href="/login">Entrar</a>
       <a href="/login?modo=cadastro">Cadastrar</a>
-      <a href="https://personalperto.com.br">Personal Perto</a>
+      <a href="https://personalperto.com.br" target="_blank" rel="noopener noreferrer">Personal Perto</a>
+      <a href="https://wa.me/5521986521747" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a href="https://instagram.com/personalperto" target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a href="https://linkedin.com/company/personalperto" target="_blank" rel="noopener noreferrer">LinkedIn</a>
     </div>
-    <span class="footer-copy">© 2026 Personal Perto · Rio de Janeiro</span>
+    <span class="footer-copy">© 2026 Personal Perto · Todos os direitos reservados</span>
   </div>
 </footer>
 
