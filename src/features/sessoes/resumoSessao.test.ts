@@ -20,6 +20,7 @@ describe('resumoSessao', () => {
     expect(textoVariacao(-10)).toBe('−10% vs. último treino')
     expect(textoVariacao(0)).toBe('Mesmo volume')
     expect(textoVariacao(null)).toBe('Mesmo volume')
+    expect(textoVariacao(null, true)).toBe('Primeiro treino')
   })
   it('status da carga interna nos limites', () => {
     expect(statusCargaInterna(199).label).toBe('Leve')
@@ -54,7 +55,7 @@ describe('resumoSessao', () => {
     expect(cumprimentoPlano([ex('c', [[15, 0]])])).toBeNull()
   })
   it('destaque ignora exercício sem carga', () => {
-    expect(exercicioDestaque([ex('a', [[10, 0]]), ex('b', [[10, 20]])])).toEqual({ nome: 'Ex b', volume: 200 })
+    expect(exercicioDestaque([ex('a', [[10, 0]]), ex('b', [[10, 20]])])).toEqual({ nome: 'Ex b', volume: 200, grupo: null })
     expect(exercicioDestaque([ex('a', [[10, 0]])])).toBeNull()
   })
   it('evolução: kg, reps com mesma carga e só melhoras', () => {
@@ -63,7 +64,7 @@ describe('resumoSessao', () => {
       sess('2', '2026-01-08', [ex('a', [[10, 75]]), ex('b', [[8, 40]]), ex('c', [[10, 30]])]),
     ]
     const r = evolucaoPorExercicio([ex('a', [[10, 80]]), ex('b', [[10, 40]]), ex('c', [[10, 30]]), ex('d', [[10, 10]])], h)
-    expect(r.map((e) => [e.exercicio, textoEvolucao(e)])).toEqual([['Ex a', '+5 kg'], ['Ex b', '+2 reps']])
+    expect(r.map((e) => [e.exercicio, textoEvolucao(e)])).toEqual([['Ex a', '+5 kg'], ['Ex b', '+2 reps na série principal'], ['Ex c', 'igual à última vez']])
   })
   it('evolução sem carga compara total de reps', () => {
     const h = [sess('1', '2026-01-01', [ex('p', [[10, 0], [10, 0]])])]

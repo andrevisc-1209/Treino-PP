@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { X, ArrowRight, Clock, Dumbbell, Flame, Info, ListChecks, Repeat, Share2, Star, TrendingUp } from 'lucide-react'
+import { X, ArrowRight, Clock, Dumbbell, Info, ListChecks, Repeat, Share2, TrendingUp } from 'lucide-react'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
@@ -22,7 +22,6 @@ import {
   evolucaoPorExercicio,
   exercicioDestaque,
   exerciciosFeitos,
-  gruposTrabalhados,
   textoEvolucao,
   totalRepeticoes,
   statusCargaInterna,
@@ -52,18 +51,6 @@ const CHIPS_NOTA = [
 ]
 
 type ResumoConcluido = { duracaoMin: number; pse: number; nota: number | null; cargaInterna: number }
-
-function Indicador({ icone, valor, label }: { icone: ReactNode; valor: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-1 rounded-2xl bg-white p-4 text-center shadow-sm">
-      <span className="text-slate-400" aria-hidden>
-        {icone}
-      </span>
-      <p className="text-xl font-bold">{valor}</p>
-      <p className="text-xs text-slate-500">{label}</p>
-    </div>
-  )
-}
 
 function TreinoConcluidoResumo({
   alunoId,
@@ -109,21 +96,23 @@ function TreinoConcluidoResumo({
 
   const seriesFeitas = atual.reduce((acc, ex) => acc + ex.series.filter((s) => s.completed).length, 0)
   const volumeTotal = volumeSessao(atual)
-  const variacao = textoVariacao(variacaoVolume(volumeTotal, volumeUltimoTreino(historico)))
-  const status = statusCargaInterna(resumo.cargaInterna)
+    const status = statusCargaInterna(resumo.cargaInterna)
   const recordes = useMemo(() => calcularRecordes(atual, historico), [atual, historico])
   const recordePrincipal = recordes.find((r) => r.tipo === 'volume') ?? recordes[0]
+  const primeiroTreino = historico.length === 0
+  const semCarga = volumeTotal === 0
+  const variacao = semCarga ? 'Sem carga registrada' : textoVariacao(variacaoVolume(volumeTotal, volumeUltimoTreino(historico)), primeiroTreino)
   const nExercicios = exerciciosFeitos(atual)
   const repeticoes = totalRepeticoes(atual)
   const plano = cumprimentoPlano(atual)
   const destaque = exercicioDestaque(atual)
-  const grupos = gruposTrabalhados(atual)
+  const grupos = destaque?.grupo ? [destaque.grupo] : []
   const evolucao = useMemo(() => evolucaoPorExercicio(atual, historico), [atual, historico])
+  const melhorEvolucao = evolucao.find((e) => e.tipo !== 'igual')
   const sequencia = useMemo(
     () => calcularSequencia(historico.map((h) => h.session_date), sessao?.session_date ?? hojeSP(), inicioDaSemanaSP, (w) => somarDias(w, -7)),
     [historico, sessao],
   )
-  const primeiroTreino = historico.length === 0
   const contexto = primeiroTreino ? 'Primeiro treino registrado 🎯' : `Treino #${sequencia.numeroTreino} · ${sequencia.naSemana}º da semana`
   const prontidaoInicio = sessao ? calcularProntidao(sessao) : null
   const pseLabel = descritorPara(DESCRITORES_PSE, resumo.pse)
@@ -136,14 +125,15 @@ function TreinoConcluidoResumo({
     try {
       await compartilharResumo({
         data: formatarDataBR(sessao?.session_date ?? hojeSP()),
-        volume: `${formatarNumero(volumeTotal)} kg`,
+        volume: semCarga ? `${repeticoes} reps` : `${formatarNumero(volumeTotal)} kg`,
+        rotuloVolume: semCarga ? 'Repetições' : 'Volume total',
         variacao,
         contexto: primeiroTreino ? 'Primeiro treino 🎯' : `Treino #${sequencia.numeroTreino} · ${sequencia.naSemana}º da semana`,
         exercicios: String(nExercicios),
         series: String(seriesFeitas),
         repeticoes: String(repeticoes),
         destaque: destaque ? `Destaque: ${destaque.nome} · ${formatarNumero(destaque.volume)} kg` : null,
-        evolucao: evolucao[0] ? `${evolucao[0].exercicio} ${textoEvolucao(evolucao[0])}` : null,
+        evolucao: melhorEvolucao ? `${melhorEvolucao.exercicio} ${textoEvolucao(melhorEvolucao)}` : null,
         pse: `${resumo.pse}/10 · ${pseLabel}`,
         recorde: recordePrincipal ? textoRecorde(recordePrincipal) : null,
         marca: APP_NAME,
@@ -165,8 +155,8 @@ function TreinoConcluidoResumo({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-accent p-4 text-center text-white shadow-sm">
-          <p className="text-xs text-white/70">Volume total</p>
-          <p className="mt-1 text-2xl font-extrabold leading-tight">{formatarNumero(volumeTotal)} kg</p>
+          <p className="text-xs text-white/70">{semCarga ? 'Repetições' : 'Volume total'}</p>
+          <p className="mt-1 text-2xl font-extrabold leading-tight">{semCarga ? repeticoes : `${formatarNumero(volumeTotal)} kg`}</p>
           <p className="mt-1 text-xs text-white/80">{variacao}</p>
         </div>
         <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
@@ -194,6 +184,9 @@ function TreinoConcluidoResumo({
             </div>
           ))}
         </div>
+        {resumo.duracaoMin < 5 && seriesFeitas >= 4 && (
+          <p className="text-xs text-amber-700">Duração pode estar incorreta — ajuste no formulário</p>
+        )}
         {plano && (
           <div className="space-y-1 border-t border-slate-100 pt-3">
             <div className="h-2 overflow-hidden rounded-full bg-slate-100">
@@ -213,10 +206,18 @@ function TreinoConcluidoResumo({
             {evolucao.map((e) => (
               <li key={e.exercicio} className="flex items-center justify-between gap-2 text-sm">
                 <span className="min-w-0 truncate">{e.exercicio}</span>
-                <span className="shrink-0 font-semibold text-emerald-700">
-                  <TrendingUp size={14} className="mr-1 inline" aria-hidden />
-                  {textoEvolucao(e)} <span className="font-normal text-slate-500">({formatarNumero(e.de)} → {formatarNumero(e.para)})</span>
-                </span>
+                {e.tipo === 'igual' ? (
+                  <span className="shrink-0 text-slate-500">{textoEvolucao(e)}</span>
+                ) : (
+                  <span className="shrink-0 text-right font-semibold text-emerald-700">
+                    <TrendingUp size={14} className="mr-1 inline" aria-hidden />
+                    {textoEvolucao(e)}{' '}
+                    <span className="font-normal text-slate-500">
+                      ({formatarNumero(e.de)} → {formatarNumero(e.para)}
+                      {e.tipo === 'kg' ? ' kg' : ' reps'})
+                    </span>
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -242,33 +243,41 @@ function TreinoConcluidoResumo({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Indicador icone={<Flame size={20} />} valor={`${resumo.pse}/10`} label="PSE" />
-        <Indicador icone={<Star size={20} />} valor={resumo.nota != null ? `${resumo.nota}/10` : '—'} label="Avaliação do personal" />
-      </div>
-
-      {prontidaoInicio != null && (
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <p className="mb-2 text-xs font-medium text-slate-500">Antes → depois</p>
-          <div className="flex items-center justify-between gap-2 text-sm">
+      <div className="space-y-2 rounded-xl bg-white p-3 text-sm shadow-sm">
+        <p className="text-xs font-medium text-slate-500">Esforço</p>
+        {prontidaoInicio != null ? (
+          <div className="flex items-center justify-between gap-2">
             <p>
-              <span className="text-slate-500">Prontidão inicial</span>
+              <span className="text-xs text-slate-500">Prontidão inicial</span>
               <br />
               <span className="font-semibold">
                 {formatarNumero(prontidaoInicio)}/10 · {faixaProntidao(prontidaoInicio).label}
               </span>
             </p>
-            <ArrowRight size={18} className="shrink-0 text-slate-400" aria-hidden />
+            <ArrowRight size={16} className="shrink-0 text-slate-400" aria-hidden />
             <p className="text-right">
-              <span className="text-slate-500">PSE final</span>
+              <span className="text-xs text-slate-500">PSE final</span>
               <br />
               <span className="font-semibold">
                 {resumo.pse}/10 · {pseLabel}
               </span>
             </p>
           </div>
-        </div>
-      )}
+        ) : (
+          <p>
+            <span className="text-slate-500">PSE final: </span>
+            <span className="font-semibold">
+              {resumo.pse}/10 · {pseLabel}
+            </span>
+          </p>
+        )}
+        {resumo.nota != null && (
+          <p className="border-t border-slate-100 pt-2">
+            <span className="text-slate-500">Avaliação do personal: </span>
+            <span className="font-semibold">{resumo.nota}/10</span>
+          </p>
+        )}
+      </div>
 
       {(recordes.length > 0 || sequencia.semanasSeguidas >= 2) && (
         <ul className="space-y-1.5">

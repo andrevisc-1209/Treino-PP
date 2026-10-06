@@ -6,6 +6,7 @@ export type DadosImagem = {
   /** ex.: "Treino #27 · 3º da semana" */
   contexto: string | null
   volume: string
+  rotuloVolume: string
   variacao: string
   exercicios: string
   series: string
@@ -48,7 +49,7 @@ export function desenharResumo(canvas: HTMLCanvasElement, d: DadosImagem) {
   ctx.fill()
   ctx.fillStyle = '#d5e1ea'
   ctx.font = fonte(600, 34)
-  ctx.fillText('Volume total', W / 2, 322)
+  ctx.fillText(d.rotuloVolume, W / 2, 322)
   ctx.fillStyle = '#ffffff'
   ctx.font = fonte(800, 108)
   ctx.fillText(d.volume, W / 2, 440, 860)

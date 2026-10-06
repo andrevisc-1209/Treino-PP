@@ -27,7 +27,8 @@ export function variacaoVolume(atual: number, anterior: number | null): number |
   return Math.round(((atual - anterior) / anterior) * 100)
 }
 
-export function textoVariacao(pct: number | null): string {
+export function textoVariacao(pct: number | null, primeiroTreino = false): string {
+  if (pct == null && primeiroTreino) return 'Primeiro treino'
   if (pct == null || pct === 0) return 'Mesmo volume'
   return `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% vs. último treino`
 }
@@ -98,11 +99,11 @@ export function cumprimentoPlano(exs: ExercicioResumo[]): { feitas: number; tota
 }
 
 /** Exercício de maior volume em kg; ignora os sem carga. */
-export function exercicioDestaque(exs: ExercicioResumo[]): { nome: string; volume: number } | null {
-  let melhor: { nome: string; volume: number } | null = null
+export function exercicioDestaque(exs: ExercicioResumo[]): { nome: string; volume: number; grupo: string | null } | null {
+  let melhor: { nome: string; volume: number; grupo: string | null } | null = null
   for (const e of exs) {
     const v = volumeSeries(e.series)
-    if (v > 0 && (!melhor || v > melhor.volume)) melhor = { nome: e.nome, volume: v }
+    if (v > 0 && (!melhor || v > melhor.volume)) melhor = { nome: e.nome, volume: v, grupo: e.grupo ?? null }
   }
   return melhor
 }
@@ -113,7 +114,7 @@ export function gruposTrabalhados(exs: ExercicioResumo[]): string[] {
   return [...vistos]
 }
 
-export type Evolucao = { exercicio: string; tipo: 'kg' | 'reps'; delta: number; de: number; para: number }
+export type Evolucao = { exercicio: string; tipo: 'kg' | 'reps' | 'igual'; delta: number; de: number; para: number; principal?: boolean }
 
 function seriePrincipal(series: SerieResumo[]): SerieResumo | null {
   const f = feitas(series)
@@ -139,22 +140,29 @@ export function evolucaoPorExercicio(atual: ExercicioResumo[], historico: Sessao
     }
     if (!anterior) continue
     const pp = seriePrincipal(anterior.series)!
+    const igual: Evolucao = { exercicio: ex.nome, tipo: 'igual', delta: 0, de: 0, para: 0 }
     if ((pa.load_kg ?? 0) > 0 || (pp.load_kg ?? 0) > 0) {
       const dKg = (pa.load_kg ?? 0) - (pp.load_kg ?? 0)
       if (dKg > 0) out.push({ exercicio: ex.nome, tipo: 'kg', delta: dKg, de: pp.load_kg ?? 0, para: pa.load_kg ?? 0 })
       else if (dKg === 0 && (pa.reps ?? 0) > (pp.reps ?? 0))
-        out.push({ exercicio: ex.nome, tipo: 'reps', delta: (pa.reps ?? 0) - (pp.reps ?? 0), de: pp.reps ?? 0, para: pa.reps ?? 0 })
+        out.push({ exercicio: ex.nome, tipo: 'reps', delta: (pa.reps ?? 0) - (pp.reps ?? 0), de: pp.reps ?? 0, para: pa.reps ?? 0, principal: true })
+      else if (dKg === 0) out.push(igual)
     } else {
       const ra = feitas(ex.series).reduce((a, s) => a + (s.reps ?? 0), 0)
       const rp = feitas(anterior.series).reduce((a, s) => a + (s.reps ?? 0), 0)
       if (ra > rp) out.push({ exercicio: ex.nome, tipo: 'reps', delta: ra - rp, de: rp, para: ra })
+      else if (ra === rp) out.push(igual)
     }
   }
-  return out.sort((a, b) => (a.tipo === b.tipo ? b.delta - a.delta : a.tipo === 'kg' ? -1 : 1)).slice(0, max)
+  // melhoras primeiro (kg antes de reps, maiores antes); "igual" só completa as vagas
+  const rank = (e: Evolucao) => (e.tipo === 'kg' ? 0 : e.tipo === 'reps' ? 1 : 2)
+  return out.sort((a, b) => rank(a) - rank(b) || b.delta - a.delta).slice(0, max)
 }
 
 /** Texto curto para a evolução: "+5 kg" / "+2 reps". */
 export function textoEvolucao(e: Evolucao): string {
+  if (e.tipo === 'igual') return 'igual à última vez'
+  if (e.tipo === 'reps' && e.principal) return `+${e.delta} ${e.delta === 1 ? 'rep' : 'reps'} na série principal`
   return `+${String(e.delta).replace('.', ',')} ${e.tipo === 'kg' ? 'kg' : e.delta === 1 ? 'rep' : 'reps'}`
 }
 
