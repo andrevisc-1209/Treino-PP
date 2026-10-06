@@ -16,7 +16,7 @@ export function ExerciciosTabs() {
           end={end}
           className={({ isActive }) =>
             cn(
-              'min-h-9 flex-1 whitespace-nowrap rounded-lg px-3 text-center text-sm font-medium transition',
+              'flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-3 text-center text-sm font-medium transition',
               isActive ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
             )
           }
