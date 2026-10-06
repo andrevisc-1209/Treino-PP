@@ -450,3 +450,12 @@ tem confirmação do aluno. `PixCard` fica recolhido por padrão (56px) e lembra
 
 PR: [feat/ux-hoje](https://github.com/andrevisc-1209/Treino-PP/pull/56)
 
+### 20.1 Bug: aula sem alunos abria um menu vazio (iPhone)
+
+Aula agendada **sem participantes** (ou com todos já registrados) abria um painel branco vazio ao tocar
+nela (Hoje/Agenda): as ações só apareciam com aluno "previsto". Corrigido: `descreverMenuAula`
+(`menuAula.ts`, com teste de que o menu nunca fica vazio) — aviso do motivo + Cancelar/Remarcar, que são
+da aula inteira. Não era específico do iPhone: reproduzido em viewport de celular e vale pra qualquer tela.
+
+PR: [fix/aula-sem-participantes-menu-vazio](https://github.com/andrevisc-1209/Treino-PP/pull/61)
+

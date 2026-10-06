@@ -5,6 +5,7 @@ import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { dividirValor } from '@/features/financeiro/calc'
 import { formatarBRL } from '@/lib/moeda'
 import { dataSP, horaSP, montarDataHoraSP } from '@/lib/datas'
+import { descreverMenuAula } from './menuAula'
 import { useCancelarAula, useCheckIn, useMarcarFalta, useProfessionalConfig, useRemarcarAula, valorPorAulaDoAluno, type Aula } from './api'
 
 type Passo = 'menu' | 'iniciar' | 'checkin' | 'falta' | 'cancelar' | 'remarcar'
@@ -51,7 +52,6 @@ export function AulaAcoesSheet({
   }
 
   const previstos = aula?.aula_participantes.filter((p) => p.status === 'previsto') ?? []
-  const podeAgir = aula?.status === 'agendada' && previstos.length > 0
 
   useEffect(() => {
     if (passo !== 'checkin' || previstos.length <= 1 || !aula) return
@@ -71,6 +71,8 @@ export function AulaAcoesSheet({
   }, [passo, aula?.id])
 
   if (!aula) return null
+
+  const menu = descreverMenuAula({ status: aula.status, totalParticipantes: aula.aula_participantes.length, previstos: previstos.length })
 
   const abrirFalta = (aluno: { id: string; name: string }) => {
     setAlunoFalta(aluno)
@@ -157,12 +159,8 @@ export function AulaAcoesSheet({
               ))}
             </ul>
           )}
-          {!podeAgir && aula.status !== 'agendada' && (
-            <p className="px-1 pb-2 text-sm text-slate-500">
-              {aula.status === 'realizada' ? 'Esta aula já foi realizada.' : 'Esta aula foi cancelada.'}
-            </p>
-          )}
-          {podeAgir && (
+          {menu.mensagem && <p className="px-1 pb-2 text-sm text-slate-500">{menu.mensagem}</p>}
+          {menu.agirNosAlunos && (
             <>
               <button
                 onClick={() => (previstos.length === 1 ? iniciarTreino(previstos[0].aluno_id) : setPasso('iniciar'))}
@@ -176,6 +174,11 @@ export function AulaAcoesSheet({
               <button onClick={() => setPasso('falta')} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
                 Falta
               </button>
+            </>
+          )}
+          {/* Cancelar e remarcar são da aula inteira: não dependem de haver aluno "previsto" (aula sem alunos também precisa delas). */}
+          {menu.agirNaAula && (
+            <>
               <button onClick={abrirCancelar} className="w-full rounded-xl px-3 py-3 text-left font-medium text-red-600 active:bg-slate-100">
                 Cancelar
               </button>
