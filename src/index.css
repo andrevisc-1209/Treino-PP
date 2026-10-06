@@ -74,3 +74,18 @@ input[type="time"] {
   }
 }
 
+
+/* Wizard do pré-treino: perguntas deslizam pro lado (avançar → esquerda, voltar → direita). */
+@keyframes slide-da-direita {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slide-da-esquerda {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-avancar { animation: slide-da-direita 0.25s ease-out; }
+.slide-voltar { animation: slide-da-esquerda 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .slide-avancar, .slide-voltar { animation: none; }
+}

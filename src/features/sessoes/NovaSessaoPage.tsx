@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ChevronDown, Search, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Search, TriangleAlert, X } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
 import {
@@ -21,7 +21,7 @@ import { Button, BottomSheet, Input } from '@/components/ui'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { useIniciarSessao, useSessoes, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
-import { calcularProntidao, descritorPara, faixaProntidao } from './prontidao'
+import { calcularProntidao, faixaProntidao } from './prontidao'
 import { planoSugerido, rotuloUltimoUso } from './rotina'
 
 type ChaveResposta = keyof Omit<PreTreinoInput, 'plano_id'>
@@ -34,6 +34,34 @@ const PERGUNTAS: { key: ChaveResposta; titulo: string; polaridade: 'positiva' | 
 ]
 
 type Selecao = string | 'livre' | undefined
+
+const CHIPS_INTENSIDADE = [
+  { valor: 1, label: 'Nenhuma' },
+  { valor: 3, label: 'Leve' },
+  { valor: 5, label: 'Moderada' },
+  { valor: 8, label: 'Forte' },
+  { valor: 10, label: 'Extrema' },
+]
+
+function ResumoProntidao({ bemEstar, alerta }: { bemEstar: number | null; alerta: string | null }) {
+  if (bemEstar == null) return null
+  return (
+    <div className="space-y-2">
+      <div className="rounded-2xl bg-slate-100 p-3 text-center">
+        <p className="text-xs text-slate-500">Prontidão</p>
+        <p className="text-xl font-bold">
+          {formatarNumero(bemEstar)} / 10 <span className={cn('text-base font-medium', faixaProntidao(bemEstar).cor)}>{faixaProntidao(bemEstar).label}</span>
+        </p>
+      </div>
+      {alerta && (
+        <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+          <TriangleAlert size={18} className="mt-0.5 shrink-0" />
+          <span>{alerta}. Considere reduzir a intensidade.</span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function NovaSessaoPage() {
   const { id } = useParams<{ id: string }>()
@@ -50,9 +78,10 @@ export function NovaSessaoPage() {
   const ativarPlano = useAtualizarPlano(id!)
   const criarDeModelo = useCriarPlanoDeModelo(id!)
 
-  const [etapa, setEtapa] = useState<'plano' | 'aviso' | 'perguntas' | 'resumo'>(planoDaUrl ? 'perguntas' : 'plano')
+  const [etapa, setEtapa] = useState<'plano' | 'aviso' | 'perguntas'>(planoDaUrl ? 'perguntas' : 'plano')
   const [selecaoManual, setSelecaoManual] = useState<Selecao>(planoDaUrl ?? undefined)
   const [perguntaAtual, setPerguntaAtual] = useState(0)
+  const [direcao, setDirecao] = useState<'avancar' | 'voltar' | null>(null)
   const [respostas, setRespostas] = useState<Partial<Record<ChaveResposta, number>>>({})
   const [erro, setErro] = useState<string | null>(null)
 
@@ -172,21 +201,9 @@ export function NovaSessaoPage() {
 
   const responder = (key: ChaveResposta, v: number) => setRespostas((r) => ({ ...r, [key]: v }))
 
-  const responderMobile = (key: ChaveResposta, v: number) => {
-    responder(key, v)
-    setTimeout(() => {
-      setPerguntaAtual((p) => {
-        const prox = p + 1
-        if (prox >= PERGUNTAS.length) {
-          setEtapa('resumo')
-          return p
-        }
-        return prox
-      })
-    }, 300)
-  }
-
   const bemEstar = calcularProntidao(respostas)
+  const todasRespondidas = PERGUNTAS.every((p) => respostas[p.key] != null)
+  const ultimaPergunta = perguntaAtual === PERGUNTAS.length - 1
 
   const alerta =
     respostas.pre_sleep != null && respostas.pre_sleep <= 3
@@ -196,8 +213,7 @@ export function NovaSessaoPage() {
         : null
 
   const comecarTreino = () => {
-    const completo = PERGUNTAS.every((p) => respostas[p.key] != null)
-    if (!completo) {
+    if (!todasRespondidas) {
       setErro('Responda as 4 perguntas para iniciar o treino')
       return
     }
@@ -221,9 +237,11 @@ export function NovaSessaoPage() {
   }
 
   const voltar = () => {
-    if (etapa === 'resumo') return setEtapa('perguntas')
     if (etapa === 'perguntas') {
-      if (perguntaAtual > 0) return setPerguntaAtual((p) => p - 1)
+      if (perguntaAtual > 0) {
+        setDirecao('voltar')
+        return setPerguntaAtual((p) => p - 1)
+      }
       return setEtapa('plano')
     }
     if (etapa === 'aviso') {
@@ -232,7 +250,7 @@ export function NovaSessaoPage() {
     }
   }
 
-  const titulo = etapa === 'plano' ? 'Escolher treino' : etapa === 'aviso' ? 'Aviso de saúde' : etapa === 'resumo' ? 'Resumo' : 'Pré-treino'
+  const titulo = etapa === 'plano' ? 'Escolher treino' : etapa === 'aviso' ? 'Aviso de saúde' : 'Pré-treino'
 
   const semPlanos = (planos?.length ?? 0) === 0
   const semTreinosProntos = (modelos?.length ?? 0) === 0
@@ -474,10 +492,10 @@ export function NovaSessaoPage() {
 
       {etapa === 'perguntas' && (
         <>
-          {/* Celular: uma pergunta por tela */}
-          <div className="space-y-4 md:hidden">
+          {/* Celular: uma pergunta por tela, botão fixo na zona do polegar */}
+          <div className="space-y-4 pb-28 md:hidden">
             <div className="space-y-1">
-              <p className="text-center text-xs font-medium text-slate-400">
+              <p className="text-center text-xs font-medium text-slate-500">
                 {perguntaAtual + 1} de {PERGUNTAS.length}
               </p>
               <div className="flex gap-1">
@@ -486,95 +504,80 @@ export function NovaSessaoPage() {
                 ))}
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
-              <ScaleQuestion
-                titulo={PERGUNTAS[perguntaAtual].titulo}
-                descritores={PERGUNTAS[perguntaAtual].descritores}
-                polaridade={PERGUNTAS[perguntaAtual].polaridade}
-                value={respostas[PERGUNTAS[perguntaAtual].key] ?? null}
-                onChange={(v) => responderMobile(PERGUNTAS[perguntaAtual].key, v)}
-              />
+            <div className="overflow-hidden">
+              <div
+                key={perguntaAtual}
+                className={cn('rounded-2xl bg-white p-4 shadow-sm', direcao === 'avancar' && 'slide-avancar', direcao === 'voltar' && 'slide-voltar')}
+              >
+                <ScaleQuestion
+                  titulo={PERGUNTAS[perguntaAtual].titulo}
+                  descritores={PERGUNTAS[perguntaAtual].descritores}
+                  polaridade={PERGUNTAS[perguntaAtual].polaridade}
+                  value={respostas[PERGUNTAS[perguntaAtual].key] ?? null}
+                  onChange={(v) => responder(PERGUNTAS[perguntaAtual].key, v)}
+                  chips={CHIPS_INTENSIDADE}
+                />
+              </div>
+            </div>
+            {ultimaPergunta && todasRespondidas && <ResumoProntidao bemEstar={bemEstar} alerta={alerta} />}
+            {erro && <p className="text-sm text-red-600">{erro}</p>}
+          </div>
+
+          <div data-barra-fixa className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+            <div className="mx-auto max-w-2xl">
+              {ultimaPergunta ? (
+                <Button onClick={comecarTreino} className="w-full" disabled={!todasRespondidas || iniciar.isPending}>
+                  Confirmar e iniciar treino
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    setDirecao('avancar')
+                    setPerguntaAtual((p) => p + 1)
+                  }}
+                  className="w-full"
+                  disabled={respostas[PERGUNTAS[perguntaAtual].key] == null}
+                >
+                  Avançar ({perguntaAtual + 1}/{PERGUNTAS.length})
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* Tablet: grade 2x2 */}
-          <div className="hidden md:block md:space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {PERGUNTAS.map((p) => (
-                <div key={p.key} className="rounded-2xl bg-white p-4 shadow-sm">
-                  <ScaleQuestion
-                    titulo={p.titulo}
-                    descritores={p.descritores}
-                    polaridade={p.polaridade}
-                    value={respostas[p.key] ?? null}
-                    onChange={(v) => responder(p.key, v)}
-                  />
+          {/* Tablet/desktop: um modal único com as 4 perguntas */}
+          <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/50 p-4 md:flex">
+            <div role="dialog" aria-modal="true" aria-label="Pré-treino" className="max-h-full w-full max-w-lg space-y-5 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold">Pré-treino</h2>
+                  {aluno && <p className="truncate text-sm text-slate-500">{aluno.name}</p>}
                 </div>
-              ))}
+                <button onClick={() => setEtapa('plano')} className="flex size-11 shrink-0 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Fechar">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {PERGUNTAS.map((p) => (
+                  <div key={p.key} className="py-5 first:pt-0">
+                    <ScaleQuestion
+                      titulo={p.titulo}
+                      descritores={p.descritores}
+                      polaridade={p.polaridade}
+                      value={respostas[p.key] ?? null}
+                      onChange={(v) => responder(p.key, v)}
+                      chips={CHIPS_INTENSIDADE}
+                    />
+                  </div>
+                ))}
+              </div>
+              {todasRespondidas && <ResumoProntidao bemEstar={bemEstar} alerta={alerta} />}
+              {erro && <p className="text-sm text-red-600">{erro}</p>}
+              <Button onClick={comecarTreino} className="w-full" disabled={!todasRespondidas || iniciar.isPending}>
+                Confirmar e iniciar treino
+              </Button>
             </div>
-            <Button onClick={() => setEtapa('resumo')} className="w-full" disabled={!PERGUNTAS.every((p) => respostas[p.key] != null)}>
-              Continuar
-            </Button>
           </div>
         </>
-      )}
-
-      {etapa === 'resumo' && (
-        <div className="space-y-4">
-          <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm">
-            {PERGUNTAS.map((p, i) => (
-              <button
-                key={p.key}
-                onClick={() => {
-                  setPerguntaAtual(i)
-                  setEtapa('perguntas')
-                }}
-                className="flex w-full items-center justify-between p-4 text-left active:bg-slate-50"
-              >
-                <span className="font-medium">{p.titulo}</span>
-                <span className="text-slate-500">{respostas[p.key]}</span>
-              </button>
-            ))}
-          </div>
-
-          {bemEstar != null && (
-            <div className="space-y-3 rounded-2xl bg-slate-100 p-4">
-              <div className="text-center">
-                <p className="text-sm text-slate-500">Prontidão</p>
-                <p className="text-2xl font-bold">
-                  {formatarNumero(bemEstar)} / 10{' '}
-                  <span className={cn('text-base font-medium', faixaProntidao(bemEstar).cor)}>{faixaProntidao(bemEstar).label}</span>
-                </p>
-              </div>
-              <div className="space-y-1 border-t border-slate-200 pt-3">
-                <p className="text-xs font-medium text-slate-500">O que influenciou</p>
-                {PERGUNTAS.map((p) => {
-                  const valor = respostas[p.key]
-                  if (valor == null) return null
-                  const descritor = descritorPara(p.descritores, valor)
-                  const faixa = p.polaridade === 'positiva' ? faixaProntidao(valor) : faixaProntidao(10 - valor)
-                  return (
-                    <p key={p.key} className={cn('text-sm', faixa.cor)}>
-                      {p.titulo} {valor} · {descritor.toLowerCase()}
-                    </p>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {alerta && (
-            <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
-              <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-              <span>{alerta}. Considere reduzir a intensidade.</span>
-            </div>
-          )}
-
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
-          <Button onClick={comecarTreino} className="w-full" disabled={iniciar.isPending}>
-            Começar treino
-          </Button>
-        </div>
       )}
 
       <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
