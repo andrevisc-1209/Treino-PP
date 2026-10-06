@@ -34,6 +34,8 @@
 }
 
 html, body, #root { height: 100%; }
+/* o pull-to-refresh é nosso (PuxarParaAtualizar); desliga o do navegador pra não recarregar a página junto */
+body { overscroll-behavior-y: contain; }
 body { @apply bg-slate-50 text-slate-900 antialiased font-sans; }
 h1, h2, h3, h4, h5, h6 { @apply font-heading; }
 

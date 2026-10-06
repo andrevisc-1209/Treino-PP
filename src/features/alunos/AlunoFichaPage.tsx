@@ -35,6 +35,17 @@ function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{children}</span>
 }
 
+function BotaoTreino({ alunoId, emAndamento, className }: { alunoId: string; emAndamento?: string; className?: string }) {
+  return (
+    <Link
+      to={emAndamento ? `/alunos/${alunoId}/sessoes/${emAndamento}` : `/alunos/${alunoId}/sessoes/nova`}
+      className={cn('min-h-12 items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-hover', className)}
+    >
+      <Play size={18} /> {emAndamento ? 'Continuar treino' : 'Iniciar treino'}
+    </Link>
+  )
+}
+
 const CAMPOS_MEDIDA = [
   { campo: 'cintura_cm', label: 'Cintura (cm)' },
   { campo: 'quadril_cm', label: 'Quadril (cm)' },
@@ -214,12 +225,13 @@ export function AlunoFichaPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4">
+    <div className="mx-auto max-w-2xl p-4 pb-28 md:pb-4">
       <header className="mb-4 flex items-center gap-3">
         <Link to="/alunos" className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
           <ArrowLeft size={20} />
         </Link>
         <h1 className="flex-1 truncate text-xl font-bold">{aluno.name}</h1>
+        <BotaoTreino alunoId={aluno.id} emAndamento={sessaoEmAndamento?.id} className="hidden px-4 md:flex" />
         {aluno.phone ? (
           <BotaoWhatsApp telefone={aluno.phone} label={`WhatsApp de ${aluno.name}`} />
         ) : (
@@ -273,12 +285,12 @@ export function AlunoFichaPage() {
         )
       })()}
 
-      <Link
-        to={sessaoEmAndamento ? `/alunos/${aluno.id}/sessoes/${sessaoEmAndamento.id}` : `/alunos/${aluno.id}/sessoes/nova`}
-        className="mb-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand font-medium text-white active:bg-brand-hover"
-      >
-        <Play size={18} /> {sessaoEmAndamento ? 'Continuar treino' : 'Iniciar treino'}
-      </Link>
+      {/* Celular: fixo no rodapé, acima da bottom nav (alcance do polegar), fora da área das abas. */}
+      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3 md:hidden">
+        <div className="mx-auto max-w-2xl">
+          <BotaoTreino alunoId={aluno.id} emAndamento={sessaoEmAndamento?.id} className="flex w-full" />
+        </div>
+      </div>
 
       <div className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
         {TABS.map((t) => (
