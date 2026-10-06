@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Fab } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
+import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
 import { cn } from '@/lib/utils'
 import {
   dataSP,
@@ -116,6 +118,7 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
 
 export function AgendaPage() {
   useGerarAulasDiarias()
+  const qc = useQueryClient()
   const [modo, setModo] = useState<Modo>('dia')
   const [dataAtual, setDataAtual] = useState(hojeSP())
   const [aulaAberta, setAulaAberta] = useState<Aula | null>(null)
@@ -127,6 +130,7 @@ export function AgendaPage() {
   const navegar = (direcao: 1 | -1) => setDataAtual((d) => somarDias(d, direcao * (modo === 'dia' ? 1 : 7)))
 
   return (
+    <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
     <div className="mx-auto max-w-2xl p-4 pb-24 md:max-w-4xl">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Agenda</h1>
@@ -173,5 +177,6 @@ export function AgendaPage() {
       <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} />
       <NovaAulaAvulsaSheet open={novaAulaAberta} onClose={() => setNovaAulaAberta(false)} dataInicial={dataAtual} />
     </div>
+    </PuxarParaAtualizar>
   )
 }

@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { CalendarCheck, MoreVertical, Search, TriangleAlert, Users } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { Archive, ArchiveRestore, CalendarCheck, MoreVertical, Play, Search, TriangleAlert, Users } from 'lucide-react'
 import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { BottomSheet, Fab, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { CardMetrica } from '@/components/CardMetrica'
+import { CardDeslizavel, type AcaoDeslize } from '@/components/CardDeslizavel'
+import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
 import { InstallBanner } from '@/components/InstallBanner'
 import { Avatar } from '@/components/Avatar'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -22,6 +25,8 @@ export function AlunosPage() {
   const { data: alunosComCobranca } = useAlunosComCobranca()
   const { data: treinosEstaSemana } = useTreinosEstaSemana()
   const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const [busca, setBusca] = useState('')
   const [menuAberto, setMenuAberto] = useState<Aluno | null>(null)
 
@@ -59,7 +64,16 @@ export function AlunosPage() {
     apagar.mutate(a.id)
   }
 
+  const acoesDeslize = (a: Aluno): AcaoDeslize[] =>
+    aba === 'ativos'
+      ? [
+          { label: 'Treino', icone: <Play size={20} />, classe: 'bg-brand', onClick: () => navigate(`/alunos/${a.id}/sessoes/nova`) },
+          { label: 'Arquivar', icone: <Archive size={20} />, classe: 'bg-slate-600', onClick: () => arquivarAluno(a) },
+        ]
+      : [{ label: 'Restaurar', icone: <ArchiveRestore size={20} />, classe: 'bg-brand', onClick: () => restaurarAluno(a) }]
+
   return (
+    <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
     <div className="mx-auto max-w-2xl p-4 pb-24">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Meus alunos</h1>
@@ -77,20 +91,21 @@ export function AlunosPage() {
       <div className="mb-4 flex gap-1 rounded-xl bg-slate-100 p-1">
         <button
           onClick={() => setAba('ativos')}
-          className={cn('flex-1 rounded-lg py-2 text-sm font-medium', aba === 'ativos' ? 'bg-white shadow-sm' : 'text-slate-500')}
+          className={cn('min-h-11 flex-1 rounded-lg text-sm font-medium', aba === 'ativos' ? 'bg-white shadow-sm' : 'text-slate-500')}
         >
           Ativos
         </button>
         <button
           onClick={() => setAba('arquivados')}
-          className={cn('flex-1 rounded-lg py-2 text-sm font-medium', aba === 'arquivados' ? 'bg-white shadow-sm' : 'text-slate-500')}
+          className={cn('min-h-11 flex-1 rounded-lg text-sm font-medium', aba === 'arquivados' ? 'bg-white shadow-sm' : 'text-slate-500')}
         >
           Arquivados
         </button>
       </div>
 
-      <div className="mb-4 flex gap-2">
-        <div className="relative flex-1">
+      {/* fixa no scroll: em listas longas a busca não some */}
+      <div className="sticky top-0 z-20 -mx-4 mb-2 bg-slate-50 px-4 py-2">
+        <div className="relative">
           <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
             placeholder="Buscar aluno por nome"
@@ -111,7 +126,9 @@ export function AlunosPage() {
 
       <ul className="space-y-2">
         {filtrados?.map((a) => (
-          <li key={a.id} className="flex items-center gap-2 rounded-2xl bg-white p-4 shadow-sm">
+          <li key={a.id}>
+            <CardDeslizavel acoes={acoesDeslize(a)}>
+              <div className="flex items-center gap-2 p-4">
             <Link to={`/alunos/${a.id}`} className="flex min-w-0 flex-1 items-center gap-3">
               <Avatar id={a.id} nome={a.name} />
               <div className="min-w-0">
@@ -131,11 +148,13 @@ export function AlunosPage() {
             </Link>
             <button
               onClick={() => setMenuAberto(a)}
-              className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
+              className="flex size-12 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
               aria-label={`Mais ações para ${a.name}`}
             >
               <MoreVertical size={18} />
             </button>
+              </div>
+            </CardDeslizavel>
           </li>
         ))}
       </ul>
@@ -171,5 +190,6 @@ export function AlunosPage() {
         </div>
       </BottomSheet>
     </div>
+    </PuxarParaAtualizar>
   )
 }
