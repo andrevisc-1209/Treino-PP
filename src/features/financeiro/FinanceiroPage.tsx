@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
+import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
+import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { Link } from 'react-router-dom'
 import { formatarBRL } from '@/lib/moeda'
 import { hojeSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 import { cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
 import { estaVencida, rotuloModelo, SeloFatura } from './rotulos'
+import { recebidoPorMes } from './desempenho'
 import { useAlunosComCobranca, useFaturasTodas, useParticipacoesCobraveisTodas, type Fatura, type FaturaStatus } from './api'
 
 type Filtro = 'todos' | 'a_fechar' | 'enviada' | 'paga' | 'atraso'
@@ -20,7 +25,7 @@ const FILTROS: { value: Filtro; label: string }[] = [
 
 function CardResumo({ label, valor, qtd }: { label: string; valor: string; qtd: number }) {
   return (
-    <div className="rounded-2xl bg-white p-3 shadow-sm">
+    <div className="w-[42%] shrink-0 snap-start rounded-2xl bg-white p-3 shadow-sm md:w-auto md:shrink">
       <p className="text-xs text-slate-500">{label}</p>
       <p className="text-lg font-bold">{valor}</p>
       <p className="text-xs text-slate-400">
@@ -35,6 +40,7 @@ export function FinanceiroPage() {
   const { data: faturas, isLoading: faturasLoading } = useFaturasTodas()
   const { data: participacoes } = useParticipacoesCobraveisTodas()
   const [filtro, setFiltro] = useState<Filtro>('todos')
+  const qc = useQueryClient()
 
   const hoje = hojeSP()
   const mesAtual = hoje.slice(0, 7)
@@ -80,9 +86,11 @@ export function FinanceiroPage() {
     })
   }, [alunosCobranca, faturas, participacoes, hoje])
 
+  const recebimentos = useMemo(() => recebidoPorMes(faturas ?? [], hoje, 6), [faturas, hoje])
   const linhasFiltradas = filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)
 
   return (
+    <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Financeiro</h1>
@@ -93,7 +101,8 @@ export function FinanceiroPage() {
 
       {!alunosLoading && !faturasLoading && (
         <>
-          <div className="mb-4 grid grid-cols-3 gap-2">
+          {/* Celular: carrossel deslizável com encaixe. Tablet/desktop: três cards lado a lado + gráfico. */}
+          <RolagemHorizontal snap className="mb-4 md:grid md:grid-cols-3 md:gap-2 md:overflow-visible">
             <CardResumo
               label="A receber"
               valor={formatarBRL(faturasAbertasEnviadas.reduce((a, f) => a + f.total, 0))}
@@ -109,22 +118,40 @@ export function FinanceiroPage() {
               valor={formatarBRL(faturasEmAtraso.reduce((a, f) => a + f.total, 0))}
               qtd={faturasEmAtraso.length}
             />
-          </div>
+          </RolagemHorizontal>
 
-          <div className="mb-3 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+          <section className="mb-4 hidden rounded-2xl bg-white p-4 shadow-sm md:block">
+            <h2 className="mb-2 text-sm font-semibold">Recebido nos últimos 6 meses</h2>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={recebimentos} margin={{ left: 0, right: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={48} tickFormatter={(v) => formatarBRL(Number(v)).replace(',00', '')} />
+                <Tooltip formatter={(v) => [formatarBRL(Number(v)), 'Recebido']} />
+                <Bar dataKey="total" fill="#367c39" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+              </BarChart>
+            </ResponsiveContainer>
+          </section>
+
+          <RolagemHorizontal className="mb-3 py-1" corFundo="#f8fafc">
             {FILTROS.map((f) => (
               <button
                 key={f.value}
-                onClick={() => setFiltro(f.value)}
+                type="button"
+                aria-pressed={filtro === f.value}
+                onClick={(e) => {
+                  setFiltro(f.value)
+                  e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+                }}
                 className={cn(
-                  'min-h-9 shrink-0 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition',
-                  filtro === f.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
+                  'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm font-medium transition',
+                  filtro === f.value ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
                 )}
               >
                 {f.label}
               </button>
             ))}
-          </div>
+          </RolagemHorizontal>
 
           {linhasFiltradas.length === 0 && <p className="text-sm text-slate-500">Nenhum aluno aqui.</p>}
 
@@ -151,5 +178,6 @@ export function FinanceiroPage() {
         </>
       )}
     </div>
+    </PuxarParaAtualizar>
   )
 }
