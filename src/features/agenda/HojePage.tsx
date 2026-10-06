@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Settings } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { Button } from '@/components/ui'
 import { formatarDataCompleta, hojeSP } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
@@ -69,13 +70,7 @@ export function HojePage() {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <img src={iconMark} alt="Personal Perto" className="h-6 w-auto" />
-          <Link
-            to="/configuracoes"
-            className="flex size-11 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100"
-            aria-label="Configurações"
-          >
-            <Settings size={22} />
-          </Link>
+          <LinkConfiguracoes />
         </div>
       </header>
 

@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, Ref } from 'react'
-import { Check } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Check, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Componentes base mínimos. Podem ser trocados por shadcn/ui depois
@@ -21,6 +22,28 @@ export function Button({
       )}
       {...p}
     />
+  )
+}
+
+/**
+ * Botão flutuante de criar item — padrão de todas as listas com ação de criação. Fica logo acima da
+ * bottom nav e alinhado à borda direita do conteúdo (max-w-2xl). 56px: acima dos mínimos de toque.
+ * As telas que o usam precisam de espaço no fim da lista (pb-20) pra ele não cobrir o último item.
+ */
+export function Fab({ label, onClick, to }: { label: string; onClick?: () => void; to?: string }) {
+  const classe =
+    'fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-[max(1rem,calc(50vw-20rem))] z-30 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition active:bg-brand-hover'
+  if (to) {
+    return (
+      <Link to={to} aria-label={label} className={classe}>
+        <Plus size={26} />
+      </Link>
+    )
+  }
+  return (
+    <button type="button" onClick={onClick} aria-label={label} className={classe}>
+      <Plus size={26} />
+    </button>
   )
 }
 

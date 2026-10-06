@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MoreVertical, Plus } from 'lucide-react'
-import { BottomSheet, Button, Field, Input } from '@/components/ui'
+import { MoreVertical } from 'lucide-react'
+import { BottomSheet, Button, Fab, Field, Input } from '@/components/ui'
+import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -106,12 +107,10 @@ export function ModelosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4">
+    <div className="mx-auto max-w-2xl p-4 pb-24">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Treinos planejados</h1>
-        <Button onClick={abrirNovo} aria-label="Novo treino planejado" className="px-3">
-          <Plus size={20} />
-        </Button>
+        <LinkConfiguracoes />
       </header>
 
       <ExerciciosTabs />
@@ -156,6 +155,8 @@ export function ModelosPage() {
           )
         })}
       </ul>
+
+      <Fab onClick={abrirNovo} label="Novo treino planejado" />
 
       <BottomSheet open={criando} onClose={() => setCriando(false)} title="Novo treino planejado">
         <div className="space-y-4">

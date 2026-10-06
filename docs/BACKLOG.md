@@ -422,3 +422,23 @@ A coluna estava em `professional_config` (não em `professionals`, como o pedido
 
 PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54)
 
+## 20. Melhorias de UX por módulo (análise de navegação/responsividade)
+
+| PR | Módulo | Status |
+|---|---|---|
+| 1 | Navegação global (bottom nav 5 itens + FAB padrão) | ✅ em revisão |
+| 2 | Hoje / Home | pendente (aguarda aprovação da PR 1) |
+| 3 | Alunos | pendente |
+| 4 | Financeiro | pendente |
+| 5 | Meus treinos / Exercícios | pendente |
+| 6 | Configurações | pendente |
+
+**PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
+de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
+botão de criar vira FAB (`Fab` em `ui.tsx`, 56px, acima da nav, alinhado ao conteúdo) em Alunos,
+Agenda, Exercícios e Treinos planejados; "Sair" continua em Configurações (o ícone de logout solto
+no topo de Alunos foi trocado pela engrenagem). Item do checklist geral ainda não aplicado:
+pull-to-refresh e teclado em formulários entram junto das PRs de cada módulo.
+
+PR: [feat/ux-navegacao-global](https://github.com/andrevisc-1209/Treino-PP/pull/55)
+

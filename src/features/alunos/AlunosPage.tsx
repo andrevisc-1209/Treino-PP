@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarCheck, LogOut, MoreVertical, Plus, Search, TriangleAlert, Users } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { CalendarCheck, MoreVertical, Search, TriangleAlert, Users } from 'lucide-react'
 import { cn, desambiguarPorNome, idade } from '@/lib/utils'
-import { Button, BottomSheet, Input } from '@/components/ui'
+import { BottomSheet, Fab, Input } from '@/components/ui'
+import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { InstallBanner } from '@/components/InstallBanner'
 import { Avatar } from '@/components/Avatar'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -59,12 +59,10 @@ export function AlunosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4">
+    <div className="mx-auto max-w-2xl p-4 pb-24">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Meus alunos</h1>
-        <Button variant="ghost" onClick={() => supabase.auth.signOut()} aria-label="Sair">
-          <LogOut size={20} />
-        </Button>
+        <LinkConfiguracoes />
       </header>
 
       <InstallBanner />
@@ -100,22 +98,11 @@ export function AlunosPage() {
             className="pl-10"
           />
         </div>
-        {aba === 'ativos' && (
-          <Link
-            to="/alunos/novo"
-            aria-label="Novo aluno"
-            className={cn(
-              'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 font-medium text-white transition active:bg-brand-hover',
-            )}
-          >
-            <Plus size={20} />
-          </Link>
-        )}
       </div>
 
       {(aba === 'ativos' ? isLoading : carregandoArquivados) && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
-      {alunos?.length === 0 && aba === 'ativos' && <p className="text-slate-500">Nenhum aluno ainda. Cadastre o primeiro acima.</p>}
+      {alunos?.length === 0 && aba === 'ativos' && <p className="text-slate-500">Nenhum aluno ainda. Toque no + para cadastrar o primeiro.</p>}
       {alunos?.length === 0 && aba === 'arquivados' && <p className="text-slate-500">Nenhum aluno arquivado.</p>}
       {alunos && alunos.length > 0 && filtrados?.length === 0 && (
         <p className="text-slate-500">Nenhum aluno encontrado para "{busca}".</p>
@@ -151,6 +138,8 @@ export function AlunosPage() {
           </li>
         ))}
       </ul>
+
+      {aba === 'ativos' && <Fab to="/alunos/novo" label="Novo aluno" />}
 
       <BottomSheet open={!!menuAberto} onClose={() => setMenuAberto(null)} title={menuAberto?.name}>
         <div className="space-y-1">
