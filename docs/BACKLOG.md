@@ -426,8 +426,8 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 
 | PR | Módulo | Status |
 |---|---|---|
-| 1 | Navegação global (bottom nav 5 itens + FAB padrão) | ✅ em revisão |
-| 2 | Hoje / Home | pendente (aguarda aprovação da PR 1) |
+| 1 | Navegação global (bottom nav 5 itens + FAB padrão) | ✅ feito |
+| 2 | Hoje / Home (micro-dashboard + Pix colapsável) | ✅ em revisão |
 | 3 | Alunos | pendente |
 | 4 | Financeiro | pendente |
 | 5 | Meus treinos / Exercícios | pendente |
@@ -441,4 +441,12 @@ no topo de Alunos foi trocado pela engrenagem). Item do checklist geral ainda n�
 pull-to-refresh e teclado em formulários entram junto das PRs de cada módulo.
 
 PR: [feat/ux-navegacao-global](https://github.com/andrevisc-1209/Treino-PP/pull/55)
+
+**PR 2**: sem aulas hoje, a Hoje mostra `ResumoSemAulas` (aulas hoje/semana, alunos ativos, próximas 3
+aulas agendadas dos próximos 7 dias, alunos sem treino há +7 dias, botão de aula avulsa). "Pendentes
+de confirmação" do pedido virou "Próximas aulas" (agendadas e ainda por acontecer): o modelo não
+tem confirmação do aluno. `PixCard` fica recolhido por padrão (56px) e lembra a escolha em
+`localStorage`. `CardMetrica` virou componente compartilhado (Alunos + Hoje).
+
+PR: [feat/ux-hoje](https://github.com/andrevisc-1209/Treino-PP/pull/56)
 

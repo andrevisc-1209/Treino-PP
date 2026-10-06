@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
-import { Button } from '@/components/ui'
 import { formatarDataCompleta, hojeSP } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -13,6 +11,7 @@ import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { OnboardingChecklist } from '@/features/onboarding/OnboardingChecklist'
 import { PixCard } from './PixCard'
+import { ResumoSemAulas } from './ResumoSemAulas'
 
 export function HojePage() {
   useGerarAulasDiarias()
@@ -80,14 +79,7 @@ export function HojePage() {
       {isLoading && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
 
-      {aulas && aulas.length === 0 && (
-        <div className="space-y-4 rounded-2xl bg-white p-6 text-center shadow-sm">
-          <p className="font-semibold">Nenhuma aula hoje</p>
-          <Button onClick={() => setNovaAulaAberta(true)} className="w-full">
-            <Plus size={18} /> Marcar aula avulsa
-          </Button>
-        </div>
-      )}
+      {aulas && aulas.length === 0 && <ResumoSemAulas onMarcarAula={() => setNovaAulaAberta(true)} />}
 
       {aulasOrdenadas && aulasOrdenadas.length > 0 && (
         <div className="space-y-2">
