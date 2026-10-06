@@ -35,13 +35,13 @@ export function Fab({ label, onClick, to }: { label: string; onClick?: () => voi
     'fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-[max(1rem,calc(50vw-20rem))] z-30 flex size-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition active:bg-brand-hover'
   if (to) {
     return (
-      <Link to={to} aria-label={label} className={classe}>
+      <Link to={to} aria-label={label} className={classe} data-fab>
         <Plus size={26} />
       </Link>
     )
   }
   return (
-    <button type="button" onClick={onClick} aria-label={label} className={classe}>
+    <button type="button" onClick={onClick} aria-label={label} className={classe} data-fab>
       <Plus size={26} />
     </button>
   )

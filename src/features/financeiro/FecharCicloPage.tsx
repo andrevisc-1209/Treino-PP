@@ -186,7 +186,11 @@ export function FecharCicloPage() {
       )}
 
       {cobranca?.ativo && ciclo && (
-        <div className="fixed inset-x-0 bottom-14 z-30 border-t border-slate-200 bg-white p-3">
+        <div
+          data-barra-fixa
+          onMouseDown={(e) => e.preventDefault()}
+          className="fixed inset-x-0 bottom-14 z-30 border-t border-slate-200 bg-white p-3"
+        >
           <div className="mx-auto max-w-2xl">
             <Button onClick={confirmar} className="w-full" disabled={fechar.isPending}>
               Fechar ciclo

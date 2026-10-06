@@ -61,3 +61,14 @@ input[type="time"] {
   @page { margin: 12mm; }
 }
 
+/* Teclado virtual aberto (campo de texto focado, só em telas de toque): some a bottom nav e o FAB — não há espaço pra
+   eles — e a barra fixa de ação (data-barra-fixa) desce pro fundo da área visível. Ver src/lib/teclado.ts. */
+@media (pointer: coarse) {
+  body:has(:is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='button'], [type='submit']), textarea):focus) :is([data-bottom-nav], [data-fab]) {
+    display: none;
+  }
+  body:has(:is(input:not([type='checkbox'], [type='radio'], [type='range'], [type='button'], [type='submit']), textarea):focus) [data-barra-fixa] {
+    bottom: env(safe-area-inset-bottom) !important;
+  }
+}
+

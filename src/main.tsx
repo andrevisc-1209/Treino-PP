@@ -9,6 +9,7 @@ import { ConfirmHost } from '@/components/ConfirmSheet'
 import { UndoToastHost } from '@/components/UndoToast'
 import { OfflineBanner, marcarFalhaDeRede } from '@/components/OfflineBanner'
 import App from './App'
+import { ajustarTecladoVirtual } from '@/lib/teclado'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -39,5 +40,7 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+ajustarTecladoVirtual()
 
 document.getElementById('splash')?.remove()
