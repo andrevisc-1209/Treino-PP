@@ -432,6 +432,9 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 4 | Financeiro (carrossel, chips rolável, gráfico) | ✅ em revisão — `docs/ux-modulos/04-financeiro.md` |
 | 5 | Meus treinos / Exercícios (sistema × meus, chips) | ✅ em revisão — `docs/ux-modulos/05-exercicios.md` |
 | 6 | Configurações (acordeões, salvar único, teclado) | ✅ em revisão — `docs/ux-modulos/06-configuracoes.md` |
+| 7 | Pós-treino (resumo em blocos, recordes, compartilhar imagem) | ✅ em revisão — `docs/ux-modulos/07-pos-treino.md` |
+| 8 | Pré-treino (wizard: chips, badge, rodapé fixo, animação, modal no desktop) | ⏳ a fazer |
+| 9 | Aula avulsa: data/hora mínimas (não permite passado) | ⏳ a fazer |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
