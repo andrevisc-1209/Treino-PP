@@ -2,6 +2,8 @@ import { lazy, Suspense, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, CircleCheck } from 'lucide-react'
 import { BottomSheet } from '@/components/ui'
+import { SeloMercadoPago } from '@/components/SeloMercadoPago'
+import logoPP from '@/assets/brand/logo-personal-perto-sm.png'
 import { cn } from '@/lib/utils'
 import type { Plano } from '@/features/assinatura/useAssinatura'
 import type { ResultadoAssinatura } from './CheckoutMP'
@@ -9,10 +11,18 @@ import type { ResultadoAssinatura } from './CheckoutMP'
 // O SDK do Mercado Pago só é baixado quando a pessoa escolhe um plano.
 const CheckoutMP = lazy(() => import('./CheckoutMP'))
 
+function CabecalhoConfianca() {
+  return (
+    <div className="flex justify-center pb-1">
+      <img src={logoPP} alt="Personal Perto" className="h-9 w-auto" />
+    </div>
+  )
+}
+
 const PLANOS: { id: Plano; nome: string; valor: number; preco: string; equivale?: string; badge?: string }[] = [
-  { id: 'mensal', nome: 'Mensal', valor: 10, preco: 'R$ 10/mês' },
-  { id: 'trimestral', nome: 'Trimestral', valor: 27, preco: 'R$ 27', equivale: 'R$ 9/mês', badge: 'Mais popular' },
-  { id: 'semestral', nome: 'Semestral', valor: 50, preco: 'R$ 50', equivale: 'R$ 8,33/mês', badge: 'Melhor valor' },
+  { id: 'mensal', nome: 'Mensal', valor: 15, preco: 'R$ 15/mês' },
+  { id: 'trimestral', nome: 'Trimestral', valor: 39, preco: 'R$ 39', equivale: 'R$ 13/mês — economize 13%', badge: 'Mais popular' },
+  { id: 'semestral', nome: 'Semestral', valor: 60, preco: 'R$ 60', equivale: 'R$ 10/mês — economize 33%', badge: 'Melhor valor' },
 ]
 
 export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -55,13 +65,15 @@ export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => vo
     return (
       <BottomSheet open={open} onClose={fechar} title={`Plano ${escolhido.nome} — ${escolhido.preco}`}>
         <div className="space-y-3">
+          <CabecalhoConfianca />
           <button type="button" onClick={() => setEscolhido(null)} className="flex min-h-11 items-center gap-1 text-sm text-brand-hover">
             <ArrowLeft size={16} /> Trocar de plano
           </button>
           <Suspense fallback={<p className="py-6 text-center text-sm text-slate-500">Carregando pagamento seguro…</p>}>
             <CheckoutMP plano={escolhido.id} valor={escolhido.valor} onSucesso={concluido} />
           </Suspense>
-          <p className="text-center text-xs text-slate-400">Pagamento seguro via Mercado Pago. Cancele quando quiser.</p>
+          <SeloMercadoPago />
+          <p className="text-center text-xs text-slate-500">Cancele quando quiser.</p>
         </div>
       </BottomSheet>
     )
@@ -70,6 +82,7 @@ export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => vo
   return (
     <BottomSheet open={open} onClose={fechar} title="Escolha seu plano">
       <div className="space-y-3">
+        <CabecalhoConfianca />
         {PLANOS.map((p) => (
           <div
             key={p.id}
@@ -87,7 +100,7 @@ export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => vo
               <div>
                 <p className="font-semibold">{p.nome}</p>
                 <p className="text-2xl font-bold">{p.preco}</p>
-                {p.equivale && <p className="text-sm text-slate-500">equivale a {p.equivale}</p>}
+                {p.equivale && <p className="text-sm font-medium text-brand-hover">{p.equivale}</p>}
               </div>
               <button
                 type="button"
@@ -99,7 +112,8 @@ export function PlanoModal({ open, onClose }: { open: boolean; onClose: () => vo
             </div>
           </div>
         ))}
-        <p className="text-center text-xs text-slate-400">Pagamento seguro via Mercado Pago. Cancele quando quiser.</p>
+        <SeloMercadoPago />
+        <p className="text-center text-xs text-slate-500">Cancele quando quiser.</p>
       </div>
     </BottomSheet>
   )

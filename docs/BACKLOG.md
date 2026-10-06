@@ -360,7 +360,6 @@ pessoa digitava.
 
 PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/48)
 
-<<<<<<< HEAD
 ## 19. Recibo de fechamento de ciclo
 
 - `ReciboCiclo.tsx` (tela cheia, via portal): cabeçalho, 4 cartões (aulas, dias, locais, valor),
@@ -377,7 +376,7 @@ PR: [feat/mp-checkout-bricks](https://github.com/andrevisc-1209/Treino-PP/pull/4
   `margin={{ left: -20 }}` e cortam o primeiro dígito do eixo Y.
 
 PR: [feat/recibo-ciclo](https://github.com/andrevisc-1209/Treino-PP/pull/51)
-=======
+
 ## 18. Cidade e UF obrigatórias no cadastro do personal
 
 - `professionals.uf` / `professionals.cidade` (migration `20261011000000`), NULL-áveis no banco
@@ -391,7 +390,6 @@ PR: [feat/recibo-ciclo](https://github.com/andrevisc-1209/Treino-PP/pull/51)
   o painel admin ainda mostra a cidade do Pix, não `professionals.cidade`.
 
 PR: [feat/cadastro-uf-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/50)
->>>>>>> origin/main
 
 ### 19.1 Refechar ciclo após cancelar a fatura
 
@@ -437,8 +435,8 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 9 | Aula avulsa: data/hora mínimas (não permite passado) | ⏳ a fazer |
 | 10 | Pós-treino (formulário): chips de PSE/avaliação + modal unificado no desktop | ✅ em revisão |
 | 11 | Pós-treino: métricas (exercícios, reps, % do planejado, evolução, destaque, sequência) | ✅ em revisão — `docs/ux-modulos/07-pos-treino.md` |
-| 12 | Landing com identidade Personal Perto (logo, seção "Quem faz", contatos, rodapé) | ✅ em revisão |
-| 13 | Preços novos (15/39/60) + selo Mercado Pago + logo PP no checkout | ⏳ a fazer |
+| 12 | Landing com identidade Personal Perto (logo, seção "Quem faz", contatos, rodapé) | ✅ feito |
+| 13 | Preços novos (15/39/60) + selo Mercado Pago + logo PP no checkout | ✅ em revisão |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
