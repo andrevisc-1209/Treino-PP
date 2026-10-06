@@ -437,6 +437,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 9 | Aula avulsa: data/hora mínimas (não permite passado) | ⏳ a fazer |
 | 10 | Pós-treino (formulário): chips de PSE/avaliação + modal unificado no desktop | ✅ em revisão |
 | 11 | Pós-treino: métricas (exercícios, reps, % do planejado, evolução, destaque, sequência) | ✅ em revisão — `docs/ux-modulos/07-pos-treino.md` |
+| 13 | Preços novos (15/39/60) + selo Mercado Pago + logo PP no checkout | ✅ em revisão |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

@@ -7,9 +7,9 @@ export type StatusAssinatura = 'ativa' | 'expirada' | 'cancelada'
 // Fonte única de preço/periodicidade do lado do servidor: o cliente só manda o
 // NOME do plano, nunca valor nem frequência.
 export const PLANOS: Record<Plano, { reason: string; frequency: number; amount: number }> = {
-  mensal: { reason: 'Treino PP Mensal', frequency: 1, amount: 10 },
-  trimestral: { reason: 'Treino PP Trimestral', frequency: 3, amount: 27 },
-  semestral: { reason: 'Treino PP Semestral', frequency: 6, amount: 50 },
+  mensal: { reason: 'Treino PP Mensal', frequency: 1, amount: 15 },
+  trimestral: { reason: 'Treino PP Trimestral', frequency: 3, amount: 39 },
+  semestral: { reason: 'Treino PP Semestral', frequency: 6, amount: 60 },
 }
 
 export function ehPlano(v: unknown): v is Plano {
