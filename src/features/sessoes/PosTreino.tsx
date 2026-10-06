@@ -1,18 +1,45 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
+import { ArrowRight, Clock, Flame, Info, ListChecks, Share2, Star } from 'lucide-react'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
-import { formatarNumero } from '@/lib/format'
+import { formatarDataBR, formatarNumero } from '@/lib/format'
+import { hojeSP } from '@/lib/datas'
+import { cn } from '@/lib/utils'
+import { mostrarErroGlobal } from '@/components/Toast'
+import { useSessoesDetalhadas } from '@/features/evolucao/api'
 import { useAtualizarSessao, useSessao, useSessaoExercicios } from './api'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
 import { APP_NAME } from '@/config/app'
 import iconMark from '@/assets/brand/icon-mark.png'
-import { calcularProntidao, faixaProntidao } from './prontidao'
+import { calcularProntidao, descritorPara, faixaProntidao } from './prontidao'
+import {
+  calcularRecordes,
+  statusCargaInterna,
+  textoVariacao,
+  variacaoVolume,
+  volumeSessao,
+  volumeUltimoTreino,
+  type ExercicioResumo,
+  type SessaoHistorico,
+} from './resumoSessao'
+import { compartilharResumo } from './imagemResumo'
 
 type ResumoConcluido = { duracaoMin: number; pse: number; nota: number | null; cargaInterna: number }
+
+function Indicador({ icone, valor, label }: { icone: ReactNode; valor: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 rounded-2xl bg-white p-4 text-center shadow-sm">
+      <span className="text-slate-400" aria-hidden>
+        {icone}
+      </span>
+      <p className="text-xl font-bold">{valor}</p>
+      <p className="text-xs text-slate-500">{label}</p>
+    </div>
+  )
+}
 
 function TreinoConcluidoResumo({
   alunoId,
@@ -25,37 +52,128 @@ function TreinoConcluidoResumo({
 }) {
   const { data: sessao } = useSessao(sessionId)
   const { data: itens } = useSessaoExercicios(sessionId)
+  const { data: detalhadas } = useSessoesDetalhadas(alunoId)
+  const [compartilhando, setCompartilhando] = useState(false)
 
-  const seriesFeitas = itens?.reduce((acc, ex) => acc + ex.sessao_series.filter((s) => s.completed).length, 0) ?? 0
-  const volumeTotal =
-    itens?.reduce((acc, ex) => acc + ex.sessao_series.filter((s) => s.completed).reduce((a, s) => a + (s.reps ?? 0) * (s.load_kg ?? 0), 0), 0) ?? 0
+  const atual: ExercicioResumo[] = useMemo(
+    () =>
+      (itens ?? []).map((i) => ({
+        exercicio_id: i.exercicio_id,
+        nome: i.exercicio?.name ?? 'Exercício',
+        series: i.sessao_series.map((s) => ({ reps: s.reps, load_kg: s.load_kg, completed: s.completed })),
+      })),
+    [itens],
+  )
+  // histórico = sessões concluídas anteriores (a atual fica de fora, mesmo se a lista já a trouxer)
+  const historico: SessaoHistorico[] = useMemo(
+    () =>
+      (detalhadas ?? [])
+        .filter((s) => s.id !== sessionId && (!sessao || s.session_date <= sessao.session_date))
+        .map((s) => ({
+          id: s.id,
+          session_date: s.session_date,
+          exercicios: s.sessao_exercicios.map((e) => ({
+            exercicio_id: e.exercicio_id,
+            nome: e.exercicio?.name ?? 'Exercício',
+            series: e.sessao_series,
+          })),
+        })),
+    [detalhadas, sessionId, sessao],
+  )
+
+  const seriesFeitas = atual.reduce((acc, ex) => acc + ex.series.filter((s) => s.completed).length, 0)
+  const volumeTotal = volumeSessao(atual)
+  const variacao = textoVariacao(variacaoVolume(volumeTotal, volumeUltimoTreino(historico)))
+  const status = statusCargaInterna(resumo.cargaInterna)
+  const recordes = useMemo(() => calcularRecordes(atual, historico), [atual, historico])
+  const recordePrincipal = recordes.find((r) => r.tipo === 'volume') ?? recordes[0]
   const prontidaoInicio = sessao ? calcularProntidao(sessao) : null
+  const pseLabel = descritorPara(DESCRITORES_PSE, resumo.pse)
 
-  const linhas: { label: string; valor: string }[] = [
-    { label: 'Duração', valor: `${resumo.duracaoMin} min` },
-    { label: 'Séries feitas', valor: String(seriesFeitas) },
-    { label: 'Volume total', valor: `${formatarNumero(volumeTotal)} kg` },
-    { label: 'PSE', valor: String(resumo.pse) },
-    ...(resumo.nota != null ? [{ label: 'Avaliação do personal', valor: String(resumo.nota) }] : []),
-    { label: 'Carga interna', valor: `${formatarNumero(resumo.cargaInterna)} UA` },
-    ...(prontidaoInicio != null ? [{ label: 'Prontidão no início', valor: `${formatarNumero(prontidaoInicio)}/10 · ${faixaProntidao(prontidaoInicio).label}` }] : []),
-  ]
+  const textoRecorde = (r: (typeof recordes)[number]) =>
+    `Novo recorde: ${r.tipo === 'volume' ? 'Maior volume' : 'Maior carga'} em ${r.exercicio} (${formatarNumero(r.valor)} kg)`
+
+  const compartilhar = async () => {
+    setCompartilhando(true)
+    try {
+      await compartilharResumo({
+        data: formatarDataBR(sessao?.session_date ?? hojeSP()),
+        volume: `${formatarNumero(volumeTotal)} kg`,
+        variacao,
+        cargaInterna: `${formatarNumero(resumo.cargaInterna)} UA`,
+        statusCarga: status.label,
+        duracao: `${resumo.duracaoMin} min`,
+        series: String(seriesFeitas),
+        pse: `${resumo.pse}/10 · ${pseLabel}`,
+        recorde: recordePrincipal ? textoRecorde(recordePrincipal) : null,
+        marca: APP_NAME,
+      })
+    } catch (e) {
+      mostrarErroGlobal((e as Error).message)
+    } finally {
+      setCompartilhando(false)
+    }
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="space-y-1 text-center">
         <p className="text-4xl">🎉</p>
         <h1 className="text-xl font-bold">Treino concluído</h1>
       </div>
 
-      <dl className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm">
-        {linhas.map((l) => (
-          <div key={l.label} className="flex items-center justify-between px-4 py-3">
-            <dt className="text-sm text-slate-500">{l.label}</dt>
-            <dd className="font-semibold">{l.valor}</dd>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl bg-accent p-4 text-center text-white shadow-sm">
+          <p className="text-xs text-white/70">Volume total</p>
+          <p className="mt-1 text-2xl font-extrabold leading-tight">{formatarNumero(volumeTotal)} kg</p>
+          <p className="mt-1 text-xs text-white/80">{variacao}</p>
+        </div>
+        <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+          <p className="text-xs text-slate-500">Carga interna</p>
+          <p className="mt-1 text-2xl font-extrabold leading-tight">{formatarNumero(resumo.cargaInterna)} UA</p>
+          <span className={cn('mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold', status.classe)}>{status.label}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Indicador icone={<Clock size={20} />} valor={`${resumo.duracaoMin} min`} label="Duração" />
+        <Indicador icone={<ListChecks size={20} />} valor={String(seriesFeitas)} label="Séries concluídas" />
+        <Indicador icone={<Flame size={20} />} valor={`${resumo.pse}/10`} label="PSE" />
+        <Indicador icone={<Star size={20} />} valor={resumo.nota != null ? `${resumo.nota}/10` : '—'} label="Avaliação do personal" />
+      </div>
+
+      {prontidaoInicio != null && (
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <p className="mb-2 text-xs font-medium text-slate-500">Antes → depois</p>
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <p>
+              <span className="text-slate-500">Prontidão inicial</span>
+              <br />
+              <span className="font-semibold">
+                {formatarNumero(prontidaoInicio)}/10 · {faixaProntidao(prontidaoInicio).label}
+              </span>
+            </p>
+            <ArrowRight size={18} className="shrink-0 text-slate-400" aria-hidden />
+            <p className="text-right">
+              <span className="text-slate-500">PSE final</span>
+              <br />
+              <span className="font-semibold">
+                {resumo.pse}/10 · {pseLabel}
+              </span>
+            </p>
           </div>
-        ))}
-      </dl>
+        </div>
+      )}
+
+      {recordes.length > 0 && (
+        <ul className="space-y-1.5">
+          {recordes.slice(0, 3).map((r) => (
+            <li key={`${r.tipo}-${r.exercicio}`} className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+              🏆 {textoRecorde(r)}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="space-y-2">
         <Link to="/" className="flex min-h-11 w-full items-center justify-center rounded-xl bg-brand font-medium text-white active:bg-brand-hover">
@@ -67,6 +185,15 @@ function TreinoConcluidoResumo({
         >
           Ver ficha do aluno
         </Link>
+        <button
+          type="button"
+          onClick={compartilhar}
+          disabled={compartilhando}
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl font-medium text-slate-600 active:bg-slate-100 disabled:opacity-60"
+        >
+          <Share2 size={18} />
+          {compartilhando ? 'Gerando imagem…' : 'Compartilhar resumo'}
+        </button>
       </div>
 
       <div className="flex items-center justify-center gap-1.5 pt-2 opacity-60">
