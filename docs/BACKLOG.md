@@ -436,6 +436,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 8 | Pré-treino (wizard: chips, badge, rodapé fixo, animação, modal no desktop) | ⏳ a fazer |
 | 9 | Aula avulsa: data/hora mínimas (não permite passado) | ⏳ a fazer |
 | 10 | Pós-treino (formulário): chips de PSE/avaliação + modal unificado no desktop | ✅ em revisão |
+| 11 | Pós-treino: métricas (exercícios, reps, % do planejado, evolução, destaque, sequência) | ✅ em revisão — `docs/ux-modulos/07-pos-treino.md` |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

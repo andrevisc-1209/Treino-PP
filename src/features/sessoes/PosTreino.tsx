@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { X, ArrowRight, Clock, Flame, Info, ListChecks, Share2, Star } from 'lucide-react'
+import { X, ArrowRight, Clock, Dumbbell, Flame, Info, ListChecks, Repeat, Share2, Star, TrendingUp } from 'lucide-react'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { criarAulaAvulsaRealizada, finalizarAgendaAoConcluir } from '@/features/agenda/api'
 import { formatarDataBR, formatarNumero } from '@/lib/format'
-import { hojeSP } from '@/lib/datas'
+import { hojeSP, inicioDaSemanaSP, somarDias } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 import { mostrarErroGlobal } from '@/components/Toast'
 import { useSessoesDetalhadas } from '@/features/evolucao/api'
@@ -17,6 +17,14 @@ import iconMark from '@/assets/brand/icon-mark.png'
 import { calcularProntidao, descritorPara, faixaProntidao } from './prontidao'
 import {
   calcularRecordes,
+  calcularSequencia,
+  cumprimentoPlano,
+  evolucaoPorExercicio,
+  exercicioDestaque,
+  exerciciosFeitos,
+  gruposTrabalhados,
+  textoEvolucao,
+  totalRepeticoes,
   statusCargaInterna,
   textoVariacao,
   variacaoVolume,
@@ -77,6 +85,8 @@ function TreinoConcluidoResumo({
         exercicio_id: i.exercicio_id,
         nome: i.exercicio?.name ?? 'Exercício',
         series: i.sessao_series.map((s) => ({ reps: s.reps, load_kg: s.load_kg, completed: s.completed })),
+        grupo: i.exercicio?.muscle_group ?? null,
+        planejado: i.plano_exercicio_id != null,
       })),
     [itens],
   )
@@ -103,6 +113,18 @@ function TreinoConcluidoResumo({
   const status = statusCargaInterna(resumo.cargaInterna)
   const recordes = useMemo(() => calcularRecordes(atual, historico), [atual, historico])
   const recordePrincipal = recordes.find((r) => r.tipo === 'volume') ?? recordes[0]
+  const nExercicios = exerciciosFeitos(atual)
+  const repeticoes = totalRepeticoes(atual)
+  const plano = cumprimentoPlano(atual)
+  const destaque = exercicioDestaque(atual)
+  const grupos = gruposTrabalhados(atual)
+  const evolucao = useMemo(() => evolucaoPorExercicio(atual, historico), [atual, historico])
+  const sequencia = useMemo(
+    () => calcularSequencia(historico.map((h) => h.session_date), sessao?.session_date ?? hojeSP(), inicioDaSemanaSP, (w) => somarDias(w, -7)),
+    [historico, sessao],
+  )
+  const primeiroTreino = historico.length === 0
+  const contexto = primeiroTreino ? 'Primeiro treino registrado 🎯' : `Treino #${sequencia.numeroTreino} · ${sequencia.naSemana}º da semana`
   const prontidaoInicio = sessao ? calcularProntidao(sessao) : null
   const pseLabel = descritorPara(DESCRITORES_PSE, resumo.pse)
 
@@ -116,10 +138,12 @@ function TreinoConcluidoResumo({
         data: formatarDataBR(sessao?.session_date ?? hojeSP()),
         volume: `${formatarNumero(volumeTotal)} kg`,
         variacao,
-        cargaInterna: `${formatarNumero(resumo.cargaInterna)} UA`,
-        statusCarga: status.label,
-        duracao: `${resumo.duracaoMin} min`,
+        contexto: primeiroTreino ? 'Primeiro treino 🎯' : `Treino #${sequencia.numeroTreino} · ${sequencia.naSemana}º da semana`,
+        exercicios: String(nExercicios),
         series: String(seriesFeitas),
+        repeticoes: String(repeticoes),
+        destaque: destaque ? `Destaque: ${destaque.nome} · ${formatarNumero(destaque.volume)} kg` : null,
+        evolucao: evolucao[0] ? `${evolucao[0].exercicio} ${textoEvolucao(evolucao[0])}` : null,
         pse: `${resumo.pse}/10 · ${pseLabel}`,
         recorde: recordePrincipal ? textoRecorde(recordePrincipal) : null,
         marca: APP_NAME,
@@ -136,6 +160,7 @@ function TreinoConcluidoResumo({
       <div className="space-y-1 text-center">
         <p className="text-4xl">🎉</p>
         <h1 className="text-xl font-bold">Treino concluído</h1>
+        <p className="text-sm text-slate-500">{contexto}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -151,9 +176,73 @@ function TreinoConcluidoResumo({
         </div>
       </div>
 
+      <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+        <p className="text-xs font-medium text-slate-500">Treino em números</p>
+        <div className="grid grid-cols-4 gap-2 text-center">
+          {[
+            { icone: <Dumbbell size={18} />, valor: nExercicios, label: nExercicios === 1 ? 'exercício' : 'exercícios' },
+            { icone: <ListChecks size={18} />, valor: seriesFeitas, label: seriesFeitas === 1 ? 'série' : 'séries' },
+            { icone: <Repeat size={18} />, valor: repeticoes, label: 'repetições' },
+            { icone: <Clock size={18} />, valor: `${resumo.duracaoMin}`, label: 'minutos' },
+          ].map((m) => (
+            <div key={m.label} className="flex flex-col items-center gap-0.5">
+              <span className="text-slate-400" aria-hidden>
+                {m.icone}
+              </span>
+              <p className="text-xl font-bold leading-tight">{m.valor}</p>
+              <p className="text-[11px] text-slate-500">{m.label}</p>
+            </div>
+          ))}
+        </div>
+        {plano && (
+          <div className="space-y-1 border-t border-slate-100 pt-3">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div className="h-full rounded-full bg-brand" style={{ width: `${plano.pct}%` }} />
+            </div>
+            <p className="text-xs text-slate-600">
+              Cumpriu {plano.pct}% do planejado ({plano.feitas} de {plano.total} séries)
+            </p>
+          </div>
+        )}
+      </div>
+
+      {evolucao.length > 0 && (
+        <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Evolução vs. última vez</p>
+          <ul className="space-y-1.5">
+            {evolucao.map((e) => (
+              <li key={e.exercicio} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 truncate">{e.exercicio}</span>
+                <span className="shrink-0 font-semibold text-emerald-700">
+                  <TrendingUp size={14} className="mr-1 inline" aria-hidden />
+                  {textoEvolucao(e)} <span className="font-normal text-slate-500">({formatarNumero(e.de)} → {formatarNumero(e.para)})</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {(destaque || grupos.length > 0) && (
+        <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+          {destaque && (
+            <p className="text-sm">
+              💪 <span className="font-medium">Exercício destaque:</span> {destaque.nome} · {formatarNumero(destaque.volume)} kg
+            </p>
+          )}
+          {grupos.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {grupos.map((g) => (
+                <span key={g} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                  {g}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
-        <Indicador icone={<Clock size={20} />} valor={`${resumo.duracaoMin} min`} label="Duração" />
-        <Indicador icone={<ListChecks size={20} />} valor={String(seriesFeitas)} label="Séries concluídas" />
         <Indicador icone={<Flame size={20} />} valor={`${resumo.pse}/10`} label="PSE" />
         <Indicador icone={<Star size={20} />} valor={resumo.nota != null ? `${resumo.nota}/10` : '—'} label="Avaliação do personal" />
       </div>
@@ -181,8 +270,11 @@ function TreinoConcluidoResumo({
         </div>
       )}
 
-      {recordes.length > 0 && (
+      {(recordes.length > 0 || sequencia.semanasSeguidas >= 2) && (
         <ul className="space-y-1.5">
+          {sequencia.semanasSeguidas >= 2 && (
+            <li className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">🔥 {sequencia.semanasSeguidas} semanas seguidas treinando</li>
+          )}
           {recordes.slice(0, 3).map((r) => (
             <li key={`${r.tipo}-${r.exercicio}`} className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
               🏆 {textoRecorde(r)}
@@ -357,6 +449,9 @@ export function PosTreino({
         <Field label="Duração (minutos)">
           <Input type="number" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value)} />
         </Field>
+        {duracao.trim() !== '' && Number(duracao) > 0 && Number(duracao) < 5 && (
+          <p className="mt-2 text-xs text-amber-700">Confira a duração: menos de 5 minutos.</p>
+        )}
       </div>
 
       <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm md:rounded-none md:bg-transparent md:p-0 md:shadow-none">

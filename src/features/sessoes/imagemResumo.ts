@@ -3,14 +3,17 @@
 
 export type DadosImagem = {
   data: string
+  /** ex.: "Treino #27 · 3º da semana" */
+  contexto: string | null
   volume: string
   variacao: string
-  cargaInterna: string
-  statusCarga: string
-  duracao: string
+  exercicios: string
   series: string
-  pse: string
+  repeticoes: string
+  destaque: string | null
+  evolucao: string | null
   recorde: string | null
+  pse: string
   marca: string
 }
 
@@ -37,42 +40,61 @@ export function desenharResumo(canvas: HTMLCanvasElement, d: DadosImagem) {
   ctx.fillText('Treino concluído 🎉', W / 2, 150)
   ctx.fillStyle = '#9fb3c4'
   ctx.font = fonte(500, 36)
-  ctx.fillText(d.data, W / 2, 210)
+  ctx.fillText([d.data, d.contexto].filter(Boolean).join(' · '), W / 2, 210, 960)
 
-  const card = (x: number, y: number, w: number, h: number, rotulo: string, valor: string, sub: string, destaque = false) => {
-    ctx.fillStyle = destaque ? '#367c39' : '#ffffff1a'
-    arredondado(ctx, x, y, w, h, 36)
+  // card principal: volume
+  ctx.fillStyle = '#367c39'
+  arredondado(ctx, 70, 260, 940, 270, 36)
+  ctx.fill()
+  ctx.fillStyle = '#d5e1ea'
+  ctx.font = fonte(600, 34)
+  ctx.fillText('Volume total', W / 2, 322)
+  ctx.fillStyle = '#ffffff'
+  ctx.font = fonte(800, 108)
+  ctx.fillText(d.volume, W / 2, 440, 860)
+  ctx.fillStyle = '#e6f0e6'
+  ctx.font = fonte(600, 34)
+  ctx.fillText(d.variacao, W / 2, 495)
+
+  // três números
+  const mini = [
+    ['Exercícios', d.exercicios],
+    ['Séries', d.series],
+    ['Repetições', d.repeticoes],
+  ]
+  mini.forEach(([rotulo, valor], i) => {
+    const x = 70 + i * 325
+    ctx.fillStyle = '#ffffff1a'
+    arredondado(ctx, x, 570, 290, 190, 32)
     ctx.fill()
     ctx.fillStyle = '#d5e1ea'
-    ctx.font = fonte(600, 32)
-    ctx.fillText(rotulo, x + w / 2, y + 62)
+    ctx.font = fonte(600, 30)
+    ctx.fillText(rotulo, x + 145, 625)
     ctx.fillStyle = '#ffffff'
-    ctx.font = fonte(800, valor.length > 9 ? 56 : 68)
-    ctx.fillText(valor, x + w / 2, y + 150)
-    ctx.fillStyle = '#d5e1ea'
-    ctx.font = fonte(500, 30)
-    ctx.fillText(sub, x + w / 2, y + 205)
-  }
+    ctx.font = fonte(800, 78)
+    ctx.fillText(valor, x + 145, 720, 260)
+  })
 
-  card(70, 270, 450, 250, 'Volume total', d.volume, d.variacao, true)
-  card(560, 270, 450, 250, 'Carga interna', d.cargaInterna, d.statusCarga)
-
-  card(70, 560, 450, 190, 'Duração', d.duracao, '')
-  card(560, 560, 450, 190, 'Séries concluídas', d.series, '')
-  card(70, 790, 940, 190, 'PSE (esforço percebido)', d.pse, '')
-
-  if (d.recorde) {
-    ctx.fillStyle = '#f5b94233'
-    arredondado(ctx, 70, 1020, 940, 130, 36)
+  // faixas opcionais
+  let y = 800
+  const faixa = (texto: string, fundo: string, cor: string) => {
+    ctx.fillStyle = fundo
+    arredondado(ctx, 70, y, 940, 110, 32)
     ctx.fill()
-    ctx.fillStyle = '#ffd98a'
-    ctx.font = fonte(700, 36)
-    ctx.fillText(`🏆 ${d.recorde}`, W / 2, 1100, 880)
+    ctx.fillStyle = cor
+    ctx.font = fonte(700, 38)
+    ctx.fillText(texto, W / 2, y + 70, 880)
+    y += 135
   }
+  if (d.destaque) faixa(`💪 ${d.destaque}`, '#ffffff1a', '#ffffff')
+  if (d.evolucao) faixa(`📈 ${d.evolucao}`, '#ffffff1a', '#ffffff')
+  if (d.recorde) faixa(`🏆 ${d.recorde}`, '#f5b94233', '#ffd98a')
 
   ctx.fillStyle = '#9fb3c4'
+  ctx.font = fonte(500, 32)
+  ctx.fillText(`PSE ${d.pse}`, W / 2, 1235)
   ctx.font = fonte(600, 34)
-  ctx.fillText(d.marca, W / 2, 1270)
+  ctx.fillText(d.marca, W / 2, 1295)
 }
 
 export async function compartilharResumo(d: DadosImagem): Promise<'compartilhado' | 'baixado' | 'cancelado'> {

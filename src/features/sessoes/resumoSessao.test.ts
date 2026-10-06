@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularRecordes, statusCargaInterna, textoVariacao, variacaoVolume, volumeSessao, volumeUltimoTreino, type ExercicioResumo, type SessaoHistorico } from './resumoSessao'
+import { calcularRecordes, calcularSequencia, cumprimentoPlano, evolucaoPorExercicio, exercicioDestaque, exerciciosFeitos, textoEvolucao, totalRepeticoes, statusCargaInterna, textoVariacao, variacaoVolume, volumeSessao, volumeUltimoTreino, type ExercicioResumo, type SessaoHistorico } from './resumoSessao'
 
 const ex = (id: string, series: [number, number, boolean?][]): ExercicioResumo => ({
   exercicio_id: id,
@@ -40,5 +40,38 @@ describe('resumoSessao', () => {
       { tipo: 'carga', exercicio: 'Ex a', valor: 60 },
     ])
     expect(calcularRecordes([ex('a', [[10, 40]])], h)).toEqual([])
+  })
+
+  it('exercícios, repetições e cumprimento do plano', () => {
+    const exs = [
+      { ...ex('a', [[10, 50], [8, 50, false]]), planejado: true },
+      { ...ex('b', [[12, 0, false]]), planejado: true },
+      ex('c', [[15, 0]]),
+    ]
+    expect(exerciciosFeitos(exs)).toBe(2)
+    expect(totalRepeticoes(exs)).toBe(25)
+    expect(cumprimentoPlano(exs)).toEqual({ feitas: 1, total: 3, pct: 33 })
+    expect(cumprimentoPlano([ex('c', [[15, 0]])])).toBeNull()
+  })
+  it('destaque ignora exercício sem carga', () => {
+    expect(exercicioDestaque([ex('a', [[10, 0]]), ex('b', [[10, 20]])])).toEqual({ nome: 'Ex b', volume: 200 })
+    expect(exercicioDestaque([ex('a', [[10, 0]])])).toBeNull()
+  })
+  it('evolução: kg, reps com mesma carga e só melhoras', () => {
+    const h = [
+      sess('1', '2026-01-01', [ex('a', [[10, 70]]), ex('b', [[10, 40]]), ex('c', [[10, 30]])]),
+      sess('2', '2026-01-08', [ex('a', [[10, 75]]), ex('b', [[8, 40]]), ex('c', [[10, 30]])]),
+    ]
+    const r = evolucaoPorExercicio([ex('a', [[10, 80]]), ex('b', [[10, 40]]), ex('c', [[10, 30]]), ex('d', [[10, 10]])], h)
+    expect(r.map((e) => [e.exercicio, textoEvolucao(e)])).toEqual([['Ex a', '+5 kg'], ['Ex b', '+2 reps']])
+  })
+  it('evolução sem carga compara total de reps', () => {
+    const h = [sess('1', '2026-01-01', [ex('p', [[10, 0], [10, 0]])])]
+    expect(evolucaoPorExercicio([ex('p', [[12, 0], [12, 0]])], h)[0]).toMatchObject({ tipo: 'reps', delta: 4 })
+  })
+  it('sequência: nº do treino, na semana e semanas seguidas', () => {
+    const seg = (d: string) => ({ '2026-09-28': '2026-09-28', '2026-09-30': '2026-09-28', '2026-10-05': '2026-10-05', '2026-10-06': '2026-10-05', '2026-09-14': '2026-09-14' })[d]!
+    const ant = (w: string) => ({ '2026-10-05': '2026-09-28', '2026-09-28': '2026-09-21', '2026-09-21': '2026-09-14' })[w]!
+    expect(calcularSequencia(['2026-09-14', '2026-09-28', '2026-09-30', '2026-10-05'], '2026-10-06', seg, ant)).toEqual({ numeroTreino: 5, naSemana: 2, semanasSeguidas: 2 })
   })
 })

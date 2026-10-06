@@ -3,7 +3,14 @@
 // daqui pode ir para a imagem compartilhada (LGPD).
 
 export type SerieResumo = { reps: number | null; load_kg: number | null; completed: boolean }
-export type ExercicioResumo = { exercicio_id: string; nome: string; series: SerieResumo[] }
+export type ExercicioResumo = {
+  exercicio_id: string
+  nome: string
+  series: SerieResumo[]
+  grupo?: string | null
+  /** veio do treino planejado (exercício adicionado na hora fica de fora do "% do planejado") */
+  planejado?: boolean
+}
 export type SessaoHistorico = { id: string; session_date: string; exercicios: ExercicioResumo[] }
 
 export function volumeSeries(series: SerieResumo[]): number {
@@ -69,4 +76,100 @@ export function volumeUltimoTreino(historico: SessaoHistorico[]): number | null 
     if (v > 0) return v
   }
   return null
+}
+
+const feitas = (series: SerieResumo[]) => series.filter((s) => s.completed)
+
+export function exerciciosFeitos(exs: ExercicioResumo[]): number {
+  return exs.filter((e) => feitas(e.series).length > 0).length
+}
+
+export function totalRepeticoes(exs: ExercicioResumo[]): number {
+  return exs.reduce((a, e) => a + feitas(e.series).reduce((b, s) => b + (s.reps ?? 0), 0), 0)
+}
+
+/** % de séries concluídas dos exercícios planejados; null em treino livre (sem exercício planejado). */
+export function cumprimentoPlano(exs: ExercicioResumo[]): { feitas: number; total: number; pct: number } | null {
+  const plan = exs.filter((e) => e.planejado)
+  const total = plan.reduce((a, e) => a + e.series.length, 0)
+  if (total === 0) return null
+  const f = plan.reduce((a, e) => a + feitas(e.series).length, 0)
+  return { feitas: f, total, pct: Math.round((f / total) * 100) }
+}
+
+/** Exercício de maior volume em kg; ignora os sem carga. */
+export function exercicioDestaque(exs: ExercicioResumo[]): { nome: string; volume: number } | null {
+  let melhor: { nome: string; volume: number } | null = null
+  for (const e of exs) {
+    const v = volumeSeries(e.series)
+    if (v > 0 && (!melhor || v > melhor.volume)) melhor = { nome: e.nome, volume: v }
+  }
+  return melhor
+}
+
+export function gruposTrabalhados(exs: ExercicioResumo[]): string[] {
+  const vistos = new Set<string>()
+  for (const e of exs) if (e.grupo && feitas(e.series).length > 0) vistos.add(e.grupo)
+  return [...vistos]
+}
+
+export type Evolucao = { exercicio: string; tipo: 'kg' | 'reps'; delta: number; de: number; para: number }
+
+function seriePrincipal(series: SerieResumo[]): SerieResumo | null {
+  const f = feitas(series)
+  if (f.length === 0) return null
+  return f.reduce((m, s) => ((s.load_kg ?? 0) > (m.load_kg ?? 0) || ((s.load_kg ?? 0) === (m.load_kg ?? 0) && (s.reps ?? 0) > (m.reps ?? 0)) ? s : m))
+}
+
+/**
+ * Melhora por exercício vs. a última sessão anterior em que ele apareceu.
+ * Com carga: diferença da maior carga (kg) ou, se igual, das reps da série principal.
+ * Sem carga: diferença do total de reps. Só melhoras, maiores primeiro.
+ */
+export function evolucaoPorExercicio(atual: ExercicioResumo[], historico: SessaoHistorico[], max = 3): Evolucao[] {
+  const ordenado = [...historico].sort((a, b) => a.session_date.localeCompare(b.session_date))
+  const out: Evolucao[] = []
+  for (const ex of atual) {
+    const pa = seriePrincipal(ex.series)
+    if (!pa) continue
+    let anterior: ExercicioResumo | null = null
+    for (let i = ordenado.length - 1; i >= 0 && !anterior; i--) {
+      const e = ordenado[i].exercicios.find((x) => x.exercicio_id === ex.exercicio_id && feitas(x.series).length > 0)
+      if (e) anterior = e
+    }
+    if (!anterior) continue
+    const pp = seriePrincipal(anterior.series)!
+    if ((pa.load_kg ?? 0) > 0 || (pp.load_kg ?? 0) > 0) {
+      const dKg = (pa.load_kg ?? 0) - (pp.load_kg ?? 0)
+      if (dKg > 0) out.push({ exercicio: ex.nome, tipo: 'kg', delta: dKg, de: pp.load_kg ?? 0, para: pa.load_kg ?? 0 })
+      else if (dKg === 0 && (pa.reps ?? 0) > (pp.reps ?? 0))
+        out.push({ exercicio: ex.nome, tipo: 'reps', delta: (pa.reps ?? 0) - (pp.reps ?? 0), de: pp.reps ?? 0, para: pa.reps ?? 0 })
+    } else {
+      const ra = feitas(ex.series).reduce((a, s) => a + (s.reps ?? 0), 0)
+      const rp = feitas(anterior.series).reduce((a, s) => a + (s.reps ?? 0), 0)
+      if (ra > rp) out.push({ exercicio: ex.nome, tipo: 'reps', delta: ra - rp, de: rp, para: ra })
+    }
+  }
+  return out.sort((a, b) => (a.tipo === b.tipo ? b.delta - a.delta : a.tipo === 'kg' ? -1 : 1)).slice(0, max)
+}
+
+/** Texto curto para a evolução: "+5 kg" / "+2 reps". */
+export function textoEvolucao(e: Evolucao): string {
+  return `+${String(e.delta).replace('.', ',')} ${e.tipo === 'kg' ? 'kg' : e.delta === 1 ? 'rep' : 'reps'}`
+}
+
+export type Sequencia = { numeroTreino: number; naSemana: number; semanasSeguidas: number }
+
+/** datas = sessões concluídas anteriores; dataAtual = a sessão que acabou de fechar. inicioSemana(d) devolve a segunda-feira de d. */
+export function calcularSequencia(datasAnteriores: string[], dataAtual: string, inicioSemana: (d: string) => string, semanaAnterior: (inicio: string) => string): Sequencia {
+  const todas = [...datasAnteriores, dataAtual]
+  const semanas = new Set(todas.map(inicioSemana))
+  const semanaAtual = inicioSemana(dataAtual)
+  let seguidas = 0
+  for (let w = semanaAtual; semanas.has(w); w = semanaAnterior(w)) seguidas++
+  return {
+    numeroTreino: todas.length,
+    naSemana: todas.filter((d) => inicioSemana(d) === semanaAtual).length,
+    semanasSeguidas: seguidas,
+  }
 }
