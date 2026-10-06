@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido } from './mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido } from './mp.ts'
 
 async function assinar(secret: string, manifest: string) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -80,5 +80,53 @@ describe('decidirWebhook', () => {
   it('sandbox: assinatura ausente/inválida/sem segredo processa com aviso', () => {
     expect(decidirWebhook({ producao: false, temSegredo: true, assinaturaOk: false })).toBe('processar_com_aviso')
     expect(decidirWebhook({ producao: false, temSegredo: false, assinaturaOk: false })).toBe('processar_com_aviso')
+  })
+})
+
+describe('decidirPagamento (Checkout Pro)', () => {
+  const uid = '123e4567-e89b-42d3-a456-426614174000'
+  const agora = new Date('2026-10-06T12:00:00.000Z')
+  const pag = (extra: Record<string, unknown> = {}) => ({
+    id: 999,
+    status: 'approved',
+    transaction_amount: 39,
+    metadata: { user_id: uid, plan_slug: 'trimestral', period_days: 90 },
+    ...extra,
+  })
+
+  it('aprovado ativa e soma 90 dias a partir de agora', () => {
+    const d = decidirPagamento(pag(), { status: 'trial', assinatura_fim: null, mp_payment_id: null }, agora)
+    expect(d).toEqual({
+      tipo: 'ativar',
+      professionalId: uid,
+      atualizacao: { status: 'ativa', plano: 'trimestral', assinatura_fim: '2027-01-04T12:00:00.000Z', mp_payment_id: '999' },
+    })
+  })
+  it('renovação antecipada soma ao que resta', () => {
+    const d = decidirPagamento(pag({ id: 1000 }), { status: 'ativa', assinatura_fim: '2026-10-16T12:00:00.000Z', mp_payment_id: '999' }, agora)
+    expect(d.tipo === 'ativar' && d.atualizacao.assinatura_fim).toBe('2027-01-14T12:00:00.000Z')
+  })
+  it('é idempotente para o mesmo payment_id', () => {
+    const d = decidirPagamento(pag(), { status: 'ativa', assinatura_fim: '2027-01-04T12:00:00.000Z', mp_payment_id: '999' }, agora)
+    expect(d.tipo).toBe('ignorar')
+  })
+  it('pendente, recusado e cancelado não mexem na assinatura', () => {
+    for (const status of ['pending', 'in_process', 'rejected', 'cancelled']) {
+      expect(decidirPagamento(pag({ status }), null, agora).tipo).toBe('ignorar')
+    }
+  })
+  it('estorno só cancela o pagamento vigente', () => {
+    const vigente = { status: 'ativa', assinatura_fim: null, mp_payment_id: '999' }
+    expect(decidirPagamento(pag({ status: 'refunded' }), vigente, agora).tipo).toBe('cancelar')
+    expect(decidirPagamento(pag({ status: 'refunded', id: 1 }), vigente, agora).tipo).toBe('ignorar')
+  })
+  it('rejeita metadata inválida e valor menor que o plano', () => {
+    expect(decidirPagamento(pag({ metadata: { user_id: 'x', plan_slug: 'mensal' } }), null, agora).tipo).toBe('ignorar')
+    expect(decidirPagamento(pag({ metadata: { user_id: uid, plan_slug: 'ouro' } }), null, agora).tipo).toBe('ignorar')
+    expect(decidirPagamento(pag({ transaction_amount: 1 }), null, agora).tipo).toBe('ignorar')
+  })
+  it('usa external_reference quando a metadata não vem', () => {
+    const d = decidirPagamento(pag({ metadata: { plan_slug: 'mensal' }, external_reference: uid, transaction_amount: 15 }), null, agora)
+    expect(d.tipo).toBe('ativar')
   })
 })

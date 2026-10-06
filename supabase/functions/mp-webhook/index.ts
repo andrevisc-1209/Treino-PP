@@ -7,13 +7,14 @@
 // ou falhar, só loga aviso e processa (ver decidirWebhook em _shared/mp.ts).
 //
 // Eventos tratados:
+//   payment                         -> Checkout Pro (Pix/cartão/boleto): aprovado ativa/renova o plano
 //   subscription_preapproval       -> sincroniza o preapproval (data.id)
 //   subscription_authorized_payment -> cobrança recorrente: acha o preapproval e sincroniza
 // Resposta: 200 pra o que não é nosso/ignorado; 401 assinatura inválida;
 // 500 em falha nossa (MP/DB) — o MP reenvia nesses casos.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook } from '../_shared/mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook } from '../_shared/mp.ts'
 
 const ok = (msg = 'ok') => new Response(msg, { status: 200 })
 
@@ -61,6 +62,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (tipo === 'payment') {
+      const pagamento = await mpGet(`/v1/payments/${dataId}`, token)
+      const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
+      const donoId: string | undefined = pagamento.metadata?.user_id ?? pagamento.external_reference
+      const { data: atual } = donoId
+        ? await supabase.from('assinaturas').select('status, assinatura_fim, mp_payment_id').eq('professional_id', donoId).maybeSingle()
+        : { data: null }
+      const decisao = decidirPagamento(pagamento, atual)
+      if (decisao.tipo === 'ignorar') {
+        console.log('mp-webhook: pagamento ignorado:', decisao.motivo, `(status ${pagamento.status})`)
+        return ok('pagamento ignorado')
+      }
+      const { data, error } = await supabase.from('assinaturas').update(decisao.atualizacao).eq('professional_id', decisao.professionalId).select('professional_id')
+      if (error) throw error
+      if (!data?.length) console.warn('mp-webhook: nenhuma assinatura para', decisao.professionalId)
+      return ok()
+    }
+
     let preapprovalId: string
     if (tipo === 'subscription_preapproval') {
       preapprovalId = String(dataId)

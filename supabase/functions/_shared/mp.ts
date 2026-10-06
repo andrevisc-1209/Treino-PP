@@ -6,10 +6,10 @@ export type StatusAssinatura = 'ativa' | 'expirada' | 'cancelada'
 
 // Fonte única de preço/periodicidade do lado do servidor: o cliente só manda o
 // NOME do plano, nunca valor nem frequência.
-export const PLANOS: Record<Plano, { reason: string; frequency: number; amount: number }> = {
-  mensal: { reason: 'Treino PP Mensal', frequency: 1, amount: 15 },
-  trimestral: { reason: 'Treino PP Trimestral', frequency: 3, amount: 39 },
-  semestral: { reason: 'Treino PP Semestral', frequency: 6, amount: 60 },
+export const PLANOS: Record<Plano, { reason: string; frequency: number; amount: number; periodDays: number }> = {
+  mensal: { reason: 'Treino PP Mensal', frequency: 1, amount: 15, periodDays: 30 },
+  trimestral: { reason: 'Treino PP Trimestral', frequency: 3, amount: 39, periodDays: 90 },
+  semestral: { reason: 'Treino PP Semestral', frequency: 6, amount: 60, periodDays: 180 },
 }
 
 export function ehPlano(v: unknown): v is Plano {
@@ -115,4 +115,63 @@ export async function assinaturaValida(args: {
   let diff = 0
   for (let i = 0; i < esperado.length; i++) diff |= esperado.charCodeAt(i) ^ partes.v1.charCodeAt(i)
   return diff === 0
+}
+
+// ---------------------------------------------------------------------------
+// Checkout Pro (pagamento avulso: Pix, cartão ou boleto). Sem renovação
+// automática — cada pagamento aprovado compra `periodDays` de acesso.
+// ---------------------------------------------------------------------------
+
+export type PagamentoMP = {
+  id?: string | number
+  status?: string
+  transaction_amount?: number
+  external_reference?: string
+  metadata?: { user_id?: string; plan_slug?: string; period_days?: number | string } | null
+}
+
+export type AssinaturaAtual = { status: string; assinatura_fim: string | null; mp_payment_id: string | null } | null
+
+export type DecisaoPagamento =
+  | { tipo: 'ativar'; professionalId: string; atualizacao: Record<string, unknown> }
+  | { tipo: 'cancelar'; professionalId: string; atualizacao: Record<string, unknown> }
+  | { tipo: 'ignorar'; motivo: string }
+
+/**
+ * O que fazer com um pagamento do Checkout Pro (já buscado na API do MP).
+ * - approved: ativa e soma o período ao que ainda resta (renovação antecipada não perde dias).
+ *   Idempotente: o mesmo payment_id reenviado pelo webhook não soma de novo.
+ * - refunded/charged_back: cancela só se for o pagamento que ativou a assinatura atual.
+ * - pending/in_process/rejected/cancelled: não mexe — quem está no trial ou já paga não pode
+ *   perder acesso por causa de uma tentativa que não deu certo (boleto/Pix pendentes inclusive).
+ */
+export function decidirPagamento(pag: PagamentoMP, atual: AssinaturaAtual, agora: Date = new Date()): DecisaoPagamento {
+  const professionalId = pag.metadata?.user_id ?? pag.external_reference
+  if (!professionalId || !UUID.test(professionalId)) return { tipo: 'ignorar', motivo: 'sem user_id válido' }
+  if (pag.id == null) return { tipo: 'ignorar', motivo: 'pagamento sem id' }
+  const paymentId = String(pag.id)
+
+  if (pag.status === 'refunded' || pag.status === 'charged_back') {
+    if (atual?.mp_payment_id === paymentId) return { tipo: 'cancelar', professionalId, atualizacao: { status: 'cancelada' } }
+    return { tipo: 'ignorar', motivo: 'estorno de pagamento que não é o vigente' }
+  }
+  if (pag.status !== 'approved') return { tipo: 'ignorar', motivo: `status ${pag.status}` }
+
+  const slug = pag.metadata?.plan_slug
+  if (!ehPlano(slug)) return { tipo: 'ignorar', motivo: 'plano inválido' }
+  const plano = PLANOS[slug]
+  // o preço vem do nosso servidor (preferência criada por nós); mesmo assim confere o valor pago
+  if (typeof pag.transaction_amount !== 'number' || pag.transaction_amount < plano.amount) {
+    return { tipo: 'ignorar', motivo: 'valor pago menor que o do plano' }
+  }
+  if (atual?.mp_payment_id === paymentId) return { tipo: 'ignorar', motivo: 'pagamento já processado' }
+
+  const fimAtual = atual?.status === 'ativa' && atual.assinatura_fim ? new Date(atual.assinatura_fim).getTime() : 0
+  const base = Math.max(agora.getTime(), Number.isNaN(fimAtual) ? 0 : fimAtual)
+  const fim = new Date(base + plano.periodDays * 86_400_000).toISOString()
+  return {
+    tipo: 'ativar',
+    professionalId,
+    atualizacao: { status: 'ativa', plano: slug, assinatura_fim: fim, mp_payment_id: paymentId },
+  }
 }
