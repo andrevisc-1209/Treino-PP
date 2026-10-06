@@ -13,3 +13,15 @@
 - **LGPD**: a imagem **não** inclui prontidão/bem-estar; só dados pós-treino.
 
 Lógica pura e testada em `resumoSessao.ts` / `resumoSessao.test.ts`.
+
+## Métricas extras (PR de métricas)
+
+- **Treino em números**: exercícios, séries, repetições e minutos; barra "Cumpriu X% do planejado"
+  (séries concluídas ÷ séries dos exercícios que vieram do treino planejado; some em treino livre).
+- **Evolução vs. última vez** (até 3): maior carga (+kg) ou, com carga igual, reps da série principal;
+  exercício sem carga compara o total de reps. Só melhoras; exercício sem histórico não aparece.
+- **Exercício destaque** (maior volume em kg, ignora sem carga) e chips dos grupos musculares.
+- **Contexto**: "Treino #N · Kº da semana" / "Primeiro treino registrado 🎯"; "🔥 N semanas seguidas" a partir de 2.
+- **Imagem**: volume, exercícios/séries/repetições, destaque, melhor evolução, recorde e PSE; sem carga
+  interna, prontidão ou nota do personal.
+- Aviso "Confira a duração" no formulário quando < 5 min.
