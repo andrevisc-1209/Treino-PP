@@ -95,3 +95,36 @@ export function useAdminResetSenha() {
     },
   })
 }
+
+export type ConsentimentosPersonal = {
+  professional_id: string
+  nome: string
+  email: string | null
+  total_alunos: number
+  confirmados: number
+  pendentes: number
+  negados: number
+  nao_solicitados: number
+}
+
+/** Contagens de consentimento LGPD por personal. Agregado de propósito: o admin não vê dados de alunos. */
+export function useAdminConsentimentos() {
+  return useQuery({
+    queryKey: ['admin', 'consentimentos'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_consentimentos_saude')
+      if (error) throw error
+      // BIGINT chega como número (ou string em contagens enormes): normaliza
+      return ((data ?? []) as Record<string, unknown>[]).map((l) => ({
+        professional_id: String(l.professional_id),
+        nome: String(l.nome ?? ''),
+        email: (l.email as string | null) ?? null,
+        total_alunos: Number(l.total_alunos),
+        confirmados: Number(l.confirmados),
+        pendentes: Number(l.pendentes),
+        negados: Number(l.negados),
+        nao_solicitados: Number(l.nao_solicitados),
+      })) as ConsentimentosPersonal[]
+    },
+  })
+}

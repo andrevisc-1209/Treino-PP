@@ -27,6 +27,7 @@ import { APP_NAME } from '@/config/app'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { useIsAdmin } from './useIsAdmin'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
+import { ConsentimentosSection } from './ConsentimentosSection'
 import {
   useAdminAlterarCpf,
   useAdminAlterarPlano,
@@ -235,6 +236,8 @@ function AdminDashboard() {
             {listaFiltrada.length === 0 && <p className="py-6 text-center text-sm text-slate-400">Nenhum personal encontrado.</p>}
           </div>
         </div>
+
+        <ConsentimentosSection />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por cadastro) — {resumo.data?.regioes_ativas ?? '—'}</h2>
