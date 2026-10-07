@@ -89,3 +89,13 @@ input[type="time"] {
 @media (prefers-reduced-motion: reduce) {
   .slide-avancar, .slide-voltar { animation: none; }
 }
+
+/* Confirmação do treino registrado (página pública do aluno). */
+@keyframes pop-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.pop-in { animation: pop-in 0.35s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .pop-in { animation: none; }
+}

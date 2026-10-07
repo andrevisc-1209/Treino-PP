@@ -10,3 +10,7 @@ verify_jwt = false
 # Página pública: o aluno confirma o consentimento pelo link do e-mail, sem login.
 [functions.confirmar-consentimento-saude]
 verify_jwt = false
+
+# Página pública /treino/:token: o aluno (sem conta) vê e registra o treino pelo link do WhatsApp.
+[functions.treino-publico]
+verify_jwt = false

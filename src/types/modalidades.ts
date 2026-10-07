@@ -24,7 +24,10 @@ export interface ModalidadeCampo {
   placeholder?: string
 }
 
-export type ModalidadeDetalhes = Record<string, string | number>
+export type ExercicioLivre = { nome: string; descricao?: string }
+
+/** Detalhes da modalidade: campos simples (texto/número) + a lista opcional `exercicios_livres`. */
+export type ModalidadeDetalhes = Record<string, string | number | ExercicioLivre[]>
 
 export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: string; campos: ModalidadeCampo[] }> = {
   musculacao: { label: 'Musculação', emoji: '🏋️', campos: [] }, // usa a estrutura de exercícios existente
@@ -66,7 +69,6 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
       { key: 'rounds', label: 'Rounds', type: 'number', placeholder: '5' },
       { key: 'duracao_min', label: 'Duração total (min)', type: 'number' },
       { key: 'descanso_seg', label: 'Descanso entre rounds (seg)', type: 'number', placeholder: '60' },
-      { key: 'exercicios_livres', label: 'Exercícios do circuito', type: 'textarea' },
     ],
   },
   futebol: {
@@ -144,7 +146,7 @@ export function ehModalidade(v: unknown): v is ModalidadeTipo {
  * Valores digitados → objeto salvo no banco: só os campos da modalidade, sem vazios,
  * números como número. Musculação nunca guarda detalhes ({}).
  */
-export function montarDetalhes(modalidade: ModalidadeTipo, valores: Record<string, string>): ModalidadeDetalhes {
+export function montarDetalhes(modalidade: ModalidadeTipo, valores: Record<string, string>, livres: ExercicioLivre[] = []): ModalidadeDetalhes {
   const saida: ModalidadeDetalhes = {}
   for (const c of MODALIDADES_CONFIG[modalidade].campos) {
     const bruto = (valores[c.key] ?? '').trim()
@@ -158,12 +160,32 @@ export function montarDetalhes(modalidade: ModalidadeTipo, valores: Record<strin
       saida[c.key] = bruto
     }
   }
+  // exercícios livres (nome + instrução) só nas modalidades sem lista de exercícios do app
+  if (modalidade !== 'musculacao') {
+    const limpos = livres
+      .map((l) => ({ nome: l.nome.trim(), descricao: (l.descricao ?? '').trim() }))
+      .filter((l) => l.nome)
+      .map((l) => (l.descricao ? l : { nome: l.nome }))
+    if (limpos.length > 0) saida.exercicios_livres = limpos
+  }
   return saida
+}
+
+/** Exercícios livres salvos (aceita o formato antigo de texto único da Fase 1: uma linha = um exercício). */
+export function exerciciosLivresDe(d: ModalidadeDetalhes | null | undefined): ExercicioLivre[] {
+  const v = d?.exercicios_livres
+  if (Array.isArray(v)) return v.filter((x) => x && typeof x.nome === 'string' && x.nome.trim()).map((x) => ({ nome: x.nome, descricao: x.descricao }))
+  if (typeof v === 'string') return v.split('\n').map((l) => l.trim()).filter(Boolean).map((nome) => ({ nome }))
+  return []
 }
 
 /** Detalhes salvos → texto de cada campo do formulário (para editar). */
 export function valoresDoFormulario(detalhes: ModalidadeDetalhes | null | undefined): Record<string, string> {
-  return Object.fromEntries(Object.entries(detalhes ?? {}).map(([k, v]) => [k, String(v)]))
+  return Object.fromEntries(
+    Object.entries(detalhes ?? {})
+      .filter(([k, v]) => k !== 'exercicios_livres' && !Array.isArray(v))
+      .map(([k, v]) => [k, String(v)]),
+  )
 }
 
 const num = (v: unknown) => (typeof v === 'number' ? formatarNumero(v) : null)
@@ -212,6 +234,68 @@ export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalh
 export function linhasDetalhes(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string[] {
   const x = d ?? {}
   return MODALIDADES_CONFIG[modalidade].campos
-    .filter((c) => x[c.key] !== undefined && x[c.key] !== '')
+    .filter((c) => x[c.key] !== undefined && x[c.key] !== '' && !Array.isArray(x[c.key]))
     .map((c) => `• ${c.label}: ${typeof x[c.key] === 'number' ? formatarNumero(x[c.key] as number) : x[c.key]}`)
+}
+
+// ---------------------------------------------------------------------------
+// Resultado que o aluno/personal registra ao fazer o treino (modalidades sem lista de exercícios do app)
+// Mantenha igual a CAMPOS_RESULTADO em supabase/functions/_shared/execucao.ts.
+// ---------------------------------------------------------------------------
+
+export const RESULTADO_CAMPOS: Record<Exclude<ModalidadeTipo, 'musculacao'>, { key: string; label: string; type: 'number' | 'text'; placeholder?: string }[]> = {
+  corrida: [
+    { key: 'distancia_km', label: 'Distância feita (km)', type: 'number', placeholder: '5,2' },
+    { key: 'tempo_total', label: 'Tempo total', type: 'text', placeholder: '28:30' },
+    { key: 'pace_medio', label: 'Pace médio (min/km)', type: 'text', placeholder: '5:29' },
+  ],
+  natacao: [
+    { key: 'tiros_feitos', label: 'Tiros feitos', type: 'number' },
+    { key: 'distancia_total_m', label: 'Distância total (m)', type: 'number' },
+  ],
+  ciclismo: [
+    { key: 'distancia_km', label: 'Distância feita (km)', type: 'number' },
+    { key: 'tempo_total', label: 'Tempo total', type: 'text', placeholder: '1:10:00' },
+  ],
+  funcional: [
+    { key: 'rounds_feitos', label: 'Rounds feitos', type: 'number' },
+    { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
+  ],
+  futebol: [{ key: 'duracao_min', label: 'Duração (min)', type: 'number' }],
+  futevolei: [{ key: 'duracao_min', label: 'Duração (min)', type: 'number' }],
+  pilates: [{ key: 'duracao_min', label: 'Duração (min)', type: 'number' }],
+  yoga: [{ key: 'duracao_min', label: 'Duração (min)', type: 'number' }],
+  boxe: [{ key: 'rounds_feitos', label: 'Rounds feitos', type: 'number' }],
+  escalada: [
+    { key: 'vias_feitas', label: 'Vias feitas', type: 'number' },
+    { key: 'nivel_max', label: 'Nível mais alto', type: 'text', placeholder: '6a' },
+  ],
+  remo: [
+    { key: 'distancia_m', label: 'Distância feita (m)', type: 'number' },
+    { key: 'tempo_total', label: 'Tempo total', type: 'text', placeholder: '20:00' },
+  ],
+}
+
+export type DetalhesExecucao = {
+  exercicios?: { exercicio_id: string; nome: string; series_planejadas: number; series_feitas: number; obs?: string }[]
+  resultado?: Record<string, string | number>
+  exercicios_livres?: { nome: string; feito: boolean }[]
+}
+
+/** O que foi registrado, em linhas legíveis para o personal ("Distância feita (km): 5,2", "✔ Alongar"). */
+export function descreverExecucao(modalidade: ModalidadeTipo, d: DetalhesExecucao | null | undefined): string[] {
+  const x = d ?? {}
+  const linhas: string[] = []
+  if (modalidade === 'musculacao') {
+    for (const e of x.exercicios ?? []) {
+      linhas.push(`${e.nome}: ${e.series_feitas}/${e.series_planejadas} séries${e.obs ? ` — ${e.obs}` : ''}`)
+    }
+    return linhas
+  }
+  for (const c of RESULTADO_CAMPOS[modalidade]) {
+    const v = x.resultado?.[c.key]
+    if (v !== undefined && v !== '') linhas.push(`${c.label}: ${typeof v === 'number' ? formatarNumero(v) : v}`)
+  }
+  for (const l of x.exercicios_livres ?? []) linhas.push(`${l.feito ? '✔' : '✘'} ${l.nome}`)
+  return linhas
 }

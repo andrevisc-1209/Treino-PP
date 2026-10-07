@@ -50,3 +50,31 @@ describe('modalidades', () => {
     expect(linkWhatsAppComTexto(null, 'a b')).toBe('https://wa.me/?text=a%20b')
   })
 })
+
+import { exerciciosLivresDe, descreverExecucao } from './modalidades'
+import { detalhesDoResultado } from '@/features/execucoes/resultado'
+
+describe('exercícios livres e execução', () => {
+  it('guarda exercícios livres só fora da musculação, sem itens vazios', () => {
+    expect(montarDetalhes('funcional', { rounds: '5' }, [{ nome: ' Burpee ', descricao: ' 20 reps ' }, { nome: '  ' }, { nome: 'Prancha' }])).toEqual({
+      rounds: 5,
+      exercicios_livres: [{ nome: 'Burpee', descricao: '20 reps' }, { nome: 'Prancha' }],
+    })
+    expect(montarDetalhes('musculacao', {}, [{ nome: 'x' }])).toEqual({})
+  })
+  it('lê exercícios livres (e o texto antigo da Fase 1, uma linha por item)', () => {
+    expect(exerciciosLivresDe({ exercicios_livres: [{ nome: 'A' }, { nome: '' }] })).toEqual([{ nome: 'A', descricao: undefined }])
+    expect(exerciciosLivresDe({ exercicios_livres: 'Agachar\n\nSaltar' })).toEqual([{ nome: 'Agachar' }, { nome: 'Saltar' }])
+    expect(exerciciosLivresDe({})).toEqual([])
+    expect(valoresDoFormulario({ rounds: 5, exercicios_livres: [{ nome: 'A' }] })).toEqual({ rounds: '5' })
+  })
+  it('monta e descreve o resultado do aluno', () => {
+    const detalhes = { exercicios_livres: [{ nome: 'Alongar' }, { nome: 'Correr' }] }
+    const d = detalhesDoResultado('corrida', detalhes, { valores: { distancia_km: '5,2', tempo_total: '28:30', pace_medio: '' }, feitos: [true], notas: '' })
+    expect(d).toEqual({ resultado: { distancia_km: 5.2, tempo_total: '28:30' }, exercicios_livres: [{ nome: 'Alongar', feito: true }, { nome: 'Correr', feito: false }] })
+    expect(descreverExecucao('corrida', d)).toEqual(['Distância feita (km): 5,2', 'Tempo total: 28:30', '✔ Alongar', '✘ Correr'])
+    expect(
+      descreverExecucao('musculacao', { exercicios: [{ exercicio_id: 'e', nome: 'Supino', series_planejadas: 3, series_feitas: 2, obs: 'pesado' }] }),
+    ).toEqual(['Supino: 2/3 séries — pesado'])
+  })
+})

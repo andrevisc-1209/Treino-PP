@@ -18,10 +18,13 @@ import {
   montarDetalhes,
   resumoModalidade,
   valoresDoFormulario,
+  exerciciosLivresDe,
+  type ExercicioLivre,
   type ModalidadeDetalhes,
   type ModalidadeTipo,
   type TipoExecucao,
 } from '@/types/modalidades'
+import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { ModalidadeForm } from './ModalidadeForm'
 import { itensIguais } from './compare'
 import { PlanoOrigemBadge } from './PlanoOrigemBadge'
@@ -36,6 +39,7 @@ import {
   useSincronizarPlanoComModelo,
   buscarItensComparaveisPlano,
   buscarExerciciosParaMensagem,
+  gerarLinkTreino,
   type Plano,
 } from './api'
 
@@ -59,6 +63,9 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [modalidadeNova, setModalidadeNova] = useState<ModalidadeTipo>('musculacao')
   const [execucaoNova, setExecucaoNova] = useState<TipoExecucao>('sincrono')
   const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
+  const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
+  // aula presencial de modalidade sem lista de exercícios: registra o resultado em uma folha
+  const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
   // treino assíncrono acabou de ser criado: oferece enviar ao aluno
   const [recemCriado, setRecemCriado] = useState<{ id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes } | null>(null)
   const [erroNovo, setErroNovo] = useState<string | null>(null)
@@ -71,6 +78,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [modalidadeEd, setModalidadeEd] = useState<ModalidadeTipo>('musculacao')
   const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
+  const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
   const [erro, setErro] = useState<string | null>(null)
 
   const [menuPlano, setMenuPlano] = useState<Plano | null>(null)
@@ -103,6 +111,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setModalidadeNova('musculacao')
     setExecucaoNova('sincrono')
     setValoresNovos({})
+    setLivresNovos([])
     setErroNovo(null)
   }
 
@@ -110,7 +119,10 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const enviarAoAluno = async (p: { id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes }) => {
     const janela = window.open('about:blank', '_blank')
     try {
-      const exercicios = p.modalidade === 'musculacao' ? await buscarExerciciosParaMensagem(p.id) : undefined
+      const [exercicios, link] = await Promise.all([
+        p.modalidade === 'musculacao' ? buscarExerciciosParaMensagem(p.id) : Promise.resolve(undefined),
+        gerarLinkTreino(p.id),
+      ])
       const mensagem = gerarMensagemTreino({
         nomeAluno: aluno?.name ?? 'aluno',
         nomePersonal: perfil?.name || 'Seu personal',
@@ -118,6 +130,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         modalidade: p.modalidade,
         detalhes: p.detalhes,
         exercicios,
+        link,
       })
       const url = linkWhatsAppComTexto(aluno?.phone, mensagem)
       if (janela && !janela.closed) janela.location.href = url
@@ -133,7 +146,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       setErroNovo('Nome é obrigatório')
       return
     }
-    const detalhes = montarDetalhes(modalidadeNova, valoresNovos)
+    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos)
     const nomePlano = nomeNovo.trim()
     criar.mutate(
       { name: nomePlano, modalidade: modalidadeNova, tipo_execucao: execucaoNova, modalidade_detalhes: detalhes },
@@ -150,22 +163,39 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   }
 
   const criarCopiaEAbrir = (modelo: Modelo) => {
+    const outra = (modelo.modalidade ?? 'musculacao') !== 'musculacao'
     criarDeModelo.mutate(
-      { id: modelo.id, name: modelo.name, notes: modelo.notes },
+      {
+        id: modelo.id,
+        name: modelo.name,
+        notes: modelo.notes,
+        modalidade: modelo.modalidade,
+        tipo_execucao: modelo.tipo_execucao,
+        modalidade_detalhes: modelo.modalidade_detalhes,
+      },
       {
         onSuccess: (planoId) => {
           fecharNovo()
-          navigate(`/alunos/${alunoId}/planos/${planoId}`)
+          if (!outra) navigate(`/alunos/${alunoId}/planos/${planoId}`)
+          else if (modelo.tipo_execucao === 'assincrono')
+            setRecemCriado({ id: planoId, name: modelo.name, modalidade: modelo.modalidade, detalhes: modelo.modalidade_detalhes })
         },
       },
     )
   }
 
   const usarModelo = async (modelo: Modelo) => {
-    if (modelo.modelo_exercicios.length === 0) return
+    const outra = (modelo.modalidade ?? 'musculacao') !== 'musculacao'
+    if (modelo.modelo_exercicios.length === 0 && !outra) return
     const existente = planos?.find((p) => p.modelo_origem_id === modelo.id)
     if (!existente) {
       criarCopiaEAbrir(modelo)
+      return
+    }
+    if (outra) {
+      // sem exercícios para comparar: o treino já está com o aluno
+      fecharNovo()
+      mostrarErroGlobal(`"${existente.name}" já está nos treinos deste aluno.`)
       return
     }
     setVerificandoModelo(true)
@@ -199,6 +229,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setModalidadeEd(p.modalidade ?? 'musculacao')
     setExecucaoEd(p.tipo_execucao ?? 'sincrono')
     setValoresEd(valoresDoFormulario(p.modalidade_detalhes))
+    setLivresEd(exerciciosLivresDe(p.modalidade_detalhes))
     setErro(null)
     setRenomeando(p)
     setMenuPlano(null)
@@ -217,7 +248,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         notes: notas.trim(),
         modalidade: modalidadeEd,
         tipo_execucao: execucaoEd,
-        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd),
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd),
       },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
@@ -287,6 +318,15 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                     <Send size={18} />
                   </button>
                 )}
+                {p.active && outraModalidade && p.tipo_execucao === 'sincrono' && (
+                  <button
+                    onClick={() => setPresencial({ id: p.id, name: p.name, modalidade: p.modalidade, modalidade_detalhes: p.modalidade_detalhes })}
+                    className="flex size-11 shrink-0 items-center justify-center rounded-xl text-brand active:bg-slate-100"
+                    aria-label={`Registrar aula de ${p.name}`}
+                  >
+                    <Play size={18} />
+                  </button>
+                )}
                 {podeIniciar && (
                   <Link
                     to={`/alunos/${alunoId}/sessoes/nova?plano=${p.id}`}
@@ -330,7 +370,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       <BottomSheet open={novoEtapa === 'modelo'} onClose={fecharNovo} title="Escolher treino planejado">
         <ul className="max-h-96 space-y-1 overflow-y-auto">
           {modelos?.map((m) => {
-            const vazio = m.modelo_exercicios.length === 0
+            const outraMod = (m.modalidade ?? 'musculacao') !== 'musculacao'
+            const vazio = m.modelo_exercicios.length === 0 && !outraMod
             if (vazio) {
               return (
                 <li key={m.id}>
@@ -349,7 +390,11 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                   className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100 disabled:opacity-50"
                 >
                   <p className="font-medium">{m.name}</p>
-                  <p className="text-sm text-slate-500">{m.modelo_exercicios.length} exercícios</p>
+                  <p className="text-sm text-slate-500">
+                    {outraMod
+                      ? `${MODALIDADES_CONFIG[m.modalidade].emoji} ${MODALIDADES_CONFIG[m.modalidade].label}${m.tipo_execucao === 'assincrono' ? ' · assíncrono' : ''}`
+                      : `${m.modelo_exercicios.length} exercícios`}
+                  </p>
                 </button>
               </li>
             )
@@ -409,11 +454,14 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onModalidade={(m) => {
               setModalidadeNova(m)
               setValoresNovos({})
+              setLivresNovos([])
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
             valores={valoresNovos}
             onValores={setValoresNovos}
+            livres={livresNovos}
+            onLivres={setLivresNovos}
           />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={criarDoZero} className="w-full" disabled={criar.isPending}>
@@ -435,7 +483,14 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
           </button>
           <button
             onClick={() => {
-              if (menuPlano) salvarComoModelo.mutate({ id: menuPlano.id, name: menuPlano.name, notes: menuPlano.notes })
+              if (menuPlano) salvarComoModelo.mutate({
+                  id: menuPlano.id,
+                  name: menuPlano.name,
+                  notes: menuPlano.notes,
+                  modalidade: menuPlano.modalidade,
+                  tipo_execucao: menuPlano.tipo_execucao,
+                  modalidade_detalhes: menuPlano.modalidade_detalhes,
+                })
               setMenuPlano(null)
             }}
             className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
@@ -471,6 +526,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
           </Button>
         </div>
       </BottomSheet>
+
+      <ExecucaoPresencialSheet plano={presencial} alunoId={alunoId} onClose={() => setPresencial(null)} />
 
       <BottomSheet open={!!recemCriado} onClose={() => setRecemCriado(null)} title="Treino criado">
         <div className="space-y-3">
@@ -510,11 +567,14 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onModalidade={(m) => {
               setModalidadeEd(m)
               setValoresEd({})
+              setLivresEd([])
             }}
             tipoExecucao={execucaoEd}
             onTipoExecucao={setExecucaoEd}
             valores={valoresEd}
             onValores={setValoresEd}
+            livres={livresEd}
+            onLivres={setLivresEd}
           />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={salvarRenome} className="w-full" disabled={atualizar.isPending}>

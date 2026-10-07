@@ -17,6 +17,7 @@ import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/feature
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
 import { MODALIDADES_CONFIG } from '@/types/modalidades'
+import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
@@ -91,6 +92,7 @@ export function NovaSessaoPage() {
   const [conflito, setConflito] = useState<{ modelo: Modelo; planoExistente: Plano } | null>(null)
   const [avisoPendente, setAvisoPendente] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
   const [copiando, setCopiando] = useState(false)
   const [verificando, setVerificando] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
@@ -331,12 +333,25 @@ export function NovaSessaoPage() {
                 .join(', ')
               if (!temExercicios && p.modalidade && p.modalidade !== 'musculacao') {
                 // treino de outra modalidade (sem lista de exercícios): ainda não dá para executar pela sessão
+                if (p.tipo_execucao === 'sincrono') {
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setPresencial({ id: p.id, name: p.name, modalidade: p.modalidade, modalidade_detalhes: p.modalidade_detalhes })}
+                      className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50"
+                    >
+                      <p className="font-medium">{p.name}</p>
+                      <p className="text-sm text-slate-500">
+                        {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label} · registrar aula presencial
+                      </p>
+                    </button>
+                  )
+                }
                 return (
                   <div key={p.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
                     <p className="font-medium text-slate-500">{p.name}</p>
                     <p className="text-sm text-slate-500">
-                      {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label}
-                      {p.tipo_execucao === 'assincrono' ? ' · assíncrono (enviado ao aluno)' : ' · execução pela sessão em breve'}
+                      {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label} · assíncrono (enviado ao aluno pelo WhatsApp)
                     </p>
                   </div>
                 )
@@ -419,13 +434,25 @@ export function NovaSessaoPage() {
               )}
               <div className="space-y-2">
                 {modelosFiltrados?.map((m) => {
-                  const vazio = m.modelo_exercicios.length === 0
+                  const outraMod = (m.modalidade ?? 'musculacao') !== 'musculacao'
+                  const vazio = m.modelo_exercicios.length === 0 && !outraMod
                   const ordenados = [...m.modelo_exercicios].sort((a, b) => a.order_index - b.order_index)
                   const previa = ordenados
                     .slice(0, 3)
                     .map((i) => i.exercicio?.name)
                     .filter(Boolean)
                     .join(', ')
+                  if (outraMod) {
+                    // sem exercícios do app: não entra no pré-treino; se aplica ao aluno pela aba Treinos
+                    return (
+                      <div key={m.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
+                        <p className="font-medium text-slate-500">{m.name}</p>
+                        <p className="text-sm text-slate-500">
+                          {MODALIDADES_CONFIG[m.modalidade].emoji} {MODALIDADES_CONFIG[m.modalidade].label} · adicione ao aluno pela aba Treinos
+                        </p>
+                      </div>
+                    )
+                  }
                   if (vazio) {
                     return (
                       <Link
@@ -592,6 +619,8 @@ export function NovaSessaoPage() {
           </div>
         </>
       )}
+
+      <ExecucaoPresencialSheet plano={presencial} alunoId={id} onClose={() => setPresencial(null)} />
 
       <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
         <div className="space-y-3">

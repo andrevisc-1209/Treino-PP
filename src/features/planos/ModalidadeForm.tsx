@@ -1,6 +1,7 @@
+import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
-import { MODALIDADES, MODALIDADES_CONFIG, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
+import { MODALIDADES, MODALIDADES_CONFIG, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 
 const CLASSE_CAMPO = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand'
 
@@ -12,6 +13,8 @@ export function ModalidadeForm({
   onTipoExecucao,
   valores,
   onValores,
+  livres,
+  onLivres,
 }: {
   modalidade: ModalidadeTipo
   onModalidade: (m: ModalidadeTipo) => void
@@ -19,6 +22,9 @@ export function ModalidadeForm({
   onTipoExecucao: (t: TipoExecucao) => void
   valores: Record<string, string>
   onValores: (v: Record<string, string>) => void
+  /** exercícios livres (nome + instrução): só nas modalidades sem lista de exercícios do app */
+  livres: ExercicioLivre[]
+  onLivres: (v: ExercicioLivre[]) => void
 }) {
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
@@ -116,6 +122,46 @@ export function ModalidadeForm({
           )}
         </Field>
       ))}
+
+      {modalidade !== 'musculacao' && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Exercícios do treino (opcional)</p>
+          <p className="text-xs text-slate-500">Itens livres, como "Aquecimento 10 min" ou "Tiros de 400 m". O aluno marca cada um ao concluir.</p>
+          {livres.map((l, i) => (
+            <div key={i} className="space-y-2 rounded-xl border border-slate-200 p-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  aria-label={`Nome do exercício ${i + 1}`}
+                  placeholder="Nome do exercício"
+                  value={l.nome}
+                  onChange={(e) => onLivres(livres.map((x, j) => (j === i ? { ...x, nome: e.target.value } : x)))}
+                />
+                <button
+                  type="button"
+                  onClick={() => onLivres(livres.filter((_, j) => j !== i))}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
+                  aria-label={`Remover exercício ${i + 1}`}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <Input
+                aria-label={`Instrução do exercício ${i + 1}`}
+                placeholder="Descrição ou instrução (opcional)"
+                value={l.descricao ?? ''}
+                onChange={(e) => onLivres(livres.map((x, j) => (j === i ? { ...x, descricao: e.target.value } : x)))}
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => onLivres([...livres, { nome: '' }])}
+            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 text-sm font-medium text-slate-600 active:bg-slate-50"
+          >
+            <Plus size={16} /> Adicionar exercício
+          </button>
+        </div>
+      )}
     </div>
   )
 }
