@@ -93,3 +93,13 @@ A cidade dos personais vem do cadastro (`professionals.cidade` / `uf`, exibida c
 O agrupamento é por UF + cidade. Só quem se cadastrou depois da PR de Cidade/UF (ou preencheu em
 Configurações) aparece; os demais ficam sem cidade (`—`). `professional_config.pix_cidade` foi
 removida: o QR Pix também usa a cidade do cadastro.
+
+## Consentimentos LGPD (saúde) por personal
+
+Seção **"Consentimentos LGPD (saúde)"** do painel (entre "Personais" e "Cidades"): para cada personal, total de
+alunos e quantos estão **confirmados / pendentes / negados / não solicitados**, com busca por nome/e-mail do personal
+e filtro por status. Função: `treino.admin_consentimentos_saude()` (migration
+`20261017000000_admin_consentimentos_saude.sql`, `SECURITY DEFINER` + `is_admin()`).
+
+**Só números agregados.** Não há lista de alunos nessa seção (nome, canal, datas individuais): a regra do projeto é o
+admin não ver dados de alunos. A visão por aluno continua sendo do próprio personal, em Configurações → Consentimentos LGPD.
