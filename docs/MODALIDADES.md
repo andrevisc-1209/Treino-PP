@@ -50,3 +50,19 @@ Migration `20261021000000_execucao_treino_modalidade.sql` (rodar **antes** do me
 **exercícios livres** (`modalidade_detalhes.exercicios_livres`: lista de `{ nome, descricao? }`) existem em todas as
 modalidades exceto musculação. Aplicar um planejado a um aluno, duplicar e "Salvar como treino planejado" copiam
 modalidade, execução e exercícios livres.
+
+# Fase 3 — métricas e acompanhamento
+
+Migration `20261022000000_metricas_modalidade.sql`: índice `(professional_id, concluido_em desc)` e a função
+`treino.ultima_execucao_por_aluno()` (SECURITY INVOKER: o RLS de `execucoes_assincrono` continua valendo).
+
+- **Performance** (aba na ficha do aluno): seletor das modalidades com execução concluída (abre na mais recente), cards
+  (execuções, última, média da métrica, sequência de semanas), gráfico da métrica principal (últimas 20) e log das últimas 10
+  com observações e detalhes expansíveis. Métricas em `src/features/execucoes/metricas.ts` (lêem o formato real:
+  `detalhes_execucao.resultado.*`; musculação = séries feitas).
+- **Lista de alunos**: selo "🏃 há 2 dias" com a modalidade da última execução (só execuções registradas pelo link/aula
+  presencial; sessões de musculação não entram).
+- **Home**: "Atividade recente" (10 últimas execuções, com ícone de citação quando o aluno deixou observação).
+
+Decisão: **sem materialized view e sem `atualizar-metricas`**. Materialized view não tem RLS (qualquer role com SELECT leria os
+alunos de todos os personais) e o volume por personal é pequeno; agregar sob demanda com RLS é barato e nunca fica defasado.

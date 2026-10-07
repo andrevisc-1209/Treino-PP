@@ -9,6 +9,7 @@ import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
 import { ExecucoesTab } from '@/features/execucoes/ExecucoesTab'
+import { PerformanceTab } from '@/features/execucoes/PerformanceTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import {
@@ -29,7 +30,7 @@ import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { mapearErroSupabase } from '@/lib/erros'
 
-const TABS = ['Resumo', 'Treinos', 'Histórico', 'Execuções', 'Evolução'] as const
+const TABS = ['Resumo', 'Treinos', 'Histórico', 'Execuções', 'Performance', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
 
 function Badge({ children }: { children: React.ReactNode }) {
@@ -380,6 +381,8 @@ export function AlunoFichaPage() {
       {tab === 'Histórico' && <HistoricoTab alunoId={aluno.id} />}
 
       {tab === 'Execuções' && <ExecucoesTab alunoId={aluno.id} />}
+
+      {tab === 'Performance' && <PerformanceTab alunoId={aluno.id} />}
 
       {tab === 'Evolução' && <EvolucaoTab alunoId={aluno.id} />}
     </div>
