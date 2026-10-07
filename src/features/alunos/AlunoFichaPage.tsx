@@ -8,7 +8,6 @@ import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
-import { ExecucoesTab } from '@/features/execucoes/ExecucoesTab'
 import { PerformanceTab } from '@/features/execucoes/PerformanceTab'
 import { EvolucaoTab } from '@/features/evolucao/EvolucaoTab'
 import { useSessaoEmAndamento } from '@/features/sessoes/api'
@@ -30,7 +29,7 @@ import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { mapearErroSupabase } from '@/lib/erros'
 
-const TABS = ['Resumo', 'Treinos', 'Histórico', 'Execuções', 'Performance', 'Evolução'] as const
+const TABS = ['Resumo', 'Treinos', 'Histórico', 'Performance', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
 
 function Badge({ children }: { children: React.ReactNode }) {
@@ -315,7 +314,7 @@ export function AlunoFichaPage() {
             <h2 className="font-semibold">Dados</h2>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               <dt className="text-slate-500">Nascimento</dt>
-              <dd>{aluno.birth_date ?? '—'}</dd>
+              <dd>{formatarDataBR(aluno.birth_date)}</dd>
               <dt className="text-slate-500">Telefone</dt>
               <dd>{aluno.phone ?? '—'}</dd>
               <dt className="text-slate-500">E-mail</dt>
@@ -379,8 +378,6 @@ export function AlunoFichaPage() {
       {tab === 'Treinos' && <PlanosTab alunoId={aluno.id} />}
 
       {tab === 'Histórico' && <HistoricoTab alunoId={aluno.id} />}
-
-      {tab === 'Execuções' && <ExecucoesTab alunoId={aluno.id} />}
 
       {tab === 'Performance' && <PerformanceTab alunoId={aluno.id} />}
 

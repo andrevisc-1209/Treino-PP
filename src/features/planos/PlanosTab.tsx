@@ -8,17 +8,15 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
 import { mostrarErroGlobal } from '@/components/Toast'
-import { useAuth } from '@/features/auth/AuthProvider'
-import { usePerfilProfissional } from '@/features/auth/api'
-import { useAluno } from '@/features/alunos/api'
-import { gerarMensagemTreino } from '@/lib/mensagemTreino'
-import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import {
   MODALIDADES_CONFIG,
   montarDetalhes,
   resumoModalidade,
   valoresDoFormulario,
+  blocosDe,
   exerciciosLivresDe,
+  validarBlocos,
+  type BlocoTreino,
   type ExercicioLivre,
   type ModalidadeDetalhes,
   type ModalidadeTipo,
@@ -26,6 +24,7 @@ import {
 } from '@/types/modalidades'
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { ModalidadeForm } from './ModalidadeForm'
+import { useEnviarTreinoAoAluno } from './useEnviarTreino'
 import { itensIguais } from './compare'
 import { PlanoOrigemBadge } from './PlanoOrigemBadge'
 import {
@@ -38,8 +37,6 @@ import {
   useSalvarPlanoComoModelo,
   useSincronizarPlanoComModelo,
   buscarItensComparaveisPlano,
-  buscarExerciciosParaMensagem,
-  gerarLinkTreino,
   type Plano,
 } from './api'
 
@@ -54,9 +51,6 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const excluir = useExcluirPlano(alunoId)
   const salvarComoModelo = useSalvarPlanoComoModelo()
   const sincronizar = useSincronizarPlanoComModelo(alunoId)
-  const { session } = useAuth()
-  const { data: aluno } = useAluno(alunoId)
-  const { data: perfil } = usePerfilProfissional(session?.user.id)
 
   const [novoEtapa, setNovoEtapa] = useState<'escolha' | 'modelo' | 'nome' | null>(null)
   const [nomeNovo, setNomeNovo] = useState('')
@@ -64,6 +58,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [execucaoNova, setExecucaoNova] = useState<TipoExecucao>('sincrono')
   const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
+  const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
   // aula presencial de modalidade sem lista de exercícios: registra o resultado em uma folha
   const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
   // treino assíncrono acabou de ser criado: oferece enviar ao aluno
@@ -79,6 +74,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
   const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
+  const [blocosEd, setBlocosEd] = useState<BlocoTreino[]>([])
   const [erro, setErro] = useState<string | null>(null)
 
   const [menuPlano, setMenuPlano] = useState<Plano | null>(null)
@@ -112,41 +108,23 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setExecucaoNova('sincrono')
     setValoresNovos({})
     setLivresNovos([])
+    setBlocosNovos([])
     setErroNovo(null)
   }
 
-  // WhatsApp: a aba é aberta antes de esperar a rede, senão o navegador do celular bloqueia o pop-up.
-  const enviarAoAluno = async (p: { id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes }) => {
-    const janela = window.open('about:blank', '_blank')
-    try {
-      const [exercicios, link] = await Promise.all([
-        p.modalidade === 'musculacao' ? buscarExerciciosParaMensagem(p.id) : Promise.resolve(undefined),
-        gerarLinkTreino(p.id),
-      ])
-      const mensagem = gerarMensagemTreino({
-        nomeAluno: aluno?.name ?? 'aluno',
-        nomePersonal: perfil?.name || 'Seu personal',
-        nomeTreino: p.name,
-        modalidade: p.modalidade,
-        detalhes: p.detalhes,
-        exercicios,
-        link,
-      })
-      const url = linkWhatsAppComTexto(aluno?.phone, mensagem)
-      if (janela && !janela.closed) janela.location.href = url
-      else window.location.assign(url)
-    } catch (e) {
-      janela?.close()
-      mostrarErroGlobal((e as Error).message)
-    }
-  }
+  const enviarAoAluno = useEnviarTreinoAoAluno(alunoId)
 
   const criarDoZero = () => {
     if (!nomeNovo.trim()) {
       setErroNovo('Nome é obrigatório')
       return
     }
-    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos)
+    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos)
+    if (erroBlocos) {
+      setErroNovo(erroBlocos)
+      return
+    }
+    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos)
     const nomePlano = nomeNovo.trim()
     criar.mutate(
       { name: nomePlano, modalidade: modalidadeNova, tipo_execucao: execucaoNova, modalidade_detalhes: detalhes },
@@ -230,6 +208,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setExecucaoEd(p.tipo_execucao ?? 'sincrono')
     setValoresEd(valoresDoFormulario(p.modalidade_detalhes))
     setLivresEd(exerciciosLivresDe(p.modalidade_detalhes))
+    setBlocosEd(blocosDe(p.modalidade ?? 'musculacao', p.modalidade_detalhes))
     setErro(null)
     setRenomeando(p)
     setMenuPlano(null)
@@ -241,6 +220,11 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       return
     }
     if (!renomeando) return
+    const erroBlocos = validarBlocos(modalidadeEd, blocosEd)
+    if (erroBlocos) {
+      setErro(erroBlocos)
+      return
+    }
     atualizar.mutate(
       {
         id: renomeando.id,
@@ -248,7 +232,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         notes: notas.trim(),
         modalidade: modalidadeEd,
         tipo_execucao: execucaoEd,
-        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd),
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd),
       },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
@@ -455,6 +439,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setModalidadeNova(m)
               setValoresNovos({})
               setLivresNovos([])
+              setBlocosNovos([])
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
@@ -462,6 +447,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onValores={setValoresNovos}
             livres={livresNovos}
             onLivres={setLivresNovos}
+            blocos={blocosNovos}
+            onBlocos={setBlocosNovos}
           />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={criarDoZero} className="w-full" disabled={criar.isPending}>
@@ -568,6 +555,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setModalidadeEd(m)
               setValoresEd({})
               setLivresEd([])
+              setBlocosEd([])
             }}
             tipoExecucao={execucaoEd}
             onTipoExecucao={setExecucaoEd}
@@ -575,6 +563,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onValores={setValoresEd}
             livres={livresEd}
             onLivres={setLivresEd}
+            blocos={blocosEd}
+            onBlocos={setBlocosEd}
           />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={salvarRenome} className="w-full" disabled={atualizar.isPending}>

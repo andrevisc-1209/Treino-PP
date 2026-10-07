@@ -80,3 +80,18 @@ Migration `20261023000000_unificacao_historico_notificacoes.sql`.
   primeiro), abre a ficha do aluno na aba Performance e tem "Marcar todas como lidas". **Realtime**: assinatura no layout
   autenticado (`useNotificacoesRealtime`) atualiza o sino e mostra um toast. A observação do aluno **não** vai no payload (texto
   livre, pode citar dor/lesão): é lida da execução quando o personal toca no ícone de citação.
+
+# Ajustes de UX (pós-Fase 3)
+
+- **Abas da ficha**: Resumo · Treinos · Histórico · Performance · Evolução. A aba **Histórico** unifica sessões presenciais,
+  aulas presenciais de outras modalidades e treinos feitos pelo aluno pelo link (🏋️ presencial / 📤 assíncrono), do mais recente
+  ao mais antigo; execuções que vieram de uma sessão de musculação (`sessao_id`) não aparecem em duplicidade.
+- **Datas** no padrão dd/mm/aaaa na ficha (`formatarDataBR`).
+- **Iniciar treino de outra modalidade** (escolha de treino da Sessão): passo "Sessão de {modalidade}" com Presencial/Assíncrono
+  (padrão = o do treino, troca vale só para essa vez). Presencial abre o registro da aula; Assíncrono envia pelo WhatsApp.
+  Treino planejado escolhido é criado no aluno ao iniciar (ou reaproveita a cópia existente). Musculação não muda.
+- **Blocos de treino** (natação, corrida, ciclismo, remo, funcional): `modalidade_detalhes.blocos` = lista de
+  `{ id, nome, descricao, distancia? (m), duracao?, intensidade?, observacoes? }` (mínimo 1, nome e descrição obrigatórios,
+  ↑↓ para reordenar). Aparecem numerados no app, na mensagem de WhatsApp e na página pública `/treino/:token`, onde cada bloco
+  vira um item para o aluno marcar. Treinos antigos (campos únicos) aparecem como um bloco "Treino" e viram blocos ao editar.
+  Yoga, pilates, boxe, futebol, futevôlei e escalada seguem com campos simples + "Observações gerais".

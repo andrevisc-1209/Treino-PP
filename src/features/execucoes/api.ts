@@ -7,6 +7,8 @@ export type Execucao = {
   id: string
   plano_id: string | null
   plano_nome: string | null
+  /** preenchido nas execuções que vieram de uma sessão presencial de musculação (já listada como sessão) */
+  sessao_id: string | null
   modalidade: ModalidadeTipo
   aluno_id: string
   origem: 'link' | 'presencial'

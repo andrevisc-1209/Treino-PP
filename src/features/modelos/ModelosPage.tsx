@@ -10,7 +10,10 @@ import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
 import { ModalidadeForm } from '@/features/planos/ModalidadeForm'
 import {
+  blocosDe,
   exerciciosLivresDe,
+  validarBlocos,
+  type BlocoTreino,
   MODALIDADES_CONFIG,
   montarDetalhes,
   resumoModalidade,
@@ -36,10 +39,12 @@ export function ModelosPage() {
   const [execucaoNova, setExecucaoNova] = useState<TipoExecucao>('sincrono')
   const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
+  const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
   const [modalidadeEd, setModalidadeEd] = useState<ModalidadeTipo>('musculacao')
   const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
   const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
+  const [blocosEd, setBlocosEd] = useState<BlocoTreino[]>([])
 
   const [renomeando, setRenomeando] = useState<Modelo | null>(null)
   const [nome, setNome] = useState('')
@@ -76,6 +81,7 @@ export function ModelosPage() {
     setExecucaoNova('sincrono')
     setValoresNovos({})
     setLivresNovos([])
+    setBlocosNovos([])
     setErroNovo(null)
     setCriando(true)
   }
@@ -85,12 +91,17 @@ export function ModelosPage() {
       setErroNovo('Nome é obrigatório')
       return
     }
+    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos)
+    if (erroBlocos) {
+      setErroNovo(erroBlocos)
+      return
+    }
     criar.mutate(
       {
         name: nomeNovo.trim(),
         modalidade: modalidadeNova,
         tipo_execucao: execucaoNova,
-        modalidade_detalhes: montarDetalhes(modalidadeNova, valoresNovos, livresNovos),
+        modalidade_detalhes: montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos),
       },
       {
         onSuccess: (id) => {
@@ -110,6 +121,7 @@ export function ModelosPage() {
     setExecucaoEd(m.tipo_execucao ?? 'sincrono')
     setValoresEd(valoresDoFormulario(m.modalidade_detalhes))
     setLivresEd(exerciciosLivresDe(m.modalidade_detalhes))
+    setBlocosEd(blocosDe(m.modalidade ?? 'musculacao', m.modalidade_detalhes))
     setErro(null)
     setRenomeando(m)
     setMenuAberto(null)
@@ -121,6 +133,11 @@ export function ModelosPage() {
       return
     }
     if (!renomeando) return
+    const erroBlocos = validarBlocos(modalidadeEd, blocosEd)
+    if (erroBlocos) {
+      setErro(erroBlocos)
+      return
+    }
     atualizar.mutate(
       {
         id: renomeando.id,
@@ -128,7 +145,7 @@ export function ModelosPage() {
         notes: notas.trim(),
         modalidade: modalidadeEd,
         tipo_execucao: execucaoEd,
-        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd),
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd),
       },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
@@ -225,6 +242,7 @@ export function ModelosPage() {
               setModalidadeNova(mo)
               setValoresNovos({})
               setLivresNovos([])
+              setBlocosNovos([])
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
@@ -232,6 +250,8 @@ export function ModelosPage() {
             onValores={setValoresNovos}
             livres={livresNovos}
             onLivres={setLivresNovos}
+            blocos={blocosNovos}
+            onBlocos={setBlocosNovos}
           />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={confirmarNovo} className="w-full" disabled={criar.isPending}>
@@ -291,6 +311,7 @@ export function ModelosPage() {
               setModalidadeEd(mo)
               setValoresEd({})
               setLivresEd([])
+              setBlocosEd([])
             }}
             tipoExecucao={execucaoEd}
             onTipoExecucao={setExecucaoEd}
@@ -298,6 +319,8 @@ export function ModelosPage() {
             onValores={setValoresEd}
             livres={livresEd}
             onLivres={setLivresEd}
+            blocos={blocosEd}
+            onBlocos={setBlocosEd}
           />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={salvarRenome} className="w-full" disabled={atualizar.isPending}>

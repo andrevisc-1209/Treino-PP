@@ -1,4 +1,4 @@
-import { exerciciosLivresDe, RESULTADO_CAMPOS, type DetalhesExecucao, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { itensChecklist, RESULTADO_CAMPOS, type DetalhesExecucao, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 type Outra = Exclude<ModalidadeTipo, 'musculacao'>
 
@@ -19,7 +19,7 @@ export function detalhesDoResultado(modalidade: Outra, detalhes: ModalidadeDetal
   }
   return {
     resultado,
-    exercicios_livres: exerciciosLivresDe(detalhes).map((l, i) => ({ nome: l.nome, feito: !!e.feitos[i] })),
+    exercicios_livres: itensChecklist(modalidade, detalhes).map((l, i) => ({ nome: l.nome, feito: !!e.feitos[i] })),
   }
 }
 

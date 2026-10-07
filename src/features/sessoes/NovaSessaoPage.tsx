@@ -16,7 +16,9 @@ import { itensIguais } from '@/features/planos/compare'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
-import { MODALIDADES_CONFIG } from '@/types/modalidades'
+import { MODALIDADES_CONFIG, type TipoExecucao } from '@/types/modalidades'
+import { useEnviarTreinoAoAluno } from '@/features/planos/useEnviarTreino'
+import { EscolhaSessaoSheet } from './EscolhaSessaoSheet'
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
@@ -93,6 +95,10 @@ export function NovaSessaoPage() {
   const [avisoPendente, setAvisoPendente] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
+  // treino de outra modalidade escolhido (do aluno ou planejado): pergunta presencial/assíncrono antes de iniciar
+  const [escolhaSessao, setEscolhaSessao] = useState<{ plano: Plano } | { modelo: Modelo } | null>(null)
+  const [abrindoOutra, setAbrindoOutra] = useState(false)
+  const enviarAoAluno = useEnviarTreinoAoAluno(id ?? '')
   const [copiando, setCopiando] = useState(false)
   const [verificando, setVerificando] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
@@ -196,6 +202,51 @@ export function NovaSessaoPage() {
       setVerificando(false)
       setErro((e as Error).message)
     }
+  }
+
+  /** O treino (do aluno) por trás da escolha: se veio de um treino planejado, usa a cópia que o aluno já tem ou cria uma. */
+  const obterPlanoEscolhido = async (): Promise<PlanoParaExecucao> => {
+    if (!escolhaSessao) throw new Error('Nenhum treino escolhido')
+    if ('plano' in escolhaSessao) {
+      const p = escolhaSessao.plano
+      return { id: p.id, name: p.name, modalidade: p.modalidade, modalidade_detalhes: p.modalidade_detalhes }
+    }
+    const m = escolhaSessao.modelo
+    const existente = planos?.find((p) => p.modelo_origem_id === m.id)
+    const planoId =
+      existente?.id ??
+      (await criarDeModelo.mutateAsync({
+        id: m.id,
+        name: m.name,
+        notes: m.notes,
+        modalidade: m.modalidade,
+        tipo_execucao: m.tipo_execucao,
+        modalidade_detalhes: m.modalidade_detalhes,
+      }))
+    return { id: planoId, name: m.name, modalidade: m.modalidade, modalidade_detalhes: m.modalidade_detalhes }
+  }
+
+  const iniciarOutraModalidade = (tipo: TipoExecucao) => {
+    if (tipo === 'assincrono') {
+      // enviarAoAluno abre a aba do WhatsApp já no clique (antes de qualquer espera)
+      setAbrindoOutra(true)
+      enviarAoAluno(async () => {
+        const p = await obterPlanoEscolhido()
+        return { id: p.id, name: p.name, modalidade: p.modalidade, detalhes: p.modalidade_detalhes }
+      }).finally(() => {
+        setAbrindoOutra(false)
+        setEscolhaSessao(null)
+      })
+      return
+    }
+    setAbrindoOutra(true)
+    obterPlanoEscolhido()
+      .then((p) => {
+        setEscolhaSessao(null)
+        setPresencial(p)
+      })
+      .catch((e) => setErro((e as Error).message))
+      .finally(() => setAbrindoOutra(false))
   }
 
   const ativarEIniciar = (p: Plano) => {
@@ -332,28 +383,19 @@ export function NovaSessaoPage() {
                 .filter(Boolean)
                 .join(', ')
               if (!temExercicios && p.modalidade && p.modalidade !== 'musculacao') {
-                // treino de outra modalidade (sem lista de exercícios): ainda não dá para executar pela sessão
-                if (p.tipo_execucao === 'sincrono') {
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => setPresencial({ id: p.id, name: p.name, modalidade: p.modalidade, modalidade_detalhes: p.modalidade_detalhes })}
-                      className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50"
-                    >
-                      <p className="font-medium">{p.name}</p>
-                      <p className="text-sm text-slate-500">
-                        {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label} · registrar aula presencial
-                      </p>
-                    </button>
-                  )
-                }
+                // treino de outra modalidade (sem lista de exercícios): pergunta presencial/assíncrono antes de iniciar
                 return (
-                  <div key={p.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
-                    <p className="font-medium text-slate-500">{p.name}</p>
+                  <button
+                    key={p.id}
+                    onClick={() => setEscolhaSessao({ plano: p })}
+                    className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50"
+                  >
+                    <p className="font-medium">{p.name}</p>
                     <p className="text-sm text-slate-500">
-                      {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label} · assíncrono (enviado ao aluno pelo WhatsApp)
+                      {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label}
+                      {p.tipo_execucao === 'assincrono' ? ' · assíncrono' : ' · presencial'}
                     </p>
-                  </div>
+                  </button>
                 )
               }
               if (!temExercicios) {
@@ -443,14 +485,19 @@ export function NovaSessaoPage() {
                     .filter(Boolean)
                     .join(', ')
                   if (outraMod) {
-                    // sem exercícios do app: não entra no pré-treino; se aplica ao aluno pela aba Treinos
+                    // sem exercícios do app: pergunta presencial/assíncrono; o treino é criado no aluno ao iniciar
                     return (
-                      <div key={m.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
-                        <p className="font-medium text-slate-500">{m.name}</p>
+                      <button
+                        key={m.id}
+                        onClick={() => setEscolhaSessao({ modelo: m })}
+                        className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50"
+                      >
+                        <p className="font-medium">{m.name}</p>
                         <p className="text-sm text-slate-500">
-                          {MODALIDADES_CONFIG[m.modalidade].emoji} {MODALIDADES_CONFIG[m.modalidade].label} · adicione ao aluno pela aba Treinos
+                          {MODALIDADES_CONFIG[m.modalidade].emoji} {MODALIDADES_CONFIG[m.modalidade].label}
+                          {m.tipo_execucao === 'assincrono' ? ' · assíncrono' : ' · presencial'}
                         </p>
-                      </div>
+                      </button>
                     )
                   }
                   if (vazio) {
@@ -619,6 +666,19 @@ export function NovaSessaoPage() {
           </div>
         </>
       )}
+
+      <EscolhaSessaoSheet
+        treino={
+          escolhaSessao
+            ? 'plano' in escolhaSessao
+              ? { nome: escolhaSessao.plano.name, modalidade: escolhaSessao.plano.modalidade, tipoExecucao: escolhaSessao.plano.tipo_execucao }
+              : { nome: escolhaSessao.modelo.name, modalidade: escolhaSessao.modelo.modalidade, tipoExecucao: escolhaSessao.modelo.tipo_execucao }
+            : null
+        }
+        carregando={abrindoOutra}
+        onCancelar={() => setEscolhaSessao(null)}
+        onIniciar={iniciarOutraModalidade}
+      />
 
       <ExecucaoPresencialSheet plano={presencial} alunoId={id} onClose={() => setPresencial(null)} />
 
