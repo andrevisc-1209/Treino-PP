@@ -2,12 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { ItemInput } from '@/features/planos/api'
 import type { ItemComparavel } from '@/features/planos/compare'
+import type { ModalidadeDetalhes, ModalidadeTipo, TipoExecucao } from '@/types/modalidades'
 
 export type Modelo = {
   id: string
   professional_id: string
   name: string
   notes: string | null
+  modalidade: ModalidadeTipo
+  tipo_execucao: TipoExecucao
+  modalidade_detalhes: ModalidadeDetalhes
   modelo_exercicios: { order_index: number; exercicio: { name: string } | null }[]
 }
 
@@ -69,12 +73,19 @@ export function useModeloExercicios(modeloId: string | undefined) {
 export function useCriarModelo() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { name: string; notes?: string }) => {
+    mutationFn: async (input: { name: string; notes?: string; modalidade?: ModalidadeTipo; tipo_execucao?: TipoExecucao; modalidade_detalhes?: ModalidadeDetalhes }) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
       const { data, error } = await supabase
         .from('modelos')
-        .insert({ professional_id: u.user.id, name: input.name, notes: input.notes || null })
+        .insert({
+          professional_id: u.user.id,
+          name: input.name,
+          notes: input.notes || null,
+          modalidade: input.modalidade ?? 'musculacao',
+          tipo_execucao: input.tipo_execucao ?? 'sincrono',
+          modalidade_detalhes: input.modalidade_detalhes ?? {},
+        })
         .select('id')
         .single()
       if (error) throw error
@@ -87,7 +98,17 @@ export function useCriarModelo() {
 export function useAtualizarModelo() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, ...input }: { id: string; name?: string; notes?: string | null }) => {
+    mutationFn: async ({
+      id,
+      ...input
+    }: {
+      id: string
+      name?: string
+      notes?: string | null
+      modalidade?: ModalidadeTipo
+      tipo_execucao?: TipoExecucao
+      modalidade_detalhes?: ModalidadeDetalhes
+    }) => {
       const { error } = await supabase.from('modelos').update(input).eq('id', id)
       if (error) throw error
     },
@@ -118,7 +139,14 @@ export function useDuplicarModelo() {
 
       const { data: novo, error: errNovo } = await supabase
         .from('modelos')
-        .insert({ professional_id: u.user.id, name: novoNome, notes: modelo.notes })
+        .insert({
+          professional_id: u.user.id,
+          name: novoNome,
+          notes: modelo.notes,
+          modalidade: modelo.modalidade,
+          tipo_execucao: modelo.tipo_execucao,
+          modalidade_detalhes: modelo.modalidade_detalhes,
+        })
         .select('id')
         .single()
       if (errNovo) throw errNovo

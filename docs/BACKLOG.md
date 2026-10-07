@@ -443,6 +443,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 17 | Painel de consentimentos LGPD (Configurações → Consentimentos LGPD) + canal e histórico de envios — `docs/CONSENTIMENTO_SAUDE.md` | ✅ em revisão — **rodar migration `20261016…` antes do merge** |
 | 18 | Admin: consentimentos LGPD agregados por personal — `docs/ADMIN.md` | ✅ em revisão — **rodar migration `20261017…` antes do merge** |
 | 19 | Treino multimodalidade — Fase 1 (modalidade, presencial/assíncrono, envio por WhatsApp) — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261020…` antes do merge** |
+| 20 | Treino multimodalidade — Fase 2 (link público do aluno, check-off por modalidade, aba Execuções, planejados multimodalidade) — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261021…` antes do merge** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

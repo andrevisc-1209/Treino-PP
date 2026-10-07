@@ -259,13 +259,30 @@ export function useExcluirPlano(alunoId: string) {
 export function useCriarPlanoDeModelo(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (modelo: { id: string; name: string; notes: string | null }) => {
+    mutationFn: async (modelo: {
+      id: string
+      name: string
+      notes: string | null
+      modalidade?: ModalidadeTipo
+      tipo_execucao?: TipoExecucao
+      modalidade_detalhes?: ModalidadeDetalhes
+    }) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
 
+      // modalidade, tipo de execução e exercícios livres do treino planejado vão junto para o treino do aluno
       const { data: novo, error: errNovo } = await supabase
         .from('planos')
-        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: modelo.name, notes: modelo.notes, modelo_origem_id: modelo.id })
+        .insert({
+          aluno_id: alunoId,
+          professional_id: u.user.id,
+          name: modelo.name,
+          notes: modelo.notes,
+          modelo_origem_id: modelo.id,
+          modalidade: modelo.modalidade ?? 'musculacao',
+          tipo_execucao: modelo.tipo_execucao ?? 'sincrono',
+          modalidade_detalhes: modelo.modalidade_detalhes ?? {},
+        })
         .select('id')
         .single()
       if (errNovo) throw errNovo
@@ -357,13 +374,27 @@ export function useSincronizarPlanoComModelo(alunoId?: string) {
 export function useSalvarPlanoComoModelo() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (plano: { id: string; name: string; notes: string | null }) => {
+    mutationFn: async (plano: {
+      id: string
+      name: string
+      notes: string | null
+      modalidade?: ModalidadeTipo
+      tipo_execucao?: TipoExecucao
+      modalidade_detalhes?: ModalidadeDetalhes
+    }) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
 
       const { data: novo, error: errNovo } = await supabase
         .from('modelos')
-        .insert({ professional_id: u.user.id, name: plano.name, notes: plano.notes })
+        .insert({
+          professional_id: u.user.id,
+          name: plano.name,
+          notes: plano.notes,
+          modalidade: plano.modalidade ?? 'musculacao',
+          tipo_execucao: plano.tipo_execucao ?? 'sincrono',
+          modalidade_detalhes: plano.modalidade_detalhes ?? {},
+        })
         .select('id')
         .single()
       if (errNovo) throw errNovo
@@ -409,4 +440,23 @@ export async function buscarExerciciosParaMensagem(planoId: string): Promise<{ n
     series: i.sets,
     repeticoes: i.reps,
   }))
+}
+
+/** Link público (7 dias, uso único) para o aluno ver o treino e registrar a execução sem conta. */
+export async function gerarLinkTreino(planoId: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke<{ link: string }>('gerar-link-treino', { body: { plano_id: planoId } })
+  if (error || !data?.link) {
+    let msg = 'Não foi possível gerar o link do treino.'
+    const contexto = (error as { context?: Response } | null)?.context
+    if (contexto && typeof contexto.json === 'function') {
+      try {
+        const corpo = await contexto.json()
+        if (typeof corpo?.error === 'string') msg = corpo.error
+      } catch {
+        // corpo ausente ou não-JSON
+      }
+    }
+    throw new Error(msg)
+  }
+  return data.link
 }

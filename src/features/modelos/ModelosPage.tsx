@@ -8,6 +8,17 @@ import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
+import { ModalidadeForm } from '@/features/planos/ModalidadeForm'
+import {
+  exerciciosLivresDe,
+  MODALIDADES_CONFIG,
+  montarDetalhes,
+  resumoModalidade,
+  valoresDoFormulario,
+  type ExercicioLivre,
+  type ModalidadeTipo,
+  type TipoExecucao,
+} from '@/types/modalidades'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
 
 export function ModelosPage() {
@@ -21,6 +32,14 @@ export function ModelosPage() {
   const [criando, setCriando] = useState(false)
   const [nomeNovo, setNomeNovo] = useState('')
   const [erroNovo, setErroNovo] = useState<string | null>(null)
+  const [modalidadeNova, setModalidadeNova] = useState<ModalidadeTipo>('musculacao')
+  const [execucaoNova, setExecucaoNova] = useState<TipoExecucao>('sincrono')
+  const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
+  const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
+  const [modalidadeEd, setModalidadeEd] = useState<ModalidadeTipo>('musculacao')
+  const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
+  const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
+  const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
 
   const [renomeando, setRenomeando] = useState<Modelo | null>(null)
   const [nome, setNome] = useState('')
@@ -53,6 +72,10 @@ export function ModelosPage() {
 
   const abrirNovo = () => {
     setNomeNovo('')
+    setModalidadeNova('musculacao')
+    setExecucaoNova('sincrono')
+    setValoresNovos({})
+    setLivresNovos([])
     setErroNovo(null)
     setCriando(true)
   }
@@ -63,11 +86,17 @@ export function ModelosPage() {
       return
     }
     criar.mutate(
-      { name: nomeNovo.trim() },
+      {
+        name: nomeNovo.trim(),
+        modalidade: modalidadeNova,
+        tipo_execucao: execucaoNova,
+        modalidade_detalhes: montarDetalhes(modalidadeNova, valoresNovos, livresNovos),
+      },
       {
         onSuccess: (id) => {
           setCriando(false)
-          navigate(`/meus-treinos/planejados/${id}?adicionar=1`)
+          // musculação segue para a escolha de exercícios; as outras modalidades não têm lista de exercícios do app
+          if (modalidadeNova === 'musculacao') navigate(`/meus-treinos/planejados/${id}?adicionar=1`)
         },
         onError: (e) => setErroNovo((e as Error).message),
       },
@@ -77,6 +106,10 @@ export function ModelosPage() {
   const abrirEditar = (m: Modelo) => {
     setNome(m.name)
     setNotas(m.notes ?? '')
+    setModalidadeEd(m.modalidade ?? 'musculacao')
+    setExecucaoEd(m.tipo_execucao ?? 'sincrono')
+    setValoresEd(valoresDoFormulario(m.modalidade_detalhes))
+    setLivresEd(exerciciosLivresDe(m.modalidade_detalhes))
     setErro(null)
     setRenomeando(m)
     setMenuAberto(null)
@@ -89,7 +122,14 @@ export function ModelosPage() {
     }
     if (!renomeando) return
     atualizar.mutate(
-      { id: renomeando.id, name: nome.trim(), notes: notas.trim() },
+      {
+        id: renomeando.id,
+        name: nome.trim(),
+        notes: notas.trim(),
+        modalidade: modalidadeEd,
+        tipo_execucao: execucaoEd,
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd),
+      },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
   }
@@ -129,13 +169,29 @@ export function ModelosPage() {
             .map((i) => i.exercicio?.name)
             .filter(Boolean)
             .join(', ')
-          const vazio = m.modelo_exercicios.length === 0
+          const outraMod = (m.modalidade ?? 'musculacao') !== 'musculacao'
+          const cfgMod = MODALIDADES_CONFIG[m.modalidade ?? 'musculacao']
+          const metrica = resumoModalidade(m.modalidade ?? 'musculacao', m.modalidade_detalhes)
+          const nLivres = exerciciosLivresDe(m.modalidade_detalhes).length
+          const vazio = m.modelo_exercicios.length === 0 && !outraMod
           return (
             <li key={m.id} className="rounded-2xl bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Link to={`/meus-treinos/planejados/${m.id}`} className="min-w-0 flex-1">
                   <p className="font-medium">{m.name}</p>
-                  {vazio ? (
+                  <p className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      {cfgMod.emoji} {cfgMod.label}
+                    </span>
+                    {m.tipo_execucao === 'assincrono' && (
+                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">📤 Assíncrono</span>
+                    )}
+                  </p>
+                  {outraMod ? (
+                    <p className="text-sm text-slate-500">
+                      {[metrica, nLivres > 0 ? `${nLivres} ${nLivres === 1 ? 'exercício' : 'exercícios'}` : null].filter(Boolean).join(' · ') || 'Sem detalhes'}
+                    </p>
+                  ) : vazio ? (
                     <p className="text-sm font-medium text-brand-hover">Nenhum exercício · toque para adicionar</p>
                   ) : (
                     <p className="text-sm text-slate-500">
@@ -163,9 +219,23 @@ export function ModelosPage() {
           <Field label="Nome">
             <Input value={nomeNovo} onChange={(e) => setNomeNovo(e.target.value)} autoFocus placeholder="Full body A" />
           </Field>
+          <ModalidadeForm
+            modalidade={modalidadeNova}
+            onModalidade={(mo) => {
+              setModalidadeNova(mo)
+              setValoresNovos({})
+              setLivresNovos([])
+            }}
+            tipoExecucao={execucaoNova}
+            onTipoExecucao={setExecucaoNova}
+            valores={valoresNovos}
+            onValores={setValoresNovos}
+            livres={livresNovos}
+            onLivres={setLivresNovos}
+          />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={confirmarNovo} className="w-full" disabled={criar.isPending}>
-            Criar e adicionar exercícios
+            {modalidadeNova === 'musculacao' ? 'Criar e adicionar exercícios' : 'Criar treino planejado'}
           </Button>
         </div>
       </BottomSheet>
@@ -215,6 +285,20 @@ export function ModelosPage() {
               onChange={(e) => setNotas(e.target.value)}
             />
           </Field>
+          <ModalidadeForm
+            modalidade={modalidadeEd}
+            onModalidade={(mo) => {
+              setModalidadeEd(mo)
+              setValoresEd({})
+              setLivresEd([])
+            }}
+            tipoExecucao={execucaoEd}
+            onTipoExecucao={setExecucaoEd}
+            valores={valoresEd}
+            onValores={setValoresEd}
+            livres={livresEd}
+            onLivres={setLivresEd}
+          />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={salvarRenome} className="w-full" disabled={atualizar.isPending}>
             Salvar

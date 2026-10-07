@@ -14,6 +14,7 @@ import { ModelosPage } from '@/features/modelos/ModelosPage'
 import { ModeloEditorPage } from '@/features/modelos/ModeloEditorPage'
 import { PlanoEditorPage } from '@/features/planos/PlanoEditorPage'
 import { ConsentimentoSaudePage } from '@/features/alunos/ConsentimentoSaudePage'
+import { TreinoPublicoPage } from '@/features/execucoes/TreinoPublicoPage'
 import { ConsentimentosPage } from '@/features/consentimentos/ConsentimentosPage'
 import { RetornoCheckoutPage } from '@/features/assinatura/RetornoCheckoutPage'
 import { NovaSessaoPage } from '@/features/sessoes/NovaSessaoPage'
@@ -42,6 +43,7 @@ export default function App() {
             trial/assinatura, sem bottom nav de agenda/alunos). A própria
             AdminPage faz o guard de sessão + is_admin. */}
         <Route path="/consentimento/saude" element={<ConsentimentoSaudePage />} />
+        <Route path="/treino/:token" element={<TreinoPublicoPage />} />
         <Route path="/checkout/success" element={<RetornoCheckoutPage resultado="success" />} />
         <Route path="/checkout/failure" element={<RetornoCheckoutPage resultado="failure" />} />
         <Route path="/checkout/pending" element={<RetornoCheckoutPage resultado="pending" />} />

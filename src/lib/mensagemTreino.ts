@@ -1,4 +1,4 @@
-import { linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { exerciciosLivresDe, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 /**
  * Mensagem de WhatsApp com o treino para o aluno fazer por conta (execução assíncrona).
@@ -12,6 +12,8 @@ export function gerarMensagemTreino(args: {
   detalhes: ModalidadeDetalhes | null | undefined
   /** musculação: exercícios do treino */
   exercicios?: { nome: string; series: number; repeticoes: string }[]
+  /** link da página pública para o aluno registrar a execução */
+  link?: string
 }): string {
   const cfg = MODALIDADES_CONFIG[args.modalidade]
   const primeiroNome = args.nomeAluno.trim().split(/\s+/)[0] || args.nomeAluno
@@ -24,6 +26,11 @@ export function gerarMensagemTreino(args: {
   if (args.exercicios && args.exercicios.length > 0) {
     blocos.push(`📋 Exercícios:\n${args.exercicios.map((e, i) => `${i + 1}. ${e.nome} — ${e.series}x${e.repeticoes}`).join('\n')}`)
   }
-  blocos.push(`Qualquer dúvida, é só me chamar!\n— ${args.nomePersonal}`)
+  const livres = exerciciosLivresDe(args.detalhes)
+  if (livres.length > 0) {
+    blocos.push(`📋 Exercícios:\n${livres.map((l, i) => `${i + 1}. ${l.nome}${l.descricao ? ` — ${l.descricao}` : ''}`).join('\n')}`)
+  }
+  if (args.link) blocos.push(`Para registrar sua execução, acesse:\n🔗 ${args.link}`)
+  blocos.push(`Qualquer dúvida, me chame!\n— ${args.nomePersonal}`)
   return blocos.join('\n\n')
 }
