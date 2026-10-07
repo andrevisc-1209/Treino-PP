@@ -41,3 +41,14 @@ app libera (ou bloqueia) os campos de lesão, cirurgia e medicamentos.
    supabase functions deploy enviar-consentimento-saude --project-ref avgrnvpvjhymsrnapfgu
    supabase functions deploy confirmar-consentimento-saude --no-verify-jwt --project-ref avgrnvpvjhymsrnapfgu
    ```
+
+## Canais e reenvio (v2)
+
+- **Canal** (`canal: 'email' | 'whatsapp'`): no WhatsApp a function gera o token, grava `pendente` e devolve
+  `{ link, nome_aluno, nome_personal }` — não envia nada. O app abre `wa.me/<telefone do aluno>?text=…` (ou
+  `wa.me/?text=…` sem telefone válido) com a mensagem pronta (`src/lib/consentimentoMensagem.ts`; sem dado de saúde).
+  Intervalo de 60 s entre envios vale para os dois canais.
+- **Reenvio** (status `pendente` ou `negado`) exige `motivo_reenvio` (lista fixa; "Outros" exige
+  `motivo_reenvio_livre`). O motivo fica no novo token (`treino.consentimento_saude_tokens`) como trilha de auditoria.
+  Migration: `20261015000000_add_motivo_reenvio.sql`.
+- Remetente do e-mail: `Treino PP <noreply@personalperto.com.br>`; logo sobre fundo branco no cabeçalho.

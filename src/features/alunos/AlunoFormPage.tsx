@@ -11,8 +11,9 @@ import { cn, formatarTelefone, idade } from '@/lib/utils'
 import { dataSP } from '@/lib/datas'
 import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
-import { enviarConsentimentoSaude, useAluno, useAlunos, useConsentimentoAtivo, useConsentimentoSaude, usePesos, useSalvarAluno } from './api'
+import { enviarConsentimentoSaude, useAluno, useAlunos, useConsentimentoAtivo, useConsentimentoSaude, usePesos, useSalvarAluno, type EnvioConsentimento } from './api'
 import { ConsentimentoSaudeBloco } from './ConsentimentoSaudeBloco'
+import { linkWhatsappConsentimento, montarMensagemConsentimento } from '@/lib/consentimentoMensagem'
 import { LocaisTreinoBlock } from './LocaisTreinoBlock'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
 import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
@@ -321,34 +322,60 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     navigate(`/alunos/${alunoId}`)
   }
 
-  // Etapa Saúde: pede o consentimento por e-mail. No cadastro novo o aluno ainda não existe — salva primeiro
-  // (o e-mail é opcional para cadastrar, obrigatório só para enviar) e segue na edição, já na etapa 3.
-  const enviarSolicitacao = async (email: string) => {
-    if (mode === 'edit' && id) {
-      await enviarConsentimentoSaude(id, email)
-      qc.invalidateQueries({ queryKey: ['consentimento-saude', id] })
-      return
-    }
-    let erroEnvio: Error | null = null
-    let novoId: string | null = null
-    const salvou = await trigger(STEP1_FIELDS as unknown as (keyof FormInput)[])
-    if (!salvou) {
-      setEtapa(1)
-      throw new Error('Complete os dados do aluno (etapa 1) antes de enviar a solicitação.')
-    }
-    await handleSubmit(async (f) => {
-      novoId = await persistir({ ...f, email })
-      try {
-        await enviarConsentimentoSaude(novoId, email)
-      } catch (e) {
-        erroEnvio = e as Error
-      }
-    })()
-    if (!novoId) throw new Error('Não foi possível salvar o aluno. Confira os dados e tente de novo.')
-    navigate(`/alunos/${novoId}/editar?etapa=3`, { replace: true })
-    if (erroEnvio) mostrarErroGlobal(`Aluno salvo, mas o e-mail não foi enviado: ${(erroEnvio as Error).message}`)
+  // WhatsApp: a function só gera o link; abrimos o wa.me com a mensagem pronta. A aba é aberta
+  // ANTES de esperar a rede (senão o navegador do celular bloqueia o pop-up).
+  const abrirWhatsapp = (janela: Window | null, r: { link?: string; nome_aluno?: string; nome_personal?: string }) => {
+    if (!r.link) throw new Error('Não foi possível gerar o link.')
+    const mensagem = montarMensagemConsentimento({
+      nomeAluno: r.nome_aluno ?? String(watch('name') ?? ''),
+      nomePersonal: r.nome_personal ?? 'Seu personal',
+      link: r.link,
+    })
+    const url = linkWhatsappConsentimento(String(watch('phone') ?? ''), mensagem)
+    if (janela && !janela.closed) janela.location.href = url
+    else window.location.href = url
   }
 
+  // Etapa Saúde: pede o consentimento por e-mail ou WhatsApp. No cadastro novo o aluno ainda não existe — salva
+  // primeiro (o e-mail é opcional para cadastrar, obrigatório só para enviar por e-mail) e segue na edição, na etapa 3.
+  const enviarSolicitacao = async (envio: EnvioConsentimento) => {
+    const janela = envio.canal === 'whatsapp' ? window.open('about:blank', '_blank') : null
+    try {
+      if (mode === 'edit' && id) {
+        const r = await enviarConsentimentoSaude(id, envio)
+        qc.invalidateQueries({ queryKey: ['consentimento-saude', id] })
+        if (envio.canal === 'whatsapp') abrirWhatsapp(janela, r)
+        return
+      }
+      const salvou = await trigger(STEP1_FIELDS as unknown as (keyof FormInput)[])
+      if (!salvou) {
+        setEtapa(1)
+        throw new Error('Complete os dados do aluno (etapa 1) antes de enviar a solicitação.')
+      }
+      let erroEnvio: Error | null = null
+      let novoId: string | null = null
+      let resultado: Awaited<ReturnType<typeof enviarConsentimentoSaude>> | null = null
+      await handleSubmit(async (f) => {
+        novoId = await persistir(envio.email ? { ...f, email: envio.email } : f)
+        try {
+          resultado = await enviarConsentimentoSaude(novoId, envio)
+        } catch (e) {
+          erroEnvio = e as Error
+        }
+      })()
+      if (!novoId) throw new Error('Não foi possível salvar o aluno. Confira os dados e tente de novo.')
+      navigate(`/alunos/${novoId}/editar?etapa=3`, { replace: true })
+      if (erroEnvio) {
+        janela?.close()
+        mostrarErroGlobal(`Aluno salvo, mas a solicitação não foi enviada: ${(erroEnvio as Error).message}`)
+      } else if (envio.canal === 'whatsapp' && resultado) {
+        abrirWhatsapp(janela, resultado)
+      }
+    } catch (e) {
+      janela?.close()
+      throw e
+    }
+  }
 
   const outrosAlunos = (outrosAlunosRaw ?? [])
     .filter((a) => a.id !== id)
