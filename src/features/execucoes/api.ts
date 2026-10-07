@@ -61,6 +61,53 @@ export function useRegistrarExecucaoPresencial(alunoId: string) {
       })
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['execucoes', alunoId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['execucoes', alunoId] })
+      qc.invalidateQueries({ queryKey: ['atividade-recente'] })
+      qc.invalidateQueries({ queryKey: ['ultima-execucao-por-aluno'] })
+    },
+  })
+}
+
+export type UltimaExecucao = { aluno_id: string; modalidade: ModalidadeTipo; concluido_em: string }
+
+/** Última execução concluída de cada aluno (uma consulta só; o RLS limita aos alunos do personal logado). */
+export function useUltimaExecucaoPorAluno() {
+  return useQuery({
+    queryKey: ['ultima-execucao-por-aluno'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('ultima_execucao_por_aluno')
+      if (error) throw error
+      return new Map(((data ?? []) as UltimaExecucao[]).map((u) => [u.aluno_id, u]))
+    },
+    staleTime: 60_000,
+  })
+}
+
+export type AtividadeRecente = {
+  id: string
+  concluido_em: string
+  plano_nome: string | null
+  modalidade: ModalidadeTipo
+  notas_aluno: string | null
+  aluno: { name: string } | null
+}
+
+/** Últimas execuções concluídas de todos os alunos (feed da Home). */
+export function useAtividadeRecente(limite = 10) {
+  return useQuery({
+    queryKey: ['atividade-recente', limite],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('execucoes_assincrono')
+        .select('id, concluido_em, plano_nome, modalidade, notas_aluno, aluno:alunos(name)')
+        .eq('status', 'concluido')
+        .not('concluido_em', 'is', null)
+        .order('concluido_em', { ascending: false })
+        .limit(limite)
+      if (error) throw error
+      return data as unknown as AtividadeRecente[]
+    },
+    staleTime: 30_000,
   })
 }

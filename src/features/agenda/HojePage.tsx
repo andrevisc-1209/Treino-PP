@@ -12,6 +12,7 @@ import iconMark from '@/assets/brand/icon-mark.png'
 import { OnboardingChecklist } from '@/features/onboarding/OnboardingChecklist'
 import { PixCard } from './PixCard'
 import { ResumoSemAulas } from './ResumoSemAulas'
+import { AtividadeRecente } from '@/features/execucoes/AtividadeRecente'
 
 export function HojePage() {
   useGerarAulasDiarias()
@@ -75,6 +76,7 @@ export function HojePage() {
 
       <OnboardingChecklist />
       <PixCard />
+      <AtividadeRecente />
 
       {isLoading && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}

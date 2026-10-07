@@ -17,6 +17,9 @@ import { mostrarDesfazer } from '@/components/UndoToast'
 import { useAlunosComCobranca } from '@/features/financeiro/api'
 import { useAlunos, useAlunosArquivados, useApagarAluno, useArquivarAluno, useDesarquivarAluno, type Aluno } from './api'
 import { useAlunosSemTreinoRecente, useTreinosEstaSemana } from './useMetricas'
+import { useUltimaExecucaoPorAluno } from '@/features/execucoes/api'
+import { rotuloDias } from '@/features/execucoes/metricas'
+import { MODALIDADES_CONFIG } from '@/types/modalidades'
 
 export function AlunosPage() {
   const [aba, setAba] = useState<'ativos' | 'arquivados'>('ativos')
@@ -25,6 +28,7 @@ export function AlunosPage() {
   const { data: alunosComCobranca } = useAlunosComCobranca()
   const { data: treinosEstaSemana } = useTreinosEstaSemana()
   const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
+  const { data: ultimasExecucoes } = useUltimaExecucaoPorAluno()
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [busca, setBusca] = useState('')
@@ -144,6 +148,11 @@ export function AlunosPage() {
                   )}
                 </p>
                 {a.objetivos[0] && <p className="truncate text-xs text-slate-400">{a.objetivos[0]}</p>}
+                {aba === 'ativos' && ultimasExecucoes?.get(a.id) && (
+                  <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    {MODALIDADES_CONFIG[ultimasExecucoes.get(a.id)!.modalidade].emoji} {rotuloDias(ultimasExecucoes.get(a.id)!.concluido_em)}
+                  </p>
+                )}
               </div>
             </Link>
             <button
