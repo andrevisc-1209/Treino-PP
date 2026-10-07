@@ -16,6 +16,7 @@ import { itensIguais } from '@/features/planos/compare'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
+import { MODALIDADES_CONFIG } from '@/types/modalidades'
 import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
@@ -328,6 +329,18 @@ export function NovaSessaoPage() {
                 .map((i) => i.exercicio?.name)
                 .filter(Boolean)
                 .join(', ')
+              if (!temExercicios && p.modalidade && p.modalidade !== 'musculacao') {
+                // treino de outra modalidade (sem lista de exercícios): ainda não dá para executar pela sessão
+                return (
+                  <div key={p.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
+                    <p className="font-medium text-slate-500">{p.name}</p>
+                    <p className="text-sm text-slate-500">
+                      {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label}
+                      {p.tipo_execucao === 'assincrono' ? ' · assíncrono (enviado ao aluno)' : ' · execução pela sessão em breve'}
+                    </p>
+                  </div>
+                )
+              }
               if (!temExercicios) {
                 return (
                   <div key={p.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">

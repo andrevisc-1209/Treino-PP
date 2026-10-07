@@ -6,3 +6,8 @@ export function linkWhatsApp(telefone: string | null | undefined): string | null
   if (digitos.length !== 12 && digitos.length !== 13) return null
   return `https://wa.me/${digitos}`
 }
+
+/** Link do WhatsApp com a mensagem pronta: abre a conversa do telefone (se válido) ou deixa escolher o contato. */
+export function linkWhatsAppComTexto(telefone: string | null | undefined, texto: string): string {
+  return `${linkWhatsApp(telefone) ?? 'https://wa.me/'}?text=${encodeURIComponent(texto)}`
+}
