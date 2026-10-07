@@ -1,14 +1,18 @@
 // Edge Function: enviar-consentimento-saude
 //
-// POST { aluno_id, email? } (JWT do personal). Gera um token de uso único (7 dias), grava
-// o status 'pendente' e manda ao aluno, via Resend, um e-mail com o link de autorização.
-// O token fica em treino.consentimento_saude_tokens (só service_role): nunca volta ao cliente.
+// POST { aluno_id, canal?, email?, motivo_reenvio?, motivo_reenvio_livre? } (JWT do personal).
+// Gera um token de uso único (7 dias) e grava o status 'pendente'.
+//   canal 'email' (padrão): manda o link ao aluno, via Resend.
+//   canal 'whatsapp': não envia nada; devolve { link } para o personal mandar pelo WhatsApp.
+// Reenvio (status já 'pendente' ou 'negado') exige motivo_reenvio — e texto livre se for "Outros" —
+// e o motivo fica gravado junto do novo token (trilha de auditoria).
+// O token fica em treino.consentimento_saude_tokens (só service_role); o link é o único jeito de chegar a ele.
 //
 // Segredos: RESEND_API_KEY (a mesma API key do SMTP do Resend), SITE_URL (opcional),
 // (remetente fixo: "Treino PP <noreply@personalperto.com.br>").
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { emailValido, expiraEm, montarEmailConsentimento, podeEnviarAgora } from '../_shared/consentimento.ts'
+import { canalValido, emailValido, expiraEm, montarEmailConsentimento, podeEnviarAgora, validarMotivoReenvio } from '../_shared/consentimento.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
@@ -33,9 +37,6 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) })
   if (req.method !== 'POST') return json(req, { error: 'Método não permitido.' }, 405)
 
-  const resendKey = Deno.env.get('RESEND_API_KEY')
-  if (!resendKey) return json(req, { error: 'Envio de e-mail indisponível no momento.' }, 503)
-
   const auth = req.headers.get('Authorization')
   if (!auth) return json(req, { error: 'Não autenticado.' }, 401)
   // Cliente "como o personal": o RLS garante que o aluno é dele.
@@ -46,13 +47,18 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await cliente.auth.getUser()
   if (userError || !userData.user) return json(req, { error: 'Não autenticado.' }, 401)
 
-  let body: { aluno_id?: unknown; email?: unknown }
+  let body: { aluno_id?: unknown; email?: unknown; canal?: unknown; motivo_reenvio?: unknown; motivo_reenvio_livre?: unknown }
   try {
     body = await req.json()
   } catch {
     return json(req, { error: 'Corpo da requisição inválido.' }, 400)
   }
   if (typeof body.aluno_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(body.aluno_id)) return json(req, { error: 'Aluno inválido.' }, 400)
+
+  const canal = body.canal === undefined || body.canal === null ? 'email' : body.canal
+  if (!canalValido(canal)) return json(req, { error: 'Canal inválido.' }, 400)
+  const resendKey = Deno.env.get('RESEND_API_KEY')
+  if (canal === 'email' && !resendKey) return json(req, { error: 'Envio de e-mail indisponível no momento.' }, 503)
 
   const { data: aluno } = await cliente
     .from('alunos')
@@ -61,20 +67,31 @@ Deno.serve(async (req) => {
     .maybeSingle()
   if (!aluno) return json(req, { error: 'Aluno não encontrado.' }, 404)
 
-  // E-mail novo no payload: grava no aluno antes de enviar.
+  // E-mail novo no payload: grava no aluno antes de enviar (só faz sentido no canal e-mail).
   let email: string | null = aluno.email
-  if (body.email !== undefined && body.email !== null && body.email !== '') {
-    if (!emailValido(body.email)) return json(req, { error: 'E-mail inválido.' }, 400)
-    email = body.email.trim()
-    if (email !== aluno.email) {
-      const { error } = await cliente.from('alunos').update({ email }).eq('id', aluno.id)
-      if (error) return json(req, { error: 'Não foi possível salvar o e-mail do aluno.' }, 500)
+  if (canal === 'email') {
+    if (body.email !== undefined && body.email !== null && body.email !== '') {
+      if (!emailValido(body.email)) return json(req, { error: 'E-mail inválido.' }, 400)
+      email = body.email.trim()
+      if (email !== aluno.email) {
+        const { error } = await cliente.from('alunos').update({ email }).eq('id', aluno.id)
+        if (error) return json(req, { error: 'Não foi possível salvar o e-mail do aluno.' }, 500)
+      }
     }
+    if (!email || !emailValido(email)) return json(req, { error: 'O aluno precisa ter um e-mail para receber a solicitação.' }, 400)
   }
-  if (!email || !emailValido(email)) return json(req, { error: 'O aluno precisa ter um e-mail para receber a solicitação.' }, 400)
 
   if (aluno.saude_consentimento_status === 'confirmado') return json(req, { error: 'O consentimento já foi confirmado.' }, 409)
-  if (aluno.saude_consentimento_status === 'negado') return json(req, { error: 'O aluno não autorizou o registro de dados de saúde.' }, 409)
+
+  // Reenvio (já houve solicitação: pendente ou negada) exige motivo.
+  const ehReenvio = aluno.saude_consentimento_status === 'pendente' || aluno.saude_consentimento_status === 'negado'
+  let motivo: { motivo: string; livre: string | null } | null = null
+  if (ehReenvio) {
+    const v = validarMotivoReenvio(body.motivo_reenvio, body.motivo_reenvio_livre)
+    if (!v.ok) return json(req, { error: v.erro }, 400)
+    motivo = v
+  }
+  // Intervalo mínimo entre envios, em qualquer canal (evita virar disparador de spam/mensagens).
   if (aluno.saude_consentimento_status === 'pendente' && !podeEnviarAgora(aluno.saude_consentimento_enviado_at)) {
     return json(req, { error: 'A solicitação acabou de ser enviada. Aguarde um minuto para reenviar.' }, 429)
   }
@@ -88,7 +105,11 @@ Deno.serve(async (req) => {
   await admin.from('consentimento_saude_tokens').delete().eq('aluno_id', aluno.id).is('used_at', null)
   const { data: tok, error: errTok } = await admin
     .from('consentimento_saude_tokens')
-    .insert({ aluno_id: aluno.id, expires_at: expiraEm() })
+    .insert({
+      aluno_id: aluno.id,
+      expires_at: expiraEm(),
+      ...(motivo ? { motivo_reenvio: motivo.motivo, motivo_reenvio_livre: motivo.livre } : {}),
+    })
     .select('token')
     .single()
   if (errTok || !tok) {
@@ -97,21 +118,23 @@ Deno.serve(async (req) => {
   }
 
   const base = `${SITE_URL}/consentimento/saude?token=${tok.token}`
-  const msg = montarEmailConsentimento({
-    nomeAluno: aluno.name,
-    nomePersonal,
-    linkAutorizar: base,
-    linkNegar: `${base}&negar=1`,
-  })
-  const resp = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: FROM, to: [email], subject: msg.assunto, html: msg.html, text: msg.texto }),
-  })
-  if (!resp.ok) {
-    console.error('enviar-consentimento-saude: Resend recusou', resp.status, (await resp.text()).slice(0, 300))
-    await admin.from('consentimento_saude_tokens').delete().eq('token', tok.token)
-    return json(req, { error: 'Não foi possível enviar o e-mail. Confira o endereço e tente novamente.' }, 502)
+  if (canal === 'email') {
+    const msg = montarEmailConsentimento({
+      nomeAluno: aluno.name,
+      nomePersonal,
+      linkAutorizar: base,
+      linkNegar: `${base}&negar=1`,
+    })
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: FROM, to: [email], subject: msg.assunto, html: msg.html, text: msg.texto }),
+    })
+    if (!resp.ok) {
+      console.error('enviar-consentimento-saude: Resend recusou', resp.status, (await resp.text()).slice(0, 300))
+      await admin.from('consentimento_saude_tokens').delete().eq('token', tok.token)
+      return json(req, { error: 'Não foi possível enviar o e-mail. Confira o endereço e tente novamente.' }, 502)
+    }
   }
 
   const { error: errStatus } = await admin
@@ -120,5 +143,6 @@ Deno.serve(async (req) => {
     .eq('id', aluno.id)
   if (errStatus) console.error('enviar-consentimento-saude: e-mail enviado, mas falhou ao gravar status', errStatus.message)
 
+  if (canal === 'whatsapp') return json(req, { ok: true, link: base, nome_aluno: aluno.name, nome_personal: nomePersonal })
   return json(req, { ok: true })
 })

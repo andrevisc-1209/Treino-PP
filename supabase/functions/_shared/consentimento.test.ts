@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emailValido, escaparHtml, estadoDoToken, expiraEm, montarEmailConsentimento, podeEnviarAgora } from './consentimento.ts'
+import { canalValido, emailValido, escaparHtml, estadoDoToken, expiraEm, montarEmailConsentimento, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
 
 const agora = new Date('2026-10-06T12:00:00.000Z')
 
@@ -36,5 +36,30 @@ describe('helpers', () => {
     expect(m.html).toContain('href="https://x/a"')
     expect(m.html).toContain('href="https://x/n"')
     expect(m.html).not.toContain('<Ana>')
+  })
+})
+
+describe('reenvio com motivo e canal', () => {
+  it('motivo obrigatório e dentro da lista', () => {
+    expect(validarMotivoReenvio(undefined, undefined).ok).toBe(false)
+    expect(validarMotivoReenvio('qualquer coisa', undefined).ok).toBe(false)
+    expect(validarMotivoReenvio('Aluno não recebeu o e-mail', undefined)).toEqual({ ok: true, motivo: 'Aluno não recebeu o e-mail', livre: null })
+  })
+  it('"Outros" exige texto livre', () => {
+    expect(validarMotivoReenvio('Outros', '  ').ok).toBe(false)
+    expect(validarMotivoReenvio('Outros', 'ab').ok).toBe(false)
+    expect(validarMotivoReenvio('Outros', ' Mudou de número ')).toEqual({ ok: true, motivo: 'Outros', livre: 'Mudou de número' })
+  })
+  it('canal', () => {
+    expect(canalValido('email')).toBe(true)
+    expect(canalValido('whatsapp')).toBe(true)
+    expect(canalValido('sms')).toBe(false)
+  })
+  it('e-mail: tom humano e logo sobre fundo branco', () => {
+    const m = montarEmailConsentimento({ nomeAluno: 'Ana', nomePersonal: 'Bia', linkAutorizar: 'https://x/a', linkNegar: 'https://x/n' })
+    expect(m.html).toContain('Olá, Ana!')
+    expect(m.html).toContain('quer cuidar do seu treino')
+    expect(m.html).toContain('background:#ffffff;padding:12px;border-radius:6px;display:inline-block')
+    expect(m.html).toContain('logo-email.png')
   })
 })

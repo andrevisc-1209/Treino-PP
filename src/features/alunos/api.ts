@@ -141,21 +141,28 @@ async function mensagemDoErroFuncao(error: unknown): Promise<string> {
   return 'Não foi possível enviar a solicitação. Tente novamente.'
 }
 
-export async function enviarConsentimentoSaude(alunoId: string, email?: string): Promise<void> {
-  const { error } = await supabase.functions.invoke('enviar-consentimento-saude', {
-    body: { aluno_id: alunoId, email: email?.trim() || undefined },
-  })
-  if (error) throw new Error(await mensagemDoErroFuncao(error))
+export type EnvioConsentimento = {
+  canal: 'email' | 'whatsapp'
+  email?: string
+  /** obrigatório em reenvio (status pendente/negado) */
+  motivo?: string
+  motivoLivre?: string
 }
 
-export function useEnviarConsentimentoSaude(alunoId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (email?: string) => enviarConsentimentoSaude(alunoId, email),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['consentimento-saude', alunoId] })
+export type ResultadoEnvioConsentimento = { ok: true; link?: string; nome_aluno?: string; nome_personal?: string }
+
+export async function enviarConsentimentoSaude(alunoId: string, envio: EnvioConsentimento): Promise<ResultadoEnvioConsentimento> {
+  const { data, error } = await supabase.functions.invoke<ResultadoEnvioConsentimento>('enviar-consentimento-saude', {
+    body: {
+      aluno_id: alunoId,
+      canal: envio.canal,
+      email: envio.email?.trim() || undefined,
+      motivo_reenvio: envio.motivo,
+      motivo_reenvio_livre: envio.motivoLivre?.trim() || undefined,
     },
   })
+  if (error || !data) throw new Error(await mensagemDoErroFuncao(error))
+  return data
 }
 
 export type ConsentimentoAtivo = { id: string; consented_at: string; consent_version: string }

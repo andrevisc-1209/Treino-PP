@@ -7,6 +7,34 @@ export const INTERVALO_REENVIO_SEG = 60
 // Mantenha igual a TERMO_VERSAO em src/features/alunos/termo.ts.
 export const TERMO_VERSAO = '1.1'
 
+export const MOTIVOS_REENVIO = [
+  'Aluno decidiu liberar acesso',
+  "Aluno clicou em 'Não autorizar' por engano",
+  'Aluno não recebeu o e-mail',
+  'Aluno trocou de e-mail/WhatsApp',
+  'Outros',
+] as const
+
+export type Canal = 'email' | 'whatsapp'
+
+export function canalValido(v: unknown): v is Canal {
+  return v === 'email' || v === 'whatsapp'
+}
+
+/** Todo reenvio (status pendente ou negado) precisa de motivo; "Outros" exige texto livre. */
+export function validarMotivoReenvio(
+  motivo: unknown,
+  livre: unknown,
+): { ok: true; motivo: string; livre: string | null } | { ok: false; erro: string } {
+  if (typeof motivo !== 'string' || !(MOTIVOS_REENVIO as readonly string[]).includes(motivo)) {
+    return { ok: false, erro: 'Informe o motivo do reenvio.' }
+  }
+  if (motivo !== 'Outros') return { ok: true, motivo, livre: null }
+  const texto = typeof livre === 'string' ? livre.trim() : ''
+  if (texto.length < 3) return { ok: false, erro: 'Descreva o motivo do reenvio.' }
+  return { ok: true, motivo, livre: texto.slice(0, 300) }
+}
+
 export function emailValido(v: unknown): v is string {
   return typeof v === 'string' && v.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
 }
@@ -53,16 +81,16 @@ export function montarEmailConsentimento(args: { nomeAluno: string; nomePersonal
 <body style="margin:0;padding:0;background-color:#f4f7f6;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f7f6;padding:24px 0;"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
-<tr><td align="center" style="background-color:#0f2537;padding:32px 24px;"><img src="https://treino.personalperto.com.br/brand/logo-email.png" alt="Treino · Personal Perto" width="180" style="display:block;width:180px;max-width:100%;height:auto;" /></td></tr>
+<tr><td align="center" style="background-color:#0f2537;padding:28px 24px;"><div style="background:#ffffff;padding:12px;border-radius:6px;display:inline-block;"><img src="https://treino.personalperto.com.br/brand/logo-email.png" alt="Treino PP" style="display:block;height:48px;width:auto;" /></div></td></tr>
 <tr><td style="padding:32px 32px 8px;">
-<h1 style="margin:0 0 16px;font-size:22px;color:#0f2537;">Olá, ${aluno}!</h1>
-<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:#334155;">O(a) personal <strong>${personal}</strong> está pedindo a sua autorização para registrar, no app Treino, informações de saúde que ajudam a planejar o seu treino com segurança: <strong>lesões, cirurgias e uso de medicamentos</strong>.</p>
-<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:#334155;">São dados sensíveis, protegidos pela LGPD (Lei 13.709/2018, art. 11). Eles só são usados para acompanhar o seu treino, não são vendidos nem compartilhados com terceiros, e você pode pedir acesso, correção, exclusão ou revogar esta autorização a qualquer momento, falando com o seu personal.</p>
+<h1 style="margin:0 0 16px;font-size:22px;color:#0f2537;">Olá, ${aluno}! 👋</h1>
+<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:#334155;">Seu personal trainer <strong>${personal}</strong> quer cuidar do seu treino com mais atenção e organização — e, para isso, precisa da sua autorização para registrar no app informações sobre a sua saúde. É rápido: clica no botão abaixo e escolhe se topa ou não.</p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#334155;">Falamos de <strong>lesões, cirurgias e uso de medicamentos</strong>. São dados sensíveis, protegidos pela LGPD (Lei 13.709/2018), então só entram no app com o seu OK. Servem apenas para ajustar o treino com segurança, não são vendidos nem compartilhados, e você pode pedir acesso, correção ou exclusão, ou mudar de ideia quando quiser, falando com o seu personal.</p>
 </td></tr>
 <tr><td align="center" style="padding:8px 32px 8px;"><a href="${args.linkAutorizar}" style="display:inline-block;background-color:#367c39;color:#ffffff;font-size:17px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:10px;">Autorizar</a></td></tr>
-<tr><td align="center" style="padding:8px 32px 24px;"><a href="${args.linkNegar}" style="font-size:14px;color:#475569;text-decoration:underline;">Não autorizar</a></td></tr>
-<tr><td style="padding:0 32px 32px;"><p style="margin:0;font-size:13px;line-height:1.5;color:#64748b;">O link vale por ${EXPIRA_DIAS} dias. Se você não reconhece este cadastro, ignore este e-mail — nada será registrado sem a sua autorização.</p></td></tr>
+<tr><td align="center" style="padding:8px 32px 24px;"><a href="${args.linkNegar}" style="font-size:14px;color:#475569;text-decoration:underline;">Prefiro não autorizar</a></td></tr>
+<tr><td style="padding:0 32px 32px;"><p style="margin:0;font-size:13px;line-height:1.5;color:#64748b;">O link vale por ${EXPIRA_DIAS} dias. Não reconhece este cadastro? Pode ignorar este e-mail — nada é registrado sem a sua autorização.</p></td></tr>
 </table></td></tr></table></body></html>`
-  const texto = `Olá, ${args.nomeAluno}!\n\nO(a) personal ${args.nomePersonal} pede sua autorização para registrar no app Treino lesões, cirurgias e uso de medicamentos (dados de saúde, LGPD art. 11).\n\nAutorizar: ${args.linkAutorizar}\nNão autorizar: ${args.linkNegar}\n\nO link vale por ${EXPIRA_DIAS} dias. Se você não reconhece este cadastro, ignore este e-mail.`
+  const texto = `Olá, ${args.nomeAluno}!\n\nSeu personal trainer ${args.nomePersonal} quer cuidar do seu treino com mais atenção e organização e precisa da sua autorização para registrar no app informações sobre a sua saúde (lesões, cirurgias e uso de medicamentos — dados sensíveis, protegidos pela LGPD). É rápido: abre o link e escolhe se topa ou não.\n\nAutorizar: ${args.linkAutorizar}\nPrefiro não autorizar: ${args.linkNegar}\n\nO link vale por ${EXPIRA_DIAS} dias. Não reconhece este cadastro? Pode ignorar este e-mail.`
   return { assunto, html, texto }
 }
