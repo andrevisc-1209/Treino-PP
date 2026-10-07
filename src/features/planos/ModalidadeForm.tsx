@@ -1,7 +1,8 @@
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
-import { MODALIDADES, MODALIDADES_CONFIG, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
+import { MODALIDADES, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
+import { BlocosEditor } from './BlocosEditor'
 
 const CLASSE_CAMPO = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand'
 
@@ -15,6 +16,8 @@ export function ModalidadeForm({
   onValores,
   livres,
   onLivres,
+  blocos,
+  onBlocos,
 }: {
   modalidade: ModalidadeTipo
   onModalidade: (m: ModalidadeTipo) => void
@@ -25,6 +28,9 @@ export function ModalidadeForm({
   /** exercícios livres (nome + instrução): só nas modalidades sem lista de exercícios do app */
   livres: ExercicioLivre[]
   onLivres: (v: ExercicioLivre[]) => void
+  /** blocos do treino (natação, corrida, ciclismo, remo, funcional) */
+  blocos: BlocoTreino[]
+  onBlocos: (v: BlocoTreino[]) => void
 }) {
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
@@ -123,7 +129,9 @@ export function ModalidadeForm({
         </Field>
       ))}
 
-      {modalidade !== 'musculacao' && (
+      {usaBlocos(modalidade) && <BlocosEditor blocos={blocos} onChange={onBlocos} />}
+
+      {modalidade !== 'musculacao' && !usaBlocos(modalidade) && (
         <div className="space-y-2">
           <p className="text-sm font-medium">Exercícios do treino (opcional)</p>
           <p className="text-xs text-slate-500">Itens livres, como "Aquecimento 10 min" ou "Tiros de 400 m". O aluno marca cada um ao concluir.</p>

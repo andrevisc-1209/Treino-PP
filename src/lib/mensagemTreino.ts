@@ -1,4 +1,4 @@
-import { exerciciosLivresDe, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { blocosDe, exerciciosLivresDe, formatarBloco, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 /**
  * Mensagem de WhatsApp com o treino para o aluno fazer por conta (execução assíncrona).
@@ -26,6 +26,8 @@ export function gerarMensagemTreino(args: {
   if (args.exercicios && args.exercicios.length > 0) {
     blocos.push(`📋 Exercícios:\n${args.exercicios.map((e, i) => `${i + 1}. ${e.nome} — ${e.series}x${e.repeticoes}`).join('\n')}`)
   }
+  const blocosTreino = blocosDe(args.modalidade, args.detalhes)
+  if (blocosTreino.length > 0) blocos.push(`📋 Treino:\n${blocosTreino.map((b, i) => `${i + 1}. ${formatarBloco(b)}`).join('\n')}`)
   const livres = exerciciosLivresDe(args.detalhes)
   if (livres.length > 0) {
     blocos.push(`📋 Exercícios:\n${livres.map((l, i) => `${i + 1}. ${l.nome}${l.descricao ? ` — ${l.descricao}` : ''}`).join('\n')}`)

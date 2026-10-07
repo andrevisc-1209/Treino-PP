@@ -2,7 +2,7 @@ import { Check } from 'lucide-react'
 import type { EstadoResultado } from './resultado'
 import { Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { exerciciosLivresDe, linhasDetalhes, MODALIDADES_CONFIG, RESULTADO_CAMPOS, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { blocosDe, formatarBloco, itensChecklist, linhasDetalhes, MODALIDADES_CONFIG, RESULTADO_CAMPOS, usaBlocos, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 type Outra = Exclude<ModalidadeTipo, 'musculacao'>
 
@@ -10,12 +10,20 @@ type Outra = Exclude<ModalidadeTipo, 'musculacao'>
 export function ReferenciaTreino({ modalidade, detalhes }: { modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes }) {
   const cfg = MODALIDADES_CONFIG[modalidade]
   const linhas = linhasDetalhes(modalidade, detalhes)
+  const blocos = blocosDe(modalidade, detalhes)
   return (
-    <div className="space-y-1 rounded-2xl bg-slate-50 p-4">
+    <div className="space-y-2 rounded-2xl bg-slate-50 p-4">
       <p className="font-semibold">
         {cfg.emoji} {cfg.label}
       </p>
-      {linhas.length === 0 ? (
+      {blocos.length > 0 && (
+        <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
+          {blocos.map((b) => (
+            <li key={b.id}>{formatarBloco(b)}</li>
+          ))}
+        </ol>
+      )}
+      {linhas.length === 0 && blocos.length === 0 ? (
         <p className="text-sm text-slate-500">Sem detalhes cadastrados.</p>
       ) : (
         <ul className="space-y-0.5 text-sm text-slate-700">
@@ -44,12 +52,12 @@ export function FormResultadoModalidade({
   onEstado: (e: EstadoResultado) => void
   dicaNotas?: string
 }) {
-  const livres = exerciciosLivresDe(detalhes)
+  const livres = itensChecklist(modalidade, detalhes)
   return (
     <div className="space-y-4">
       {livres.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">Exercícios</p>
+          <p className="text-sm font-medium">{usaBlocos(modalidade) ? 'Blocos do treino' : 'Exercícios'}</p>
           <ul className="space-y-2">
             {livres.map((l, i) => {
               const feito = !!estado.feitos[i]

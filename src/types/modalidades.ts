@@ -26,8 +26,25 @@ export interface ModalidadeCampo {
 
 export type ExercicioLivre = { nome: string; descricao?: string }
 
+export const INTENSIDADES = ['leve', 'moderado', 'forte', 'máximo'] as const
+
+/** Bloco de um treino de endurance (aquecimento, série principal, soltura…). Distância em metros. */
+export interface BlocoTreino {
+  id: string
+  nome: string
+  descricao: string
+  distancia?: number
+  duracao?: string
+  intensidade?: string
+  observacoes?: string
+}
+
+/** Modalidades cujo treino é uma lista de blocos (no lugar dos campos únicos da Fase 1). */
+export const MODALIDADES_COM_BLOCOS: ModalidadeTipo[] = ['natacao', 'corrida', 'ciclismo', 'remo', 'funcional']
+export const usaBlocos = (m: ModalidadeTipo): boolean => MODALIDADES_COM_BLOCOS.includes(m)
+
 /** Detalhes da modalidade: campos simples (texto/número) + a lista opcional `exercicios_livres`. */
-export type ModalidadeDetalhes = Record<string, string | number | ExercicioLivre[]>
+export type ModalidadeDetalhes = Record<string, string | number | ExercicioLivre[] | BlocoTreino[]>
 
 export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: string; campos: ModalidadeCampo[] }> = {
   musculacao: { label: 'Musculação', emoji: '🏋️', campos: [] }, // usa a estrutura de exercícios existente
@@ -35,40 +52,28 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
     label: 'Corrida',
     emoji: '🏃',
     campos: [
-      { key: 'distancia_km', label: 'Distância (km)', type: 'number', placeholder: '5' },
-      { key: 'pace_alvo', label: 'Pace alvo (min/km)', type: 'text', placeholder: '5:30' },
-      { key: 'terreno', label: 'Terreno', type: 'select', options: ['asfalto', 'trilha', 'pista', 'esteira'] },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   natacao: {
     label: 'Natação',
     emoji: '🏊',
     campos: [
-      { key: 'distancia_m', label: 'Distância total (m)', type: 'number', placeholder: '1000' },
-      { key: 'estilo', label: 'Estilo', type: 'select', options: ['crawl', 'costas', 'peito', 'borboleta', 'medley'] },
-      { key: 'tiros', label: 'Número de tiros', type: 'number', placeholder: '10' },
-      { key: 'intervalo_seg', label: 'Intervalo entre tiros (seg)', type: 'number', placeholder: '30' },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   ciclismo: {
     label: 'Ciclismo',
     emoji: '🚴',
     campos: [
-      { key: 'distancia_km', label: 'Distância (km)', type: 'number' },
-      { key: 'desnivel_m', label: 'Desnível (m)', type: 'number' },
-      { key: 'cadencia_alvo', label: 'Cadência alvo (rpm)', type: 'number' },
-      { key: 'tipo', label: 'Tipo', type: 'select', options: ['rua', 'mountain bike', 'indoor'] },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   funcional: {
     label: 'Funcional / HIIT',
     emoji: '⚡',
     campos: [
-      { key: 'rounds', label: 'Rounds', type: 'number', placeholder: '5' },
-      { key: 'duracao_min', label: 'Duração total (min)', type: 'number' },
-      { key: 'descanso_seg', label: 'Descanso entre rounds (seg)', type: 'number', placeholder: '60' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   futebol: {
@@ -77,7 +82,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'foco', label: 'Foco da sessão', type: 'text', placeholder: 'ex: resistência, técnica, tático' },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   futevolei: {
@@ -85,7 +90,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
     emoji: '🏐',
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   pilates: {
@@ -94,7 +99,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'nivel', label: 'Nível', type: 'select', options: ['iniciante', 'intermediário', 'avançado'] },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   yoga: {
@@ -103,7 +108,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'estilo', label: 'Estilo', type: 'select', options: ['hatha', 'vinyasa', 'yin', 'ashtanga', 'restaurativo'] },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   boxe: {
@@ -113,7 +118,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
       { key: 'rounds', label: 'Rounds', type: 'number' },
       { key: 'duracao_round_min', label: 'Duração do round (min)', type: 'number', placeholder: '3' },
       { key: 'descanso_seg', label: 'Descanso (seg)', type: 'number', placeholder: '60' },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   escalada: {
@@ -122,16 +127,14 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
     campos: [
       { key: 'tipo', label: 'Tipo', type: 'select', options: ['boulder', 'esportiva', 'tradicional', 'indoor'] },
       { key: 'nivel_via', label: 'Nível da via', type: 'text', placeholder: 'ex: 6a, V4' },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
   remo: {
     label: 'Remo',
     emoji: '🚣',
     campos: [
-      { key: 'distancia_m', label: 'Distância (m)', type: 'number' },
-      { key: 'tempo_alvo', label: 'Tempo alvo', type: 'text', placeholder: 'ex: 20:00' },
-      { key: 'observacoes', label: 'Observações', type: 'textarea' },
+      { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
 }
@@ -146,7 +149,12 @@ export function ehModalidade(v: unknown): v is ModalidadeTipo {
  * Valores digitados → objeto salvo no banco: só os campos da modalidade, sem vazios,
  * números como número. Musculação nunca guarda detalhes ({}).
  */
-export function montarDetalhes(modalidade: ModalidadeTipo, valores: Record<string, string>, livres: ExercicioLivre[] = []): ModalidadeDetalhes {
+export function montarDetalhes(
+  modalidade: ModalidadeTipo,
+  valores: Record<string, string>,
+  livres: ExercicioLivre[] = [],
+  blocos: BlocoTreino[] = [],
+): ModalidadeDetalhes {
   const saida: ModalidadeDetalhes = {}
   for (const c of MODALIDADES_CONFIG[modalidade].campos) {
     const bruto = (valores[c.key] ?? '').trim()
@@ -160,8 +168,11 @@ export function montarDetalhes(modalidade: ModalidadeTipo, valores: Record<strin
       saida[c.key] = bruto
     }
   }
-  // exercícios livres (nome + instrução) só nas modalidades sem lista de exercícios do app
-  if (modalidade !== 'musculacao') {
+  if (usaBlocos(modalidade)) {
+    const limpos = blocos.map(limparBloco).filter((b): b is BlocoTreino => b !== null)
+    if (limpos.length > 0) saida.blocos = limpos
+  } else if (modalidade !== 'musculacao') {
+    // exercícios livres (nome + instrução) nas modalidades sem blocos nem lista de exercícios do app
     const limpos = livres
       .map((l) => ({ nome: l.nome.trim(), descricao: (l.descricao ?? '').trim() }))
       .filter((l) => l.nome)
@@ -179,6 +190,69 @@ export function exerciciosLivresDe(d: ModalidadeDetalhes | null | undefined): Ex
   return []
 }
 
+function limparBloco(b: BlocoTreino): BlocoTreino | null {
+  const nome = b.nome.trim()
+  const descricao = b.descricao.trim()
+  if (!nome || !descricao) return null
+  const distancia = typeof b.distancia === 'number' && Number.isFinite(b.distancia) && b.distancia > 0 ? b.distancia : undefined
+  const duracao = b.duracao?.trim()
+  const intensidade = b.intensidade?.trim()
+  const observacoes = b.observacoes?.trim()
+  return {
+    id: b.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Math.random())),
+    nome,
+    descricao,
+    ...(distancia !== undefined ? { distancia } : {}),
+    ...(duracao ? { duracao } : {}),
+    ...(intensidade ? { intensidade } : {}),
+    ...(observacoes ? { observacoes } : {}),
+  }
+}
+
+/** Valida a lista de blocos do formulário (modalidades com blocos): ao menos 1, cada um com nome e descrição. */
+export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[]): string | null {
+  if (!usaBlocos(modalidade)) return null
+  if (blocos.length === 0) return 'Adicione ao menos um bloco ao treino.'
+  if (blocos.some((b) => !b.nome.trim() || !b.descricao.trim())) return 'Preencha o nome e a descrição de cada bloco.'
+  return null
+}
+
+/**
+ * Blocos de um treino. Treinos criados na Fase 1/2 (campos únicos: distancia_km, estilo, tiros…) viram um bloco único
+ * "Treino", para aparecerem — e poderem ser editados — no formato novo sem perder o que foi cadastrado.
+ */
+export function blocosDe(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): BlocoTreino[] {
+  if (!usaBlocos(modalidade)) return []
+  const v = d?.blocos
+  if (Array.isArray(v)) {
+    return (v as BlocoTreino[])
+      .filter((b) => b && typeof b.nome === 'string' && typeof b.descricao === 'string')
+      .map((b, i) => ({ ...b, id: b.id || `b${i}` }))
+  }
+  const legado = resumoLegado(modalidade, d)
+  return legado ? [{ id: 'legado', nome: 'Treino', descricao: legado }] : []
+}
+
+/** "Aquecimento — 400m livre · 400 m · leve" */
+export function formatarBloco(b: BlocoTreino): string {
+  const extras = [typeof b.distancia === 'number' ? `${formatarNumero(b.distancia)} m` : null, b.duracao, b.intensidade].filter(Boolean)
+  return `${b.nome} — ${b.descricao}${extras.length ? ` · ${extras.join(' · ')}` : ''}`
+}
+
+/**
+ * Itens que o aluno marca ao concluir: os blocos (modalidades com blocos) ou os exercícios livres (demais).
+ * O texto do bloco vai em `descricao`.
+ */
+export function itensChecklist(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): ExercicioLivre[] {
+  if (usaBlocos(modalidade)) {
+    return blocosDe(modalidade, d).map((b) => ({
+      nome: b.nome,
+      descricao: [b.descricao, typeof b.distancia === 'number' ? `${formatarNumero(b.distancia)} m` : null, b.duracao, b.intensidade].filter(Boolean).join(' · '),
+    }))
+  }
+  return exerciciosLivresDe(d)
+}
+
 /** Detalhes salvos → texto de cada campo do formulário (para editar). */
 export function valoresDoFormulario(detalhes: ModalidadeDetalhes | null | undefined): Record<string, string> {
   return Object.fromEntries(
@@ -190,8 +264,8 @@ export function valoresDoFormulario(detalhes: ModalidadeDetalhes | null | undefi
 
 const num = (v: unknown) => (typeof v === 'number' ? formatarNumero(v) : null)
 
-/** Métrica-chave para o subtítulo do card (ex.: "5 km · pace 5:30/km"). null se não houver. */
-export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string | null {
+/** Resumo dos campos únicos da Fase 1 (treinos antigos de corrida, natação…). */
+function resumoLegado(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string | null {
   const x = d ?? {}
   const partes: (string | null)[] = []
   switch (modalidade) {
@@ -228,6 +302,17 @@ export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalh
   }
   const texto = partes.filter(Boolean).join(' · ')
   return texto || null
+}
+
+/** Subtítulo do card: "4 blocos · 2.500 m" (com blocos) ou a métrica dos campos antigos (ex.: "5 km · pace 5:30/km"). null se não houver. */
+export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string | null {
+  if (usaBlocos(modalidade) && Array.isArray(d?.blocos)) {
+    const blocos = blocosDe(modalidade, d)
+    if (blocos.length === 0) return null
+    const total = blocos.reduce((a, b) => a + (typeof b.distancia === 'number' ? b.distancia : 0), 0)
+    return `${blocos.length} ${blocos.length === 1 ? 'bloco' : 'blocos'}${total > 0 ? ` · ${formatarNumero(total)} m` : ''}`
+  }
+  return resumoLegado(modalidade, d)
 }
 
 /** Linhas "rótulo: valor" dos detalhes preenchidos, na ordem dos campos (usa o rótulo do formulário, não a chave). */
