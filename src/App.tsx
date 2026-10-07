@@ -14,6 +14,7 @@ import { ModelosPage } from '@/features/modelos/ModelosPage'
 import { ModeloEditorPage } from '@/features/modelos/ModeloEditorPage'
 import { PlanoEditorPage } from '@/features/planos/PlanoEditorPage'
 import { ConsentimentoSaudePage } from '@/features/alunos/ConsentimentoSaudePage'
+import { ConsentimentosPage } from '@/features/consentimentos/ConsentimentosPage'
 import { RetornoCheckoutPage } from '@/features/assinatura/RetornoCheckoutPage'
 import { NovaSessaoPage } from '@/features/sessoes/NovaSessaoPage'
 import { SessaoPage } from '@/features/sessoes/SessaoPage'
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/" element={<HojePage />} />
           <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/consentimentos" element={<ConsentimentosPage />} />
           <Route path="/alunos" element={<AlunosPage />} />
           <Route path="/alunos/novo" element={<AlunoFormPage mode="create" />} />
           <Route path="/alunos/:id" element={<AlunoFichaPage />} />

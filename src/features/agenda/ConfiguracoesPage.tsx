@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Lock, LogOut } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Lock, LogOut, ShieldCheck } from 'lucide-react'
 import { Acordeao } from '@/components/Acordeao'
 import { SeletorCidade } from '@/components/SeletorCidade'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
@@ -253,6 +253,14 @@ export function ConfiguracoesPage() {
             </div>
             <p className="text-xs text-slate-400">Este interruptor salva na hora, sem precisar de “Salvar alterações”.</p>
           </Acordeao>
+
+          <Link to="/consentimentos" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
+            <span className="flex items-center gap-2">
+              <ShieldCheck size={20} className="text-slate-500" aria-hidden />
+              Consentimentos LGPD
+            </span>
+            <ChevronRight size={20} className="text-slate-400" aria-hidden />
+          </Link>
 
           <Button variant="ghost" className="w-full text-red-600" onClick={() => supabase.auth.signOut()}>
             <LogOut size={18} /> Sair
