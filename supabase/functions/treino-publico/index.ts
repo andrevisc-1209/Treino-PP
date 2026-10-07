@@ -110,23 +110,38 @@ Deno.serve(async (req) => {
   }
   if (!usado?.length) return json(req, { estado: 'usado' })
 
-  const { error } = await admin.from('execucoes_assincrono').insert({
-    plano_id: plano.id,
-    plano_nome: plano.name,
-    modalidade,
-    aluno_id: link.aluno_id,
-    professional_id: link.professional_id,
-    origem: 'link',
-    link_id: link.id,
-    concluido_em: agora,
-    status: 'concluido',
-    detalhes_execucao: v.detalhes,
-    notas_aluno: v.notas,
-  })
-  if (error) {
-    console.error('treino-publico: falha ao gravar execução', error.message)
+  const { data: execucao, error } = await admin
+    .from('execucoes_assincrono')
+    .insert({
+      plano_id: plano.id,
+      plano_nome: plano.name,
+      modalidade,
+      aluno_id: link.aluno_id,
+      professional_id: link.professional_id,
+      origem: 'link',
+      link_id: link.id,
+      concluido_em: agora,
+      status: 'concluido',
+      detalhes_execucao: v.detalhes,
+      notas_aluno: v.notas,
+    })
+    .select('id')
+    .single()
+  if (error || !execucao) {
+    console.error('treino-publico: falha ao gravar execução', error?.message)
     await admin.from('links_treino_assincrono').update({ usado_em: null }).eq('id', link.id)
     return json(req, { error: 'Não foi possível registrar. Tente novamente.' }, 500)
   }
+
+  // Notifica o personal (sino do app). Não falha a resposta ao aluno: o treino já está registrado.
+  // As observações do aluno NÃO vão no payload (texto livre, pode citar dor/lesão): só a marca "tem_notas".
+  const { error: errNotif } = await admin.from('notificacoes_professor').insert({
+    professional_id: link.professional_id,
+    aluno_id: link.aluno_id,
+    tipo: 'treino_concluido',
+    payload: { execucao_id: execucao.id, plano_nome: plano.name, modalidade, tem_notas: !!v.notas },
+  })
+  if (errNotif) console.error('treino-publico: treino registrado, mas a notificação falhou', errNotif.message)
+
   return json(req, { estado: 'concluido' })
 })

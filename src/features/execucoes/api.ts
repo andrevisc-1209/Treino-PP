@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { DetalhesExecucao, ModalidadeTipo } from '@/types/modalidades'
+import { detalhesDaSessao } from './daSessao'
 
 export type Execucao = {
   id: string
@@ -110,4 +111,39 @@ export function useAtividadeRecente(limite = 10) {
     },
     staleTime: 30_000,
   })
+}
+
+/**
+ * Sessão presencial de musculação concluída → também entra no histórico unificado (Performance, selo, feed).
+ * Aditivo: o salvamento da sessão em si não muda. Idempotente (sessao_id é único). Quem chama trata a falha
+ * (só registra no console) para nunca travar a conclusão do treino.
+ */
+export async function registrarExecucaoDaSessao(sessaoId: string): Promise<void> {
+  const [{ data: sessao, error: errSessao }, { data: itens, error: errItens }] = await Promise.all([
+    supabase.from('sessoes').select('id, aluno_id, professional_id, plano_id, plano_nome, created_at, post_pse, duration_minutes').eq('id', sessaoId).single(),
+    supabase
+      .from('sessao_exercicios')
+      .select('exercicio_id, notes, order_index, exercicio:exercicios(name), sessao_series(reps, load_kg, completed)')
+      .eq('sessao_id', sessaoId)
+      .order('order_index'),
+  ])
+  if (errSessao) throw errSessao
+  if (errItens) throw errItens
+
+  const { error } = await supabase.from('execucoes_assincrono').insert({
+    sessao_id: sessao.id,
+    plano_id: sessao.plano_id,
+    plano_nome: sessao.plano_nome,
+    modalidade: 'musculacao',
+    aluno_id: sessao.aluno_id,
+    professional_id: sessao.professional_id,
+    origem: 'presencial',
+    iniciado_em: sessao.created_at,
+    concluido_em: new Date().toISOString(),
+    status: 'concluido',
+    detalhes_execucao: detalhesDaSessao(itens as unknown as Parameters<typeof detalhesDaSessao>[0], sessao.post_pse, sessao.duration_minutes),
+    notas_aluno: null,
+  })
+  // 23505 = já registrada (conclusão repetida): não é erro
+  if (error && error.code !== '23505') throw error
 }

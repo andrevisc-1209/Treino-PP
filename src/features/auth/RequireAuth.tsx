@@ -4,6 +4,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { AssinaturaGuard } from '@/components/AssinaturaGuard'
 import { TrialBanner } from '@/components/TrialBanner'
 import { useIsAdmin } from '@/features/admin/useIsAdmin'
+import { useNotificacoesRealtime } from '@/features/notificacoes/api'
 import { useAuth } from './AuthProvider'
 
 // Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
@@ -18,6 +19,12 @@ function IrParaLandingOuLogin() {
     if (!standalone) window.location.replace('/landing.html')
   }, [standalone])
   return standalone ? <Navigate to="/login" replace /> : null
+}
+
+/** Assina as notificações do personal (Realtime) enquanto o app autenticado está aberto. */
+function NotificacoesRealtime({ professionalId }: { professionalId: string }) {
+  useNotificacoesRealtime(professionalId)
+  return null
 }
 
 export function RequireAuth() {
@@ -36,6 +43,7 @@ export function RequireAuth() {
 
   return (
     <div className={modoFoco ? '' : 'pb-16'}>
+      <NotificacoesRealtime professionalId={session.user.id} />
       <AssinaturaGuard>
         {!modoFoco && (
           <div className="mx-auto max-w-2xl px-4 pt-4">

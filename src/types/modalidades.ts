@@ -277,7 +277,10 @@ export const RESULTADO_CAMPOS: Record<Exclude<ModalidadeTipo, 'musculacao'>, { k
 }
 
 export type DetalhesExecucao = {
-  exercicios?: { exercicio_id: string; nome: string; series_planejadas: number; series_feitas: number; obs?: string }[]
+  exercicios?: { exercicio_id: string; nome: string; series_planejadas: number; series_feitas: number; carga_kg?: number; obs?: string }[]
+  /** sessão presencial de musculação: PSE (0–10) e duração informadas ao concluir */
+  pse?: number
+  duracao_min?: number
   resultado?: Record<string, string | number>
   exercicios_livres?: { nome: string; feito: boolean }[]
 }
@@ -288,8 +291,10 @@ export function descreverExecucao(modalidade: ModalidadeTipo, d: DetalhesExecuca
   const linhas: string[] = []
   if (modalidade === 'musculacao') {
     for (const e of x.exercicios ?? []) {
-      linhas.push(`${e.nome}: ${e.series_feitas}/${e.series_planejadas} séries${e.obs ? ` — ${e.obs}` : ''}`)
+      linhas.push(`${e.nome}: ${e.series_feitas}/${e.series_planejadas} séries${e.carga_kg ? ` · até ${formatarNumero(e.carga_kg)} kg` : ''}${e.obs ? ` — ${e.obs}` : ''}`)
     }
+    if (typeof x.pse === 'number') linhas.push(`PSE: ${x.pse}/10`)
+    if (typeof x.duracao_min === 'number') linhas.push(`Duração: ${formatarNumero(x.duracao_min)} min`)
     return linhas
   }
   for (const c of RESULTADO_CAMPOS[modalidade]) {
