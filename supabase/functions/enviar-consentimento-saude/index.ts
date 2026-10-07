@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
     .insert({
       aluno_id: aluno.id,
       expires_at: expiraEm(),
+      canal,
       ...(motivo ? { motivo_reenvio: motivo.motivo, motivo_reenvio_livre: motivo.livre } : {}),
     })
     .select('token')
@@ -142,6 +143,17 @@ Deno.serve(async (req) => {
     .update({ saude_consentimento_status: 'pendente', saude_consentimento_enviado_at: new Date().toISOString(), saude_consentimento_confirmado_at: null })
     .eq('id', aluno.id)
   if (errStatus) console.error('enviar-consentimento-saude: e-mail enviado, mas falhou ao gravar status', errStatus.message)
+
+  // Histórico (alimenta o painel de consentimentos): todo envio — o primeiro entra como "Primeiro envio".
+  const { error: errHist } = await admin.from('consentimento_reenvios').insert({
+    token_id: tok.token,
+    aluno_id: aluno.id,
+    personal_id: userData.user.id,
+    canal,
+    motivo: motivo?.motivo ?? 'Primeiro envio',
+    motivo_livre: motivo?.livre ?? null,
+  })
+  if (errHist) console.error('enviar-consentimento-saude: falha ao gravar histórico do envio', errHist.message)
 
   if (canal === 'whatsapp') return json(req, { ok: true, link: base, nome_aluno: aluno.name, nome_personal: nomePersonal })
   return json(req, { ok: true })

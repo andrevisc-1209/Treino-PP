@@ -52,3 +52,18 @@ app libera (ou bloqueia) os campos de lesão, cirurgia e medicamentos.
   `motivo_reenvio_livre`). O motivo fica no novo token (`treino.consentimento_saude_tokens`) como trilha de auditoria.
   Migration: `20261015000000_add_motivo_reenvio.sql`.
 - Remetente do e-mail: `Treino PP <noreply@personalperto.com.br>`; logo sobre fundo branco no cabeçalho.
+
+## Painel de consentimentos (v3)
+
+Rota `/consentimentos` (Configurações → "Consentimentos LGPD"): um registro por aluno ativo com selo de status
+(Pendente / Confirmado / Negado / Não solicitado), canal e data do último envio, data da resposta, filtros por
+status + busca por nome e o modal **Ver histórico** (envios em ordem cronológica: data, canal, motivo, quem enviou).
+
+Migration `20261016000000_add_canal_historico_consentimento.sql`:
+- `consentimento_saude_tokens.canal` e a tabela `treino.consentimento_reenvios` (histórico de **todos** os envios — o
+  primeiro entra com motivo "Primeiro envio"). `token_id` é `ON DELETE SET NULL`: criar um novo envio apaga o token
+  anterior ainda não usado, e um CASCADE levaria o histórico junto. RLS: o personal só lê as próprias linhas
+  (`personal_id = auth.uid()`); só a Edge Function grava.
+- Função `treino.consentimentos_saude_painel()` (SECURITY DEFINER, só alunos ativos do próprio personal): é por ela
+  que o painel lê canal e data da resposta, porque a tabela de tokens continua sem acesso do cliente.
+- Ordem de rollout: **migration → deploy da function** (a function nova grava `canal`, coluna que ainda não existe antes da migration).
