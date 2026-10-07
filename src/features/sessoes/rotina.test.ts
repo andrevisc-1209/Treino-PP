@@ -4,7 +4,7 @@ import type { Plano } from '@/features/planos/api'
 import type { Sessao } from './api'
 
 function plano(id: string, name: string): Plano {
-  return { id, aluno_id: 'a1', professional_id: 'p1', name, notes: null, active: true, modelo_origem_id: null, plano_exercicios: [] }
+  return { id, aluno_id: 'a1', professional_id: 'p1', name, notes: null, active: true, modelo_origem_id: null, modalidade: 'musculacao', tipo_execucao: 'sincrono', modalidade_detalhes: {}, plano_exercicios: [] }
 }
 
 function sessao(planoId: string, sessionDate: string, status: Sessao['status'] = 'concluida'): Sessao {

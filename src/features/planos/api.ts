@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { ItemComparavel } from './compare'
+import type { ModalidadeDetalhes, ModalidadeTipo, TipoExecucao } from '@/types/modalidades'
 
 export type Plano = {
   id: string
@@ -10,6 +11,9 @@ export type Plano = {
   notes: string | null
   active: boolean
   modelo_origem_id: string | null
+  modalidade: ModalidadeTipo
+  tipo_execucao: TipoExecucao
+  modalidade_detalhes: ModalidadeDetalhes
   plano_exercicios: { order_index: number; exercicio: { name: string } | null }[]
 }
 
@@ -74,12 +78,20 @@ export function usePlanoExercicios(planoId: string | undefined) {
 export function useCriarPlano(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { name: string; notes?: string }) => {
+    mutationFn: async (input: { name: string; notes?: string; modalidade?: ModalidadeTipo; tipo_execucao?: TipoExecucao; modalidade_detalhes?: ModalidadeDetalhes }) => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
       const { data, error } = await supabase
         .from('planos')
-        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: input.name, notes: input.notes || null })
+        .insert({
+          aluno_id: alunoId,
+          professional_id: u.user.id,
+          name: input.name,
+          notes: input.notes || null,
+          modalidade: input.modalidade ?? 'musculacao',
+          tipo_execucao: input.tipo_execucao ?? 'sincrono',
+          modalidade_detalhes: input.modalidade_detalhes ?? {},
+        })
         .select('id')
         .single()
       if (error) throw error
@@ -92,7 +104,18 @@ export function useCriarPlano(alunoId: string) {
 export function useAtualizarPlano(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, ...input }: { id: string; name?: string; notes?: string | null; active?: boolean }) => {
+    mutationFn: async ({
+      id,
+      ...input
+    }: {
+      id: string
+      name?: string
+      notes?: string | null
+      active?: boolean
+      modalidade?: ModalidadeTipo
+      tipo_execucao?: TipoExecucao
+      modalidade_detalhes?: ModalidadeDetalhes
+    }) => {
       const { error } = await supabase.from('planos').update(input).eq('id', id)
       if (error) throw error
     },
@@ -112,7 +135,15 @@ export function useDuplicarPlano(alunoId: string) {
 
       const { data: novo, error: errNovo } = await supabase
         .from('planos')
-        .insert({ aluno_id: alunoId, professional_id: u.user.id, name: novoNome, notes: plano.notes })
+        .insert({
+          aluno_id: alunoId,
+          professional_id: u.user.id,
+          name: novoNome,
+          notes: plano.notes,
+          modalidade: plano.modalidade,
+          tipo_execucao: plano.tipo_execucao,
+          modalidade_detalhes: plano.modalidade_detalhes,
+        })
         .select('id')
         .single()
       if (errNovo) throw errNovo
@@ -363,4 +394,19 @@ export function useSalvarPlanoComoModelo() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['modelos'] }),
   })
+}
+
+/** Exercícios do plano (nome, séries, repetições) — para montar a mensagem de WhatsApp de um treino de musculação. */
+export async function buscarExerciciosParaMensagem(planoId: string): Promise<{ nome: string; series: number; repeticoes: string }[]> {
+  const { data, error } = await supabase
+    .from('plano_exercicios')
+    .select('sets, reps, order_index, exercicio:exercicios(name)')
+    .eq('plano_id', planoId)
+    .order('order_index')
+  if (error) throw error
+  return (data as unknown as { sets: number; reps: string; exercicio: { name: string } | null }[]).map((i) => ({
+    nome: i.exercicio?.name ?? 'Exercício',
+    series: i.sets,
+    repeticoes: i.reps,
+  }))
 }

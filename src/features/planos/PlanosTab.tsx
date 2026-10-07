@@ -1,12 +1,28 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MoreVertical, Play, Plus } from 'lucide-react'
+import { MoreVertical, Play, Plus, Send } from 'lucide-react'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
+import { mostrarErroGlobal } from '@/components/Toast'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { usePerfilProfissional } from '@/features/auth/api'
+import { useAluno } from '@/features/alunos/api'
+import { gerarMensagemTreino } from '@/lib/mensagemTreino'
+import { linkWhatsAppComTexto } from '@/lib/whatsapp'
+import {
+  MODALIDADES_CONFIG,
+  montarDetalhes,
+  resumoModalidade,
+  valoresDoFormulario,
+  type ModalidadeDetalhes,
+  type ModalidadeTipo,
+  type TipoExecucao,
+} from '@/types/modalidades'
+import { ModalidadeForm } from './ModalidadeForm'
 import { itensIguais } from './compare'
 import { PlanoOrigemBadge } from './PlanoOrigemBadge'
 import {
@@ -19,6 +35,7 @@ import {
   useSalvarPlanoComoModelo,
   useSincronizarPlanoComModelo,
   buscarItensComparaveisPlano,
+  buscarExerciciosParaMensagem,
   type Plano,
 } from './api'
 
@@ -33,9 +50,17 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const excluir = useExcluirPlano(alunoId)
   const salvarComoModelo = useSalvarPlanoComoModelo()
   const sincronizar = useSincronizarPlanoComModelo(alunoId)
+  const { session } = useAuth()
+  const { data: aluno } = useAluno(alunoId)
+  const { data: perfil } = usePerfilProfissional(session?.user.id)
 
   const [novoEtapa, setNovoEtapa] = useState<'escolha' | 'modelo' | 'nome' | null>(null)
   const [nomeNovo, setNomeNovo] = useState('')
+  const [modalidadeNova, setModalidadeNova] = useState<ModalidadeTipo>('musculacao')
+  const [execucaoNova, setExecucaoNova] = useState<TipoExecucao>('sincrono')
+  const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
+  // treino assíncrono acabou de ser criado: oferece enviar ao aluno
+  const [recemCriado, setRecemCriado] = useState<{ id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes } | null>(null)
   const [erroNovo, setErroNovo] = useState<string | null>(null)
   const [verificandoModelo, setVerificandoModelo] = useState(false)
   const [conflitoModelo, setConflitoModelo] = useState<{ modelo: Modelo; planoExistente: Plano } | null>(null)
@@ -43,6 +68,9 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [renomeando, setRenomeando] = useState<Plano | null>(null)
   const [nome, setNome] = useState('')
   const [notas, setNotas] = useState('')
+  const [modalidadeEd, setModalidadeEd] = useState<ModalidadeTipo>('musculacao')
+  const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
+  const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
   const [erro, setErro] = useState<string | null>(null)
 
   const [menuPlano, setMenuPlano] = useState<Plano | null>(null)
@@ -72,7 +100,32 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const fecharNovo = () => {
     setNovoEtapa(null)
     setNomeNovo('')
+    setModalidadeNova('musculacao')
+    setExecucaoNova('sincrono')
+    setValoresNovos({})
     setErroNovo(null)
+  }
+
+  // WhatsApp: a aba é aberta antes de esperar a rede, senão o navegador do celular bloqueia o pop-up.
+  const enviarAoAluno = async (p: { id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes }) => {
+    const janela = window.open('about:blank', '_blank')
+    try {
+      const exercicios = p.modalidade === 'musculacao' ? await buscarExerciciosParaMensagem(p.id) : undefined
+      const mensagem = gerarMensagemTreino({
+        nomeAluno: aluno?.name ?? 'aluno',
+        nomePersonal: perfil?.name || 'Seu personal',
+        nomeTreino: p.name,
+        modalidade: p.modalidade,
+        detalhes: p.detalhes,
+        exercicios,
+      })
+      const url = linkWhatsAppComTexto(aluno?.phone, mensagem)
+      if (janela && !janela.closed) janela.location.href = url
+      else window.location.assign(url)
+    } catch (e) {
+      janela?.close()
+      mostrarErroGlobal((e as Error).message)
+    }
   }
 
   const criarDoZero = () => {
@@ -80,12 +133,16 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       setErroNovo('Nome é obrigatório')
       return
     }
+    const detalhes = montarDetalhes(modalidadeNova, valoresNovos)
+    const nomePlano = nomeNovo.trim()
     criar.mutate(
-      { name: nomeNovo.trim() },
+      { name: nomePlano, modalidade: modalidadeNova, tipo_execucao: execucaoNova, modalidade_detalhes: detalhes },
       {
         onSuccess: (planoId) => {
           fecharNovo()
-          navigate(`/alunos/${alunoId}/planos/${planoId}`)
+          // musculação segue para o editor de exercícios, como sempre; as outras modalidades não têm exercícios
+          if (modalidadeNova === 'musculacao') navigate(`/alunos/${alunoId}/planos/${planoId}`)
+          else if (execucaoNova === 'assincrono') setRecemCriado({ id: planoId, name: nomePlano, modalidade: modalidadeNova, detalhes })
         },
         onError: (e) => setErroNovo((e as Error).message),
       },
@@ -139,6 +196,9 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const abrirEditar = (p: Plano) => {
     setNome(p.name)
     setNotas(p.notes ?? '')
+    setModalidadeEd(p.modalidade ?? 'musculacao')
+    setExecucaoEd(p.tipo_execucao ?? 'sincrono')
+    setValoresEd(valoresDoFormulario(p.modalidade_detalhes))
     setErro(null)
     setRenomeando(p)
     setMenuPlano(null)
@@ -151,7 +211,14 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     }
     if (!renomeando) return
     atualizar.mutate(
-      { id: renomeando.id, name: nome.trim(), notes: notas.trim() },
+      {
+        id: renomeando.id,
+        name: nome.trim(),
+        notes: notas.trim(),
+        modalidade: modalidadeEd,
+        tipo_execucao: execucaoEd,
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd),
+      },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
   }
@@ -188,6 +255,9 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             .filter(Boolean)
             .join(', ')
           const podeIniciar = p.active && p.plano_exercicios.length > 0
+          const cfgMod = MODALIDADES_CONFIG[p.modalidade ?? 'musculacao']
+          const outraModalidade = (p.modalidade ?? 'musculacao') !== 'musculacao'
+          const metrica = resumoModalidade(p.modalidade ?? 'musculacao', p.modalidade_detalhes)
           return (
             <li key={p.id} className="rounded-2xl bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
@@ -196,10 +266,27 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                     {p.name}
                     {!p.active && <span className="ml-2 text-xs font-normal">(inativo)</span>}
                   </p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      {cfgMod.emoji} {cfgMod.label}
+                    </span>
+                    {p.tipo_execucao === 'assincrono' && (
+                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">📤 Assíncrono</span>
+                    )}
+                  </p>
                   <p className="text-sm text-slate-500">
-                    {p.plano_exercicios.length} exercícios{previa && ` · ${previa}`}
+                    {outraModalidade ? (metrica ?? 'Sem detalhes') : <>{p.plano_exercicios.length} exercícios{previa && ` · ${previa}`}</>}
                   </p>
                 </Link>
+                {p.tipo_execucao === 'assincrono' && p.active && (
+                  <button
+                    onClick={() => enviarAoAluno({ id: p.id, name: p.name, modalidade: p.modalidade, detalhes: p.modalidade_detalhes })}
+                    className="flex size-11 shrink-0 items-center justify-center rounded-xl text-brand active:bg-slate-100"
+                    aria-label={`Enviar ${p.name} para o aluno pelo WhatsApp`}
+                  >
+                    <Send size={18} />
+                  </button>
+                )}
                 {podeIniciar && (
                   <Link
                     to={`/alunos/${alunoId}/sessoes/nova?plano=${p.id}`}
@@ -317,9 +404,20 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
           <Field label="Nome">
             <Input value={nomeNovo} onChange={(e) => setNomeNovo(e.target.value)} autoFocus placeholder="Treino A" />
           </Field>
+          <ModalidadeForm
+            modalidade={modalidadeNova}
+            onModalidade={(m) => {
+              setModalidadeNova(m)
+              setValoresNovos({})
+            }}
+            tipoExecucao={execucaoNova}
+            onTipoExecucao={setExecucaoNova}
+            valores={valoresNovos}
+            onValores={setValoresNovos}
+          />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={criarDoZero} className="w-full" disabled={criar.isPending}>
-            Criar e editar
+            {modalidadeNova === 'musculacao' ? 'Criar e editar' : 'Criar treino'}
           </Button>
         </div>
       </BottomSheet>
@@ -374,6 +472,27 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         </div>
       </BottomSheet>
 
+      <BottomSheet open={!!recemCriado} onClose={() => setRecemCriado(null)} title="Treino criado">
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            {recemCriado && `${MODALIDADES_CONFIG[recemCriado.modalidade].emoji} "${recemCriado.name}" é assíncrono: envie para o aluno fazer por conta.`}
+          </p>
+          <Button
+            onClick={() => {
+              const r = recemCriado
+              setRecemCriado(null)
+              if (r) enviarAoAluno(r)
+            }}
+            className="w-full"
+          >
+            <Send size={18} className="mr-2 inline" aria-hidden /> Enviar para aluno
+          </Button>
+          <Button variant="ghost" onClick={() => setRecemCriado(null)} className="w-full">
+            Enviar depois
+          </Button>
+        </div>
+      </BottomSheet>
+
       <BottomSheet open={!!renomeando} onClose={() => setRenomeando(null)} title="Editar treino">
         <div className="space-y-4">
           <Field label="Nome">
@@ -386,6 +505,17 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               onChange={(e) => setNotas(e.target.value)}
             />
           </Field>
+          <ModalidadeForm
+            modalidade={modalidadeEd}
+            onModalidade={(m) => {
+              setModalidadeEd(m)
+              setValoresEd({})
+            }}
+            tipoExecucao={execucaoEd}
+            onTipoExecucao={setExecucaoEd}
+            valores={valoresEd}
+            onValores={setValoresEd}
+          />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={salvarRenome} className="w-full" disabled={atualizar.isPending}>
             Salvar
