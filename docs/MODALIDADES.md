@@ -66,3 +66,17 @@ Migration `20261022000000_metricas_modalidade.sql`: índice `(professional_id, c
 
 Decisão: **sem materialized view e sem `atualizar-metricas`**. Materialized view não tem RLS (qualquer role com SELECT leria os
 alunos de todos os personais) e o volume por personal é pequeno; agregar sob demanda com RLS é barato e nunca fica defasado.
+
+# Pós-Fase 3 — histórico unificado e notificações
+
+Migration `20261023000000_unificacao_historico_notificacoes.sql`.
+
+- **Musculação presencial no histórico**: ao concluir a sessão (Pós-treino), o app também grava em `execucoes_assincrono`
+  (`origem = 'presencial'`, `sessao_id` único, mesmo formato das execuções por link + maior carga, PSE e duração). É aditivo e
+  tolerante a falha (só registra no console): o salvamento da sessão não muda. Com isso a aba Performance, o selo da lista e o feed
+  passam a incluir essas sessões. **Sessões antigas não são retroativas** (só valem a partir do deploy).
+- **Notificações do personal** (`treino.notificacoes_professor`): `treino-publico` cria uma notificação quando o aluno conclui
+  pelo link. O **sino** (junto da engrenagem, nas telas principais) mostra as não lidas (9+), lista as 20 últimas (não lidas
+  primeiro), abre a ficha do aluno na aba Performance e tem "Marcar todas como lidas". **Realtime**: assinatura no layout
+  autenticado (`useNotificacoesRealtime`) atualiza o sino e mostra um toast. A observação do aluno **não** vai no payload (texto
+  livre, pode citar dor/lesão): é lida da execução quando o personal toca no ícone de citação.

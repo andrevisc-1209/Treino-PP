@@ -33,6 +33,7 @@ import {
   type SessaoHistorico,
 } from './resumoSessao'
 import { compartilharResumo } from './imagemResumo'
+import { registrarExecucaoDaSessao } from '@/features/execucoes/api'
 
 const CHIPS_PSE = [
   { valor: 1, label: 'Repouso' },
@@ -396,6 +397,15 @@ export function PosTreino({
       },
       {
         onSuccess: async () => {
+          // histórico unificado (Performance/selo/feed): aditivo — uma falha aqui nunca trava a conclusão do treino
+          try {
+            await registrarExecucaoDaSessao(sessionId)
+            qc.invalidateQueries({ queryKey: ['execucoes', alunoId] })
+            qc.invalidateQueries({ queryKey: ['atividade-recente'] })
+            qc.invalidateQueries({ queryKey: ['ultima-execucao-por-aluno'] })
+          } catch (e) {
+            console.error('PosTreino: não foi possível registrar no histórico unificado', e)
+          }
           try {
             const resultado = await finalizarAgendaAoConcluir({ sessaoId: sessionId, alunoId, aulaId: sessao?.aula_id ?? null })
             qc.invalidateQueries({ queryKey: ['aulas'] })
