@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import type { EstadoResultado } from './resultado'
+import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
 import { Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { blocosDe, formatarBloco, itensChecklist, linhasDetalhes, MODALIDADES_CONFIG, RESULTADO_CAMPOS, usaBlocos, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
@@ -11,11 +12,15 @@ export function ReferenciaTreino({ modalidade, detalhes }: { modalidade: Modalid
   const cfg = MODALIDADES_CONFIG[modalidade]
   const linhas = linhasDetalhes(modalidade, detalhes)
   const blocos = blocosDe(modalidade, detalhes)
+  const natacao = modalidade === 'natacao' ? dadosNatacaoDe(detalhes) : null
   return (
     <div className="space-y-2 rounded-2xl bg-slate-50 p-4">
       <p className="font-semibold">
         {cfg.emoji} {cfg.label}
+        {natacao && <span className="font-normal"> — {rotuloAmbiente(natacao.ambiente)}</span>}
       </p>
+      {natacao && <p className="text-sm font-medium text-slate-700">{resumoTotalNatacao(natacao)}</p>}
+      {modalidade === 'natacao' && !natacao && blocos.length === 0 && <p className="text-sm text-slate-500">(treino antigo — sem estrutura)</p>}
       {blocos.length > 0 && (
         <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
           {blocos.map((b) => (

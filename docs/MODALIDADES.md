@@ -95,3 +95,18 @@ Migration `20261023000000_unificacao_historico_notificacoes.sql`.
   ↑↓ para reordenar). Aparecem numerados no app, na mensagem de WhatsApp e na página pública `/treino/:token`, onde cada bloco
   vira um item para o aluno marcar. Treinos antigos (campos únicos) aparecem como um bloco "Treino" e viram blocos ao editar.
   Yoga, pilates, boxe, futebol, futevôlei e escalada seguem com campos simples + "Observações gerais".
+
+# Natação com biblioteca de exercícios
+
+Migration `20261024000000_exercicios_natacao.sql` (tabela `treino.exercicios_natacao_custom`, RLS por personal).
+
+- **Biblioteca padrão** (estática): `src/data/natacao-exercicios.ts` — 32 exercícios em 5 grupos (estilos, educativos, acessórios,
+  séries, mar aberto); **modelos** em `src/data/natacao-templates.ts` (8). Modelos **não** são copiados para a biblioteca do personal.
+- **Formulário** (`src/components/modalidades/NatacaoForm.tsx`): ambiente Piscina/Mar Aberto (trocar com blocos pede confirmação),
+  "Começar de um modelo", lista de exercícios com distância (m) ou tempo (s, com valor legível), séries, descanso, ritmo,
+  observações, chips de sugestão e ↑↓; adicionar por Biblioteca / Meus exercícios (criar o próprio, ⭐) / Modelos.
+- **Dados**: `modalidade_detalhes = { ambiente, blocos: [{ id, exercicio_id, nome, is_custom?, parametros: { distancia | tempo,
+  series, descanso, ritmo?, observacao? } }] }`. Total calculado (piscina: Σ distância × séries; mar: tempo + descansos).
+- **Exibição**: cada exercício vira item numerado/checklist (referência do treino, página pública, WhatsApp, cards). Treino
+  de natação no formato antigo (blocos de texto) continua legível e aparece no formulário para ser refeito.
+- Corrida, ciclismo, remo e funcional seguem com os blocos de texto livre.

@@ -447,6 +447,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 21 | Treino multimodalidade — Fase 3 (aba Performance, selo na lista de alunos, atividade recente) — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261022…` antes do merge** |
 | 22 | Histórico unificado (musculação presencial) + sino de notificações com Realtime — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261023…` antes do merge** |
 | 23 | Ajustes de UX: abas Histórico unificado, datas dd/mm/aaaa, escolha presencial/assíncrono ao iniciar, blocos de treino — `docs/MODALIDADES.md` | ✅ em revisão (sem migration, sem deploy) |
+| 24 | Natação: biblioteca de exercícios + modelos + mar aberto — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261024…` antes do merge** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

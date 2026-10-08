@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
 import { MODALIDADES, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 import { BlocosEditor } from './BlocosEditor'
+import { NatacaoForm } from '@/components/modalidades/NatacaoForm'
+import type { DadosNatacao } from '@/types/natacao'
 
 const CLASSE_CAMPO = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand'
 
@@ -18,6 +20,9 @@ export function ModalidadeForm({
   onLivres,
   blocos,
   onBlocos,
+  natacao,
+  onNatacao,
+  legadoNatacao,
 }: {
   modalidade: ModalidadeTipo
   onModalidade: (m: ModalidadeTipo) => void
@@ -31,6 +36,11 @@ export function ModalidadeForm({
   /** blocos do treino (natação, corrida, ciclismo, remo, funcional) */
   blocos: BlocoTreino[]
   onBlocos: (v: BlocoTreino[]) => void
+  /** natação (biblioteca de exercícios) */
+  natacao: DadosNatacao
+  onNatacao: (v: DadosNatacao) => void
+  /** conteúdo de um treino de natação no formato antigo, para o personal refazer */
+  legadoNatacao?: string[]
 }) {
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
@@ -129,7 +139,8 @@ export function ModalidadeForm({
         </Field>
       ))}
 
-      {usaBlocos(modalidade) && <BlocosEditor blocos={blocos} onChange={onBlocos} />}
+      {modalidade === 'natacao' && <NatacaoForm dados={natacao} onChange={onNatacao} textoAntigo={legadoNatacao} />}
+      {usaBlocos(modalidade) && modalidade !== 'natacao' && <BlocosEditor blocos={blocos} onChange={onBlocos} />}
 
       {modalidade !== 'musculacao' && !usaBlocos(modalidade) && (
         <div className="space-y-2">
