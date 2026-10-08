@@ -14,6 +14,7 @@ import {
   resumoModalidade,
   valoresDoFormulario,
   blocosDe,
+  textoLegadoNatacao,
   exerciciosLivresDe,
   validarBlocos,
   type BlocoTreino,
@@ -23,6 +24,7 @@ import {
   type TipoExecucao,
 } from '@/types/modalidades'
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
+import { natacaoInicial, type DadosNatacao } from '@/types/natacao'
 import { ModalidadeForm } from './ModalidadeForm'
 import { useEnviarTreinoAoAluno } from './useEnviarTreino'
 import { itensIguais } from './compare'
@@ -59,6 +61,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
   const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
+  const [natacaoNova, setNatacaoNova] = useState<DadosNatacao>({ ambiente: 'piscina', blocos: [] })
   // aula presencial de modalidade sem lista de exercícios: registra o resultado em uma folha
   const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
   // treino assíncrono acabou de ser criado: oferece enviar ao aluno
@@ -75,6 +78,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
   const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
   const [blocosEd, setBlocosEd] = useState<BlocoTreino[]>([])
+  const [natacaoEd, setNatacaoEd] = useState<DadosNatacao>({ ambiente: 'piscina', blocos: [] })
+  const [legadoNatacaoEd, setLegadoNatacaoEd] = useState<string[]>([])
   const [erro, setErro] = useState<string | null>(null)
 
   const [menuPlano, setMenuPlano] = useState<Plano | null>(null)
@@ -109,6 +114,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setValoresNovos({})
     setLivresNovos([])
     setBlocosNovos([])
+    setNatacaoNova({ ambiente: 'piscina', blocos: [] })
     setErroNovo(null)
   }
 
@@ -119,12 +125,12 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       setErroNovo('Nome é obrigatório')
       return
     }
-    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos)
+    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos, natacaoNova)
     if (erroBlocos) {
       setErroNovo(erroBlocos)
       return
     }
-    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos)
+    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos, natacaoNova)
     const nomePlano = nomeNovo.trim()
     criar.mutate(
       { name: nomePlano, modalidade: modalidadeNova, tipo_execucao: execucaoNova, modalidade_detalhes: detalhes },
@@ -209,6 +215,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setValoresEd(valoresDoFormulario(p.modalidade_detalhes))
     setLivresEd(exerciciosLivresDe(p.modalidade_detalhes))
     setBlocosEd(blocosDe(p.modalidade ?? 'musculacao', p.modalidade_detalhes))
+    setNatacaoEd(natacaoInicial(p.modalidade_detalhes))
+    setLegadoNatacaoEd(textoLegadoNatacao(p.modalidade_detalhes))
     setErro(null)
     setRenomeando(p)
     setMenuPlano(null)
@@ -220,7 +228,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       return
     }
     if (!renomeando) return
-    const erroBlocos = validarBlocos(modalidadeEd, blocosEd)
+    const erroBlocos = validarBlocos(modalidadeEd, blocosEd, natacaoEd)
     if (erroBlocos) {
       setErro(erroBlocos)
       return
@@ -232,7 +240,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         notes: notas.trim(),
         modalidade: modalidadeEd,
         tipo_execucao: execucaoEd,
-        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd),
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, natacaoEd),
       },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
@@ -440,6 +448,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setValoresNovos({})
               setLivresNovos([])
               setBlocosNovos([])
+              setNatacaoNova({ ambiente: 'piscina', blocos: [] })
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
@@ -449,6 +458,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onLivres={setLivresNovos}
             blocos={blocosNovos}
             onBlocos={setBlocosNovos}
+            natacao={natacaoNova}
+            onNatacao={setNatacaoNova}
           />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={criarDoZero} className="w-full" disabled={criar.isPending}>
@@ -556,6 +567,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setValoresEd({})
               setLivresEd([])
               setBlocosEd([])
+              setNatacaoEd({ ambiente: 'piscina', blocos: [] })
+              setLegadoNatacaoEd([])
             }}
             tipoExecucao={execucaoEd}
             onTipoExecucao={setExecucaoEd}
@@ -565,6 +578,9 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onLivres={setLivresEd}
             blocos={blocosEd}
             onBlocos={setBlocosEd}
+            natacao={natacaoEd}
+            onNatacao={setNatacaoEd}
+            legadoNatacao={legadoNatacaoEd}
           />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
           <Button onClick={salvarRenome} className="w-full" disabled={atualizar.isPending}>

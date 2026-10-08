@@ -1,4 +1,5 @@
 import { formatarNumero } from '@/lib/format'
+import { dadosNatacaoDe, descricaoBlocoNatacao, montarDetalhesNatacao, resumoTotalNatacao, rotuloAmbiente, validarNatacao, type DadosNatacao } from './natacao'
 
 export type ModalidadeTipo =
   | 'musculacao'
@@ -154,7 +155,14 @@ export function montarDetalhes(
   valores: Record<string, string>,
   livres: ExercicioLivre[] = [],
   blocos: BlocoTreino[] = [],
+  natacao?: DadosNatacao,
 ): ModalidadeDetalhes {
+  // natação tem formulário próprio (biblioteca de exercícios): ambiente + blocos estruturados
+  if (modalidade === 'natacao' && natacao) {
+    const base = montarDetalhesNatacao(natacao) as ModalidadeDetalhes
+    const obs = (valores.observacoes ?? '').trim()
+    return obs ? { ...base, observacoes: obs } : base
+  }
   const saida: ModalidadeDetalhes = {}
   for (const c of MODALIDADES_CONFIG[modalidade].campos) {
     const bruto = (valores[c.key] ?? '').trim()
@@ -210,7 +218,8 @@ function limparBloco(b: BlocoTreino): BlocoTreino | null {
 }
 
 /** Valida a lista de blocos do formulário (modalidades com blocos): ao menos 1, cada um com nome e descrição. */
-export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[]): string | null {
+export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[], natacao?: DadosNatacao): string | null {
+  if (modalidade === 'natacao' && natacao) return validarNatacao(natacao)
   if (!usaBlocos(modalidade)) return null
   if (blocos.length === 0) return 'Adicione ao menos um bloco ao treino.'
   if (blocos.some((b) => !b.nome.trim() || !b.descricao.trim())) return 'Preencha o nome e a descrição de cada bloco.'
@@ -223,6 +232,15 @@ export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[])
  */
 export function blocosDe(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): BlocoTreino[] {
   if (!usaBlocos(modalidade)) return []
+  // natação estruturada (biblioteca): cada exercício vira um bloco de texto para listar/marcar/enviar
+  const nat = modalidade === 'natacao' ? dadosNatacaoDe(d as Record<string, unknown> | null | undefined) : null
+  if (nat) {
+    return nat.blocos.map((b) => ({
+      id: b.id,
+      nome: b.nome,
+      descricao: [descricaoBlocoNatacao(b), b.parametros.observacao?.trim() ? `“${b.parametros.observacao.trim()}”` : null].filter(Boolean).join(' · '),
+    }))
+  }
   const v = d?.blocos
   if (Array.isArray(v)) {
     return (v as BlocoTreino[])
@@ -231,6 +249,12 @@ export function blocosDe(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | nul
   }
   const legado = resumoLegado(modalidade, d)
   return legado ? [{ id: 'legado', nome: 'Treino', descricao: legado }] : []
+}
+
+/** Conteúdo de um treino de natação no FORMATO ANTIGO (blocos de texto ou campos únicos), para o personal refazer na biblioteca. */
+export function textoLegadoNatacao(d: ModalidadeDetalhes | null | undefined): string[] {
+  if (dadosNatacaoDe(d as Record<string, unknown> | null | undefined)) return []
+  return blocosDe('natacao', d).map(formatarBloco)
 }
 
 /** "Aquecimento — 400m livre · 400 m · leve" */
@@ -306,6 +330,11 @@ function resumoLegado(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null |
 
 /** Subtítulo do card: "4 blocos · 2.500 m" (com blocos) ou a métrica dos campos antigos (ex.: "5 km · pace 5:30/km"). null se não houver. */
 export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string | null {
+  const nat = modalidade === 'natacao' ? dadosNatacaoDe(d as Record<string, unknown> | null | undefined) : null
+  if (nat) {
+    const total = resumoTotalNatacao(nat).replace(/^(Distância total|Tempo estimado): /, '')
+    return `${rotuloAmbiente(nat.ambiente)} · ${nat.blocos.length} ${nat.blocos.length === 1 ? 'exercício' : 'exercícios'}${total !== rotuloAmbiente(nat.ambiente) ? ` · ${total}` : ''}`
+  }
   if (usaBlocos(modalidade) && Array.isArray(d?.blocos)) {
     const blocos = blocosDe(modalidade, d)
     if (blocos.length === 0) return null

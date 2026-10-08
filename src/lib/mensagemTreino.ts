@@ -1,3 +1,4 @@
+import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
 import { blocosDe, exerciciosLivresDe, formatarBloco, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 /**
@@ -21,6 +22,8 @@ export function gerarMensagemTreino(args: {
     `Olá, ${primeiroNome}! 💪`,
     `Seu treino "${args.nomeTreino}" de ${cfg.emoji} ${cfg.label} está pronto!`,
   ]
+  const natacao = args.modalidade === 'natacao' ? dadosNatacaoDe(args.detalhes) : null
+  if (natacao) blocos.push(`🏊 ${rotuloAmbiente(natacao.ambiente)} · ${resumoTotalNatacao(natacao)}`)
   const detalhes = linhasDetalhes(args.modalidade, args.detalhes)
   if (detalhes.length > 0) blocos.push(`📋 Detalhes:\n${detalhes.join('\n')}`)
   if (args.exercicios && args.exercicios.length > 0) {
