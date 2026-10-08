@@ -331,7 +331,7 @@ export function NovaSessaoPage() {
           <p className="font-semibold">Crie o primeiro treino</p>
           <p className="text-sm text-slate-500">Monte um treino para {aluno?.name ?? 'o aluno'} ou crie um treino planejado para reutilizar depois.</p>
           <div className="space-y-2">
-            <Button onClick={() => navigate(`/alunos/${id}?tab=Treinos`)} className="w-full">
+            <Button onClick={() => navigate(`/alunos/${id}?tab=Treinos&novo=1`)} className="w-full">
               Montar treino do aluno
             </Button>
             <Button variant="ghost" onClick={() => navigate('/meus-treinos/planejados')} className="w-full">
@@ -543,7 +543,7 @@ export function NovaSessaoPage() {
               Treino livre
             </button>
             <button
-              onClick={() => navigate(`/alunos/${id}?tab=Treinos`)}
+              onClick={() => navigate(`/alunos/${id}?tab=Treinos&novo=1`)}
               className="w-full rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-left font-medium text-slate-600 shadow-sm transition active:bg-slate-50"
             >
               + Criar treino
