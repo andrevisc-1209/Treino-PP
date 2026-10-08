@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { MoreVertical, Play, Plus, Send } from 'lucide-react'
 import { useModelos, buscarItensComparaveisModelo, type Modelo } from '@/features/modelos/api'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
@@ -54,7 +54,15 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const salvarComoModelo = useSalvarPlanoComoModelo()
   const sincronizar = useSincronizarPlanoComModelo(alunoId)
 
-  const [novoEtapa, setNovoEtapa] = useState<'escolha' | 'modelo' | 'nome' | null>(null)
+  // vindo de "Escolher treino → + Criar treino" (?novo=1): já abre o "Novo treino" deste aluno
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [novoEtapa, setNovoEtapa] = useState<'escolha' | 'modelo' | 'nome' | null>(searchParams.get('novo') === '1' ? 'escolha' : null)
+  useEffect(() => {
+    if (searchParams.get('novo') !== '1') return
+    const resto = new URLSearchParams(searchParams)
+    resto.delete('novo')
+    setSearchParams(resto, { replace: true }) // evita reabrir ao recarregar a página
+  }, [searchParams, setSearchParams])
   const [nomeNovo, setNomeNovo] = useState('')
   const [modalidadeNova, setModalidadeNova] = useState<ModalidadeTipo>('musculacao')
   const [execucaoNova, setExecucaoNova] = useState<TipoExecucao>('sincrono')
