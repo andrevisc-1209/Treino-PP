@@ -7,7 +7,7 @@ export type TreinoEscolhido = { nome: string; modalidade: ModalidadeTipo; tipoEx
 
 /**
  * Passo antes de iniciar um treino que não é de musculação: confirma a modalidade e pergunta se a sessão é
- * presencial ou assíncrona (vem marcado com o que o treino já define, mas pode trocar só para esta vez).
+ * presencial ou à distância (vem marcado com o que o treino já define, mas pode trocar só para esta vez).
  */
 export function EscolhaSessaoSheet({
   treino,
@@ -37,7 +37,7 @@ export function EscolhaSessaoSheet({
               {(
                 [
                   { v: 'sincrono', t: 'Presencial' },
-                  { v: 'assincrono', t: 'Assíncrono' },
+                  { v: 'assincrono', t: 'À distância' },
                 ] as const
               ).map((o) => (
                 <button

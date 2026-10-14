@@ -24,6 +24,7 @@ import {
   useEnviarFatura,
   useFatura,
   useItensRecibo,
+  useTreinosADistanciaNoPeriodo,
   useMarcarFaturaPaga,
   type FormaPagamento,
 } from './api'
@@ -50,6 +51,7 @@ export function FaturaPage() {
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const { data: sessoesTodas } = useSessoesDetalhadas(fatura?.aluno_id)
   const { data: pesosTodos } = usePesos(fatura?.aluno_id)
+  const { data: treinosADistancia } = useTreinosADistanciaNoPeriodo(fatura?.modelo === 'mensal' ? fatura.aluno_id : undefined, fatura?.periodo_inicio, fatura?.periodo_fim)
   const { data: itensFatura } = useItensRecibo(fatura && fatura.status !== 'cancelada' ? fatura.id : undefined)
 
   const enviar = useEnviarFatura()
@@ -129,7 +131,7 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =
-    itensFatura && itensFatura.length > 0 ? dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal') : null
+    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal'), treinosADistancia: fatura.modelo === 'mensal' ? (treinosADistancia ?? 0) : undefined } : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)

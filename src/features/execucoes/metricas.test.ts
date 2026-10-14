@@ -18,6 +18,9 @@ describe('métrica principal (formato real da Fase 2)', () => {
   it('sem resultado: valor nulo e texto neutro', () => {
     expect(metricaPrincipal('corrida', { resultado: {} }).valor).toBeNull()
     expect(textoMetrica('corrida', {})).toBe('Sem resultado preenchido')
+    // sem números, mas com o checklist marcado, mostra o progresso (caso real: natação presencial com 6/6 itens)
+    expect(textoMetrica('natacao', { resultado: {}, exercicios_livres: [{ nome: 'A', feito: true }, { nome: 'B', feito: true }, { nome: 'C', feito: false }] })).toBe('2/3 itens feitos')
+    expect(textoMetrica('natacao', { resultado: { tiros_feitos: 8 }, exercicios_livres: [{ nome: 'A', feito: false }] })).toBe('8 tiros')
   })
   it('pontos do gráfico: só a modalidade, só com valor, em ordem e limitados', () => {
     const ex = (data: string, km: number | null, modalidade: 'corrida' | 'natacao' = 'corrida') => ({

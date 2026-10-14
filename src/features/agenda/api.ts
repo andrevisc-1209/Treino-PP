@@ -355,6 +355,51 @@ export async function criarAulaAvulsaRealizada(input: { alunoId: string; sessaoI
   if (errLink) throw errLink
 }
 
+/**
+ * Treino presencial de outra modalidade (natação, corrida…) registrado em "Registrar treino": mesmo caminho da sessão de
+ * musculação — marca presença na aula de hoje do aluno (se houver) e a cobra. Devolve 'sem-aula-hoje' para a tela
+ * perguntar se cria uma aula avulsa.
+ */
+export async function finalizarAgendaAoConcluirExecucao(input: { execucaoId: string; alunoId: string }): Promise<'vinculada' | 'sem-aula-hoje'> {
+  const { inicio, fim } = limitesDoDiaSP(hojeSP())
+  const { data: candidatas, error } = await supabase
+    .from('aulas')
+    .select('id, aula_participantes!inner(aluno_id, status)')
+    .gte('starts_at', inicio.toISOString())
+    .lte('starts_at', fim.toISOString())
+    .eq('aula_participantes.aluno_id', input.alunoId)
+    .eq('aula_participantes.status', 'previsto')
+    .limit(1)
+  if (error) throw error
+  if (candidatas.length === 0) return 'sem-aula-hoje'
+
+  const aulaId = candidatas[0].id as string
+  const valor = await valorPorAulaDoAluno(input.alunoId)
+  const { data: p, error: errSel } = await supabase.from('aula_participantes').select('id').eq('aula_id', aulaId).eq('aluno_id', input.alunoId).single()
+  if (errSel) throw errSel
+  const { error: errUp } = await supabase.from('aula_participantes').update({ status: 'presente', cobrar: true, valor, execucao_id: input.execucaoId }).eq('id', p.id)
+  if (errUp) throw errUp
+  await atualizarStatusAulaSeCompleta(aulaId)
+  return 'vinculada'
+}
+
+/** Aula avulsa já realizada para cobrar um treino presencial de outra modalidade feito fora da agenda. */
+export async function criarAulaAvulsaDeExecucao(input: { alunoId: string; execucaoId: string; durationMin: number }): Promise<void> {
+  const { data: u } = await supabase.auth.getUser()
+  if (!u.user) throw new Error('Sessão expirada')
+  const valor = await valorPorAulaDoAluno(input.alunoId)
+  const { data: aula, error } = await supabase
+    .from('aulas')
+    .insert({ professional_id: u.user.id, horario_id: null, starts_at: new Date().toISOString(), original_starts_at: null, duration_min: input.durationMin, local: null, status: 'realizada' })
+    .select('id')
+    .single()
+  if (error) throw error
+  const { error: errPart } = await supabase
+    .from('aula_participantes')
+    .insert({ aula_id: aula.id, aluno_id: input.alunoId, status: 'presente', cobrar: true, valor, execucao_id: input.execucaoId })
+  if (errPart) throw errPart
+}
+
 // ============================================================
 // Horários fixos
 // ============================================================

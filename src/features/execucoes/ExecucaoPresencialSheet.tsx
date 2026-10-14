@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { BottomSheet, Button } from '@/components/ui'
-import { mostrarInfoGlobal } from '@/components/Toast'
+import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { criarAulaAvulsaDeExecucao, finalizarAgendaAoConcluirExecucao, valorPorAulaDoAluno } from '@/features/agenda/api'
+import { formatarBRL } from '@/lib/moeda'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 import { useRegistrarExecucaoPresencial } from './api'
 import { FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
@@ -29,9 +32,30 @@ export function ExecucaoPresencialSheet({ plano, alunoId, onClose }: { plano: Pl
     registrar.mutate(
       { plano, detalhes: detalhesDoResultado(plano.modalidade, plano.modalidade_detalhes, estado), notas: estado.notas },
       {
-        onSuccess: () => {
+        onSuccess: async (execucaoId) => {
           mostrarInfoGlobal('Treino registrado.')
           fechar()
+          // Cobrança: como na musculação, marca presença na aula de hoje; sem aula, oferece criar uma avulsa (só se o aluno paga por aula).
+          try {
+            const r = await finalizarAgendaAoConcluirExecucao({ execucaoId, alunoId })
+            if (r === 'sem-aula-hoje') {
+              const valor = await valorPorAulaDoAluno(alunoId)
+              if (valor == null) return
+              const ok = await confirmarAcao({
+                titulo: 'Cobrar este treino?',
+                mensagem: `Não há aula agendada hoje para este aluno. Criar uma aula avulsa e cobrar ${formatarBRL(valor)}?`,
+                textoConfirmar: 'Criar e cobrar',
+              })
+              if (ok) {
+                await criarAulaAvulsaDeExecucao({ alunoId, execucaoId, durationMin: 60 })
+                mostrarInfoGlobal('Aula avulsa criada e incluída na cobrança.')
+              }
+            } else {
+              mostrarInfoGlobal('Presença marcada na aula de hoje.')
+            }
+          } catch (e) {
+            mostrarErroGlobal(`Treino registrado, mas não deu para atualizar a cobrança: ${(e as Error).message}`)
+          }
         },
         onError: (e) => setErro((e as Error).message),
       },

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { limitesDoDiaSP } from '@/lib/datas'
 import type { ItemRecibo } from './recibo'
 
 export type ModeloCobranca = 'por_aula' | 'mensal'
@@ -13,6 +14,8 @@ export type AlunoCobranca = {
   dia_ciclo: number
   dias_vencimento: number
   ativo: boolean
+  cobrar_distancia?: boolean
+  valor_distancia?: number | null
 }
 
 export function useAlunoCobranca(alunoId: string | undefined) {
@@ -48,6 +51,8 @@ export type SalvarCobrancaInput = {
   valor_mensal: number | null
   dia_ciclo: number
   dias_vencimento: number
+  cobrar_distancia: boolean
+  valor_distancia: number | null
 }
 
 export function useSalvarAlunoCobranca() {
@@ -107,7 +112,9 @@ export type ParticipacaoAberta = {
   cobrar: boolean | null
   valor: number | null
   fatura_id: string | null
-  aula: { starts_at: string; duration_min: number; local: string | null } | null
+  aula: { starts_at: string; duration_min: number; local: string | null; tipo?: string } | null
+  /** execução à distância que originou a cobrança */
+  execucao?: { modalidade: string | null } | null
   /** modalidade do treino da sessão ligada à aula (ausente em falta/cancelamento e em treinos apagados) */
   sessao?: SessaoDetalhe | null
 }
@@ -118,7 +125,7 @@ export function useParticipacoesAbertas(alunoId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select(`id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), ${SELECT_SESSAO_DETALHE}`)
+        .select(`id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade), ${SELECT_SESSAO_DETALHE}`)
         .eq('aluno_id', alunoId!)
         .is('fatura_id', null)
         .neq('status', 'previsto')
@@ -404,7 +411,8 @@ type LinhaRecibo = {
   id: string
   status: ItemRecibo['status']
   valor: number | null
-  aula: { starts_at: string; duration_min: number; local: string | null } | null
+  aula: { starts_at: string; duration_min: number; local: string | null; tipo?: string } | null
+  execucao?: { modalidade: string | null } | null
   sessao?: SessaoDetalhe | null
 }
 
@@ -422,7 +430,8 @@ export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
     pse: l.sessao?.post_pse ?? null,
     nota: l.sessao?.prof_rating ?? null,
     data_sessao: l.sessao?.session_date ?? null,
-    modalidade: l.sessao?.plano?.modalidade ?? null,
+    modalidade: l.sessao?.plano?.modalidade ?? l.execucao?.modalidade ?? null,
+    a_distancia: l.aula.tipo === 'distancia',
     duracao_sessao_min: l.sessao?.duration_minutes ?? null,
     exercicios_feitos: series.filter((n) => n > 0).length,
     series_feitas: series.reduce((a, n) => a + n, 0),
@@ -436,11 +445,31 @@ export function useItensRecibo(faturaId: string | undefined) {
     queryFn: async (): Promise<ItemRecibo[]> => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select(`id, status, valor, aula:aulas(starts_at, duration_min, local), ${SELECT_SESSAO_DETALHE}`)
+        .select(`id, status, valor, aula:aulas(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade), ${SELECT_SESSAO_DETALHE}`)
         .eq('fatura_id', faturaId!)
       if (error) throw error
       return (data as unknown as LinhaRecibo[]).map(paraItemRecibo).filter((i): i is ItemRecibo => !!i)
     },
     enabled: !!faturaId,
+  })
+}
+
+/** Treinos que o aluno concluiu à distância (pelo link) dentro do período — para mostrar a quantidade (modelo mensal não cobra por treino). */
+export function useTreinosADistanciaNoPeriodo(alunoId: string | undefined, inicio: string | undefined, fim: string | undefined) {
+  return useQuery({
+    queryKey: ['treinos-a-distancia', alunoId, inicio, fim],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('execucoes_assincrono')
+        .select('id', { count: 'exact', head: true })
+        .eq('aluno_id', alunoId!)
+        .eq('origem', 'link')
+        .eq('status', 'concluido')
+        .gte('concluido_em', limitesDoDiaSP(inicio!).inicio.toISOString())
+        .lte('concluido_em', limitesDoDiaSP(fim!).fim.toISOString())
+      if (error) throw error
+      return count ?? 0
+    },
+    enabled: !!alunoId && !!inicio && !!fim,
   })
 }

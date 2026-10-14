@@ -11,10 +11,10 @@ import { useSessoes, type Sessao } from './api'
 
 type Item = { chave: string; quando: string; sessao: Sessao } | { chave: string; quando: string; execucao: Execucao }
 
-/** Origem do registro: 🏋️ presencial (sessão ou aula) · 📤 assíncrono (aluno fez pelo link). */
+/** Origem do registro: 🏋️ presencial (sessão ou aula) · 📤 à distância (aluno fez pelo link). */
 function IconeOrigem({ assincrono }: { assincrono: boolean }) {
   return (
-    <span role="img" aria-label={assincrono ? 'Assíncrono' : 'Presencial'} title={assincrono ? 'Assíncrono (link)' : 'Presencial'} className="shrink-0 text-base">
+    <span role="img" aria-label={assincrono ? 'À distância' : 'Presencial'} title={assincrono ? 'À distância (link)' : 'Presencial'} className="shrink-0 text-base">
       {assincrono ? '📤' : '🏋️'}
     </span>
   )

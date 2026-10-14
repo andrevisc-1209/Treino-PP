@@ -111,7 +111,7 @@ export function ModalidadeForm({
           {(
             [
               { v: 'sincrono', t: 'Presencial', s: '(Síncrono)' },
-              { v: 'assincrono', t: 'Assíncrono', s: '(Envio ao aluno)' },
+              { v: 'assincrono', t: 'À distância', s: '(Envio ao aluno)' },
             ] as const
           ).map((o) => (
             <button

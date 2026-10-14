@@ -13,10 +13,10 @@ Planos existentes ficam `musculacao` + `sincrono` — nada muda para eles.
 
 ## App
 - `src/types/modalidades.ts`: configuração de campos por modalidade + helpers (`montarDetalhes`, `resumoModalidade`, `linhasDetalhes`).
-- `ModalidadeForm` (criar do zero e editar treino): grade de modalidades, Presencial/Assíncrono e campos dinâmicos.
+- `ModalidadeForm` (criar do zero e editar treino): grade de modalidades, Presencial/À distância e campos dinâmicos.
   Musculação segue o fluxo de sempre (vai para o editor de exercícios).
-- Cards da aba Treinos: selo da modalidade, "📤 Assíncrono" e a métrica-chave ("10 km · pace 6:00/km").
-- Assíncrono: botão enviar (no card e logo após criar) abre o WhatsApp com a mensagem pronta
+- Cards da aba Treinos: selo da modalidade, "📤 À distância" e a métrica-chave ("10 km · pace 6:00/km").
+- À distância (internamente `assincrono`): botão enviar (no card e logo após criar) abre o WhatsApp com a mensagem pronta
   (`src/lib/mensagemTreino.ts`). Telefone do aluno válido → abre a conversa dele; senão, escolher o contato.
   Só vai o que o personal montou para o treino — nunca a ficha de saúde.
 
@@ -29,7 +29,7 @@ Planos existentes ficam `musculacao` + `sincrono` — nada muda para eles.
 Migration `20261021000000_execucao_treino_modalidade.sql` (rodar **antes** do merge).
 
 ## Aluno sem conta: link público `/treino/:token`
-1. **Enviar** (treino assíncrono): chama `gerar-link-treino` (JWT do personal) → link de 7 dias e uso único em
+1. **Enviar** (treino à distância): chama `gerar-link-treino` (JWT do personal) → link de 7 dias e uso único em
    `treino.links_treino_assincrono` (reaproveita o link se ainda válido) → entra na mensagem de WhatsApp.
 2. A página pública fala **só com a Edge Function `treino-publico`** (`verify_jwt = false`): `consultar` devolve o treino
    e o *primeiro* nome do aluno (nada de telefone/e-mail/ficha de saúde); `concluir` valida o resultado
@@ -112,11 +112,11 @@ Migration `20261023000000_unificacao_historico_notificacoes.sql`.
 # Ajustes de UX (pós-Fase 3)
 
 - **Abas da ficha**: Resumo · Treinos · Histórico · Performance · Evolução. A aba **Histórico** unifica sessões presenciais,
-  aulas presenciais de outras modalidades e treinos feitos pelo aluno pelo link (🏋️ presencial / 📤 assíncrono), do mais recente
+  aulas presenciais de outras modalidades e treinos feitos pelo aluno pelo link (🏋️ presencial / 📤 à distância), do mais recente
   ao mais antigo; execuções que vieram de uma sessão de musculação (`sessao_id`) não aparecem em duplicidade.
 - **Datas** no padrão dd/mm/aaaa na ficha (`formatarDataBR`).
-- **Iniciar treino de outra modalidade** (escolha de treino da Sessão): passo "Sessão de {modalidade}" com Presencial/Assíncrono
-  (padrão = o do treino, troca vale só para essa vez). Presencial abre o registro da aula; Assíncrono envia pelo WhatsApp.
+- **Iniciar treino de outra modalidade** (escolha de treino da Sessão): passo "Sessão de {modalidade}" com Presencial/À distância
+  (padrão = o do treino, troca vale só para essa vez). Presencial abre o registro da aula; À distância envia pelo WhatsApp.
   Treino planejado escolhido é criado no aluno ao iniciar (ou reaproveita a cópia existente). Musculação não muda.
 - **Blocos de treino** (natação, corrida, ciclismo, remo, funcional): `modalidade_detalhes.blocos` = lista de
   `{ id, nome, descricao, distancia? (m), duracao?, intensidade?, observacoes? }` (mínimo 1, nome e descrição obrigatórios,
@@ -179,3 +179,11 @@ Migration `20261026000000_triathlon_perfil.sql` (`treino.alunos`: `modalidade_fo
 `ClimaCard` na Hoje (após o checklist de primeiros passos): temperatura, condição, mín/máx, chance de chuva, vento, UV e uma dica para treino ao
 ar livre (chuva > calor > UV > vento). Edge Function `clima` (JWT do personal): lê `professionals.cidade/uf`, geocodifica e busca a previsão no
 Open-Meteo (sem chave). Só a **cidade** do personal sai para o serviço externo — nenhum dado de aluno. Sem cidade cadastrada ou com falha, o card some.
+
+## Treino à distância: cobrança (v. 20261036)
+Vocabulário na interface: **"à distância"** (internamente `tipo_execucao = 'assincrono'`).
+- **Por aluno**, modelo **por aula**: opção "Cobrar treinos à distância" + **valor próprio** (`aluno_cobranca.cobrar_distancia` / `valor_distancia`), desligada por padrão.
+- Ao concluir o treino pelo link com a opção ligada, `treino-publico` cria uma aula `tipo = 'distancia'` (`status realizada`) e a participação **presente, cobrar, valor = valor à distância**, ligada à execução (`aula_participantes.execucao_id`, único).
+  Aparece em "Itens do ciclo" e no relatório como "treino à distância" para o personal revisar/desmarcar. Falha ao criar a cobrança não desfaz o registro do aluno.
+- **Modelo mensal**: nada é cobrado por treino; o relatório do ciclo mostra só a **quantidade** de treinos à distância.
+- Histórico: execução sem números, mas com checklist marcado, mostra "N/M itens feitos" em vez de "Sem resultado preenchido".

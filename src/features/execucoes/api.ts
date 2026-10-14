@@ -50,24 +50,31 @@ export function useRegistrarExecucaoPresencial(alunoId: string) {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
       const agora = new Date().toISOString()
-      const { error } = await supabase.from('execucoes_assincrono').insert({
-        plano_id: input.plano.id,
-        plano_nome: input.plano.name,
-        modalidade: input.plano.modalidade,
-        aluno_id: alunoId,
-        professional_id: u.user.id,
-        origem: 'presencial',
-        concluido_em: agora,
-        status: 'concluido',
-        detalhes_execucao: input.detalhes,
-        notas_aluno: input.notas.trim() || null,
-      })
+      const { data, error } = await supabase
+        .from('execucoes_assincrono')
+        .insert({
+          plano_id: input.plano.id,
+          plano_nome: input.plano.name,
+          modalidade: input.plano.modalidade,
+          aluno_id: alunoId,
+          professional_id: u.user.id,
+          origem: 'presencial',
+          concluido_em: agora,
+          status: 'concluido',
+          detalhes_execucao: input.detalhes,
+          notas_aluno: input.notas.trim() || null,
+        })
+        .select('id')
+        .single()
       if (error) throw error
+      return data.id as string
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['execucoes', alunoId] })
       qc.invalidateQueries({ queryKey: ['atividade-recente'] })
       qc.invalidateQueries({ queryKey: ['ultima-execucao-por-aluno'] })
+      qc.invalidateQueries({ queryKey: ['participacoes-abertas'] })
+      qc.invalidateQueries({ queryKey: ['agenda'] })
     },
   })
 }

@@ -469,6 +469,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 43 | Relatório completo do ciclo: recibo + relatório num PDF só (resumo, treinos, tabela, gráficos, total) | ✅ em revisão (sem migration) |
 | 44 | Consentimento de saúde: registro do IP do aceite (tabela só da plataforma) e termo v1.2 — `docs/CONSENTIMENTO_SAUDE.md` | ✅ em revisão — **rodar migration `20261035…` antes do merge e redeploy de `confirmar-consentimento-saude`** |
 | 45 | Medidas corporais (altura, peso, % gordura, circunferências) só com o consentimento do aluno; termo v1.3 | ✅ em revisão — **redeploy de `confirmar-consentimento-saude`** |
+| 46 | Treino à distância: renomeia "assíncrono", cobrança por aluno (valor próprio, modelo por aula), quantidades no mensal, check-in/cobrança do presencial de outras modalidades, histórico "N/M itens feitos" e termo v1.4 | ✅ em revisão — **rodar migration `20261036…` antes do merge; redeploy de `treino-publico` e `confirmar-consentimento-saude`** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
