@@ -8,6 +8,8 @@ export type Exercicio = {
   muscle_group: string | null
   equipment: string | null
   description: string | null
+  /** fase da progressão (grupo Reabilitação / Prep Física): 'I' | 'II'; dado, não aparece na tela */
+  fase?: 'I' | 'II' | null
 }
 
 export function useExercicios() {
