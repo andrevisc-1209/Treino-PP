@@ -1,7 +1,7 @@
 import { estruturadosDe, type DadosEstruturados } from '@/types/estruturado'
 import type { ModalidadeDetalhes, ModalidadeTipo } from '@/types/modalidades'
 
-export const MODALIDADES_COM_TEMPLATE_DO_SISTEMA: ModalidadeTipo[] = ['corrida', 'ciclismo', 'brick']
+export const MODALIDADES_COM_TEMPLATE_DO_SISTEMA: ModalidadeTipo[] = ['musculacao', 'corrida', 'ciclismo', 'brick']
 
 /** Dados do formulário a partir de um modelo pronto, com ids novos nos blocos (o JSON do banco não tem ids). */
 export function estruturadoDoTemplate(modalidade: ModalidadeTipo, detalhes: ModalidadeDetalhes): DadosEstruturados {
@@ -21,4 +21,15 @@ export function temBlocos(modalidade: ModalidadeTipo, e: DadosEstruturados): boo
   if (modalidade === 'ciclismo') return e.ciclismo.blocos.length > 0
   if (modalidade === 'brick') return e.brick.blocos_bike.length + e.brick.blocos_corrida.length > 0
   return false
+}
+
+/** Exercício de um modelo de musculação (modalidade_detalhes.exercicios), já com o id real da biblioteca. */
+export type ItemTemplateMusculacao = { exercicio_id: string; nome: string; sets: number; reps: string; rest_seconds: number | null }
+
+export function itensMusculacaoDe(detalhes: ModalidadeDetalhes | null | undefined): ItemTemplateMusculacao[] {
+  const lista = (detalhes as Record<string, unknown> | null | undefined)?.exercicios
+  if (!Array.isArray(lista)) return []
+  return lista
+    .filter((x): x is ItemTemplateMusculacao => !!x && typeof x.exercicio_id === 'string' && typeof x.nome === 'string' && typeof x.sets === 'number' && typeof x.reps === 'string')
+    .map((x) => ({ ...x, rest_seconds: typeof x.rest_seconds === 'number' ? x.rest_seconds : null }))
 }

@@ -26,6 +26,7 @@ import {
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { estruturadosDe, estruturadosVazios, type DadosEstruturados } from '@/types/estruturado'
 import { ModalidadeForm } from './ModalidadeForm'
+import { useAplicarItensTemplate, type TemplateTreino } from '@/features/templates/api'
 import { useEnviarTreinoAoAluno } from './useEnviarTreino'
 import { itensIguais } from './compare'
 import { PlanoOrigemBadge } from './PlanoOrigemBadge'
@@ -70,6 +71,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
   const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
   const [estrNova, setEstrNova] = useState<DadosEstruturados>(estruturadosVazios())
+  const [modeloMuscNovo, setModeloMuscNovo] = useState<TemplateTreino | null>(null)
+  const aplicarItensTemplate = useAplicarItensTemplate()
   // aula presencial de modalidade sem lista de exercícios: registra o resultado em uma folha
   const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
   // treino assíncrono acabou de ser criado: oferece enviar ao aluno
@@ -123,6 +126,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setLivresNovos([])
     setBlocosNovos([])
     setEstrNova(estruturadosVazios())
+    setModeloMuscNovo(null)
     setErroNovo(null)
   }
 
@@ -143,8 +147,16 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     criar.mutate(
       { name: nomePlano, modalidade: modalidadeNova, tipo_execucao: execucaoNova, modalidade_detalhes: detalhes },
       {
-        onSuccess: (planoId) => {
+        onSuccess: async (planoId) => {
+          const modeloMusc = modalidadeNova === 'musculacao' ? modeloMuscNovo : null
           fecharNovo()
+          if (modeloMusc) {
+            try {
+              await aplicarItensTemplate({ tabela: 'plano_exercicios', plano_id: planoId }, modeloMusc)
+            } catch (e) {
+              mostrarErroGlobal(`O treino foi criado, mas não deu para adicionar os exercícios do modelo: ${(e as Error).message}`)
+            }
+          }
           // musculação segue para o editor de exercícios, como sempre; as outras modalidades não têm exercícios
           if (modalidadeNova === 'musculacao') navigate(`/alunos/${alunoId}/planos/${planoId}`)
           else if (execucaoNova === 'assincrono') setRecemCriado({ id: planoId, name: nomePlano, modalidade: modalidadeNova, detalhes })
@@ -457,6 +469,12 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setLivresNovos([])
               setBlocosNovos([])
               setEstrNova(estruturadosVazios())
+              setModeloMuscNovo(null)
+            }}
+            modeloMusculacao={modeloMuscNovo}
+            onModeloMusculacao={(t) => {
+              setModeloMuscNovo(t)
+              if (t && !nomeNovo.trim()) setNomeNovo(t.nome)
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
