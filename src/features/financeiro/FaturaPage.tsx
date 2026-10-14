@@ -16,11 +16,14 @@ import { confirmarAcao } from '@/components/ConfirmSheet'
 import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
+import { BotaoRelatorioFatura } from './BotaoRelatorio'
+import type { DadosRelatorio } from './relatorio'
 import {
   useCancelarFatura,
   useDesfazerPagamentoFatura,
   useEnviarFatura,
   useFatura,
+  useItensRecibo,
   useMarcarFaturaPaga,
   type FormaPagamento,
 } from './api'
@@ -47,6 +50,7 @@ export function FaturaPage() {
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const { data: sessoesTodas } = useSessoesDetalhadas(fatura?.aluno_id)
   const { data: pesosTodos } = usePesos(fatura?.aluno_id)
+  const { data: itensFatura } = useItensRecibo(fatura && fatura.status !== 'cancelada' ? fatura.id : undefined)
 
   const enviar = useEnviarFatura()
   const marcarPaga = useMarcarFaturaPaga()
@@ -123,6 +127,21 @@ export function FaturaPage() {
   if (!faturaId) return <Navigate to="/financeiro" replace />
   if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
+
+  const dadosRelatorio: DadosRelatorio | null =
+    itensFatura && itensFatura.length > 0
+      ? {
+          alunoNome: aluno?.name ?? fatura.aluno?.name ?? 'Aluno',
+          personalNome: perfil?.name?.trim() || 'Personal',
+          periodoInicio: fatura.periodo_inicio,
+          periodoFim: fatura.periodo_fim,
+          modelo: fatura.modelo,
+          linhas: itensFatura.map((i) => ({ startsAt: i.starts_at, durationMin: i.duration_min, modalidade: i.modalidade ?? null, local: i.local, valor: i.valor })),
+          ajuste: fatura.ajuste,
+          ajusteDescricao: fatura.ajuste_descricao,
+          total: fatura.total,
+        }
+      : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)
@@ -234,6 +253,7 @@ export function FaturaPage() {
               <FileText size={18} /> Ver recibo
             </Button>
           )}
+          {fatura.status !== 'cancelada' && <BotaoRelatorioFatura dados={dadosRelatorio} />}
         </div>
 
         {fatura.status !== 'cancelada' && (
