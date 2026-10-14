@@ -465,6 +465,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 39 | Mercado Pago só em produção (sem fallback de sandbox) + checklist — `docs/mp-producao-checklist.md` | ✅ em revisão — **secrets, webhook no painel e redeploy de `mp-subscribe`/`mp-webhook`** |
 | 40 | Configurações: nome e telefone editáveis, seção Assinatura (status, plano, prazo, valor) e WhatsApp ativado por padrão no cadastro | ✅ em revisão (sem migration) |
 | 41 | Fechar ciclo: erro de ciclo duplicado tratado, itens com data/modalidade/local e PDF "Baixar relatório" (jsPDF) | ✅ em revisão (sem migration) |
+| 42 | Relatório do ciclo em PDF com a identidade visual (cabeçalho verde com logo, tabela zebrada, blocos de ajuste e total, rodapé) | ✅ em revisão (sem migration) |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
