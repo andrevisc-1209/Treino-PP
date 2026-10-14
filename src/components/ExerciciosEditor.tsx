@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp, Pencil, Plus, Search, Trash2 } from 'lucide-react'
-import { useExercicios, type Exercicio } from '@/features/exercicios/api'
+import { useExerciciosMusculacao, type Exercicio } from '@/features/exercicios/api'
 import type { ItemInput } from '@/features/planos/api'
 import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
@@ -58,7 +58,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
   /** Abre o bottom sheet de "Adicionar exercício" assim que o editor monta (fluxo de criação). */
   abrirAdicionarInicial?: boolean
 }) {
-  const { data: exercicios } = useExercicios()
+  const { data: exercicios } = useExerciciosMusculacao()
 
   const [adicionando, setAdicionando] = useState(false)
 

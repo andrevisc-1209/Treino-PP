@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clock, Pause, Play, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
-import { useExercicios, type Exercicio } from '@/features/exercicios/api'
+import { useExerciciosMusculacao, type Exercicio } from '@/features/exercicios/api'
 import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { ScaleQuestion } from '@/components/ScaleQuestion'
@@ -244,7 +244,7 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
   const { data: aluno } = useAluno(alunoId)
   const { data: itens, isLoading } = useSessaoExercicios(sessionId)
   const { data: ultimosUsos } = useUltimosUsosExercicios(alunoId)
-  const { data: exercicios } = useExercicios()
+  const { data: exercicios } = useExerciciosMusculacao()
   const adicionarExercicio = useAdicionarExercicioSessao(sessionId)
   const removerExercicio = useRemoverExercicioSessao(sessionId)
   const fila = useFilaOffline(sessionId)

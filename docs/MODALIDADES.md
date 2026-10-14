@@ -65,6 +65,18 @@ real da biblioteca global (resolvido pelo nome na migration; exercício que não
 (na edição os exercícios ficam no editor).
 Para incluir um modelo novo: nova migration com `INSERT ... ON CONFLICT (slug) DO NOTHING`.
 
+## Exercícios: Modalidade > Tipo > Exercício
+A aba Exercícios tem chips de modalidade (as ativas) → "Do sistema"/"Meus exercícios" → chips de tipo → exercício. "Novo exercício" abre com modalidade e
+tipo **pré-preenchidos** pelo filtro ativo (e editáveis; o tipo só vale se pertence à modalidade — `prefillNovoExercicio`). Na edição a modalidade fica fixa.
+- **Tipo** por modalidade (`features/exercicios/tipos.ts`): musculação = grupo muscular (continua em `muscle_group`); natação = grupo
+  (estilo/educativo/acessório/série/mar); corrida = os 11 tipos; ciclismo = tipos indoor/outdoor (sem repetir); brick = bike | corrida.
+- **Dados** (migration `20261032…`): `treino.exercicios` ganha `modalidade` (padrão `musculacao`), `tipo` e `parametro_principal`
+  (distância/tempo); unicidade de nome por modalidade. RLS/GRANTs inalterados. **Natação não muda de tabela**: a página usa a
+  biblioteca do sistema em TS e `exercicios_natacao_custom` (agora com editar/excluir), então o seletor da natação continua igual.
+- Corrida/ciclismo/brick: "Tipos do app" lista os tipos fixos (somente leitura) e "Meus exercícios" guarda os do personal.
+  **Ainda não há seletor desses exercícios nos formulários de corrida/ciclismo/brick** (follow-up).
+- Editores de treino e sessão de musculação listam só exercícios de musculação (`useExerciciosMusculacao`).
+
 # Fase 3 — métricas e acompanhamento
 
 Migration `20261022000000_metricas_modalidade.sql`: índice `(professional_id, concluido_em desc)` e a função

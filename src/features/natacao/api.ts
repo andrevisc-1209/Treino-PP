@@ -72,3 +72,33 @@ export function useCriarExercicioNatacao() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios-natacao-custom'] }),
   })
 }
+
+const colunasCustom = (input: NovoExercicioNatacao) => ({
+  nome: input.nome.trim(),
+  descricao: input.descricao.trim() || null,
+  ambiente: input.ambiente,
+  grupo: input.grupo,
+  parametros_padrao: { parametroPrincipal: input.parametroPrincipal, ...(input.valorSugerido ? { valorSugerido: input.valorSugerido } : {}) },
+})
+
+export function useAtualizarExercicioNatacao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...input }: NovoExercicioNatacao & { id: string }) => {
+      const { error } = await supabase.from('exercicios_natacao_custom').update(colunasCustom(input)).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios-natacao-custom'] }),
+  })
+}
+
+export function useExcluirExercicioNatacao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('exercicios_natacao_custom').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios-natacao-custom'] }),
+  })
+}
