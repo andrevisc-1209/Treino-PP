@@ -110,3 +110,24 @@ Migration `20261024000000_exercicios_natacao.sql` (tabela `treino.exercicios_nat
 - **Exibição**: cada exercício vira item numerado/checklist (referência do treino, página pública, WhatsApp, cards). Treino
   de natação no formato antigo (blocos de texto) continua legível e aparece no formulário para ser refeito.
 - Corrida, ciclismo, remo e funcional seguem com os blocos de texto livre.
+
+# Corrida, ciclismo e brick
+
+Migration `20261025000000_corrida_ciclismo_brick.sql` (só `brick` é novo no enum; rodar **sozinha**, sem `BEGIN`).
+
+- **Modalidades ativas na criação**: musculação, corrida, natação, ciclismo e brick (`enabled` em `MODALIDADES_CONFIG`). As demais
+  (funcional, futebol, futevôlei, pilates, yoga, boxe, escalada, remo) ficam ocultas no seletor, mas o código e os treinos já
+  criados continuam funcionando (ao editar um deles, a modalidade dele aparece).
+- **Corrida** (`CorridaForm`, `src/data/corrida-tipos.ts`): 11 tipos (regenerativo … strides); distância (km) ou tempo (min) com chips,
+  séries/distância da série/descanso nos intervalados e hill repeats, acelerações nos strides, pace alvo e zona de FC (Z1–Z5).
+- **Ciclismo** (`CiclismoForm`, `src/data/ciclismo-tipos.ts`): ambiente Indoor (watts e cadência) ou Outdoor (km e velocidade), tipos
+  por ambiente; trocar de ambiente com blocos pede confirmação.
+- **Brick** (`BrickForm`): bike (outdoor) → transição T2 (min, opcional; salva em segundos) → corrida. `modalidade_detalhes =
+  { blocos_bike, transicao_segundos?, blocos_corrida }`.
+- **Dados**: `modalidade_detalhes.blocos[]` com `tipo` (corrida/ciclismo). Treinos antigos (blocos de texto/campos únicos) continuam legíveis.
+- **Exibição**: cards ("🏃 Corrida · 3 blocos · 14 km", "🚴 Ciclismo Indoor · 2 blocos · 55 min", "🧱 Brick · 40 km bike + 10 km corrida"),
+  referência do treino (página pública, aula presencial) e WhatsApp; cada bloco é um item que o aluno marca.
+- **Feedback pós-treino** (corrida, ciclismo, brick): concluiu? (Sim/Parcialmente/Não consegui), distância, tempo (min), pace ou
+  velocidade média, RPE 1–10 e comentário; no brick, campos separados de bike e corrida. Fica em `detalhes_execucao.resultado`.
+  **Exige redeploy de `treino-publico`** (a validação do servidor só aceita campos conhecidos).
+- TODO (fase 2): upload de arquivo `.fit` (Garmin/COROS/Apple Watch).

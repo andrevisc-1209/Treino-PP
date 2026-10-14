@@ -3,7 +3,7 @@ import type { EstadoResultado } from './resultado'
 import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
 import { Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { blocosDe, formatarBloco, itensChecklist, linhasDetalhes, MODALIDADES_CONFIG, RESULTADO_CAMPOS, usaBlocos, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { blocosDe, cabecalhoEstruturado, formatarBloco, itensChecklist, linhasDetalhes, MODALIDADES_CONFIG, RESULTADO_CAMPOS, usaBlocos, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 type Outra = Exclude<ModalidadeTipo, 'musculacao'>
 
@@ -20,6 +20,7 @@ export function ReferenciaTreino({ modalidade, detalhes }: { modalidade: Modalid
         {natacao && <span className="font-normal"> — {rotuloAmbiente(natacao.ambiente)}</span>}
       </p>
       {natacao && <p className="text-sm font-medium text-slate-700">{resumoTotalNatacao(natacao)}</p>}
+      {cabecalhoEstruturado(modalidade, detalhes) && <p className="text-sm font-medium text-slate-700">{cabecalhoEstruturado(modalidade, detalhes)}</p>}
       {modalidade === 'natacao' && !natacao && blocos.length === 0 && <p className="text-sm text-slate-500">(treino antigo — sem estrutura)</p>}
       {blocos.length > 0 && (
         <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
@@ -101,20 +102,68 @@ export function FormResultadoModalidade({
 
       <div className="space-y-3">
         <p className="text-sm font-medium">Resultado</p>
-        {RESULTADO_CAMPOS[modalidade].map((c) => (
-          <Field key={c.key} label={c.label}>
-            <Input
-              type={c.type === 'number' ? 'number' : 'text'}
-              inputMode={c.type === 'number' ? 'decimal' : undefined}
-              min={c.type === 'number' ? 0 : undefined}
-              step={c.type === 'number' ? 'any' : undefined}
-              placeholder={c.placeholder}
-              value={estado.valores[c.key] ?? ''}
-              onChange={(e) => onEstado({ ...estado, valores: { ...estado.valores, [c.key]: e.target.value } })}
-            />
-          </Field>
-        ))}
-        <Field label="Observações">
+        {RESULTADO_CAMPOS[modalidade]
+          .filter((c) => !c.legado)
+          .map((c) => {
+            const atual = estado.valores[c.key] ?? ''
+            const definir = (v: string) => onEstado({ ...estado, valores: { ...estado.valores, [c.key]: v } })
+            if (c.type === 'opcao') {
+              return (
+                <div key={c.key}>
+                  <p className="mb-1 text-sm font-medium">{c.label}</p>
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={c.label}>
+                    {c.opcoes?.map((o) => (
+                      <button
+                        key={o.valor}
+                        type="button"
+                        role="radio"
+                        aria-checked={atual === o.valor}
+                        onClick={() => definir(atual === o.valor ? '' : o.valor)}
+                        className={cn('min-h-12 rounded-xl border px-1 text-sm font-medium', atual === o.valor ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+            if (c.type === 'rpe') {
+              return (
+                <div key={c.key}>
+                  <p className="mb-1 text-sm font-medium">{c.label}</p>
+                  <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label={c.label}>
+                    {Array.from({ length: 10 }, (_, i) => String(i + 1)).map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        role="radio"
+                        aria-checked={atual === n}
+                        onClick={() => definir(atual === n ? '' : n)}
+                        className={cn('min-h-11 rounded-xl border text-sm font-semibold', atual === n ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <Field key={c.key} label={c.label}>
+                <Input
+                  type={c.type === 'number' ? 'number' : 'text'}
+                  inputMode={c.type === 'number' ? 'decimal' : undefined}
+                  min={c.type === 'number' ? 0 : undefined}
+                  step={c.type === 'number' ? 'any' : undefined}
+                  placeholder={c.placeholder}
+                  value={atual}
+                  onChange={(e) => definir(e.target.value)}
+                />
+              </Field>
+            )
+          })}
+        <Field label="Comentário">
           <textarea
             className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"
             value={estado.notas}

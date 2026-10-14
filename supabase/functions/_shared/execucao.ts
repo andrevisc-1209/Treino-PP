@@ -3,15 +3,26 @@
 
 export const MODALIDADES = [
   'musculacao', 'corrida', 'natacao', 'ciclismo', 'funcional', 'futebol',
-  'futevolei', 'pilates', 'yoga', 'boxe', 'escalada', 'remo',
+  'futevolei', 'pilates', 'yoga', 'boxe', 'escalada', 'remo', 'brick',
 ] as const
 export type Modalidade = (typeof MODALIDADES)[number]
 
 // Campos de resultado aceitos por modalidade (mantenha igual a RESULTADO_CAMPOS em src/types/modalidades.ts).
-export const CAMPOS_RESULTADO: Record<Exclude<Modalidade, 'musculacao'>, { key: string; type: 'number' | 'text' }[]> = {
-  corrida: [{ key: 'distancia_km', type: 'number' }, { key: 'tempo_total', type: 'text' }, { key: 'pace_medio', type: 'text' }],
+type CampoServidor = { key: string; type: 'number' | 'text' | 'opcao' | 'rpe' }
+const CONCLUSAO: CampoServidor = { key: 'conclusao', type: 'opcao' }
+const RPE: CampoServidor = { key: 'rpe', type: 'rpe' }
+const OPCOES_CONCLUSAO = ['sim', 'parcial', 'nao']
+
+export const CAMPOS_RESULTADO: Record<Exclude<Modalidade, 'musculacao'>, CampoServidor[]> = {
+  corrida: [CONCLUSAO, { key: 'distancia_km', type: 'number' }, { key: 'tempo_min', type: 'number' }, { key: 'pace_medio', type: 'text' }, RPE, { key: 'tempo_total', type: 'text' }],
   natacao: [{ key: 'tiros_feitos', type: 'number' }, { key: 'distancia_total_m', type: 'number' }],
-  ciclismo: [{ key: 'distancia_km', type: 'number' }, { key: 'tempo_total', type: 'text' }],
+  ciclismo: [CONCLUSAO, { key: 'distancia_km', type: 'number' }, { key: 'tempo_min', type: 'number' }, { key: 'velocidade_media', type: 'number' }, RPE, { key: 'tempo_total', type: 'text' }],
+  brick: [
+    CONCLUSAO,
+    { key: 'bike_distancia_km', type: 'number' }, { key: 'bike_tempo_min', type: 'number' }, { key: 'bike_velocidade_media', type: 'number' },
+    { key: 'run_distancia_km', type: 'number' }, { key: 'run_tempo_min', type: 'number' }, { key: 'run_pace_medio', type: 'text' },
+    RPE,
+  ],
   funcional: [{ key: 'rounds_feitos', type: 'number' }, { key: 'duracao_min', type: 'number' }],
   futebol: [{ key: 'duracao_min', type: 'number' }],
   futevolei: [{ key: 'duracao_min', type: 'number' }],
@@ -72,7 +83,12 @@ export function validarExecucao(
     const resultado: Record<string, string | number> = {}
     for (const c of CAMPOS_RESULTADO[modalidade]) {
       const v = resultadoBruto[c.key]
-      if (c.type === 'number') {
+      if (c.type === 'opcao') {
+        if (typeof v === 'string' && OPCOES_CONCLUSAO.includes(v)) resultado[c.key] = v
+      } else if (c.type === 'rpe') {
+        const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : Number.NaN
+        if (Number.isInteger(n) && n >= 1 && n <= 10) resultado[c.key] = n
+      } else if (c.type === 'number') {
         const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v.replace(',', '.')) : Number.NaN
         if (Number.isFinite(n) && n >= 0 && n <= 100000) resultado[c.key] = n
       } else if (texto(v, 40)) {

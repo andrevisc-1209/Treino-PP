@@ -19,6 +19,10 @@ export function metricaPrincipal(modalidade: ModalidadeTipo, d: DetalhesExecucao
     }
     case 'corrida':
       return { valor: n(r.distancia_km), unidade: 'km', rotulo: 'km percorridos' }
+    case 'brick': {
+      const t = (n(r.bike_distancia_km) ?? 0) + (n(r.run_distancia_km) ?? 0)
+      return { valor: t > 0 ? t : null, unidade: 'km', rotulo: 'km (bike + corrida)' }
+    }
     case 'ciclismo':
       return { valor: n(r.distancia_km), unidade: 'km', rotulo: 'km pedalados' }
     case 'natacao':
@@ -52,8 +56,18 @@ export function textoMetrica(modalidade: ModalidadeTipo, d: DetalhesExecucao | n
       break
     }
     case 'corrida':
-    case 'ciclismo':
-      partes.push([fmt(m.valor, 'km'), r.tempo_total ? `em ${r.tempo_total}` : null].filter(Boolean).join(' '), r.pace_medio ? `pace ${r.pace_medio}/km` : null)
+    case 'ciclismo': {
+      const tempo = n(r.tempo_min) !== null ? `em ${formatarNumero(n(r.tempo_min) as number)} min` : r.tempo_total ? `em ${r.tempo_total}` : null
+      partes.push(
+        [fmt(m.valor, 'km'), tempo].filter(Boolean).join(' '),
+        r.pace_medio ? `pace ${r.pace_medio}/km` : null,
+        n(r.velocidade_media) !== null ? `${formatarNumero(n(r.velocidade_media) as number)} km/h` : null,
+        n(r.rpe) !== null ? `RPE ${r.rpe}` : null,
+      )
+      break
+    }
+    case 'brick':
+      partes.push(fmt(n(r.bike_distancia_km), 'km bike'), fmt(n(r.run_distancia_km), 'km corrida'), n(r.rpe) !== null ? `RPE ${r.rpe}` : null)
       break
     case 'natacao':
       partes.push(fmt(m.valor, 'tiros'), fmt(n(r.distancia_total_m), 'm'))

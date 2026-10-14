@@ -12,7 +12,7 @@ export function detalhesDoResultado(modalidade: Outra, detalhes: ModalidadeDetal
   for (const c of RESULTADO_CAMPOS[modalidade]) {
     const bruto = (e.valores[c.key] ?? '').trim()
     if (!bruto) continue
-    if (c.type === 'number') {
+    if (c.type === 'number' || c.type === 'rpe') {
       const n = Number(bruto.replace(',', '.'))
       if (Number.isFinite(n) && n >= 0) resultado[c.key] = n
     } else resultado[c.key] = bruto
