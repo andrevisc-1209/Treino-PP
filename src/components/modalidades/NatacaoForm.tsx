@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Chips } from './comum'
 import { numero } from './numero'
 import { CHIPS_PADRAO, EXERCICIOS_NATACAO, type ExercicioNatacao } from '@/data/natacao-exercicios'
-import type { TemplateNatacao } from '@/data/natacao-templates'
+import type { TemplateNatacao } from '@/features/natacao/templates'
 import { SeletorExercicioNatacao } from '@/features/natacao/SeletorExercicioNatacao'
 import { AMBIENTES_NATACAO, formatarTempo, resumoTotalNatacao, type AmbienteNatacao, type BlocoNatacao, type DadosNatacao } from '@/types/natacao'
 

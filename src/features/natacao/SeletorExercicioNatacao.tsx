@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils'
 import { mapearErroSupabase } from '@/lib/erros'
 import { formatarNumero } from '@/lib/format'
 import { EXERCICIOS_NATACAO, GRUPOS_NATACAO, serveAoAmbiente, type ExercicioNatacao } from '@/data/natacao-exercicios'
-import { ROTULO_NIVEL, TEMPLATES_NATACAO, type TemplateNatacao } from '@/data/natacao-templates'
+import { useTemplatesTreino } from '@/features/templates/api'
+import { ROTULO_NIVEL, templateNatacaoDe, type TemplateNatacao } from './templates'
 import { distanciaTotalNatacao, formatarTempo, rotuloAmbiente, tempoTotalNatacao, type AmbienteNatacao, type GrupoNatacao } from '@/types/natacao'
 import { useCriarExercicioNatacao, useExerciciosNatacaoCustom } from './api'
 
@@ -169,7 +170,11 @@ export function SeletorExercicioNatacao({
     lista.filter((e) => (grupo === 'todos' || e.grupo === grupo) && (!termo || e.nome.toLowerCase().includes(termo)))
   const biblioteca = useMemo(() => filtrar(EXERCICIOS_NATACAO), [grupo, termo]) // eslint-disable-line react-hooks/exhaustive-deps
   const gruposVisiveis = GRUPOS_NATACAO.filter((g) => g.key !== 'mar' || ambiente === 'mar')
-  const templates = TEMPLATES_NATACAO.filter((t) => t.ambiente === ambiente)
+  const { data: linhas, isLoading: carregandoModelos, error: erroModelos } = useTemplatesTreino('natacao', aberto && aba === 'templates')
+  const templates = useMemo(
+    () => (linhas ?? []).map(templateNatacaoDe).filter((t): t is TemplateNatacao => !!t && t.ambiente === ambiente),
+    [linhas, ambiente],
+  )
 
   const abas: { id: Aba; rotulo: string }[] = [
     { id: 'biblioteca', rotulo: 'Biblioteca' },
@@ -240,7 +245,9 @@ export function SeletorExercicioNatacao({
 
           {aba === 'templates' && (
             <>
-              {templates.length === 0 && <p className="py-4 text-center text-sm text-slate-500">Sem modelos para este ambiente.</p>}
+              {carregandoModelos && <p className="py-4 text-center text-sm text-slate-500">Carregando…</p>}
+              {erroModelos && <p className="text-sm text-red-600">{mapearErroSupabase(erroModelos)}</p>}
+              {!carregandoModelos && !erroModelos && templates.length === 0 && <p className="py-4 text-center text-sm text-slate-500">Sem modelos para este ambiente.</p>}
               {(['iniciante', 'intermediario', 'avancado'] as const).map((nivel) => {
                 const doNivel = templates.filter((t) => t.nivel === nivel)
                 if (doNivel.length === 0) return null

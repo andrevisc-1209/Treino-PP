@@ -57,7 +57,7 @@ gesto da natação. Os modelos vêm de `treino.templates_treino` (migration `202
 (RLS só de SELECT para `authenticated`, sem escrita pela API), separado de `treino.modelos` — por isso **não aparecem em
 "Treinos planejados"**, que lista só o que o personal salvou. `modalidade_detalhes` usa o mesmo formato que o app salva, então
 aplicar um modelo é carregar o JSON no formulário (blocos ganham ids novos; confirma antes de substituir blocos existentes).
-Natação segue com os modelos em `src/data/natacao-templates.ts` (ganhou Técnica 2.000 m e Resistência 3.000 m).
+Natação também lê de `treino.templates_treino` (migration `20261031…`, `modalidade_detalhes` = `{ ambiente, nivel, blocos }`); a aba "Modelos" do seletor de natação filtra por ambiente e agrupa por nível, como antes.
 Musculação ainda não tem modelos do sistema (dependeria de itens em `modelo_exercicios` ligados à biblioteca).
 Para incluir um modelo novo: nova migration com `INSERT ... ON CONFLICT (slug) DO NOTHING`.
 
@@ -111,7 +111,7 @@ Migration `20261023000000_unificacao_historico_notificacoes.sql`.
 Migration `20261024000000_exercicios_natacao.sql` (tabela `treino.exercicios_natacao_custom`, RLS por personal).
 
 - **Biblioteca padrão** (estática): `src/data/natacao-exercicios.ts` — 32 exercícios em 5 grupos (estilos, educativos, acessórios,
-  séries, mar aberto); **modelos** em `src/data/natacao-templates.ts` (8). Modelos **não** são copiados para a biblioteca do personal.
+  séries, mar aberto); **modelos** em `treino.templates_treino` (10; antes em TypeScript). Modelos **não** são copiados para a biblioteca do personal.
 - **Formulário** (`src/components/modalidades/NatacaoForm.tsx`): ambiente Piscina/Mar Aberto (trocar com blocos pede confirmação),
   "Começar de um modelo", lista de exercícios com distância (m) ou tempo (s, com valor legível), séries, descanso, ritmo,
   observações, chips de sugestão e ↑↓; adicionar por Biblioteca / Meus exercícios (criar o próprio, ⭐) / Modelos.
