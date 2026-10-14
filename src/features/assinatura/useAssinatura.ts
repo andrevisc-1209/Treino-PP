@@ -7,6 +7,7 @@ export type Plano = 'mensal' | 'trimestral' | 'semestral'
 export type Assinatura = {
   status: StatusAssinatura
   diasRestantesTrial: number | null
+  trialFim: Date | null
   plano: Plano | null
   assinaturaFim: Date | null
   estaAtivo: boolean
@@ -41,6 +42,7 @@ export function useAssinatura() {
       return {
         status: linha.status,
         diasRestantesTrial: linha.status === 'trial' ? diasRestantes(linha.trial_fim) : null,
+        trialFim: linha.trial_fim ? new Date(linha.trial_fim) : null,
         plano: linha.plano,
         assinaturaFim: linha.assinatura_fim ? new Date(linha.assinatura_fim) : null,
         estaAtivo: trialValido || assinaturaValida,

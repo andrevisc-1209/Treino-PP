@@ -77,7 +77,7 @@ export function LoginPage() {
 
   const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
-    defaultValues: { termosAceitos: false, cep: '', bairro: '', uf: '', cidade: '' },
+    defaultValues: { termosAceitos: false, whatsappOptIn: true, cep: '', bairro: '', uf: '', cidade: '' },
   })
   const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
   const termosAceitos = watch('termosAceitos')

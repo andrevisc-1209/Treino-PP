@@ -10,8 +10,10 @@ import { supabase } from '@/lib/supabase'
 import { mapearErroSupabase } from '@/lib/erros'
 import { normalizarChavePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
 import { mascararCPF } from '@/lib/cpf'
+import { mascararTelefone, validarTelefone } from '@/lib/telefone'
+import { AssinaturaSecao } from '@/features/assinatura/AssinaturaSecao'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarLocalidade } from '@/features/auth/api'
+import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarDadosPessoais, useSalvarLocalidade } from '@/features/auth/api'
 import { useProfessionalConfig, useSalvarProfessionalConfig, type SalvarProfessionalConfigInput } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -22,7 +24,7 @@ const TIPOS_PIX: { value: PixTipo; label: string }[] = [
   { value: 'aleatoria', label: 'Chave aleatória' },
 ]
 
-type SecaoId = 'dados' | 'localizacao' | 'aulas' | 'pix' | 'notificacoes'
+type SecaoId = 'dados' | 'assinatura' | 'localizacao' | 'aulas' | 'pix' | 'notificacoes'
 
 // Valores quando o personal ainda não tem linha em professional_config.
 const PADRAO = { cobrarFalta: true, cobrarCancel: false, duracao: '60', pixTipo: 'cpf' as PixTipo, pixChave: '', pixNome: '' }
@@ -34,6 +36,10 @@ export function ConfiguracoesPage() {
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const atualizarWhatsapp = useAtualizarWhatsappOptIn(session?.user.id ?? '')
   const salvarLocalidade = useSalvarLocalidade(session?.user.id ?? '')
+  const salvarDados = useSalvarDadosPessoais(session?.user.id ?? '')
+
+  const [nome, setNome] = useState('')
+  const [telefone, setTelefone] = useState('')
 
   const [loc, setLoc] = useState<Localizacao>({ cep: '', bairro: '', cidade: '', uf: '' })
   const [cobrarFalta, setCobrarFalta] = useState(PADRAO.cobrarFalta)
@@ -50,6 +56,8 @@ export function ConfiguracoesPage() {
 
   useEffect(() => {
     if (perfil) {
+      setNome(perfil.name)
+      setTelefone(mascararTelefone(perfil.phone ?? ''))
       setLoc({ cep: '', bairro: perfil.bairro ?? '', cidade: perfil.cidade ?? '', uf: perfil.uf ?? '' })
     }
   }, [perfil])
@@ -77,7 +85,8 @@ export function ConfiguracoesPage() {
     pixChave !== (config?.pix_chave ?? PADRAO.pixChave) ||
     pixNome !== (config?.pix_nome ?? PADRAO.pixNome)
   const localizacaoSuja = !!perfil && (loc.uf !== (perfil.uf ?? '') || loc.cidade !== (perfil.cidade ?? '') || loc.bairro !== (perfil.bairro ?? ''))
-  const algoSujo = aulasSujas || pixSujo || localizacaoSuja
+  const dadosSujos = !!perfil && (nome.trim() !== perfil.name || telefone.replace(/\D/g, '') !== (perfil.phone ?? ''))
+  const algoSujo = aulasSujas || pixSujo || localizacaoSuja || dadosSujos
 
   const estaAberta = (id: SecaoId, padrao: boolean) => abertas[id] ?? padrao
   const alternar = (id: SecaoId, padrao: boolean) => setAbertas((a) => ({ ...a, [id]: !(a[id] ?? padrao) }))
@@ -94,6 +103,10 @@ export function ConfiguracoesPage() {
 
   const salvarTudo = async () => {
     const novosErros: Partial<Record<SecaoId, string>> = {}
+    if (dadosSujos) {
+      if (!nome.trim()) novosErros.dados = 'Informe seu nome'
+      else if (!validarTelefone(telefone)) novosErros.dados = 'Telefone inválido'
+    }
     if (localizacaoSuja && (!loc.uf || !loc.cidade)) novosErros.localizacao = 'Informe o CEP para preencher cidade e estado'
     if (pixSujo) {
       const e = validarPix()
@@ -120,6 +133,7 @@ export function ConfiguracoesPage() {
         cfg.pix_nome = normalizarNomePix(pixNome)
       }
       if (Object.keys(cfg).length > 0) await salvarConfig.mutateAsync(cfg)
+      if (dadosSujos) await salvarDados.mutateAsync({ name: nome.trim(), phone: telefone.replace(/\D/g, '') })
       if (localizacaoSuja) await salvarLocalidade.mutateAsync({ uf: loc.uf, cidade: loc.cidade, bairro: loc.bairro })
       mostrarInfoGlobal('Alterações salvas.')
       ;(document.activeElement as HTMLElement | null)?.blur()
@@ -145,21 +159,38 @@ export function ConfiguracoesPage() {
         <p className="text-slate-500">Carregando…</p>
       ) : (
         <div className="space-y-3">
-          <Acordeao titulo="Dados pessoais" aberto={estaAberta('dados', false)} onAlternar={() => alternar('dados', false)}>
-            <dl className="space-y-1 text-sm">
-              {perfil?.name && (
-                <div className="flex justify-between gap-3">
-                  <dt className="text-slate-500">Nome</dt>
-                  <dd className="truncate font-medium">{perfil.name}</dd>
-                </div>
-              )}
-              {session?.user.email && (
+          <Acordeao titulo="Dados pessoais" aberto={estaAberta('dados', false)} onAlternar={() => alternar('dados', false)} alterado={dadosSujos}>
+            <Field label="Nome">
+              <Input
+                value={nome}
+                onChange={(e) => {
+                  setNome(e.target.value)
+                  setErros((x) => ({ ...x, dados: undefined }))
+                }}
+                autoComplete="name"
+                maxLength={120}
+              />
+            </Field>
+            <Field label="Telefone">
+              <Input
+                value={telefone}
+                onChange={(e) => {
+                  setTelefone(mascararTelefone(e.target.value))
+                  setErros((x) => ({ ...x, dados: undefined }))
+                }}
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="(00) 00000-0000"
+              />
+            </Field>
+            {session?.user.email && (
+              <dl className="text-sm">
                 <div className="flex justify-between gap-3">
                   <dt className="text-slate-500">E-mail</dt>
                   <dd className="truncate font-medium">{session.user.email}</dd>
                 </div>
-              )}
-            </dl>
+              </dl>
+            )}
             {perfil?.cpf && (
               <Field label="CPF">
                 <div className="relative">
@@ -169,6 +200,11 @@ export function ConfiguracoesPage() {
                 <p className="text-xs text-slate-400">CPF não editável após o cadastro.</p>
               </Field>
             )}
+            {erros.dados && <p className="text-sm text-red-600">{erros.dados}</p>}
+          </Acordeao>
+
+          <Acordeao titulo="Assinatura" aberto={estaAberta('assinatura', false)} onAlternar={() => alternar('assinatura', false)}>
+            <AssinaturaSecao />
           </Acordeao>
 
           <Acordeao
