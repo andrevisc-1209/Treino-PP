@@ -4,10 +4,11 @@
 // - consultar: devolve nomes e a situação do token, SEM alterar nada (abrir o link de um e-mail
 //   nunca muda estado — scanners de link e pré-visualização também o abrem).
 // - confirmar / negar: exigem o clique no botão da página; gravam o status, marcam o token como
-//   usado e, ao confirmar, registram o aceite em treino.consentimentos (method = 'link').
+//   usado e, ao confirmar, registram o aceite em treino.consentimentos (method = 'link', com versão e data/hora)
+//   e o IP do aparelho em treino.consentimento_evidencias (só service_role; o personal não lê).
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { estadoDoToken, TERMO_VERSAO } from '../_shared/consentimento.ts'
+import { estadoDoToken, ipDoCliente, TERMO_VERSAO } from '../_shared/consentimento.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const ORIGENS_PERMITIDAS = [APP_URL, 'http://localhost:5173']
@@ -86,10 +87,18 @@ Deno.serve(async (req) => {
       await admin.from('consentimento_saude_tokens').update({ used_at: null }).eq('token', tok.token)
       return json(req, { error: 'Não foi possível registrar. Tente novamente.' }, 500)
     }
-    const { error: errAceite } = await admin
+    // consented_at (padrão now()) + consent_version = data/hora e versão do termo; o IP vai para a tabela só da plataforma.
+    const { data: aceite, error: errAceite } = await admin
       .from('consentimentos')
       .insert({ aluno_id: aluno.id, professional_id: aluno.professional_id, method: 'link', consent_version: TERMO_VERSAO })
-    if (errAceite) console.error('confirmar-consentimento-saude: status gravado, mas falhou o registro em consentimentos', errAceite.message)
+      .select('id')
+      .single()
+    if (errAceite || !aceite) {
+      console.error('confirmar-consentimento-saude: status gravado, mas falhou o registro em consentimentos', errAceite?.message)
+    } else {
+      const { error: errEvidencia } = await admin.from('consentimento_evidencias').insert({ consentimento_id: aceite.id, ip: ipDoCliente(req.headers) })
+      if (errEvidencia) console.error('confirmar-consentimento-saude: aceite gravado, mas falhou a evidência (IP)', errEvidencia.message)
+    }
     return json(req, { estado: 'confirmado', ...nomes })
   }
 
