@@ -111,9 +111,11 @@ const schema = z
 type FormInput = z.input<typeof schema>
 type FormOutput = z.output<typeof schema>
 
-const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'nome_prova', 'data_prova'] as const
+const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'phone', 'email', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'nome_prova', 'data_prova'] as const
 const STEP2_FIELDS = [
   'lgpd_consent',
+  'height_cm',
+  'weight_kg',
   'injury',
   'injury_regions',
   'injury_notes',
@@ -450,15 +452,6 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               />
             </Field>
 
-            <div className="flex gap-2">
-              <Field label="Altura (cm)" error={formState.errors.height_cm?.message}>
-                <Input type="number" inputMode="numeric" {...register('height_cm')} />
-              </Field>
-              <Field label="Peso (kg)" error={formState.errors.weight_kg?.message}>
-                <Input type="number" step="0.1" inputMode="decimal" {...register('weight_kg')} />
-              </Field>
-            </div>
-
             <Field label="Telefone">
               <Controller
                 control={control}
@@ -566,6 +559,19 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                   </button>
                 </div>
               )}
+
+              <div className="space-y-2 rounded-xl border border-slate-200 p-3">
+                <p className="text-sm font-medium">Medidas corporais</p>
+                <div className="flex gap-2">
+                  <Field label="Altura (cm)" error={formState.errors.height_cm?.message}>
+                    <Input type="number" inputMode="numeric" {...register('height_cm')} />
+                  </Field>
+                  <Field label="Peso (kg)" error={formState.errors.weight_kg?.message}>
+                    <Input type="number" step="0.1" inputMode="decimal" {...register('weight_kg')} />
+                  </Field>
+                </div>
+                <p className="text-xs text-slate-500">Altura, peso e demais medidas só podem ser registradas com a autorização do aluno.</p>
+              </div>
 
               <Field label="Possui lesão?">
                 <OptionButtons
@@ -704,10 +710,14 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 <dd>{formatarDataBR(watch('birth_date'))}</dd>
                 <dt className="text-slate-500">Sexo</dt>
                 <dd>{formatarSexo(sex)}</dd>
-                <dt className="text-slate-500">Altura</dt>
-                <dd>{watch('height_cm') ? `${formatarNumero(watch('height_cm') as number)} cm` : '—'}</dd>
-                <dt className="text-slate-500">Peso</dt>
-                <dd>{watch('weight_kg') ? formatarPesoKg(watch('weight_kg') as number) : '—'}</dd>
+                {lgpdConsent && (
+                  <>
+                    <dt className="text-slate-500">Altura</dt>
+                    <dd>{watch('height_cm') ? `${formatarNumero(watch('height_cm') as number)} cm` : '—'}</dd>
+                    <dt className="text-slate-500">Peso</dt>
+                    <dd>{watch('weight_kg') ? formatarPesoKg(watch('weight_kg') as number) : '—'}</dd>
+                  </>
+                )}
                 <dt className="text-slate-500">Telefone</dt>
                 <dd>{watch('phone') || '—'}</dd>
                 <dt className="text-slate-500">E-mail</dt>

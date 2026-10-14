@@ -90,3 +90,13 @@ WHERE c.aluno_id = '<id do aluno>' ORDER BY c.consented_at DESC;
 ```
 
 O termo (v1.2) informa ao aluno que data/hora, versão e IP são registrados. Redeploy: `supabase functions deploy confirmar-consentimento-saude --no-verify-jwt --project-ref avgrnvpvjhymsrnapfgu`.
+
+## Medidas corporais também dependem do consentimento
+
+Altura, peso, % de gordura e circunferências (`alunos.height_cm`, `treino.pesos`) só são preenchidas com consentimento ativo do aluno:
+- No cadastro/edição, altura e peso ficam na etapa **3. Saúde**, dentro da mesma trava dos demais campos (saem da etapa 1).
+  Sem consentimento a altura nem entra no payload (o que já estava salvo não é apagado) e o peso não é registrado.
+- Na ficha, **Nova avaliação** só aparece com consentimento ativo; sem ele há aviso e atalho para pedir a autorização.
+- `useRegistrarPeso` confere o consentimento ativo antes de gravar.
+- O termo (v1.3) cita as medidas corporais entre os dados autorizados.
+- Como as demais travas de saúde, a verificação é no app (não há trigger no banco). Revogar o consentimento mantém as medidas já registradas e bloqueia novas.
