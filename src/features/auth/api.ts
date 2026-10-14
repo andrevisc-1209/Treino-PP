@@ -79,3 +79,15 @@ export function useSalvarLocalidade(userId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['perfil-profissional', userId] }),
   })
 }
+
+/** Nome e telefone do personal, editáveis nas Configurações (o CPF nunca muda aqui — ver migration de imutabilidade). */
+export function useSalvarDadosPessoais(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ name, phone }: { name: string; phone: string }) => {
+      const { error } = await supabase.from('professionals').update({ name, phone }).eq('id', userId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['perfil-profissional', userId] }),
+  })
+}
