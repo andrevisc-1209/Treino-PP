@@ -1,4 +1,4 @@
-export const TERMO_VERSAO = '1.4'
+export const TERMO_VERSAO = '1.5'
 
 export const TERMO_AVISO = 'Modelo inicial — revisar com assessoria jurídica.'
 
@@ -17,7 +17,7 @@ Base legal
 O tratamento desses dados, por serem dados sensíveis de saúde, depende do consentimento específico do titular (LGPD, art. 11, I).
 
 Compartilhamento
-Não há venda nem compartilhamento com terceiros. Os dados ficam armazenados em servidor com acesso restrito ao profissional responsável.
+Não há venda nem compartilhamento com terceiros. Os dados ficam armazenados com acesso restrito ao profissional responsável, em servidores de provedor de nuvem localizados nos Estados Unidos (transferência internacional, LGPD art. 33). Ao autorizar, você concorda com essa transferência, que segue cláusulas de proteção compatíveis com a lei.
 
 Registro do aceite
 Ao confirmar, registramos a data e a hora, a versão deste termo e o endereço IP do aparelho usado, apenas como comprovação do seu consentimento. Essas informações ficam guardadas junto ao registro do consentimento e não são exibidas ao profissional.

@@ -18,6 +18,7 @@ Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (a
 2.3. Período de teste: o Usuário tem acesso gratuito e completo por 15 (quinze) dias.
 2.4. Planos e pagamento: depois do período de teste, a continuidade depende da contratação de um plano (mensal, trimestral ou semestral), pago via Mercado Pago (Pix, cartão ou boleto). O pagamento é avulso, por período, e não há renovação automática.
 2.5. Fim do período: ao término do período pago, o acesso é suspenso até nova contratação. Como não há renovação automática, não há assinatura recorrente a cancelar.
+2.6. Direito de arrependimento: o Usuário pode desistir da contratação em até 7 (sete) dias corridos contados do pagamento (CDC, art. 49), sem precisar justificar, e receber o reembolso integral do valor pago, pelo mesmo meio de pagamento. Para exercer o direito, basta pedir por contato@personalperto.com.br dentro do prazo. Com o reembolso, o acesso pago é encerrado.
 
 3. Dados dos alunos e LGPD
 O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, VI). A plataforma atua como OPERADORA (art. 5º, VII), tratando esses dados somente em nome do Personal Trainer e conforme as instruções dele. Estas cláusulas constituem o contrato de tratamento de dados entre Controlador e Operadora (art. 39).
@@ -49,11 +50,11 @@ O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, V
 Os Termos podem ser alterados. Mudanças relevantes serão comunicadas no aplicativo ou por e-mail com antecedência mínima de 10 dias. O uso continuado depois do aviso implica aceite das novas condições.
 
 8. Legislação e foro
-Estes Termos são regidos pela legislação brasileira. As partes elegem o foro da comarca da sede da plataforma para resolver eventuais disputas, com renúncia a qualquer outro.
+Estes Termos são regidos pela legislação brasileira. As partes elegem o foro da comarca do Rio de Janeiro/RJ para resolver eventuais disputas, com renúncia a qualquer outro, ressalvado o direito de o consumidor, quando a lei assim determinar, litigar no foro do seu domicílio.
 
 9. Contato
 Suporte técnico: canais oficiais de atendimento do Personal Perto.
-Privacidade e direitos de titular: privacidade@personalperto.com.br`
+Privacidade e direitos de titular: contato@personalperto.com.br`
 
 export const PRIVACIDADE_TEXTO = `Política de Privacidade e Proteção de Dados (v${PRIVACIDADE_VERSAO})
 
@@ -79,15 +80,17 @@ O operador responde solidariamente apenas quando descumpre a lei ou as instruç�
 
 3. Análise de uso da página inicial (PostHog)
 Na página inicial pública (landing page) usamos o PostHog para entender como a página é usada: visitas, cliques, rolagem e gravação de sessão. Só coletamos esses dados depois do seu consentimento explícito, dado no aviso de cookies da página; até lá, a ferramenta fica inativa. A gravação de sessão é anônima e os campos de formulário são mascarados. Você pode recusar no próprio aviso ou revogar o consentimento limpando os dados do site (localStorage) no seu navegador.
-Transferência internacional (art. 33): o PostHog tem servidores nos Estados Unidos. A transferência dos dados de navegação ocorre com base em cláusulas contratuais do fornecedor que asseguram nível de proteção compatível com a LGPD. Mais informações: https://posthog.com/privacy
+Transferência internacional: o PostHog tem servidores nos Estados Unidos (veja a seção 4.1). Mais informações: https://posthog.com/privacy
 
 4. Compartilhamento com terceiros
 Não vendemos, alugamos nem compartilhamos dados pessoais para fins de marketing. O compartilhamento ocorre apenas com fornecedores essenciais ao serviço:
 • Mercado Pago: processamento de Pix, cartão e boleto. Os dados financeiros são tratados por ele, conforme a política de privacidade dele.
-• Hospedagem e banco de dados: provedor de nuvem com criptografia em trânsito e em repouso e acesso restrito por autenticação. Quando houver processamento fora do Brasil, aplica-se o art. 33 da LGPD.
+• Hospedagem e banco de dados (Supabase): provedor de nuvem com servidores nos Estados Unidos, criptografia em trânsito e em repouso e acesso restrito por autenticação. Veja a seção 4.1 sobre a transferência internacional.
 • Comunicação: envio de e-mails (por exemplo, o pedido de consentimento do aluno) e abertura de mensagens de WhatsApp, sempre a pedido do Personal Trainer. As mensagens não contêm dados de saúde.
 • Serviços de apoio: consulta de endereço pelo CEP (ViaCEP, que recebe apenas o CEP digitado) e previsão do tempo (Open-Meteo, que recebe apenas a localização da cidade, sem identificar você).
 • Análise de uso (PostHog): apenas dados anônimos de navegação da página inicial, conforme a seção 3.
+
+4.1. Transferência internacional de dados (art. 33): os dados da plataforma, inclusive os dados de saúde dos alunos, são armazenados em servidores nos Estados Unidos (Supabase), e os dados de navegação da página inicial são tratados pelo PostHog, também nos Estados Unidos. A transferência é feita com base em cláusulas contratuais dos fornecedores que asseguram grau de proteção compatível com a LGPD (art. 33, II). Para os dados de saúde, o consentimento do aluno informa expressamente essa transferência (art. 33, VIII). Você pode pedir informações sobre ela pelo contato do Encarregado.
 
 5. Armazenamento, retenção e segurança
 5.1. Prazos de retenção
@@ -112,7 +115,7 @@ Alunos devem fazer os pedidos ao seu Personal Trainer (controlador), que pode co
 
 7. Encarregado de proteção de dados (DPO)
 Nos termos do art. 41, a plataforma designa um Encarregado para atender as requisições dos titulares e atuar como canal com a ANPD.
-Contato: privacidade@personalperto.com.br. Prazo de resposta: até 15 dias.
+Contato: contato@personalperto.com.br. Prazo de resposta: até 15 dias.
 
 8. Incidentes de segurança
 Se houver incidente que possa causar risco ou dano relevante aos titulares, comunicaremos a ANPD e os titulares afetados, nos prazos da regulamentação (art. 48), informando a natureza dos dados, as medidas adotadas e o contato do Encarregado.

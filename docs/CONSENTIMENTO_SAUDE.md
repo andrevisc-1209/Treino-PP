@@ -98,5 +98,5 @@ Altura, peso, % de gordura e circunferências (`alunos.height_cm`, `treino.pesos
   Sem consentimento a altura nem entra no payload (o que já estava salvo não é apagado) e o peso não é registrado.
 - Na ficha, **Nova avaliação** só aparece com consentimento ativo; sem ele há aviso e atalho para pedir a autorização.
 - `useRegistrarPeso` confere o consentimento ativo antes de gravar.
-- O termo cita as medidas corporais entre os dados autorizados (v1.3) e, na v1.4, informa que o registro do próprio consentimento (data, hora, versão e IP) é mantido pelo prazo necessário para comprovar o aceite, mesmo após a exclusão dos demais dados.
+- O termo cita as medidas corporais entre os dados autorizados (v1.3) e, na v1.4, informa que o registro do próprio consentimento (data, hora, versão e IP) é mantido pelo prazo necessário para comprovar o aceite, mesmo após a exclusão dos demais dados. Na v1.5, o termo também informa que os dados ficam em servidores nos Estados Unidos (transferência internacional, art. 33) e o aluno concorda com isso ao autorizar.
 - Como as demais travas de saúde, a verificação é no app (não há trigger no banco). Revogar o consentimento mantém as medidas já registradas e bloqueia novas.
