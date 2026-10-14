@@ -69,6 +69,33 @@ export const TEMPLATES_NATACAO: TemplateNatacao[] = [
     ],
   },
   {
+    id: 'intermediario-tecnica-2000',
+    nome: 'Técnica 2.000 m',
+    nivel: 'intermediario',
+    ambiente: 'piscina',
+    descricao: 'Série de técnica: braçada, pernada e educativos. Aproveite a soltura para treinar viradas e chegadas.',
+    blocos: [
+      { exercicio_id: 'crawl', nome: 'Aquecimento', parametros: { distancia: 400, series: 1, descanso: 30 } },
+      { exercicio_id: 'catch-up', nome: 'Catch-up (Piteira)', parametros: { distancia: 100, series: 4, descanso: 20 } },
+      { exercicio_id: 'um-braco', nome: '1 Braço (Alternado)', parametros: { distancia: 100, series: 4, descanso: 20 } },
+      { exercicio_id: 'punho-fechado', nome: 'Punho Fechado (Fist)', parametros: { distancia: 100, series: 4, descanso: 20 } },
+      { exercicio_id: 'perna-lateral', nome: '6-Kick Switch (Perna Lateral)', parametros: { distancia: 50, series: 4, descanso: 20 } },
+      { exercicio_id: 'crawl', nome: 'Soltura — viradas e chegadas', parametros: { distancia: 200, series: 1, descanso: 0, observacao: 'Treinar virada e chegada na parede' } },
+    ],
+  },
+  {
+    id: 'intermediario-resistencia-3000',
+    nome: 'Resistência 3.000 m',
+    nivel: 'intermediario',
+    ambiente: 'piscina',
+    descricao: '500 m de aquecimento, 2.000 m de série principal e 500 m de desaquecimento.',
+    blocos: [
+      { exercicio_id: 'crawl', nome: 'Aquecimento', parametros: { distancia: 500, series: 1, descanso: 30 } },
+      { exercicio_id: 'aerobico', nome: 'Série Principal 4 × 500 m', parametros: { distancia: 500, series: 4, descanso: 30 } },
+      { exercicio_id: 'crawl', nome: 'Desaquecimento', parametros: { distancia: 500, series: 1, descanso: 0 } },
+    ],
+  },
+  {
     id: 'avancado-velocidade',
     nome: 'Avançado — Velocidade',
     nivel: 'avancado',

@@ -1,6 +1,11 @@
+import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { BotaoComecarDeModelo, SeletorTemplate } from '@/features/templates/SeletorTemplate'
+import { estruturadoDoTemplate, MODALIDADES_COM_TEMPLATE_DO_SISTEMA, temBlocos } from '@/features/templates/aplicar'
+import type { TemplateTreino } from '@/features/templates/api'
 import { MODALIDADES_ATIVAS, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 import { BlocosEditor } from './BlocosEditor'
 import { NatacaoForm } from '@/components/modalidades/NatacaoForm'
@@ -47,6 +52,17 @@ export function ModalidadeForm({
 }) {
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
+  const [escolhendoModelo, setEscolhendoModelo] = useState(false)
+  const comModeloDoSistema = MODALIDADES_COM_TEMPLATE_DO_SISTEMA.includes(modalidade)
+
+  const usarModelo = async (t: TemplateTreino) => {
+    if (temBlocos(modalidade, estruturado)) {
+      const ok = await confirmarAcao({ titulo: 'Usar modelo', mensagem: 'Os blocos atuais serão substituídos pelos do modelo.', textoConfirmar: 'Substituir', destrutivo: true })
+      if (!ok) return
+    }
+    onEstruturado({ ...estruturado, ...estruturadoDoTemplate(modalidade, t.modalidade_detalhes) })
+    setEscolhendoModelo(false)
+  }
 
   return (
     <div className="space-y-4">
@@ -142,6 +158,13 @@ export function ModalidadeForm({
           )}
         </Field>
       ))}
+
+      {comModeloDoSistema && (
+        <>
+          <BotaoComecarDeModelo onClick={() => setEscolhendoModelo(true)} />
+          <SeletorTemplate modalidade={modalidade} aberto={escolhendoModelo} onClose={() => setEscolhendoModelo(false)} onEscolher={usarModelo} />
+        </>
+      )}
 
       {modalidade === 'natacao' && <NatacaoForm dados={estruturado.natacao} onChange={(natacao) => onEstruturado({ ...estruturado, natacao })} textoAntigo={legadoNatacao} />}
       {modalidade === 'corrida' && <CorridaForm dados={estruturado.corrida} onChange={(corrida) => onEstruturado({ ...estruturado, corrida })} />}
