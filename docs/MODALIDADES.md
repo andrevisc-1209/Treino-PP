@@ -74,7 +74,9 @@ tipo **pré-preenchidos** pelo filtro ativo (e editáveis; o tipo só vale se pe
   (distância/tempo); unicidade de nome por modalidade. RLS/GRANTs inalterados. **Natação não muda de tabela**: a página usa a
   biblioteca do sistema em TS e `exercicios_natacao_custom` (agora com editar/excluir), então o seletor da natação continua igual.
 - Corrida/ciclismo/brick: "Tipos do app" lista os tipos fixos (somente leitura) e "Meus exercícios" guarda os do personal.
-  **Ainda não há seletor desses exercícios nos formulários de corrida/ciclismo/brick** (follow-up).
+  Esses exercícios entram no treino pelo seletor de tipo de treino (aba "Meus exercícios"): viram um **bloco** do tipo do exercício (nome do exercício,
+  `exercicio_id`), com os mesmos campos dos blocos (distância/tempo, séries, descanso, pace/zona…), então histórico, checklist e página pública funcionam como antes.
+  No ciclismo só aparecem os tipos que existem no ambiente (indoor/outdoor); no brick, exercícios da modalidade brick (bike/corrida) entram na parte correspondente.
 - Editores de treino e sessão de musculação listam só exercícios de musculação (`useExerciciosMusculacao`).
 
 # Fase 3 — métricas e acompanhamento

@@ -6,6 +6,7 @@ import { totalCorrida, type BlocoCorrida, type DadosCorrida, type TipoCorrida } 
 import { formatarTempo } from '@/types/natacao'
 import { CabecalhoBloco, Chips, SeletorTipoTreino, ZonasFc } from './comum'
 import { numero } from './numero'
+import { useExerciciosParaBloco } from '@/features/exercicios/api'
 
 const CHIPS_DESCANSO = [30, 60, 90, 120, 180]
 const TIPOS_SERIES: TipoCorrida[] = ['intervalado-curto', 'intervalado-longo', 'hill-repeats']
@@ -89,8 +90,9 @@ function CartaoBloco({ bloco, indice, total, onChange, onMover, onRemover }: { b
 }
 
 /** Treino de corrida: tipos de treino (regenerativo, intervalado, long run…) com distância/tempo, pace e zona de FC. */
-export function CorridaForm({ dados, onChange }: { dados: DadosCorrida; onChange: (d: DadosCorrida) => void }) {
+export function CorridaForm({ dados, onChange, incluirBrick }: { dados: DadosCorrida; onChange: (d: DadosCorrida) => void; incluirBrick?: boolean }) {
   const [seletor, setSeletor] = useState(false)
+  const meus = useExerciciosParaBloco('corrida', { incluirBrick })
   const mover = (i: number, delta: -1 | 1) => {
     const alvo = i + delta
     if (alvo < 0 || alvo >= dados.blocos.length) return
@@ -124,6 +126,11 @@ export function CorridaForm({ dados, onChange }: { dados: DadosCorrida; onChange
         onClose={() => setSeletor(false)}
         onEscolher={(id) => {
           onChange({ blocos: [...dados.blocos, novoBloco(id as TipoCorrida)] })
+          setSeletor(false)
+        }}
+        meus={meus}
+        onEscolherExercicio={(e) => {
+          onChange({ blocos: [...dados.blocos, { ...novoBloco(e.tipoId as TipoCorrida), nome: e.nome, exercicio_id: e.id }] })
           setSeletor(false)
         }}
       />
