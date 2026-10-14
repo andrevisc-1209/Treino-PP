@@ -67,3 +67,26 @@ Migration `20261016000000_add_canal_historico_consentimento.sql`:
 - Função `treino.consentimentos_saude_painel()` (SECURITY DEFINER, só alunos ativos do próprio personal): é por ela
   que o painel lê canal e data da resposta, porque a tabela de tokens continua sem acesso do cliente.
 - Ordem de rollout: **migration → deploy da function** (a function nova grava `canal`, coluna que ainda não existe antes da migration).
+
+## Evidência de auditoria do aceite (IP) — v4
+
+Para provar o consentimento perante o titular ou a ANPD (LGPD, art. 11, I) cada aceite pelo link guarda:
+
+| Evidência | Onde | Como |
+|---|---|---|
+| Data/hora | `treino.consentimentos.consented_at` | já existia (`now()` na confirmação) |
+| Versão do termo | `treino.consentimentos.consent_version` | já existia; vem de `TERMO_VERSAO` (`src/features/alunos/termo.ts`, espelhada em `_shared/consentimento.ts` — **incremente as duas quando o texto do termo mudar**) |
+| IP do aparelho | `treino.consentimento_evidencias.ip` | novo (migration `20261035…`); `cf-connecting-ip` → 1º IP de `x-forwarded-for` → `x-real-ip`; `NULL` se não vier IP válido |
+
+A tabela de evidências é só da plataforma (RLS ligado, sem policy nem grant para `authenticated`): o personal não lê o IP do aluno.
+Aceites anteriores à migration ficam sem IP (sem backfill — nada é inventado). Falha ao gravar o IP só gera log; não desfaz o aceite.
+Consulta para atender uma requisição (SQL Editor):
+
+```sql
+SELECT c.consented_at, c.consent_version, c.method, e.ip
+FROM treino.consentimentos c
+LEFT JOIN treino.consentimento_evidencias e ON e.consentimento_id = c.id
+WHERE c.aluno_id = '<id do aluno>' ORDER BY c.consented_at DESC;
+```
+
+O termo (v1.2) informa ao aluno que data/hora, versão e IP são registrados. Redeploy: `supabase functions deploy confirmar-consentimento-saude --no-verify-jwt --project-ref avgrnvpvjhymsrnapfgu`.
