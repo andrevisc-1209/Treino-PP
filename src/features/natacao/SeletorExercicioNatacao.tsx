@@ -176,16 +176,17 @@ export function SeletorExercicioNatacao({
     [linhas, ambiente],
   )
 
+  // "Começar de um modelo" abre só os modelos prontos (somente leitura); "Adicionar exercício" abre biblioteca + meus (com criar)
+  const soModelos = abaInicial === 'templates'
   const abas: { id: Aba; rotulo: string }[] = [
     { id: 'biblioteca', rotulo: 'Biblioteca' },
     { id: 'meus', rotulo: 'Meus exercícios' },
-    { id: 'templates', rotulo: 'Modelos' },
   ]
 
   return (
-    <BottomSheet open={aberto} onClose={onClose} title={`Adicionar — ${rotuloAmbiente(ambiente)}`}>
+    <BottomSheet open={aberto} onClose={onClose} title={soModelos ? `Modelos prontos — ${rotuloAmbiente(ambiente)}` : `Adicionar — ${rotuloAmbiente(ambiente)}`} mostrarFechar>
       <div className="space-y-3">
-        <div className="flex gap-1 rounded-xl bg-slate-100 p-1" role="tablist">
+        {!soModelos && <div className="flex gap-1 rounded-xl bg-slate-100 p-1" role="tablist">
           {abas.map((a) => (
             <button
               key={a.id}
@@ -201,7 +202,7 @@ export function SeletorExercicioNatacao({
               {a.rotulo}
             </button>
           ))}
-        </div>
+        </div>}
 
         <div className="max-h-[60vh] space-y-2 overflow-y-auto">
           {aba === 'biblioteca' && (

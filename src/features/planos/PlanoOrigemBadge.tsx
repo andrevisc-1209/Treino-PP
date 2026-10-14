@@ -5,11 +5,16 @@ import { confirmarAcao } from '@/components/ConfirmSheet'
 import { itensIguais } from './compare'
 import { buscarItensComparaveisPlano, useSincronizarPlanoComModelo, type Plano } from './api'
 
-type PlanoParaBadge = Pick<Plano, 'id' | 'name' | 'modelo_origem_id'>
+type PlanoParaBadge = Pick<Plano, 'id' | 'name' | 'modelo_origem_id'> & { modalidade?: Plano['modalidade'] }
 
-/** Selo "Baseado em: X · desatualizado" (+ ação de atualizar) ou "Carregar exercícios do treino planejado" quando o plano está vazio. Nada se estiver em dia ou sem origem. */
+/**
+ * Selo "Baseado em: X · desatualizado" (+ ação de atualizar) ou "Carregar exercícios do treino planejado" quando o plano está vazio. Nada se estiver em dia ou sem origem.
+ * Só vale para musculação: compara/copia a lista de exercícios (plano_exercicios ↔ modelo_exercicios). As demais modalidades guardam o treino em
+ * modalidade_detalhes, então a lista de exercícios delas é sempre vazia — o selo apareceria sempre e o botão não faria nada.
+ */
 export function PlanoOrigemBadge({ plano, alunoId }: { plano: PlanoParaBadge; alunoId: string }) {
-  const modeloId = plano.modelo_origem_id
+  const musculacao = (plano.modalidade ?? 'musculacao') === 'musculacao'
+  const modeloId = musculacao ? plano.modelo_origem_id : null
   const { data: modelo } = useModelo(modeloId ?? undefined)
   const { data: itensPlano } = useQuery({
     queryKey: ['plano-exercicios-cmp', plano.id],
