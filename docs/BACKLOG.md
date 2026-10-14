@@ -453,6 +453,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 27 | Perfil de triatleta (foco, prova alvo, data) + volume semanal por disciplina — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261026…` antes do merge** |
 | 28 | Nome da prova alvo (selo da ficha usa o nome) | ✅ em revisão — **rodar migration `20261027…` antes do merge** |
 | 29 | Card de clima na Hoje (Open-Meteo, cidade do personal) — `docs/MODALIDADES.md` | ✅ em revisão — **deploy da função `clima`** |
+| 30 | Grupo "Reabilitação / Prep Física" (23 exercícios, fases I e II) na biblioteca de musculação | ✅ em revisão — **rodar migration `20261028…` antes do merge** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
