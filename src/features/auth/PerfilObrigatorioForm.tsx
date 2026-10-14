@@ -3,7 +3,8 @@ import { Button, Field, Input, Switch } from '@/components/ui'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { mapearErroSupabase } from '@/lib/erros'
-import { SeletorCidade } from '@/components/SeletorCidade'
+import { LocalizacaoCep, type Localizacao } from '@/components/LocalizacaoCep'
+import { cepCompleto } from '@/lib/cep'
 import { ERROS } from '@/lib/mensagens'
 import { salvarPerfilProfissional } from './api'
 
@@ -19,8 +20,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
   const [cpfTocado, setCpfTocado] = useState(false)
   const [telefone, setTelefone] = useState('')
   const [whatsappOptIn, setWhatsappOptIn] = useState(false)
-  const [uf, setUf] = useState('')
-  const [cidade, setCidade] = useState('')
+  const [local, setLocal] = useState<Localizacao>({ cep: '', bairro: '', cidade: '', uf: '' })
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
 
@@ -30,8 +30,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
     if (!nome.trim()) return setErro('Informe seu nome')
     if (!validarCPF(cpf)) return setErro(ERROS.CPF.invalido)
     if (!validarTelefone(telefone)) return setErro('Telefone inválido')
-    if (!uf) return setErro('Selecione o estado')
-    if (!cidade) return setErro('Selecione a cidade')
+    if (!cepCompleto(local.cep) || !local.uf || !local.cidade) return setErro('Informe um CEP válido para preencher cidade e estado')
     setErro(null)
     setSalvando(true)
     try {
@@ -40,8 +39,9 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
         cpf: cpf.replace(/\D/g, ''),
         phone: telefone.replace(/\D/g, ''),
         whatsappOptIn,
-        uf,
-        cidade,
+        uf: local.uf,
+        cidade: local.cidade,
+        bairro: local.bairro,
       })
       onConcluido()
     } catch (e) {
@@ -69,14 +69,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
       <Field label="Telefone">
         <Input value={telefone} onChange={(e) => setTelefone(mascararTelefone(e.target.value))} inputMode="tel" placeholder="(00) 00000-0000" />
       </Field>
-      <SeletorCidade
-        uf={uf}
-        cidade={cidade}
-        onChange={(novaUf, novaCidade) => {
-          setUf(novaUf)
-          setCidade(novaCidade)
-        }}
-      />
+      <LocalizacaoCep valor={local} onChange={(patch) => setLocal((l) => ({ ...l, ...patch }))} />
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
         <Switch checked={whatsappOptIn} onChange={setWhatsappOptIn} label="Aceito receber notificações pelo WhatsApp" />

@@ -17,7 +17,8 @@ import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { ERROS } from '@/lib/mensagens'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { PasswordInput } from '@/components/PasswordInput'
-import { SeletorCidade } from '@/components/SeletorCidade'
+import { LocalizacaoCep } from '@/components/LocalizacaoCep'
+import { cepCompleto } from '@/lib/cep'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
 
@@ -40,8 +41,10 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
     confirmPassword: z.string().optional(),
     cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
     phone: mode === 'signup' ? z.string().refine(validarTelefone, 'Telefone inválido') : z.string().optional(),
-    uf: mode === 'signup' ? z.string().min(1, 'Selecione o estado') : z.string().optional(),
-    cidade: mode === 'signup' ? z.string().min(1, 'Selecione a cidade') : z.string().optional(),
+    cep: mode === 'signup' ? z.string().refine(cepCompleto, 'Informe o CEP com 8 números') : z.string().optional(),
+    bairro: z.string().optional(),
+    uf: mode === 'signup' ? z.string().min(1, 'Informe um CEP válido para preencher o estado') : z.string().optional(),
+    cidade: mode === 'signup' ? z.string().min(1, 'Informe um CEP válido para preencher a cidade') : z.string().optional(),
     whatsappOptIn: z.boolean().optional(),
     termosAceitos:
       mode === 'signup'
@@ -74,13 +77,15 @@ export function LoginPage() {
 
   const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
-    defaultValues: { termosAceitos: false, uf: '', cidade: '' },
+    defaultValues: { termosAceitos: false, cep: '', bairro: '', uf: '', cidade: '' },
   })
   const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
   const termosAceitos = watch('termosAceitos')
   const whatsappOptIn = watch('whatsappOptIn')
   const cpfValor = watch('cpf')
   const phoneValor = watch('phone')
+  const cepValor = watch('cep')
+  const bairroValor = watch('bairro')
   const ufValor = watch('uf')
   const cidadeValor = watch('cidade')
   const senhaValor = watch('password')
@@ -177,6 +182,7 @@ export function LoginPage() {
           phone: (f.phone ?? '').replace(/\D/g, ''),
           uf: f.uf ?? '',
           cidade: f.cidade ?? '',
+          bairro: (f.bairro ?? '').trim(),
           whatsapp_opt_in: f.whatsappOptIn ?? false,
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
@@ -285,15 +291,13 @@ export function LoginPage() {
                 placeholder="(00) 00000-0000"
               />
             </Field>
-            <SeletorCidade
-              uf={ufValor ?? ''}
-              cidade={cidadeValor ?? ''}
-              onChange={(uf, cidade) => {
-                setValue('uf', uf, { shouldValidate: true })
-                setValue('cidade', cidade, { shouldValidate: true })
+            <LocalizacaoCep
+              valor={{ cep: cepValor ?? '', bairro: bairroValor ?? '', cidade: cidadeValor ?? '', uf: ufValor ?? '' }}
+              onChange={(patch) => {
+                for (const [campo, v] of Object.entries(patch) as ['cep' | 'bairro' | 'cidade' | 'uf', string][]) setValue(campo, v, { shouldValidate: campo !== 'bairro' })
               }}
-              erroUf={formState.errors.uf?.message}
-              erroCidade={formState.errors.cidade?.message}
+              erroCep={formState.errors.cep?.message}
+              erroLocal={formState.errors.cidade?.message ?? formState.errors.uf?.message}
             />
           </>
         )}
