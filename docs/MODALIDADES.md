@@ -51,6 +51,16 @@ Migration `20261021000000_execucao_treino_modalidade.sql` (rodar **antes** do me
 modalidades exceto musculação. Aplicar um planejado a um aluno, duplicar e "Salvar como treino planejado" copiam
 modalidade, execução e exercícios livres.
 
+## Modelos prontos ao criar o treino
+Ao criar um treino (aluno ou treino planejado), **corrida, ciclismo e brick** têm o botão "Começar de um modelo ›" — o mesmo
+gesto da natação. Os modelos vêm de `treino.templates_treino` (migration `20261029…`): catálogo global, somente leitura
+(RLS só de SELECT para `authenticated`, sem escrita pela API), separado de `treino.modelos` — por isso **não aparecem em
+"Treinos planejados"**, que lista só o que o personal salvou. `modalidade_detalhes` usa o mesmo formato que o app salva, então
+aplicar um modelo é carregar o JSON no formulário (blocos ganham ids novos; confirma antes de substituir blocos existentes).
+Natação segue com os modelos em `src/data/natacao-templates.ts` (ganhou Técnica 2.000 m e Resistência 3.000 m).
+Musculação ainda não tem modelos do sistema (dependeria de itens em `modelo_exercicios` ligados à biblioteca).
+Para incluir um modelo novo: nova migration com `INSERT ... ON CONFLICT (slug) DO NOTHING`.
+
 # Fase 3 — métricas e acompanhamento
 
 Migration `20261022000000_metricas_modalidade.sql`: índice `(professional_id, concluido_em desc)` e a função
