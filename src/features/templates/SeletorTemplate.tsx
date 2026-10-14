@@ -2,10 +2,12 @@ import { Sparkles } from 'lucide-react'
 import { BottomSheet, Button } from '@/components/ui'
 import { mapearErroSupabase } from '@/lib/erros'
 import { resumoModalidade, type ModalidadeTipo } from '@/types/modalidades'
+import { itensMusculacaoDe } from './aplicar'
 import { useTemplatesTreino, type TemplateTreino } from './api'
 
 function Cartao({ t, onUsar }: { t: TemplateTreino; onUsar: () => void }) {
-  const resumo = resumoModalidade(t.modalidade, t.modalidade_detalhes)
+  const itens = t.modalidade === 'musculacao' ? itensMusculacaoDe(t.modalidade_detalhes) : []
+  const resumo = t.modalidade === 'musculacao' ? `${itens.length} ${itens.length === 1 ? 'exercício' : 'exercícios'}` : resumoModalidade(t.modalidade, t.modalidade_detalhes)
   return (
     <div className="space-y-2 rounded-2xl border border-slate-200 p-3">
       <div>
@@ -13,6 +15,15 @@ function Cartao({ t, onUsar }: { t: TemplateTreino; onUsar: () => void }) {
         {resumo && <p className="text-xs text-slate-500">{resumo}</p>}
       </div>
       {t.descricao && <p className="text-sm text-slate-600">{t.descricao}</p>}
+      {itens.length > 0 && (
+        <ol className="list-decimal space-y-0.5 pl-5 text-xs text-slate-600">
+          {itens.map((it) => (
+            <li key={it.exercicio_id}>
+              {it.nome} · {it.sets} × {it.reps}
+            </li>
+          ))}
+        </ol>
+      )}
       <Button onClick={onUsar} className="w-full">
         Usar este modelo
       </Button>

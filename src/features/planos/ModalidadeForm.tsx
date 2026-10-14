@@ -31,6 +31,8 @@ export function ModalidadeForm({
   estruturado,
   onEstruturado,
   legadoNatacao,
+  modeloMusculacao,
+  onModeloMusculacao,
 }: {
   modalidade: ModalidadeTipo
   onModalidade: (m: ModalidadeTipo) => void
@@ -49,13 +51,21 @@ export function ModalidadeForm({
   onEstruturado: (v: DadosEstruturados) => void
   /** conteúdo de um treino de natação no formato antigo, para o personal refazer */
   legadoNatacao?: string[]
+  /** só ao CRIAR treino de musculação: modelo pronto escolhido (os exercícios são gravados depois que o treino é criado) */
+  modeloMusculacao?: TemplateTreino | null
+  onModeloMusculacao?: (t: TemplateTreino | null) => void
 }) {
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
   const [escolhendoModelo, setEscolhendoModelo] = useState(false)
-  const comModeloDoSistema = MODALIDADES_COM_TEMPLATE_DO_SISTEMA.includes(modalidade)
+  const comModeloDoSistema = MODALIDADES_COM_TEMPLATE_DO_SISTEMA.includes(modalidade) && (modalidade !== 'musculacao' || !!onModeloMusculacao)
 
   const usarModelo = async (t: TemplateTreino) => {
+    if (modalidade === 'musculacao') {
+      onModeloMusculacao?.(t)
+      setEscolhendoModelo(false)
+      return
+    }
     if (temBlocos(modalidade, estruturado)) {
       const ok = await confirmarAcao({ titulo: 'Usar modelo', mensagem: 'Os blocos atuais serão substituídos pelos do modelo.', textoConfirmar: 'Substituir', destrutivo: true })
       if (!ok) return
@@ -161,7 +171,19 @@ export function ModalidadeForm({
 
       {comModeloDoSistema && (
         <>
-          <BotaoComecarDeModelo onClick={() => setEscolhendoModelo(true)} />
+          {modalidade === 'musculacao' && modeloMusculacao ? (
+            <div className="flex items-center gap-2 rounded-xl bg-brand-soft p-3 text-sm">
+              <p className="min-w-0 flex-1">
+                <span className="font-medium">Modelo: {modeloMusculacao.nome}</span>
+                <span className="block text-xs text-slate-600">Os exercícios entram quando você criar o treino.</span>
+              </p>
+              <button type="button" onClick={() => onModeloMusculacao?.(null)} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-600 active:bg-white/60" aria-label="Remover modelo">
+                <X size={18} />
+              </button>
+            </div>
+          ) : (
+            <BotaoComecarDeModelo onClick={() => setEscolhendoModelo(true)} />
+          )}
           <SeletorTemplate modalidade={modalidade} aberto={escolhendoModelo} onClose={() => setEscolhendoModelo(false)} onEscolher={usarModelo} />
         </>
       )}

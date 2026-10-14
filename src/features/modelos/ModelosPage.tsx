@@ -5,6 +5,7 @@ import { BottomSheet, Button, Fab, Field, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
 import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mostrarErroGlobal } from '@/components/Toast'
 import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
@@ -24,6 +25,7 @@ import {
   type ModalidadeTipo,
   type TipoExecucao,
 } from '@/types/modalidades'
+import { useAplicarItensTemplate, type TemplateTreino } from '@/features/templates/api'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
 
 export function ModelosPage() {
@@ -43,6 +45,8 @@ export function ModelosPage() {
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
   const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
   const [estrNova, setEstrNova] = useState<DadosEstruturados>(estruturadosVazios())
+  const [modeloMuscNovo, setModeloMuscNovo] = useState<TemplateTreino | null>(null)
+  const aplicarItensTemplate = useAplicarItensTemplate()
   const [modalidadeEd, setModalidadeEd] = useState<ModalidadeTipo>('musculacao')
   const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
@@ -88,6 +92,7 @@ export function ModelosPage() {
     setLivresNovos([])
     setBlocosNovos([])
     setEstrNova(estruturadosVazios())
+    setModeloMuscNovo(null)
     setErroNovo(null)
     setCriando(true)
   }
@@ -110,8 +115,16 @@ export function ModelosPage() {
         modalidade_detalhes: montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos, estrNova),
       },
       {
-        onSuccess: (id) => {
+        onSuccess: async (id) => {
+          const modeloMusc = modalidadeNova === 'musculacao' ? modeloMuscNovo : null
           setCriando(false)
+          if (modeloMusc) {
+            try {
+              await aplicarItensTemplate({ tabela: 'modelo_exercicios', modelo_id: id }, modeloMusc)
+            } catch (e) {
+              mostrarErroGlobal(`O treino planejado foi criado, mas não deu para adicionar os exercícios do modelo: ${(e as Error).message}`)
+            }
+          }
           // musculação segue para a escolha de exercícios; as outras modalidades não têm lista de exercícios do app
           if (modalidadeNova === 'musculacao') navigate(`/meus-treinos/planejados/${id}?adicionar=1`)
         },
@@ -252,6 +265,12 @@ export function ModelosPage() {
               setLivresNovos([])
               setBlocosNovos([])
               setEstrNova(estruturadosVazios())
+              setModeloMuscNovo(null)
+            }}
+            modeloMusculacao={modeloMuscNovo}
+            onModeloMusculacao={(t) => {
+              setModeloMuscNovo(t)
+              if (t && !nomeNovo.trim()) setNomeNovo(t.nome)
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
