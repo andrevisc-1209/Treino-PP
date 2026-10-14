@@ -67,3 +67,13 @@ Migration `20261016000000_add_canal_historico_consentimento.sql`:
 - Função `treino.consentimentos_saude_painel()` (SECURITY DEFINER, só alunos ativos do próprio personal): é por ela
   que o painel lê canal e data da resposta, porque a tabela de tokens continua sem acesso do cliente.
 - Ordem de rollout: **migration → deploy da function** (a function nova grava `canal`, coluna que ainda não existe antes da migration).
+
+## Medidas corporais também dependem do consentimento
+
+Altura, peso, % de gordura e circunferências (`alunos.height_cm`, `treino.pesos`) só são preenchidas com consentimento ativo do aluno:
+- No cadastro/edição, altura e peso ficam na etapa **3. Saúde**, dentro da mesma trava dos demais campos (saem da etapa 1).
+  Sem consentimento a altura nem entra no payload (o que já estava salvo não é apagado) e o peso não é registrado.
+- Na ficha, **Nova avaliação** só aparece com consentimento ativo; sem ele há aviso e atalho para pedir a autorização.
+- `useRegistrarPeso` confere o consentimento ativo antes de gravar.
+- O termo (v1.3) cita as medidas corporais entre os dados autorizados.
+- Como as demais travas de saúde, a verificação é no app (não há trigger no banco). Revogar o consentimento mantém as medidas já registradas e bloqueia novas.
