@@ -467,7 +467,8 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 41 | Fechar ciclo: erro de ciclo duplicado tratado, itens com data/modalidade/local e PDF "Baixar relatório" (jsPDF) | ✅ em revisão (sem migration) |
 | 42 | Relatório do ciclo em PDF com a identidade visual (cabeçalho verde com logo, tabela zebrada, blocos de ajuste e total, rodapé) | ✅ em revisão (sem migration) |
 | 43 | Relatório completo do ciclo: recibo + relatório num PDF só (resumo, treinos, tabela, gráficos, total) | ✅ em revisão (sem migration) |
-| 44 | Medidas corporais (altura, peso, % gordura, circunferências) só com o consentimento do aluno; termo v1.3 | ✅ em revisão — **merge depois da #103; redeploy de `confirmar-consentimento-saude`** |
+| 44 | Consentimento de saúde: registro do IP do aceite (tabela só da plataforma) e termo v1.2 — `docs/CONSENTIMENTO_SAUDE.md` | ✅ em revisão — **rodar migration `20261035…` antes do merge e redeploy de `confirmar-consentimento-saude`** |
+| 45 | Medidas corporais (altura, peso, % gordura, circunferências) só com o consentimento do aluno; termo v1.3 | ✅ em revisão — **redeploy de `confirmar-consentimento-saude`** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

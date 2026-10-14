@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canalValido, emailValido, escaparHtml, estadoDoToken, expiraEm, montarEmailConsentimento, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
+import { canalValido, emailValido, escaparHtml, estadoDoToken, expiraEm, ipDoCliente, montarEmailConsentimento, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
 
 const agora = new Date('2026-10-06T12:00:00.000Z')
 
@@ -61,5 +61,26 @@ describe('reenvio com motivo e canal', () => {
     expect(m.html).toContain('quer cuidar do seu treino')
     expect(m.html).toContain('background:#ffffff;padding:12px;border-radius:6px;display:inline-block')
     expect(m.html).toContain('logo-email.png')
+  })
+})
+
+describe('ipDoCliente', () => {
+  const h = (o: Record<string, string>) => ({ get: (n: string) => o[n.toLowerCase()] ?? null })
+  it('prioriza cf-connecting-ip, depois o primeiro de x-forwarded-for, depois x-real-ip', () => {
+    expect(ipDoCliente(h({ 'cf-connecting-ip': '200.10.20.30', 'x-forwarded-for': '1.1.1.1' }))).toBe('200.10.20.30')
+    expect(ipDoCliente(h({ 'x-forwarded-for': ' 189.4.5.6 , 10.0.0.1' }))).toBe('189.4.5.6')
+    expect(ipDoCliente(h({ 'x-real-ip': '177.1.2.3' }))).toBe('177.1.2.3')
+  })
+  it('aceita IPv6', () => {
+    expect(ipDoCliente(h({ 'x-forwarded-for': '2804:14d:1234::1' }))).toBe('2804:14d:1234::1')
+  })
+  it('sem header ou com valor que não é IP → null (nunca "unknown")', () => {
+    expect(ipDoCliente(h({}))).toBeNull()
+    expect(ipDoCliente(h({ 'x-forwarded-for': 'unknown' }))).toBeNull()
+    expect(ipDoCliente(h({ 'x-forwarded-for': '999.1.1.1' }))).toBeNull()
+    expect(ipDoCliente(h({ 'x-forwarded-for': '<script>' }))).toBeNull()
+  })
+  it('um candidato inválido não impede de usar o próximo header', () => {
+    expect(ipDoCliente(h({ 'cf-connecting-ip': 'lixo', 'x-real-ip': '177.1.2.3' }))).toBe('177.1.2.3')
   })
 })

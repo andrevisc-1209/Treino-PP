@@ -94,3 +94,21 @@ export function montarEmailConsentimento(args: { nomeAluno: string; nomePersonal
   const texto = `Olá, ${args.nomeAluno}!\n\nSeu personal trainer ${args.nomePersonal} quer cuidar do seu treino com mais atenção e organização e precisa da sua autorização para registrar no app informações sobre a sua saúde (lesões, cirurgias e uso de medicamentos — dados sensíveis, protegidos pela LGPD). É rápido: abre o link e escolhe se topa ou não.\n\nAutorizar: ${args.linkAutorizar}\nPrefiro não autorizar: ${args.linkNegar}\n\nO link vale por ${EXPIRA_DIAS} dias. Não reconhece este cadastro? Pode ignorar este e-mail.`
   return { assunto, html, texto }
 }
+
+const IPV4 = /^(\d{1,3}\.){3}\d{1,3}$/
+const IPV6 = /^[0-9a-f:.]+$/i
+
+/**
+ * IP do cliente a partir dos headers da requisição (Edge Function atrás do proxy do Supabase):
+ * cf-connecting-ip, depois o primeiro IP de x-forwarded-for, depois x-real-ip. Devolve null se
+ * nenhum for um IP válido — nunca grava texto solto como "unknown".
+ */
+export function ipDoCliente(headers: { get(nome: string): string | null }): string | null {
+  const candidatos = [headers.get('cf-connecting-ip'), headers.get('x-forwarded-for')?.split(',')[0], headers.get('x-real-ip')]
+  for (const bruto of candidatos) {
+    const ip = bruto?.trim()
+    if (!ip || ip.length > 45) continue
+    if (IPV4.test(ip) ? ip.split('.').every((n) => Number(n) <= 255) : ip.includes(':') && IPV6.test(ip)) return ip
+  }
+  return null
+}

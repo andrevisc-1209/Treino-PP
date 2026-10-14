@@ -19,6 +19,9 @@ O tratamento desses dados, por serem dados sensíveis de saúde, depende do cons
 Compartilhamento
 Não há venda nem compartilhamento com terceiros. Os dados ficam armazenados em servidor com acesso restrito ao profissional responsável.
 
+Registro do aceite
+Ao confirmar, registramos a data e a hora, a versão deste termo e o endereço IP do aparelho usado, apenas como comprovação do seu consentimento. Essas informações ficam guardadas junto ao registro do consentimento e não são exibidas ao profissional.
+
 Prazo de guarda
 Os dados são mantidos enquanto durar o acompanhamento do aluno pelo profissional, podendo ser excluídos a pedido a qualquer momento.
 
