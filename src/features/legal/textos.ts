@@ -1,5 +1,5 @@
 export const TERMOS_USO_VERSAO = '1.1'
-export const PRIVACIDADE_VERSAO = '1.3'
+export const PRIVACIDADE_VERSAO = '1.4'
 
 export const AVISO_MODELO_INICIAL = 'Modelo inicial — revisar com assessoria jurídica.'
 
@@ -115,6 +115,7 @@ Alunos devem fazer os pedidos ao seu Personal Trainer (controlador), que pode co
 
 7. Encarregado de proteção de dados (DPO)
 Nos termos do art. 41, a plataforma designa um Encarregado para atender as requisições dos titulares e atuar como canal com a ANPD.
+Encarregado: André Vieira Scherer (Fundador e Encarregado).
 Contato: contato@personalperto.com.br. Prazo de resposta: até 15 dias.
 
 8. Incidentes de segurança
