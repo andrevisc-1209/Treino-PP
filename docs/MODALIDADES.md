@@ -58,7 +58,11 @@ gesto da natação. Os modelos vêm de `treino.templates_treino` (migration `202
 "Treinos planejados"**, que lista só o que o personal salvou. `modalidade_detalhes` usa o mesmo formato que o app salva, então
 aplicar um modelo é carregar o JSON no formulário (blocos ganham ids novos; confirma antes de substituir blocos existentes).
 Natação segue com os modelos em `src/data/natacao-templates.ts` (ganhou Técnica 2.000 m e Resistência 3.000 m).
-Musculação ainda não tem modelos do sistema (dependeria de itens em `modelo_exercicios` ligados à biblioteca).
+**Musculação** (migration `20261030…`): `modalidade_detalhes.exercicios` = `[{ exercicio_id, nome, sets, reps, rest_seconds }]`, com o id
+real da biblioteca global (resolvido pelo nome na migration; exercício que não existe na biblioteca é omitido). Ao criar treino
+(aluno ou treino planejado) o modelo escolhido aparece como etiqueta e os exercícios são gravados em `plano_exercicios` /
+`modelo_exercicios` logo após a criação, seguindo para o editor de exercícios como sempre. O botão só aparece ao **criar**
+(na edição os exercícios ficam no editor).
 Para incluir um modelo novo: nova migration com `INSERT ... ON CONFLICT (slug) DO NOTHING`.
 
 # Fase 3 — métricas e acompanhamento

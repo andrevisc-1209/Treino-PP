@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { itensMusculacaoDe } from './aplicar'
 import type { ModalidadeDetalhes, ModalidadeTipo } from '@/types/modalidades'
 
 /** Modelo pronto do sistema (treino.templates_treino): catálogo global, somente leitura. */
@@ -28,4 +29,20 @@ export function useTemplatesTreino(modalidade: ModalidadeTipo, habilitado = true
     enabled: habilitado,
     staleTime: 60 * 60 * 1000,
   })
+}
+
+/** Grava os exercícios de um modelo de musculação no treino (plano) ou treino planejado (modelo) recém-criado. */
+export function useAplicarItensTemplate() {
+  const qc = useQueryClient()
+  return async (destino: { tabela: 'plano_exercicios'; plano_id: string } | { tabela: 'modelo_exercicios'; modelo_id: string }, t: TemplateTreino) => {
+    const itens = itensMusculacaoDe(t.modalidade_detalhes)
+    if (itens.length === 0) return
+    const linhas = itens.map((it, i) => ({ ...destino, exercicio_id: it.exercicio_id, sets: it.sets, reps: it.reps, rest_seconds: it.rest_seconds, order_index: i }))
+    const { error } = await supabase.from(destino.tabela).insert(linhas)
+    if (error) throw error
+    const id = 'plano_id' in destino ? destino.plano_id : destino.modelo_id
+    qc.invalidateQueries({ queryKey: ['plano-exercicios', id] })
+    qc.invalidateQueries({ queryKey: ['planos'] })
+    qc.invalidateQueries({ queryKey: ['modelos'] })
+  }
 }
