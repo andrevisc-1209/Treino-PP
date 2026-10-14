@@ -10,7 +10,8 @@ import { cicloAtual, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { mapearErroSupabase } from '@/lib/erros'
-import { CicloJaFechadoError, useAlunoCobranca, useFaturaDoCiclo, useFecharCiclo, useParticipacoesAbertas } from './api'
+import { CicloJaFechadoError, paraItemRecibo, useAlunoCobranca, useFaturaDoCiclo, useFecharCiclo, useParticipacoesAbertas } from './api'
+import type { ItemRecibo } from './recibo'
 import { BotaoRelatorio } from './BotaoRelatorio'
 import { rotuloAulaCiclo, rotuloModalidade, type DadosRelatorio } from './relatorio'
 
@@ -75,6 +76,10 @@ export function FecharCicloPage() {
 
   const cicloNaoTerminou = ciclo ? hoje < ciclo.fim : false
 
+  const itensDoRelatorio = (cobranca?.modelo === 'mensal' ? itensDoCiclo : itensIncluidos)
+    .map((i) => paraItemRecibo({ id: i.id, status: i.status, valor: Number((valores[i.id] ?? '0').replace(',', '.')) || 0, aula: i.aula, sessao: i.sessao }))
+    .filter((i): i is ItemRecibo => !!i)
+
   const dadosRelatorio: DadosRelatorio | null =
     cobranca && ciclo && aluno && (cobranca.modelo === 'mensal' || itensIncluidos.length > 0)
       ? {
@@ -83,13 +88,7 @@ export function FecharCicloPage() {
           periodoInicio: ciclo.inicio,
           periodoFim: ciclo.fim,
           modelo: cobranca.modelo,
-          linhas: (cobranca.modelo === 'mensal' ? itensDoCiclo : itensIncluidos).map((i) => ({
-            startsAt: i.aula?.starts_at ?? '',
-            durationMin: i.aula?.duration_min ?? 60,
-            modalidade: i.sessao?.plano?.modalidade ?? null,
-            local: i.aula?.local ?? null,
-            valor: Number((valores[i.id] ?? '0').replace(',', '.')) || 0,
-          })),
+          itens: itensDoRelatorio,
           ajuste,
           ajusteDescricao: ajusteDescricao.trim() || null,
           total,
