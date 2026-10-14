@@ -5,7 +5,7 @@
 export const EXPIRA_DIAS = 7
 export const INTERVALO_REENVIO_SEG = 60
 // Mantenha igual a TERMO_VERSAO em src/features/alunos/termo.ts.
-export const TERMO_VERSAO = '1.1'
+export const TERMO_VERSAO = '1.3'
 
 export const MOTIVOS_REENVIO = [
   'Aluno decidiu liberar acesso',

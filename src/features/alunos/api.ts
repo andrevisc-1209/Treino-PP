@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { payloadAltura } from './medidas'
 import { TERMO_VERSAO } from './termo'
 
 export type Aluno = {
@@ -282,7 +283,8 @@ export function useSalvarAluno() {
         name: input.name,
         birth_date: input.birth_date || null,
         sex: input.sex || null,
-        height_cm: input.height_cm ?? null,
+        // Medidas corporais são dado sensível: sem consentimento do aluno nada é gravado nem apagado (a chave nem entra no payload).
+        ...payloadAltura(input.lgpd_consent, input.height_cm),
         phone: input.phone || null,
         email: input.email || null,
         objetivos: input.objetivos,
@@ -315,7 +317,7 @@ export function useSalvarAluno() {
         alunoId = data.id as string
       }
 
-      if (input.weight_kg) {
+      if (input.weight_kg && input.lgpd_consent) {
         let deveRegistrar = !input.id
         if (input.id) {
           const { data: ultimo } = await supabase
@@ -360,6 +362,8 @@ export function useRegistrarPeso(alunoId: string | undefined) {
   return useMutation({
     mutationFn: async (input: NovaAvaliacaoInput) => {
       if (!alunoId) throw new Error('Aluno inválido')
+      const { data: ativo } = await supabase.from('consentimentos').select('id').eq('aluno_id', alunoId).is('revoked_at', null).limit(1).maybeSingle()
+      if (!ativo) throw new Error('O aluno ainda não autorizou o registro de medidas corporais.')
       const { error } = await supabase.from('pesos').insert({ aluno_id: alunoId, ...input })
       if (error) throw error
     },

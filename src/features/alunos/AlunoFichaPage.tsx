@@ -219,7 +219,7 @@ export function AlunoFichaPage() {
     if (!consentimento) return
     const ok = await confirmarAcao({
       titulo: 'Revogar consentimento LGPD',
-      mensagem: 'Os dados de lesão e medicamentos serão apagados e os campos de saúde ficarão travados até um novo consentimento.',
+      mensagem: 'Os dados de lesão e medicamentos serão apagados e os campos de saúde (inclusive novas medidas corporais) ficarão travados até um novo consentimento. As medidas já registradas são mantidas.',
       textoConfirmar: 'Revogar',
       destrutivo: true,
     })
@@ -358,13 +358,21 @@ export function AlunoFichaPage() {
               <h2 className="flex items-center gap-2 font-semibold">
                 <Scale size={18} /> Avaliações
               </h2>
-              {!registrandoPeso && (
+              {!registrandoPeso && consentimento && (
                 <Button variant="ghost" onClick={() => setRegistrandoPeso(true)}>
                   Nova avaliação
                 </Button>
               )}
             </div>
-            {registrandoPeso && <NovaAvaliacaoForm alunoId={aluno.id} alturaCm={aluno.height_cm} onDone={() => setRegistrandoPeso(false)} />}
+            {!consentimento && (
+              <div className="space-y-1 rounded-xl bg-amber-50 p-3 text-sm text-amber-900" role="note">
+                <p>Medidas corporais são dado de saúde: só podem ser registradas depois que o aluno autoriza.</p>
+                <Link to={`/alunos/${aluno.id}/editar?etapa=3`} className="inline-flex min-h-11 items-center font-medium underline">
+                  Pedir autorização ao aluno
+                </Link>
+              </div>
+            )}
+            {registrandoPeso && consentimento && <NovaAvaliacaoForm alunoId={aluno.id} alturaCm={aluno.height_cm} onDone={() => setRegistrandoPeso(false)} />}
             {pesos && pesos.length > 0 ? (
               <ul className="divide-y divide-slate-100">
                 {pesos.map((p) => (
