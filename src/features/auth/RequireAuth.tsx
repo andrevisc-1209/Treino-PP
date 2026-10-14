@@ -4,7 +4,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { AssinaturaGuard } from '@/components/AssinaturaGuard'
 import { TrialBanner } from '@/components/TrialBanner'
 import { useIsAdmin } from '@/features/admin/useIsAdmin'
-import { useNotificacoesRealtime } from '@/features/notificacoes/api'
+import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
 import { useAuth } from './AuthProvider'
 
 // Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
@@ -24,6 +24,7 @@ function IrParaLandingOuLogin() {
 /** Assina as notificações do personal (Realtime) enquanto o app autenticado está aberto. */
 function NotificacoesRealtime({ professionalId }: { professionalId: string }) {
   useNotificacoesRealtime(professionalId)
+  useGerarNotificacoesCiclo(professionalId)
   return null
 }
 

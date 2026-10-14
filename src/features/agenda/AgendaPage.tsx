@@ -14,6 +14,8 @@ import {
   inicioDaSemanaSP,
   limitesDaSemanaSP,
   nomeDiaCurto,
+  rotuloDiaAgenda,
+  rotuloSemanaAgenda,
   somarDias,
 } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
@@ -127,6 +129,9 @@ export function AgendaPage() {
   const inicioSemana = inicioDaSemanaSP(dataAtual)
 
   const irParaHoje = () => setDataAtual(hojeSP())
+  const hoje = hojeSP()
+  const ehHoje = modo === 'dia' ? dataAtual === hoje : inicioSemana === inicioDaSemanaSP(hoje)
+  const rotulo = modo === 'dia' ? rotuloDiaAgenda(dataAtual, hoje) : rotuloSemanaAgenda(inicioSemana, hoje)
   const navegar = (direcao: 1 | -1) => setDataAtual((d) => somarDias(d, direcao * (modo === 'dia' ? 1 : 7)))
 
   return (
@@ -156,8 +161,12 @@ export function AgendaPage() {
           <button onClick={() => navegar(-1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Anterior">
             <ChevronLeft size={18} />
           </button>
-          <button onClick={irParaHoje} className="min-h-9 rounded-xl px-3 text-sm font-medium text-brand-hover active:bg-slate-100">
-            Hoje
+          <button
+            onClick={irParaHoje}
+            aria-label={ehHoje ? 'Hoje' : `${rotulo} — voltar para hoje`}
+            className="min-h-9 min-w-24 whitespace-nowrap rounded-xl px-2 text-sm font-medium text-brand-hover active:bg-slate-100"
+          >
+            {rotulo}
           </button>
           <button onClick={() => navegar(1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Próximo">
             <ChevronRight size={18} />

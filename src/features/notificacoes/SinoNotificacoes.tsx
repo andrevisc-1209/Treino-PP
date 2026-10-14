@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, MessageSquareQuote } from 'lucide-react'
+import { Bell, MessageSquareQuote, Wallet } from 'lucide-react'
 import { BottomSheet } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { tempoRelativo } from '@/features/execucoes/metricas'
 import { MODALIDADES_CONFIG } from '@/types/modalidades'
+import { linkEncerrarMes, textoCicloEncerrado } from './ciclo'
 import { useMarcarLida, useMarcarTodasLidas, useNaoLidas, useNotaDaExecucao, useNotificacoes, type Notificacao } from './api'
 
 function Nota({ execucaoId }: { execucaoId: string }) {
@@ -25,7 +26,7 @@ export function SinoNotificacoes() {
   const abrir = (n: Notificacao) => {
     if (!n.lida) marcar.mutate(n.id)
     setAberto(false)
-    navigate(`/alunos/${n.aluno_id}?tab=Performance`)
+    navigate(n.tipo === 'ciclo_encerrado' ? linkEncerrarMes(n.aluno_id, n.payload) : `/alunos/${n.aluno_id}?tab=Performance`)
   }
 
   return (
@@ -59,6 +60,22 @@ export function SinoNotificacoes() {
           {lista?.length === 0 && <p className="py-4 text-center text-sm text-slate-500">Nenhuma notificação por enquanto.</p>}
           <ul className="space-y-2">
             {lista?.map((n) => {
+              if (n.tipo === 'ciclo_encerrado') {
+                return (
+                  <li key={n.id} className={cn('rounded-2xl border p-3', n.lida ? 'border-slate-200 bg-white' : 'border-brand bg-brand-soft')}>
+                    <p className="text-sm">
+                      <Wallet size={14} className="mr-1 inline align-[-2px]" aria-hidden /> <strong>Ciclo encerrado — {n.aluno?.name ?? 'Aluno'}</strong>
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">{textoCicloEncerrado(n.payload)}</p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-xs text-slate-500">{tempoRelativo(n.criada_em)}</span>
+                      <button type="button" onClick={() => abrir(n)} className="min-h-11 rounded-xl bg-brand px-4 text-sm font-medium text-white active:bg-brand-hover">
+                        Encerrar mês
+                      </button>
+                    </div>
+                  </li>
+                )
+              }
               const m = n.payload.modalidade
               const emoji = m && MODALIDADES_CONFIG[m] ? MODALIDADES_CONFIG[m].emoji : '💪'
               return (
