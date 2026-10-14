@@ -14,6 +14,10 @@ export type Aluno = {
   active: boolean
   objetivos: string[]
   objetivo_notes: string | null
+  /** objetivo esportivo: triathlon | corrida | natacao | ciclismo */
+  modalidade_foco: string | null
+  prova_alvo: string | null
+  data_prova: string | null
   injury: boolean
   injury_regions: string[]
   injury_notes: string | null
@@ -246,6 +250,9 @@ export type SalvarAlunoInput = {
   weight_kg?: number
   objetivos: string[]
   objetivo_notes?: string
+  modalidade_foco?: string
+  prova_alvo?: string
+  data_prova?: string
   injury: boolean
   injury_regions: string[]
   injury_notes?: string
@@ -278,6 +285,10 @@ export function useSalvarAluno() {
         email: input.email || null,
         objetivos: input.objetivos,
         objetivo_notes: input.objetivos.includes('Outros') ? input.objetivo_notes || null : null,
+        modalidade_foco: input.modalidade_foco || null,
+        // prova alvo só existe para triathlon e corrida
+        prova_alvo: input.modalidade_foco === 'triathlon' || input.modalidade_foco === 'corrida' ? input.prova_alvo || null : null,
+        data_prova: input.data_prova || null,
         injury: input.injury,
         injury_regions: input.injury ? input.injury_regions : [],
         injury_notes: input.injury ? input.injury_notes || null : null,

@@ -13,6 +13,8 @@ import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
 import { enviarConsentimentoSaude, useAluno, useAlunos, useConsentimentoAtivo, useConsentimentoSaude, usePesos, useSalvarAluno, type EnvioConsentimento } from './api'
 import { ConsentimentoSaudeBloco } from './ConsentimentoSaudeBloco'
+import { ObjetivoEsportivo } from './ObjetivoEsportivo'
+import { provasDoFoco } from './provaAlvo'
 import { linkWhatsappConsentimento, montarMensagemConsentimento } from '@/lib/consentimentoMensagem'
 import { LocaisTreinoBlock } from './LocaisTreinoBlock'
 import { TERMO_AVISO, TERMO_TEXTO } from './termo'
@@ -42,6 +44,9 @@ const schema = z
 
     objetivos: z.array(z.string()),
     objetivo_notes: z.string().optional(),
+    modalidade_foco: z.string().optional(),
+    prova_alvo: z.string().optional(),
+    data_prova: z.string().optional(),
 
     lgpd_consent: z.boolean(),
 
@@ -105,7 +110,7 @@ const schema = z
 type FormInput = z.input<typeof schema>
 type FormOutput = z.output<typeof schema>
 
-const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email', 'objetivos', 'objetivo_notes'] as const
+const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'data_prova'] as const
 const STEP2_FIELDS = [
   'lgpd_consent',
   'injury',
@@ -215,6 +220,9 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         email: aluno.email ?? '',
         objetivos: aluno.objetivos,
         objetivo_notes: aluno.objetivo_notes ?? '',
+        modalidade_foco: aluno.modalidade_foco ?? '',
+        prova_alvo: aluno.prova_alvo ?? '',
+        data_prova: aluno.data_prova ?? '',
         injury: aluno.injury,
         injury_regions: aluno.injury_regions,
         injury_notes: aluno.injury_notes ?? '',
@@ -481,6 +489,18 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 <Input {...register('objetivo_notes')} placeholder="Ex.: voltar a jogar futevôlei" />
               </Field>
             )}
+
+            <ObjetivoEsportivo
+              foco={watch('modalidade_foco') ?? ''}
+              prova={watch('prova_alvo') ?? ''}
+              data={watch('data_prova') ?? ''}
+              onFoco={(v) => {
+                setValue('modalidade_foco', v, { shouldDirty: true })
+                if (!provasDoFoco(v).some((p) => p.valor === (watch('prova_alvo') ?? ''))) setValue('prova_alvo', '', { shouldDirty: true })
+              }}
+              onProva={(v) => setValue('prova_alvo', v, { shouldDirty: true })}
+              onData={(v) => setValue('data_prova', v, { shouldDirty: true })}
+            />
 
             <Field label="Local de treino">
               {mode === 'edit' ? (
