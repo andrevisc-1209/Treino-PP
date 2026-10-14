@@ -145,3 +145,9 @@ Migration `20261026000000_triathlon_perfil.sql` (`treino.alunos`: `modalidade_fo
 
 - **Nome da prova** (`20261027000000_nome_prova.sql`, `nome_prova`, até 60 caracteres): campo opcional que aparece quando há prova alvo; o selo da
   ficha usa o nome ("🏁 Ironman Floripa 2027 · 47 dias") ou, sem nome, o tipo da prova; também aparece na linha "Objetivo esportivo".
+
+# Clima na Home
+
+`ClimaCard` na Hoje (após o checklist de primeiros passos): temperatura, condição, mín/máx, chance de chuva, vento, UV e uma dica para treino ao
+ar livre (chuva > calor > UV > vento). Edge Function `clima` (JWT do personal): lê `professionals.cidade/uf`, geocodifica e busca a previsão no
+Open-Meteo (sem chave). Só a **cidade** do personal sai para o serviço externo — nenhum dado de aluno. Sem cidade cadastrada ou com falha, o card some.

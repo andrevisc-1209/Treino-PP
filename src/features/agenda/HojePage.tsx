@@ -12,6 +12,7 @@ import iconMark from '@/assets/brand/icon-mark.png'
 import { OnboardingChecklist } from '@/features/onboarding/OnboardingChecklist'
 import { PixCard } from './PixCard'
 import { ResumoSemAulas } from './ResumoSemAulas'
+import { ClimaCard } from '@/components/ClimaCard'
 import { AtividadeRecente } from '@/features/execucoes/AtividadeRecente'
 
 export function HojePage() {
@@ -75,6 +76,7 @@ export function HojePage() {
       </header>
 
       <OnboardingChecklist />
+      <ClimaCard />
       <PixCard />
       <AtividadeRecente />
 
