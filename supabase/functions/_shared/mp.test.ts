@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido } from './mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido, tokenMpValido } from './mp.ts'
 
 async function assinar(secret: string, manifest: string) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -68,18 +68,24 @@ describe('atualizacaoDoPreapproval', () => {
   })
 })
 
-describe('decidirWebhook', () => {
-  it('assinatura válida processa em qualquer ambiente', () => {
-    expect(decidirWebhook({ producao: true, temSegredo: true, assinaturaOk: true })).toBe('processar')
-    expect(decidirWebhook({ producao: false, temSegredo: true, assinaturaOk: true })).toBe('processar')
+describe('decidirWebhook (produção)', () => {
+  it('assinatura válida processa', () => {
+    expect(decidirWebhook({ temSegredo: true, assinaturaOk: true })).toBe('processar')
   })
-  it('produção: assinatura inválida/ausente rejeita; sem segredo também (falha fechada)', () => {
-    expect(decidirWebhook({ producao: true, temSegredo: true, assinaturaOk: false })).toBe('rejeitar_assinatura')
-    expect(decidirWebhook({ producao: true, temSegredo: false, assinaturaOk: false })).toBe('rejeitar_sem_segredo')
+  it('assinatura inválida/ausente rejeita; sem segredo também (falha fechada)', () => {
+    expect(decidirWebhook({ temSegredo: true, assinaturaOk: false })).toBe('rejeitar_assinatura')
+    expect(decidirWebhook({ temSegredo: false, assinaturaOk: false })).toBe('rejeitar_sem_segredo')
+    expect(decidirWebhook({ temSegredo: false, assinaturaOk: true })).toBe('rejeitar_sem_segredo')
   })
-  it('sandbox: assinatura ausente/inválida/sem segredo processa com aviso', () => {
-    expect(decidirWebhook({ producao: false, temSegredo: true, assinaturaOk: false })).toBe('processar_com_aviso')
-    expect(decidirWebhook({ producao: false, temSegredo: false, assinaturaOk: false })).toBe('processar_com_aviso')
+})
+
+describe('tokenMpValido', () => {
+  it('aceita token de produção; recusa vazio e token de teste', () => {
+    expect(tokenMpValido('APP_USR-123-abc')).toBe(true)
+    expect(tokenMpValido('')).toBe(false)
+    expect(tokenMpValido('   ')).toBe(false)
+    expect(tokenMpValido(undefined)).toBe(false)
+    expect(tokenMpValido('TEST-123-abc')).toBe(false)
   })
 })
 

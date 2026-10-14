@@ -10,11 +10,10 @@
 // e metadata.user_id = auth.uid(). Quem ainda tem assinatura RECORRENTE ativa
 // (legado, Preapproval) é barrado pra não cobrar em duplicidade.
 //
-// Segredos: MP_ACCESS_TOKEN_TEST (sandbox) ou MP_ACCESS_TOKEN (produção);
-// SITE_URL opcional (padrão: domínio de produção).
+// Segredos: MP_ACCESS_TOKEN (produção; token "TEST-" é recusado); SITE_URL opcional (padrão: domínio de produção).
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { ehPlano, PLANOS } from '../_shared/mp.ts'
+import { ehPlano, PLANOS, tokenMpValido } from '../_shared/mp.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
@@ -38,9 +37,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) })
   if (req.method !== 'POST') return json(req, { error: 'Método não permitido.' }, 405)
 
-  const tokenProducao = Deno.env.get('MP_ACCESS_TOKEN')
-  const token = tokenProducao ?? Deno.env.get('MP_ACCESS_TOKEN_TEST')
-  if (!token) return json(req, { error: 'Pagamento indisponível no momento.' }, 503)
+  const token = Deno.env.get('MP_ACCESS_TOKEN')
+  if (!tokenMpValido(token)) {
+    console.error('mp-subscribe: MP_ACCESS_TOKEN ausente ou é um token de teste (TEST-)')
+    return json(req, { error: 'Pagamento indisponível no momento.' }, 503)
+  }
 
   const auth = req.headers.get('Authorization')
   if (!auth) return json(req, { error: 'Não autenticado.' }, 401)
@@ -48,10 +49,7 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await cliente.auth.getUser()
   if (userError || !userData.user?.email) return json(req, { error: 'Não autenticado.' }, 401)
   const user = userData.user
-  // Sandbox: o MP só aceita comprador que também seja usuário de TESTE
-  // ("Both payer and collector must be real or test users"). MP_TEST_PAYER_EMAIL
-  // só vale sem MP_ACCESS_TOKEN (ou seja, nunca em produção).
-  const payerEmail = (!tokenProducao && Deno.env.get('MP_TEST_PAYER_EMAIL')) || user.email
+  const payerEmail = user.email
 
   let body: { plano?: unknown }
   try {
@@ -85,29 +83,20 @@ Deno.serve(async (req) => {
     statement_descriptor: 'TREINO PP',
   }
   // Diagnóstico: o payload vai pro log SEM o e-mail do comprador (só o domínio) e sem token.
-  // token_tipo só diz o formato do token (TEST- / APP_USR-); nenhum trecho do token vai pro log.
-  console.log(
-    'mp-subscribe: criando preferência',
-    JSON.stringify({
-      ambiente: tokenProducao ? 'MP_ACCESS_TOKEN (produção)' : 'MP_ACCESS_TOKEN_TEST (sandbox)',
-      token_tipo: token.startsWith('TEST-') ? 'TEST-' : token.startsWith('APP_USR-') ? 'APP_USR-' : 'outro',
-      payer_dominio: payerEmail.split('@')[1] ?? null,
-      payer_email_de_teste: !tokenProducao && !!Deno.env.get('MP_TEST_PAYER_EMAIL'),
-      preferencia: { ...preferencia, payer: { email: '***@' + (payerEmail.split('@')[1] ?? '') } },
-    }),
-  )
+  console.log('mp-subscribe: criando preferência', JSON.stringify({ payer_dominio: payerEmail.split('@')[1] ?? null, preferencia: { ...preferencia, payer: { email: '***@' + (payerEmail.split('@')[1] ?? '') } } }))
   const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'X-Idempotency-Key': crypto.randomUUID() },
     body: JSON.stringify(preferencia),
   })
   const mp = await resp.json().catch(() => ({}))
-  // Em sandbox (token de teste) o checkout correto é o sandbox_init_point.
-  const link: unknown = tokenProducao ? mp.init_point : (mp.sandbox_init_point ?? mp.init_point)
-  console.log(
-    'mp-subscribe: resposta do MP',
-    JSON.stringify({ status: resp.status, preference_id: mp.id ?? null, collector_id: mp.collector_id ?? null, live_mode: mp.live_mode ?? null, usou: tokenProducao ? 'init_point' : mp.sandbox_init_point ? 'sandbox_init_point' : 'init_point', host: typeof link === 'string' ? new URL(link).host : null }),
-  )
+  const link: unknown = mp.init_point
+  console.log('mp-subscribe: resposta do MP', JSON.stringify({ status: resp.status, preference_id: mp.id ?? null, live_mode: mp.live_mode ?? null, host: typeof link === 'string' ? new URL(link).host : null }))
+  // Produção: a preferência tem que nascer live_mode=true; se vier de teste, não manda o personal pagar.
+  if (resp.ok && mp.live_mode === false) {
+    console.error('mp-subscribe: preferência criada em modo de teste (live_mode=false) — verifique o MP_ACCESS_TOKEN')
+    return json(req, { error: 'Pagamento indisponível no momento.' }, 503)
+  }
   if (!resp.ok || typeof link !== 'string') {
     console.error('mp-subscribe: falha ao criar preferência', resp.status, mp?.message, JSON.stringify(mp?.cause ?? null))
     return json(req, { error: 'Não foi possível abrir o pagamento. Tente novamente.' }, 502)
