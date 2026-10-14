@@ -10,21 +10,25 @@ const SELECT = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3
 export function ObjetivoEsportivo({
   foco,
   prova,
+  nome,
   data,
   onFoco,
   onProva,
+  onNome,
   onData,
 }: {
   foco: string
   prova: string
+  nome: string
   data: string
   onFoco: (v: string) => void
   onProva: (v: string) => void
+  onNome: (v: string) => void
   onData: (v: string) => void
 }) {
   // aberto por padrão quando já há dados (eles chegam depois do primeiro render, na edição); o toque do usuário prevalece
   const [manual, setManual] = useState<boolean | null>(null)
-  const aberto = manual ?? !!(foco || prova || data)
+  const aberto = manual ?? !!(foco || prova || nome || data)
   const provas = provasDoFoco(foco)
   return (
     <section className="rounded-2xl border border-slate-200">
@@ -54,6 +58,11 @@ export function ObjetivoEsportivo({
                   </option>
                 ))}
               </select>
+            </Field>
+          )}
+          {prova && (
+            <Field label="Nome da prova (opcional)">
+              <Input value={nome} maxLength={60} onChange={(e) => onNome(e.target.value)} placeholder="Ex: Ironman Floripa, São Silvestre..." />
             </Field>
           )}
           <Field label="Data da prova">

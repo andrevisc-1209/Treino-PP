@@ -142,3 +142,6 @@ Migration `20261026000000_triathlon_perfil.sql` (`treino.alunos`: `modalidade_fo
 - **Volume semanal** (aba Performance): barras empilhadas (natação/ciclismo/corrida, em km) das últimas 8 semanas (seg–dom, SP; "Sem 41")
   e totais da semana atual. Conta o **realizado** (resultado registrado: natação `distancia_total_m` → km; corrida/ciclismo `distancia_km`;
   brick = bike + corrida em separado); ciclismo indoor sem distância soma minutos, mostrado à parte. Musculação não entra.
+
+- **Nome da prova** (`20261027000000_nome_prova.sql`, `nome_prova`, até 60 caracteres): campo opcional que aparece quando há prova alvo; o selo da
+  ficha usa o nome ("🏁 Ironman Floripa 2027 · 47 dias") ou, sem nome, o tipo da prova; também aparece na linha "Objetivo esportivo".

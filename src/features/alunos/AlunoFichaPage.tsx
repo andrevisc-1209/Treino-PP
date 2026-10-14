@@ -267,8 +267,8 @@ export function AlunoFichaPage() {
           <div className="mb-4 space-y-2">
             {demograficos.length > 0 && <p className="text-sm text-slate-500">{demograficos.join(' · ')}</p>}
 
-            {badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP()) && (
-              <p className="inline-block rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-hover">{badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP())}</p>
+            {badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP(), aluno.nome_prova) && (
+              <p className="inline-block rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-hover">{badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP(), aluno.nome_prova)}</p>
             )}
 
             {alertasSaude.length > 0 && (
@@ -330,7 +330,7 @@ export function AlunoFichaPage() {
               {(aluno.modalidade_foco || aluno.data_prova) && (
                 <>
                   <dt className="text-slate-500">Objetivo esportivo</dt>
-                  <dd>{[rotuloFoco(aluno.modalidade_foco), rotuloProva(aluno.prova_alvo), aluno.data_prova ? formatarDataBR(aluno.data_prova) : null].filter(Boolean).join(' · ') || '—'}</dd>
+                  <dd>{[rotuloFoco(aluno.modalidade_foco), rotuloProva(aluno.prova_alvo), aluno.nome_prova?.trim() || null, aluno.data_prova ? formatarDataBR(aluno.data_prova) : null].filter(Boolean).join(' · ') || '—'}</dd>
                 </>
               )}
             </dl>
