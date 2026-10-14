@@ -17,7 +17,7 @@ import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
 import { BotaoRelatorioFatura } from './BotaoRelatorio'
-import type { DadosRelatorio } from './relatorio'
+import { dadosRelatorioDeFatura, type DadosRelatorio } from './relatorio'
 import {
   useCancelarFatura,
   useDesfazerPagamentoFatura,
@@ -129,19 +129,7 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =
-    itensFatura && itensFatura.length > 0
-      ? {
-          alunoNome: aluno?.name ?? fatura.aluno?.name ?? 'Aluno',
-          personalNome: perfil?.name?.trim() || 'Personal',
-          periodoInicio: fatura.periodo_inicio,
-          periodoFim: fatura.periodo_fim,
-          modelo: fatura.modelo,
-          linhas: itensFatura.map((i) => ({ startsAt: i.starts_at, durationMin: i.duration_min, modalidade: i.modalidade ?? null, local: i.local, valor: i.valor })),
-          ajuste: fatura.ajuste,
-          ajusteDescricao: fatura.ajuste_descricao,
-          total: fatura.total,
-        }
-      : null
+    itensFatura && itensFatura.length > 0 ? dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal') : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)

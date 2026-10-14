@@ -88,6 +88,18 @@ export function useRemoverAlunoCobranca() {
 // Participações abertas (para fechar o ciclo)
 // ============================================================
 
+/** Sessão ligada à aula, com o que o relatório do ciclo usa: nota, duração, modalidade e séries concluídas (nenhum dado de prontidão). */
+const SELECT_SESSAO_DETALHE = 'sessao:sessoes(session_date, post_pse, prof_rating, duration_minutes, plano:planos(modalidade), sessao_exercicios(sessao_series(completed)))'
+
+type SessaoDetalhe = {
+  session_date: string
+  post_pse: number | null
+  prof_rating: number | null
+  duration_minutes?: number | null
+  plano?: { modalidade: string | null } | null
+  sessao_exercicios?: { sessao_series: { completed: boolean }[] | null }[] | null
+}
+
 export type ParticipacaoAberta = {
   id: string
   aluno_id: string
@@ -97,7 +109,7 @@ export type ParticipacaoAberta = {
   fatura_id: string | null
   aula: { starts_at: string; duration_min: number; local: string | null } | null
   /** modalidade do treino da sessão ligada à aula (ausente em falta/cancelamento e em treinos apagados) */
-  sessao?: { plano: { modalidade: string | null } | null } | null
+  sessao?: SessaoDetalhe | null
 }
 
 export function useParticipacoesAbertas(alunoId: string | undefined) {
@@ -106,7 +118,7 @@ export function useParticipacoesAbertas(alunoId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), sessao:sessoes(plano:planos(modalidade))')
+        .select(`id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), ${SELECT_SESSAO_DETALHE}`)
         .eq('aluno_id', alunoId!)
         .is('fatura_id', null)
         .neq('status', 'previsto')
@@ -393,33 +405,41 @@ type LinhaRecibo = {
   status: ItemRecibo['status']
   valor: number | null
   aula: { starts_at: string; duration_min: number; local: string | null } | null
-  sessao: { session_date: string; post_pse: number | null; prof_rating: number | null; plano?: { modalidade: string | null } | null } | null
+  sessao?: SessaoDetalhe | null
 }
 
-/** Aulas de um ciclo fechado (as ligadas à fatura), com local, PSE e nota do personal. Sem dados de prontidão. */
+/** Linha de aula_participantes (com aula e sessão) → item do recibo/relatório; null se a aula não existe mais. */
+export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
+  if (!l.aula) return null
+  const series = (l.sessao?.sessao_exercicios ?? []).map((e) => (e.sessao_series ?? []).filter((x) => x.completed).length)
+  return {
+    id: l.id,
+    status: l.status,
+    valor: l.valor,
+    starts_at: l.aula.starts_at,
+    duration_min: l.aula.duration_min,
+    local: l.aula.local,
+    pse: l.sessao?.post_pse ?? null,
+    nota: l.sessao?.prof_rating ?? null,
+    data_sessao: l.sessao?.session_date ?? null,
+    modalidade: l.sessao?.plano?.modalidade ?? null,
+    duracao_sessao_min: l.sessao?.duration_minutes ?? null,
+    exercicios_feitos: series.filter((n) => n > 0).length,
+    series_feitas: series.reduce((a, n) => a + n, 0),
+  }
+}
+
+/** Aulas de um ciclo fechado (as ligadas à fatura), com local, PSE, nota do personal e totais do treino. Sem dados de prontidão. */
 export function useItensRecibo(faturaId: string | undefined) {
   return useQuery({
     queryKey: ['recibo', faturaId],
     queryFn: async (): Promise<ItemRecibo[]> => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select('id, status, valor, aula:aulas(starts_at, duration_min, local), sessao:sessoes(session_date, post_pse, prof_rating, plano:planos(modalidade))')
+        .select(`id, status, valor, aula:aulas(starts_at, duration_min, local), ${SELECT_SESSAO_DETALHE}`)
         .eq('fatura_id', faturaId!)
       if (error) throw error
-      return (data as unknown as LinhaRecibo[])
-        .filter((l) => l.aula)
-        .map((l) => ({
-          id: l.id,
-          status: l.status,
-          valor: l.valor,
-          starts_at: l.aula!.starts_at,
-          duration_min: l.aula!.duration_min,
-          local: l.aula!.local,
-          pse: l.sessao?.post_pse ?? null,
-          nota: l.sessao?.prof_rating ?? null,
-          data_sessao: l.sessao?.session_date ?? null,
-          modalidade: l.sessao?.plano?.modalidade ?? null,
-        }))
+      return (data as unknown as LinhaRecibo[]).map(paraItemRecibo).filter((i): i is ItemRecibo => !!i)
     },
     enabled: !!faturaId,
   })

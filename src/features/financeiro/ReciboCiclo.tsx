@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Printer, Share2, X } from 'lucide-react'
+import { Check, FileDown, Share2, X } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { APP_NAME } from '@/config/app'
 import iconMark from '@/assets/brand/icon-mark.png'
@@ -10,6 +10,7 @@ import { usePerfilProfissional } from '@/features/auth/api'
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
 import { useItensRecibo, type Fatura } from './api'
+import { baixarRelatorioCompleto, dadosRelatorioDeFatura } from './relatorio'
 import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoRecibo, textoCompartilharRecibo } from './recibo'
 
 const NAVY = '#0f2537'
@@ -44,8 +45,8 @@ function BlocoGrafico({ titulo, children }: { titulo: string; children: React.Re
 }
 
 /**
- * Recibo visual do ciclo fechado. Tela cheia (portal em <body>); "Baixar PDF" usa a impressão do
- * navegador (CSS @media print em index.css) — nenhuma biblioteca externa nem script de CDN.
+ * Resumo visual do ciclo fechado. Tela cheia (portal em <body>); "Baixar relatório completo" gera o mesmo
+ * PDF unificado (recibo + relatório) da tela de fatura e de fechar ciclo — ver relatorio.ts.
  */
 export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; alunoNome: string; onFechar: () => void }) {
   const { session } = useAuth()
@@ -78,6 +79,18 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
   const personalNome = perfil?.name?.trim() || 'Personal'
   const periodo = `${formatarDataCurta(fatura.periodo_inicio)} a ${formatarDataCurta(fatura.periodo_fim)}`
 
+  const [baixando, setBaixando] = useState(false)
+  const baixarCompleto = async () => {
+    setBaixando(true)
+    try {
+      await baixarRelatorioCompleto(dadosRelatorioDeFatura(fatura, itens, alunoNome, personalNome))
+    } catch {
+      mostrarErroGlobal('Não foi possível gerar o relatório. Tente de novo.')
+    } finally {
+      setBaixando(false)
+    }
+  }
+
   const compartilhar = async () => {
     const texto = textoCompartilharRecibo({ alunoNome, personalNome, periodo, resumo, total: fatura.total })
     try {
@@ -89,7 +102,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
       }
     } catch (e) {
       if ((e as Error).name === 'AbortError') return // a pessoa fechou a folha de compartilhamento
-      mostrarErroGlobal('Não foi possível compartilhar. Tente baixar o PDF.')
+      mostrarErroGlobal('Não foi possível compartilhar. Tente baixar o relatório completo.')
     }
   }
 
@@ -106,8 +119,14 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
         <button type="button" onClick={compartilhar} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium active:bg-slate-100" style={{ color: VERDE }}>
           <Share2 size={16} /> Compartilhar
         </button>
-        <button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-white" style={{ background: VERDE }}>
-          <Printer size={16} /> Baixar PDF
+        <button
+          type="button"
+          onClick={baixarCompleto}
+          disabled={baixando || isLoading || !!error}
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-white disabled:opacity-60"
+          style={{ background: VERDE }}
+        >
+          <FileDown size={16} /> {baixando ? 'Gerando…' : 'Baixar relatório completo'}
         </button>
       </div>
 

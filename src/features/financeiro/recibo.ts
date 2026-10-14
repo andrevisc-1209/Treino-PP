@@ -15,6 +15,26 @@ export type ItemRecibo = {
   nota: number | null
   /** Data (YYYY-MM-DD) da sessão de treino ligada à aula, se houve. */
   data_sessao: string | null
+  /** Duração gravada da sessão (min), se houve sessão e foi informada. */
+  duracao_sessao_min?: number | null
+  /** Exercícios com ao menos uma série concluída na sessão. */
+  exercicios_feitos?: number
+  /** Séries concluídas na sessão. */
+  series_feitas?: number
+}
+
+export type MetricasTreino = { exercicios: number; series: number; minutos: number }
+
+/**
+ * Totais dos treinos (sessões) ligados às aulas do ciclo; null quando não há nenhum dado de treino
+ * (aulas sem sessão, ou sessões sem série/duração gravada) — nada é inventado.
+ */
+export function metricasDeTreino(itens: ItemRecibo[]): MetricasTreino | null {
+  const m = itens.reduce(
+    (a, i) => ({ exercicios: a.exercicios + (i.exercicios_feitos ?? 0), series: a.series + (i.series_feitas ?? 0), minutos: a.minutos + (i.duracao_sessao_min ?? 0) }),
+    { exercicios: 0, series: 0, minutos: 0 },
+  )
+  return m.exercicios > 0 || m.series > 0 || m.minutos > 0 ? m : null
 }
 
 export function ordenarItens(itens: ItemRecibo[]): ItemRecibo[] {
