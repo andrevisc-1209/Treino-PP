@@ -2,12 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
-import { formatarHoraInicioFim, hojeSP, somarDias } from '@/lib/datas'
+import { hojeSP, somarDias } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
 import { Button, Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { cicloAtual, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
-import { useAlunoCobranca, useFecharCiclo, useParticipacoesAbertas } from './api'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { usePerfilProfissional } from '@/features/auth/api'
+import { mapearErroSupabase } from '@/lib/erros'
+import { CicloJaFechadoError, useAlunoCobranca, useFaturaDoCiclo, useFecharCiclo, useParticipacoesAbertas } from './api'
+import { BotaoRelatorio } from './BotaoRelatorio'
+import { rotuloAulaCiclo, rotuloModalidade, type DadosRelatorio } from './relatorio'
 
 const ROTULO_STATUS: Record<string, string> = { presente: 'Presente', falta: 'Falta', cancelou: 'Cancelou' }
 
@@ -19,6 +24,8 @@ export function FecharCicloPage() {
   const { data: cobranca, isLoading: cobrancaLoading } = useAlunoCobranca(id)
   const { data: participacoes, isLoading: participacoesLoading } = useParticipacoesAbertas(id)
   const fechar = useFecharCiclo()
+  const { session } = useAuth()
+  const { data: perfil } = usePerfilProfissional(session?.user.id)
 
   const [incluidos, setIncluidos] = useState<Record<string, boolean>>({})
   const [valores, setValores] = useState<Record<string, string>>({})
@@ -31,6 +38,8 @@ export function FecharCicloPage() {
   const refParam = searchParams.get('ref')
   const referencia = refParam && /^\d{4}-\d{2}-\d{2}$/.test(refParam) && refParam <= hoje ? refParam : hoje
   const ciclo = useMemo(() => (cobranca ? cicloAtual(cobranca.dia_ciclo, referencia) : null), [cobranca, referencia])
+
+  const { data: faturaExistente } = useFaturaDoCiclo(id, ciclo?.inicio)
 
   const itensDoCiclo = useMemo(() => {
     if (!participacoes || !ciclo) return []
@@ -66,6 +75,27 @@ export function FecharCicloPage() {
 
   const cicloNaoTerminou = ciclo ? hoje < ciclo.fim : false
 
+  const dadosRelatorio: DadosRelatorio | null =
+    cobranca && ciclo && aluno && (cobranca.modelo === 'mensal' || itensIncluidos.length > 0)
+      ? {
+          alunoNome: aluno.name,
+          personalNome: perfil?.name?.trim() || 'Personal',
+          periodoInicio: ciclo.inicio,
+          periodoFim: ciclo.fim,
+          modelo: cobranca.modelo,
+          linhas: (cobranca.modelo === 'mensal' ? itensDoCiclo : itensIncluidos).map((i) => ({
+            startsAt: i.aula?.starts_at ?? '',
+            durationMin: i.aula?.duration_min ?? 60,
+            modalidade: i.sessao?.plano?.modalidade ?? null,
+            local: i.aula?.local ?? null,
+            valor: Number((valores[i.id] ?? '0').replace(',', '.')) || 0,
+          })),
+          ajuste,
+          ajusteDescricao: ajusteDescricao.trim() || null,
+          total,
+        }
+      : null
+
   const confirmar = () => {
     if (!cobranca || !ciclo) return
     setErro(null)
@@ -89,7 +119,7 @@ export function FecharCicloPage() {
       },
       {
         onSuccess: (faturaId) => navigate(`/financeiro/${faturaId}?recibo=1`, { replace: true }),
-        onError: (e) => setErro((e as Error).message),
+        onError: (e) => setErro(e instanceof CicloJaFechadoError ? e.message : mapearErroSupabase(e)),
       },
     )
   }
@@ -116,6 +146,15 @@ export function FecharCicloPage() {
             Ciclo {ciclo.inicio.slice(8, 10)}/{ciclo.inicio.slice(5, 7)} a {ciclo.fim.slice(8, 10)}/{ciclo.fim.slice(5, 7)}
           </p>
 
+          {faturaExistente && (
+            <div className="space-y-2 rounded-xl bg-slate-100 p-3 text-sm text-slate-800" role="status">
+              <p className="font-medium">Este ciclo já foi encerrado.</p>
+              <Link to={`/financeiro/${faturaExistente.id}`} className="inline-flex min-h-11 items-center font-medium text-brand-hover underline">
+                Ver fatura
+              </Link>
+            </div>
+          )}
+
           {cicloNaoTerminou && (
             <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
               <TriangleAlert size={18} className="mt-0.5 shrink-0" />
@@ -138,9 +177,11 @@ export function FecharCicloPage() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className={cn('text-sm font-medium', !incluidos[item.id] && 'text-slate-400 line-through')}>
-                        {item.aula ? formatarHoraInicioFim(item.aula.starts_at, item.aula.duration_min) : '—'}
+                        {item.aula ? rotuloAulaCiclo(item.aula.starts_at, item.aula.duration_min) : '—'}
                       </p>
-                      <p className="text-xs text-slate-500">{ROTULO_STATUS[item.status] ?? item.status}</p>
+                      <p className="text-xs text-slate-500">
+                        {[ROTULO_STATUS[item.status] ?? item.status, rotuloModalidade(item.sessao?.plano?.modalidade), item.aula?.local?.trim()].filter(Boolean).join(' · ')}
+                      </p>
                     </div>
                     <div className="w-24 shrink-0">
                       <Input
@@ -196,9 +237,12 @@ export function FecharCicloPage() {
           className="fixed inset-x-0 bottom-14 z-30 border-t border-slate-200 bg-white p-3"
         >
           <div className="mx-auto max-w-2xl">
-            <Button onClick={confirmar} className="w-full" disabled={fechar.isPending}>
-              Fechar ciclo
-            </Button>
+            <div className="flex gap-2">
+              <BotaoRelatorio dados={dadosRelatorio} className="flex-1" />
+              <Button onClick={confirmar} className="flex-1" disabled={fechar.isPending || !!faturaExistente}>
+                {fechar.isPending ? 'Fechando…' : 'Fechar ciclo'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

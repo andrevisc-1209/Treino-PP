@@ -9,6 +9,8 @@ export type ItemRecibo = {
   starts_at: string
   duration_min: number
   local: string | null
+  /** modalidade do treino da sessão da aula (null se não houve sessão) */
+  modalidade?: string | null
   pse: number | null
   nota: number | null
   /** Data (YYYY-MM-DD) da sessão de treino ligada à aula, se houve. */

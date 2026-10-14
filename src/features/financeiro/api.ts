@@ -96,6 +96,8 @@ export type ParticipacaoAberta = {
   valor: number | null
   fatura_id: string | null
   aula: { starts_at: string; duration_min: number; local: string | null } | null
+  /** modalidade do treino da sessão ligada à aula (ausente em falta/cancelamento e em treinos apagados) */
+  sessao?: { plano: { modalidade: string | null } | null } | null
 }
 
 export function useParticipacoesAbertas(alunoId: string | undefined) {
@@ -104,7 +106,7 @@ export function useParticipacoesAbertas(alunoId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local)')
+        .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), sessao:sessoes(plano:planos(modalidade))')
         .eq('aluno_id', alunoId!)
         .is('fatura_id', null)
         .neq('status', 'previsto')
@@ -122,7 +124,7 @@ export function useParticipacoesCobraveisTodas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local)')
+        .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), sessao:sessoes(plano:planos(modalidade))')
         .is('fatura_id', null)
         .eq('cobrar', true)
       if (error) throw error
@@ -228,6 +230,35 @@ export type FecharCicloInput = {
   itemIds: string[]
 }
 
+/** O ciclo daquele aluno/período já tem fatura (não cancelada): só pode existir uma por período. */
+export class CicloJaFechadoError extends Error {
+  constructor() {
+    super('Este ciclo já foi encerrado.')
+    this.name = 'CicloJaFechadoError'
+  }
+}
+
+/** Fatura já existente (não cancelada) do aluno naquele período, se houver. */
+async function buscarFaturaDoCiclo(alunoId: string, periodoInicio: string): Promise<{ id: string; status: FaturaStatus } | null> {
+  const { data, error } = await supabase
+    .from('faturas')
+    .select('id, status')
+    .eq('aluno_id', alunoId)
+    .eq('periodo_inicio', periodoInicio)
+    .neq('status', 'cancelada')
+    .maybeSingle()
+  if (error) throw error
+  return data as { id: string; status: FaturaStatus } | null
+}
+
+export function useFaturaDoCiclo(alunoId: string | undefined, periodoInicio: string | undefined) {
+  return useQuery({
+    queryKey: ['fatura-do-ciclo', alunoId, periodoInicio],
+    queryFn: () => buscarFaturaDoCiclo(alunoId!, periodoInicio!),
+    enabled: !!alunoId && !!periodoInicio,
+  })
+}
+
 export function useFecharCiclo() {
   const qc = useQueryClient()
   return useMutation({
@@ -244,6 +275,9 @@ export function useFecharCiclo() {
         .eq('periodo_inicio', input.periodo_inicio)
         .eq('status', 'cancelada')
       if (errLimpeza) throw errLimpeza
+
+      // Só uma fatura por aluno + período (UNIQUE): se já existe, não tenta inserir.
+      if (await buscarFaturaDoCiclo(input.aluno_id, input.periodo_inicio)) throw new CicloJaFechadoError()
 
       const { data: fatura, error } = await supabase
         .from('faturas')
@@ -262,6 +296,8 @@ export function useFecharCiclo() {
         })
         .select('id')
         .single()
+      // Corrida entre dois cliques/abas: o UNIQUE barrou — mesma mensagem, sem texto técnico.
+      if (error?.code === '23505') throw new CicloJaFechadoError()
       if (error) throw error
 
       if (input.itemIds.length > 0) {
@@ -273,6 +309,7 @@ export function useFecharCiclo() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['faturas'] })
+      qc.invalidateQueries({ queryKey: ['fatura-do-ciclo', vars.aluno_id] })
       qc.invalidateQueries({ queryKey: ['faturas-aluno', vars.aluno_id] })
       qc.invalidateQueries({ queryKey: ['participacoes-abertas', vars.aluno_id] })
       qc.invalidateQueries({ queryKey: ['participacoes-cobraveis-todas'] })
@@ -356,7 +393,7 @@ type LinhaRecibo = {
   status: ItemRecibo['status']
   valor: number | null
   aula: { starts_at: string; duration_min: number; local: string | null } | null
-  sessao: { session_date: string; post_pse: number | null; prof_rating: number | null } | null
+  sessao: { session_date: string; post_pse: number | null; prof_rating: number | null; plano?: { modalidade: string | null } | null } | null
 }
 
 /** Aulas de um ciclo fechado (as ligadas à fatura), com local, PSE e nota do personal. Sem dados de prontidão. */
@@ -366,7 +403,7 @@ export function useItensRecibo(faturaId: string | undefined) {
     queryFn: async (): Promise<ItemRecibo[]> => {
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select('id, status, valor, aula:aulas(starts_at, duration_min, local), sessao:sessoes(session_date, post_pse, prof_rating)')
+        .select('id, status, valor, aula:aulas(starts_at, duration_min, local), sessao:sessoes(session_date, post_pse, prof_rating, plano:planos(modalidade))')
         .eq('fatura_id', faturaId!)
       if (error) throw error
       return (data as unknown as LinhaRecibo[])
@@ -381,6 +418,7 @@ export function useItensRecibo(faturaId: string | undefined) {
           pse: l.sessao?.post_pse ?? null,
           nota: l.sessao?.prof_rating ?? null,
           data_sessao: l.sessao?.session_date ?? null,
+          modalidade: l.sessao?.plano?.modalidade ?? null,
         }))
     },
     enabled: !!faturaId,
