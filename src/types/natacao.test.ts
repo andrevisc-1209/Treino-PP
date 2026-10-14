@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { EXERCICIOS_NATACAO, serveAoAmbiente } from '@/data/natacao-exercicios'
-import { TEMPLATES_NATACAO } from '@/data/natacao-templates'
+import { readFileSync } from 'node:fs'
+import { templateNatacaoDe, type TemplateNatacao } from '@/features/natacao/templates'
+import type { TemplateTreino } from '@/features/templates/api'
 import { gerarMensagemTreino } from '@/lib/mensagemTreino'
 import { estruturadosVazios } from './estruturado'
 import { blocosDe, itensChecklist, montarDetalhes, resumoModalidade, textoLegadoNatacao, validarBlocos } from './modalidades'
@@ -17,6 +19,12 @@ import {
   type DadosNatacao,
 } from './natacao'
 
+// os modelos de natação vivem na migration (treino.templates_treino): o teste os lê de lá
+const sqlTemplates = readFileSync('supabase/migrations/20261031000000_templates_natacao_banco.sql', 'utf8')
+const TEMPLATES_NATACAO: TemplateNatacao[] = [...sqlTemplates.matchAll(/\('(natacao-[\w-]+)', 'natacao', '((?:[^']|'')+)',\s*'((?:[^']|'')*)',\s*\$json\$([\s\S]*?)\$json\$::jsonb, (\d+)\)/g)].map((m) =>
+  templateNatacaoDe({ id: m[1], slug: m[1], modalidade: 'natacao', nome: m[2].replace(/''/g, "'"), descricao: m[3].replace(/''/g, "'"), modalidade_detalhes: JSON.parse(m[4]), ordem: Number(m[5]) } as TemplateTreino)!,
+)
+
 const bloco = (id: string, nome: string, parametros: DadosNatacao['blocos'][number]['parametros']) => ({ id, exercicio_id: id, nome, parametros })
 const piscina: DadosNatacao = {
   ambiente: 'piscina',
@@ -28,6 +36,14 @@ const piscina: DadosNatacao = {
 }
 
 describe('biblioteca e templates', () => {
+  it('a migration traz os 10 modelos de natação (os mesmos que existiam em TypeScript)', () => {
+    expect(TEMPLATES_NATACAO.map((t) => t.id)).toEqual([
+      'natacao-iniciante-adaptacao', 'natacao-iniciante-base', 'natacao-intermediario-forca', 'natacao-intermediario-resistencia', 'natacao-intermediario-tecnica-2000',
+      'natacao-intermediario-resistencia-3000', 'natacao-avancado-velocidade', 'natacao-avancado-longo', 'natacao-mar-iniciante', 'natacao-mar-avancado',
+    ])
+    expect(TEMPLATES_NATACAO.filter((t) => t.ambiente === 'mar')).toHaveLength(2)
+    expect(sqlTemplates).toMatch(/ON CONFLICT \(slug\) DO NOTHING/)
+  })
   it('ids únicos e parâmetro principal coerente', () => {
     const ids = EXERCICIOS_NATACAO.map((e) => e.id)
     expect(new Set(ids).size).toBe(ids.length)

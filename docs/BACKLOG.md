@@ -456,6 +456,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 30 | Grupo "Reabilitação / Prep Física" (23 exercícios, fases I e II) na biblioteca de musculação | ✅ em revisão — **rodar migration `20261028…` antes do merge** |
 | 31 | Modelos prontos ao criar o treino (corrida, ciclismo, brick; natação ganhou Técnica 2.000 m e Resistência 3.000 m) — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261029…` antes do merge**. Musculação: sem modelos do sistema ainda |
 | 32 | Modelos prontos de musculação (Full Body, HIIT + Abdômen, Treinos A/B/C) com exercícios da biblioteca — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261030…` antes do merge** |
+| 33 | Modelos de natação migrados de TypeScript para `treino.templates_treino` (mesmos 10 modelos, mesma UX) | ✅ em revisão — **rodar migration `20261031…` antes do merge** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
