@@ -42,10 +42,10 @@ export function diasParaProva(dataProva: string | null | undefined, hojeISO: str
   return d >= 0 ? d : null
 }
 
-/** "🏁 Ironman · 47 dias" / "🏁 Ironman · amanhã" / "🏁 Prova · hoje". null se a prova não está no futuro. */
-export function badgeProva(prova: string | null | undefined, dataProva: string | null | undefined, hojeISO: string): string | null {
+/** "🏁 Ironman Floripa 2027 · 47 dias" (com nome) / "🏁 Ironman · 47 dias" / "🏁 Prova · hoje". null se a prova não está no futuro. */
+export function badgeProva(prova: string | null | undefined, dataProva: string | null | undefined, hojeISO: string, nomeProva?: string | null): string | null {
   const dias = diasParaProva(dataProva, hojeISO)
   if (dias === null) return null
   const quando = dias === 0 ? 'hoje' : dias === 1 ? 'amanhã' : `${dias} dias`
-  return `🏁 ${rotuloProva(prova) ?? 'Prova'} · ${quando}`
+  return `🏁 ${nomeProva?.trim() || rotuloProva(prova) || 'Prova'} · ${quando}`
 }

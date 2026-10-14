@@ -46,6 +46,7 @@ const schema = z
     objetivo_notes: z.string().optional(),
     modalidade_foco: z.string().optional(),
     prova_alvo: z.string().optional(),
+    nome_prova: z.string().max(60, 'Máximo 60 caracteres').optional(),
     data_prova: z.string().optional(),
 
     lgpd_consent: z.boolean(),
@@ -110,7 +111,7 @@ const schema = z
 type FormInput = z.input<typeof schema>
 type FormOutput = z.output<typeof schema>
 
-const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'data_prova'] as const
+const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'height_cm', 'weight_kg', 'phone', 'email', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'nome_prova', 'data_prova'] as const
 const STEP2_FIELDS = [
   'lgpd_consent',
   'injury',
@@ -222,6 +223,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         objetivo_notes: aluno.objetivo_notes ?? '',
         modalidade_foco: aluno.modalidade_foco ?? '',
         prova_alvo: aluno.prova_alvo ?? '',
+        nome_prova: aluno.nome_prova ?? '',
         data_prova: aluno.data_prova ?? '',
         injury: aluno.injury,
         injury_regions: aluno.injury_regions,
@@ -493,12 +495,17 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <ObjetivoEsportivo
               foco={watch('modalidade_foco') ?? ''}
               prova={watch('prova_alvo') ?? ''}
+              nome={watch('nome_prova') ?? ''}
               data={watch('data_prova') ?? ''}
               onFoco={(v) => {
                 setValue('modalidade_foco', v, { shouldDirty: true })
                 if (!provasDoFoco(v).some((p) => p.valor === (watch('prova_alvo') ?? ''))) setValue('prova_alvo', '', { shouldDirty: true })
               }}
-              onProva={(v) => setValue('prova_alvo', v, { shouldDirty: true })}
+              onProva={(v) => {
+                setValue('prova_alvo', v, { shouldDirty: true })
+                if (!v) setValue('nome_prova', '', { shouldDirty: true })
+              }}
+              onNome={(v) => setValue('nome_prova', v, { shouldDirty: true })}
               onData={(v) => setValue('data_prova', v, { shouldDirty: true })}
             />
 
