@@ -8,7 +8,7 @@ import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
-import { natacaoInicial, type DadosNatacao } from '@/types/natacao'
+import { estruturadosDe, estruturadosVazios, type DadosEstruturados } from '@/types/estruturado'
 import { ModalidadeForm } from '@/features/planos/ModalidadeForm'
 import {
   blocosDe,
@@ -42,13 +42,13 @@ export function ModelosPage() {
   const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
   const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
-  const [natacaoNova, setNatacaoNova] = useState<DadosNatacao>({ ambiente: 'piscina', blocos: [] })
+  const [estrNova, setEstrNova] = useState<DadosEstruturados>(estruturadosVazios())
   const [modalidadeEd, setModalidadeEd] = useState<ModalidadeTipo>('musculacao')
   const [execucaoEd, setExecucaoEd] = useState<TipoExecucao>('sincrono')
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
   const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
   const [blocosEd, setBlocosEd] = useState<BlocoTreino[]>([])
-  const [natacaoEd, setNatacaoEd] = useState<DadosNatacao>({ ambiente: 'piscina', blocos: [] })
+  const [estrEd, setEstrEd] = useState<DadosEstruturados>(estruturadosVazios())
   const [legadoNatacaoEd, setLegadoNatacaoEd] = useState<string[]>([])
 
   const [renomeando, setRenomeando] = useState<Modelo | null>(null)
@@ -87,7 +87,7 @@ export function ModelosPage() {
     setValoresNovos({})
     setLivresNovos([])
     setBlocosNovos([])
-    setNatacaoNova({ ambiente: 'piscina', blocos: [] })
+    setEstrNova(estruturadosVazios())
     setErroNovo(null)
     setCriando(true)
   }
@@ -97,7 +97,7 @@ export function ModelosPage() {
       setErroNovo('Nome é obrigatório')
       return
     }
-    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos, natacaoNova)
+    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos, estrNova)
     if (erroBlocos) {
       setErroNovo(erroBlocos)
       return
@@ -107,7 +107,7 @@ export function ModelosPage() {
         name: nomeNovo.trim(),
         modalidade: modalidadeNova,
         tipo_execucao: execucaoNova,
-        modalidade_detalhes: montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos, natacaoNova),
+        modalidade_detalhes: montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos, estrNova),
       },
       {
         onSuccess: (id) => {
@@ -128,7 +128,7 @@ export function ModelosPage() {
     setValoresEd(valoresDoFormulario(m.modalidade_detalhes))
     setLivresEd(exerciciosLivresDe(m.modalidade_detalhes))
     setBlocosEd(blocosDe(m.modalidade ?? 'musculacao', m.modalidade_detalhes))
-    setNatacaoEd(natacaoInicial(m.modalidade_detalhes))
+    setEstrEd(estruturadosDe(m.modalidade ?? 'musculacao', m.modalidade_detalhes))
     setLegadoNatacaoEd(textoLegadoNatacao(m.modalidade_detalhes))
     setErro(null)
     setRenomeando(m)
@@ -141,7 +141,7 @@ export function ModelosPage() {
       return
     }
     if (!renomeando) return
-    const erroBlocos = validarBlocos(modalidadeEd, blocosEd, natacaoEd)
+    const erroBlocos = validarBlocos(modalidadeEd, blocosEd, estrEd)
     if (erroBlocos) {
       setErro(erroBlocos)
       return
@@ -153,7 +153,7 @@ export function ModelosPage() {
         notes: notas.trim(),
         modalidade: modalidadeEd,
         tipo_execucao: execucaoEd,
-        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, natacaoEd),
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, estrEd),
       },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
@@ -251,7 +251,7 @@ export function ModelosPage() {
               setValoresNovos({})
               setLivresNovos([])
               setBlocosNovos([])
-              setNatacaoNova({ ambiente: 'piscina', blocos: [] })
+              setEstrNova(estruturadosVazios())
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
@@ -261,8 +261,8 @@ export function ModelosPage() {
             onLivres={setLivresNovos}
             blocos={blocosNovos}
             onBlocos={setBlocosNovos}
-            natacao={natacaoNova}
-            onNatacao={setNatacaoNova}
+            estruturado={estrNova}
+            onEstruturado={setEstrNova}
           />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={confirmarNovo} className="w-full" disabled={criar.isPending}>
@@ -323,7 +323,7 @@ export function ModelosPage() {
               setValoresEd({})
               setLivresEd([])
               setBlocosEd([])
-              setNatacaoEd({ ambiente: 'piscina', blocos: [] })
+              setEstrEd(estruturadosVazios())
               setLegadoNatacaoEd([])
             }}
             tipoExecucao={execucaoEd}
@@ -334,8 +334,8 @@ export function ModelosPage() {
             onLivres={setLivresEd}
             blocos={blocosEd}
             onBlocos={setBlocosEd}
-            natacao={natacaoEd}
-            onNatacao={setNatacaoEd}
+            estruturado={estrEd}
+            onEstruturado={setEstrEd}
             legadoNatacao={legadoNatacaoEd}
           />
           {erro && <p className="text-sm text-red-600">{erro}</p>}

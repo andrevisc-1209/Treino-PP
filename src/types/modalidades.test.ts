@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { gerarMensagemTreino } from '@/lib/mensagemTreino'
 import { linkWhatsAppComTexto } from '@/lib/whatsapp'
-import { ehModalidade, linhasDetalhes, MODALIDADES, montarDetalhes, resumoModalidade, valoresDoFormulario } from './modalidades'
+import { ehModalidade, linhasDetalhes, MODALIDADES, MODALIDADES_ATIVAS, MODALIDADES_CONFIG, montarDetalhes, resumoModalidade, valoresDoFormulario } from './modalidades'
 
 describe('modalidades', () => {
-  it('tem as 12 modalidades do enum do banco', () => {
-    expect(MODALIDADES).toHaveLength(12)
+  it('tem as 13 modalidades do enum do banco; só 5 ficam ativas na criação', () => {
+    expect(MODALIDADES).toHaveLength(13)
+    expect(MODALIDADES_ATIVAS).toEqual(['musculacao', 'corrida', 'natacao', 'ciclismo', 'brick'])
+    expect(['funcional', 'futebol', 'futevolei', 'pilates', 'yoga', 'boxe', 'escalada', 'remo'].every((m) => !MODALIDADES_CONFIG[m as keyof typeof MODALIDADES_CONFIG].enabled)).toBe(true)
     expect(ehModalidade('corrida')).toBe(true)
     expect(ehModalidade('golfe')).toBe(false)
   })
@@ -67,9 +69,9 @@ describe('exercícios livres e execução', () => {
   })
   it('monta e descreve o resultado do aluno', () => {
     const detalhes = { blocos: [{ id: '1', nome: 'Alongar', descricao: '5 min' }, { id: '2', nome: 'Correr', descricao: '5 km' }] }
-    const d = detalhesDoResultado('corrida', detalhes, { valores: { distancia_km: '5,2', tempo_total: '28:30', pace_medio: '' }, feitos: [true], notas: '' })
-    expect(d).toEqual({ resultado: { distancia_km: 5.2, tempo_total: '28:30' }, exercicios_livres: [{ nome: 'Alongar', feito: true }, { nome: 'Correr', feito: false }] })
-    expect(descreverExecucao('corrida', d)).toEqual(['Distância feita (km): 5,2', 'Tempo total: 28:30', '✔ Alongar', '✘ Correr'])
+    const d = detalhesDoResultado('corrida', detalhes, { valores: { conclusao: 'parcial', distancia_km: '5,2', tempo_min: '28', pace_medio: '', rpe: '7' }, feitos: [true], notas: '' })
+    expect(d).toEqual({ resultado: { conclusao: 'parcial', distancia_km: 5.2, tempo_min: 28, rpe: 7 }, exercicios_livres: [{ nome: 'Alongar', feito: true }, { nome: 'Correr', feito: false }] })
+    expect(descreverExecucao('corrida', d)).toEqual(['Concluiu o treino? Parcialmente', 'Distância realizada (km): 5,2', 'Tempo total (min): 28', 'RPE: 7/10', '✔ Alongar', '✘ Correr'])
     expect(
       descreverExecucao('musculacao', { exercicios: [{ exercicio_id: 'e', nome: 'Supino', series_planejadas: 3, series_feitas: 2, obs: 'pesado' }] }),
     ).toEqual(['Supino: 2/3 séries — pesado'])

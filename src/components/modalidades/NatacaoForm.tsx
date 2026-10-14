@@ -3,33 +3,14 @@ import { ArrowDown, ArrowUp, Plus, Sparkles, X } from 'lucide-react'
 import { Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { cn } from '@/lib/utils'
+import { Chips } from './comum'
+import { numero } from './numero'
 import { CHIPS_PADRAO, EXERCICIOS_NATACAO, type ExercicioNatacao } from '@/data/natacao-exercicios'
 import type { TemplateNatacao } from '@/data/natacao-templates'
 import { SeletorExercicioNatacao } from '@/features/natacao/SeletorExercicioNatacao'
 import { AMBIENTES_NATACAO, formatarTempo, resumoTotalNatacao, type AmbienteNatacao, type BlocoNatacao, type DadosNatacao } from '@/types/natacao'
 
 const CHIPS_DESCANSO = [15, 20, 30, 45, 60, 90]
-
-function Chips({ valores, atual, unidade, onEscolher }: { valores: number[]; atual: number | undefined; unidade: string; onEscolher: (v: number) => void }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {valores.map((v) => (
-        <button
-          key={v}
-          type="button"
-          aria-pressed={atual === v}
-          onClick={() => onEscolher(v)}
-          className={cn('min-h-9 rounded-full border px-3 text-xs font-medium', atual === v ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
-        >
-          {v}
-          {unidade}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-const numero = (v: string): number | undefined => (v === '' ? undefined : Number(v))
 
 /** Um exercício do treino com seus parâmetros (distância ou tempo, séries, descanso, ritmo e observação). */
 function CartaoBloco({

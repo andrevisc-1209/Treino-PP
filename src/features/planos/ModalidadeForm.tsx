@@ -1,10 +1,13 @@
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
-import { MODALIDADES, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
+import { MODALIDADES_ATIVAS, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 import { BlocosEditor } from './BlocosEditor'
 import { NatacaoForm } from '@/components/modalidades/NatacaoForm'
-import type { DadosNatacao } from '@/types/natacao'
+import { CorridaForm } from '@/components/modalidades/CorridaForm'
+import { CiclismoForm } from '@/components/modalidades/CiclismoForm'
+import { BrickForm } from '@/components/modalidades/BrickForm'
+import type { DadosEstruturados } from '@/types/estruturado'
 
 const CLASSE_CAMPO = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 outline-none focus:border-brand'
 
@@ -20,8 +23,8 @@ export function ModalidadeForm({
   onLivres,
   blocos,
   onBlocos,
-  natacao,
-  onNatacao,
+  estruturado,
+  onEstruturado,
   legadoNatacao,
 }: {
   modalidade: ModalidadeTipo
@@ -36,9 +39,9 @@ export function ModalidadeForm({
   /** blocos do treino (natação, corrida, ciclismo, remo, funcional) */
   blocos: BlocoTreino[]
   onBlocos: (v: BlocoTreino[]) => void
-  /** natação (biblioteca de exercícios) */
-  natacao: DadosNatacao
-  onNatacao: (v: DadosNatacao) => void
+  /** natação, corrida, ciclismo e brick (formulários estruturados) */
+  estruturado: DadosEstruturados
+  onEstruturado: (v: DadosEstruturados) => void
   /** conteúdo de um treino de natação no formato antigo, para o personal refazer */
   legadoNatacao?: string[]
 }) {
@@ -50,7 +53,8 @@ export function ModalidadeForm({
       <div>
         <p className="mb-2 text-sm font-medium">Modalidade</p>
         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Modalidade">
-          {MODALIDADES.map((m) => {
+          {/* modalidades desabilitadas ficam ocultas; a do treino sendo editado continua visível para não sumir */}
+          {MODALIDADES_ATIVAS.concat(MODALIDADES_ATIVAS.includes(modalidade) ? [] : [modalidade]).map((m) => {
             const cfg = MODALIDADES_CONFIG[m]
             const ativo = m === modalidade
             return (
@@ -139,8 +143,11 @@ export function ModalidadeForm({
         </Field>
       ))}
 
-      {modalidade === 'natacao' && <NatacaoForm dados={natacao} onChange={onNatacao} textoAntigo={legadoNatacao} />}
-      {usaBlocos(modalidade) && modalidade !== 'natacao' && <BlocosEditor blocos={blocos} onChange={onBlocos} />}
+      {modalidade === 'natacao' && <NatacaoForm dados={estruturado.natacao} onChange={(natacao) => onEstruturado({ ...estruturado, natacao })} textoAntigo={legadoNatacao} />}
+      {modalidade === 'corrida' && <CorridaForm dados={estruturado.corrida} onChange={(corrida) => onEstruturado({ ...estruturado, corrida })} />}
+      {modalidade === 'ciclismo' && <CiclismoForm dados={estruturado.ciclismo} onChange={(ciclismo) => onEstruturado({ ...estruturado, ciclismo })} />}
+      {modalidade === 'brick' && <BrickForm dados={estruturado.brick} onChange={(brick) => onEstruturado({ ...estruturado, brick })} />}
+      {usaBlocos(modalidade) && !['natacao', 'corrida', 'ciclismo', 'brick'].includes(modalidade) && <BlocosEditor blocos={blocos} onChange={onBlocos} />}
 
       {modalidade !== 'musculacao' && !usaBlocos(modalidade) && (
         <div className="space-y-2">

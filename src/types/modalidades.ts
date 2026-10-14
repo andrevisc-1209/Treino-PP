@@ -1,5 +1,9 @@
 import { formatarNumero } from '@/lib/format'
-import { dadosNatacaoDe, descricaoBlocoNatacao, montarDetalhesNatacao, resumoTotalNatacao, rotuloAmbiente, validarNatacao, type DadosNatacao } from './natacao'
+import { dadosNatacaoDe, descricaoBlocoNatacao, montarDetalhesNatacao, resumoTotalNatacao, rotuloAmbiente, validarNatacao } from './natacao'
+import { dadosCorridaDe, descricaoBlocoCorrida, montarDetalhesCorrida, totalCorrida, validarCorrida } from './corrida'
+import { dadosCiclismoDe, descricaoBlocoCiclismo, montarDetalhesCiclismo, rotuloAmbienteCiclismo, totalCiclismo, validarCiclismo } from './ciclismo'
+import { dadosBrickDe, descricoesBrick, montarDetalhesBrick, resumoBrick, resumoBrickCurto, validarBrick } from './brick'
+import type { DadosEstruturados } from './estruturado'
 
 export type ModalidadeTipo =
   | 'musculacao'
@@ -14,6 +18,7 @@ export type ModalidadeTipo =
   | 'boxe'
   | 'escalada'
   | 'remo'
+  | 'brick' // bike → corrida (triatletas)
 
 export type TipoExecucao = 'sincrono' | 'assincrono'
 
@@ -41,17 +46,18 @@ export interface BlocoTreino {
 }
 
 /** Modalidades cujo treino é uma lista de blocos (no lugar dos campos únicos da Fase 1). */
-export const MODALIDADES_COM_BLOCOS: ModalidadeTipo[] = ['natacao', 'corrida', 'ciclismo', 'remo', 'funcional']
+export const MODALIDADES_COM_BLOCOS: ModalidadeTipo[] = ['natacao', 'corrida', 'ciclismo', 'remo', 'funcional', 'brick']
 export const usaBlocos = (m: ModalidadeTipo): boolean => MODALIDADES_COM_BLOCOS.includes(m)
 
 /** Detalhes da modalidade: campos simples (texto/número) + a lista opcional `exercicios_livres`. */
 export type ModalidadeDetalhes = Record<string, string | number | ExercicioLivre[] | BlocoTreino[]>
 
-export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: string; campos: ModalidadeCampo[] }> = {
-  musculacao: { label: 'Musculação', emoji: '🏋️', campos: [] }, // usa a estrutura de exercícios existente
+export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: string; enabled: boolean; campos: ModalidadeCampo[] }> = {
+  musculacao: { label: 'Musculação', emoji: '🏋️', enabled: true, campos: [] }, // usa a estrutura de exercícios existente
   corrida: {
     label: 'Corrida',
     emoji: '🏃',
+    enabled: true,
     campos: [
       { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
@@ -59,6 +65,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   natacao: {
     label: 'Natação',
     emoji: '🏊',
+    enabled: true,
     campos: [
       { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
@@ -66,6 +73,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   ciclismo: {
     label: 'Ciclismo',
     emoji: '🚴',
+    enabled: true,
     campos: [
       { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
@@ -73,6 +81,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   funcional: {
     label: 'Funcional / HIIT',
     emoji: '⚡',
+    enabled: false,
     campos: [
       { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
@@ -80,6 +89,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   futebol: {
     label: 'Futebol',
     emoji: '⚽',
+    enabled: false,
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'foco', label: 'Foco da sessão', type: 'text', placeholder: 'ex: resistência, técnica, tático' },
@@ -89,6 +99,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   futevolei: {
     label: 'Futevôlei',
     emoji: '🏐',
+    enabled: false,
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
@@ -97,6 +108,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   pilates: {
     label: 'Pilates',
     emoji: '🧘',
+    enabled: false,
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'nivel', label: 'Nível', type: 'select', options: ['iniciante', 'intermediário', 'avançado'] },
@@ -106,6 +118,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   yoga: {
     label: 'Yoga',
     emoji: '🧘‍♀️',
+    enabled: false,
     campos: [
       { key: 'duracao_min', label: 'Duração (min)', type: 'number' },
       { key: 'estilo', label: 'Estilo', type: 'select', options: ['hatha', 'vinyasa', 'yin', 'ashtanga', 'restaurativo'] },
@@ -115,6 +128,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   boxe: {
     label: 'Boxe / Luta',
     emoji: '🥊',
+    enabled: false,
     campos: [
       { key: 'rounds', label: 'Rounds', type: 'number' },
       { key: 'duracao_round_min', label: 'Duração do round (min)', type: 'number', placeholder: '3' },
@@ -125,6 +139,7 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   escalada: {
     label: 'Escalada',
     emoji: '🧗',
+    enabled: false,
     campos: [
       { key: 'tipo', label: 'Tipo', type: 'select', options: ['boulder', 'esportiva', 'tradicional', 'indoor'] },
       { key: 'nivel_via', label: 'Nível da via', type: 'text', placeholder: 'ex: 6a, V4' },
@@ -134,13 +149,22 @@ export const MODALIDADES_CONFIG: Record<ModalidadeTipo, { label: string; emoji: 
   remo: {
     label: 'Remo',
     emoji: '🚣',
+    enabled: false,
     campos: [
       { key: 'observacoes', label: 'Observações gerais', type: 'textarea' },
     ],
   },
+  brick: {
+    label: 'Brick (Bike→Run)',
+    emoji: '🧱',
+    enabled: true,
+    campos: [{ key: 'observacoes', label: 'Observações gerais', type: 'textarea' }],
+  },
 }
 
 export const MODALIDADES: ModalidadeTipo[] = Object.keys(MODALIDADES_CONFIG) as ModalidadeTipo[]
+/** Modalidades oferecidas na criação de treino (as demais seguem no código, só ocultas). */
+export const MODALIDADES_ATIVAS: ModalidadeTipo[] = MODALIDADES.filter((m) => MODALIDADES_CONFIG[m].enabled)
 
 export function ehModalidade(v: unknown): v is ModalidadeTipo {
   return typeof v === 'string' && v in MODALIDADES_CONFIG
@@ -155,13 +179,22 @@ export function montarDetalhes(
   valores: Record<string, string>,
   livres: ExercicioLivre[] = [],
   blocos: BlocoTreino[] = [],
-  natacao?: DadosNatacao,
+  estruturado?: DadosEstruturados,
 ): ModalidadeDetalhes {
-  // natação tem formulário próprio (biblioteca de exercícios): ambiente + blocos estruturados
-  if (modalidade === 'natacao' && natacao) {
-    const base = montarDetalhesNatacao(natacao) as ModalidadeDetalhes
+  // natação, corrida, ciclismo e brick têm formulário próprio (blocos estruturados)
+  const estruturada =
+    estruturado && modalidade === 'natacao'
+      ? montarDetalhesNatacao(estruturado.natacao)
+      : estruturado && modalidade === 'corrida'
+        ? montarDetalhesCorrida(estruturado.corrida)
+        : estruturado && modalidade === 'ciclismo'
+          ? montarDetalhesCiclismo(estruturado.ciclismo)
+          : estruturado && modalidade === 'brick'
+            ? montarDetalhesBrick(estruturado.brick)
+            : null
+  if (estruturada) {
     const obs = (valores.observacoes ?? '').trim()
-    return obs ? { ...base, observacoes: obs } : base
+    return (obs ? { ...estruturada, observacoes: obs } : estruturada) as ModalidadeDetalhes
   }
   const saida: ModalidadeDetalhes = {}
   for (const c of MODALIDADES_CONFIG[modalidade].campos) {
@@ -218,8 +251,13 @@ function limparBloco(b: BlocoTreino): BlocoTreino | null {
 }
 
 /** Valida a lista de blocos do formulário (modalidades com blocos): ao menos 1, cada um com nome e descrição. */
-export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[], natacao?: DadosNatacao): string | null {
-  if (modalidade === 'natacao' && natacao) return validarNatacao(natacao)
+export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[], estruturado?: DadosEstruturados): string | null {
+  if (estruturado) {
+    if (modalidade === 'natacao') return validarNatacao(estruturado.natacao)
+    if (modalidade === 'corrida') return validarCorrida(estruturado.corrida)
+    if (modalidade === 'ciclismo') return validarCiclismo(estruturado.ciclismo)
+    if (modalidade === 'brick') return validarBrick(estruturado.brick)
+  }
   if (!usaBlocos(modalidade)) return null
   if (blocos.length === 0) return 'Adicione ao menos um bloco ao treino.'
   if (blocos.some((b) => !b.nome.trim() || !b.descricao.trim())) return 'Preencha o nome e a descrição de cada bloco.'
@@ -232,6 +270,20 @@ export function validarBlocos(modalidade: ModalidadeTipo, blocos: BlocoTreino[],
  */
 export function blocosDe(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): BlocoTreino[] {
   if (!usaBlocos(modalidade)) return []
+  // treinos estruturados: cada bloco vira um item de texto para listar, marcar e enviar
+  const dd = d as Record<string, unknown> | null | undefined
+  const cor = modalidade === 'corrida' ? dadosCorridaDe(dd) : null
+  if (cor) return cor.blocos.map((b) => ({ id: b.id, nome: b.nome, descricao: descricaoBlocoCorrida(b) }))
+  const cic = modalidade === 'ciclismo' ? dadosCiclismoDe(dd) : null
+  if (cic) return cic.blocos.map((b) => ({ id: b.id, nome: b.nome, descricao: descricaoBlocoCiclismo(b) }))
+  const brk = modalidade === 'brick' ? dadosBrickDe(dd) : null
+  if (brk) {
+    const t = descricoesBrick(brk)
+    return [
+      ...brk.blocos_bike.map((b, i) => ({ id: `bike-${b.id}`, nome: `🚴 ${b.nome}`, descricao: t.bike[i].replace(`${b.nome} — `, '') })),
+      ...brk.blocos_corrida.map((b, i) => ({ id: `run-${b.id}`, nome: `🏃 ${b.nome}`, descricao: t.corrida[i].replace(`${b.nome} — `, '') })),
+    ]
+  }
   // natação estruturada (biblioteca): cada exercício vira um bloco de texto para listar/marcar/enviar
   const nat = modalidade === 'natacao' ? dadosNatacaoDe(d as Record<string, unknown> | null | undefined) : null
   if (nat) {
@@ -330,6 +382,13 @@ function resumoLegado(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null |
 
 /** Subtítulo do card: "4 blocos · 2.500 m" (com blocos) ou a métrica dos campos antigos (ex.: "5 km · pace 5:30/km"). null se não houver. */
 export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string | null {
+  const dd = d as Record<string, unknown> | null | undefined
+  const cor = modalidade === 'corrida' ? dadosCorridaDe(dd) : null
+  if (cor) return [`${cor.blocos.length} ${cor.blocos.length === 1 ? 'bloco' : 'blocos'}`, totalCorrida(cor.blocos)].filter(Boolean).join(' · ')
+  const cic = modalidade === 'ciclismo' ? dadosCiclismoDe(dd) : null
+  if (cic) return [rotuloAmbienteCiclismo(cic.ambiente), `${cic.blocos.length} ${cic.blocos.length === 1 ? 'bloco' : 'blocos'}`, totalCiclismo(cic)].filter(Boolean).join(' · ')
+  const brk = modalidade === 'brick' ? dadosBrickDe(dd) : null
+  if (brk) return resumoBrickCurto(brk)
   const nat = modalidade === 'natacao' ? dadosNatacaoDe(d as Record<string, unknown> | null | undefined) : null
   if (nat) {
     const total = resumoTotalNatacao(nat).replace(/^(Distância total|Tempo estimado): /, '')
@@ -342,6 +401,17 @@ export function resumoModalidade(modalidade: ModalidadeTipo, d: ModalidadeDetalh
     return `${blocos.length} ${blocos.length === 1 ? 'bloco' : 'blocos'}${total > 0 ? ` · ${formatarNumero(total)} m` : ''}`
   }
   return resumoLegado(modalidade, d)
+}
+
+/** Linha de resumo de treinos estruturados (corrida, ciclismo, brick): total, ambiente e a sequência do brick. null se não se aplica. */
+export function cabecalhoEstruturado(modalidade: ModalidadeTipo, d: ModalidadeDetalhes | null | undefined): string | null {
+  const dd = d as Record<string, unknown> | null | undefined
+  const cor = modalidade === 'corrida' ? dadosCorridaDe(dd) : null
+  if (cor) return totalCorrida(cor.blocos) ? `Total: ${totalCorrida(cor.blocos)}` : null
+  const cic = modalidade === 'ciclismo' ? dadosCiclismoDe(dd) : null
+  if (cic) return [rotuloAmbienteCiclismo(cic.ambiente), totalCiclismo(cic) ? `Total: ${totalCiclismo(cic)}` : null].filter(Boolean).join(' · ')
+  const brk = modalidade === 'brick' ? dadosBrickDe(dd) : null
+  return brk ? resumoBrick(brk) : null
 }
 
 /** Linhas "rótulo: valor" dos detalhes preenchidos, na ordem dos campos (usa o rótulo do formulário, não a chave). */
@@ -357,19 +427,56 @@ export function linhasDetalhes(modalidade: ModalidadeTipo, d: ModalidadeDetalhes
 // Mantenha igual a CAMPOS_RESULTADO em supabase/functions/_shared/execucao.ts.
 // ---------------------------------------------------------------------------
 
-export const RESULTADO_CAMPOS: Record<Exclude<ModalidadeTipo, 'musculacao'>, { key: string; label: string; type: 'number' | 'text'; placeholder?: string }[]> = {
+export type CampoResultado = {
+  key: string
+  label: string
+  /** 'opcao' = botões (conclusão do treino); 'rpe' = escala 1–10 */
+  type: 'number' | 'text' | 'opcao' | 'rpe'
+  placeholder?: string
+  opcoes?: { valor: string; label: string }[]
+  /** campo de versões antigas: continua aparecendo no resultado salvo, mas não no formulário */
+  legado?: boolean
+}
+
+export const OPCOES_CONCLUSAO = [
+  { valor: 'sim', label: 'Sim' },
+  { valor: 'parcial', label: 'Parcialmente' },
+  { valor: 'nao', label: 'Não consegui' },
+]
+const CONCLUSAO: CampoResultado = { key: 'conclusao', label: 'Concluiu o treino?', type: 'opcao', opcoes: OPCOES_CONCLUSAO }
+const RPE: CampoResultado = { key: 'rpe', label: 'Esforço percebido (RPE 1–10)', type: 'rpe' }
+
+// TODO(fase 2): upload de arquivo .fit (Garmin/COROS/Apple Watch) para preencher distância, tempo e ritmo automaticamente.
+export const RESULTADO_CAMPOS: Record<Exclude<ModalidadeTipo, 'musculacao'>, CampoResultado[]> = {
   corrida: [
-    { key: 'distancia_km', label: 'Distância feita (km)', type: 'number', placeholder: '5,2' },
-    { key: 'tempo_total', label: 'Tempo total', type: 'text', placeholder: '28:30' },
+    CONCLUSAO,
+    { key: 'distancia_km', label: 'Distância realizada (km)', type: 'number', placeholder: '5,2' },
+    { key: 'tempo_min', label: 'Tempo total (min)', type: 'number', placeholder: '28' },
     { key: 'pace_medio', label: 'Pace médio (min/km)', type: 'text', placeholder: '5:29' },
+    RPE,
+    { key: 'tempo_total', label: 'Tempo total', type: 'text', legado: true },
   ],
   natacao: [
     { key: 'tiros_feitos', label: 'Tiros feitos', type: 'number' },
     { key: 'distancia_total_m', label: 'Distância total (m)', type: 'number' },
   ],
   ciclismo: [
-    { key: 'distancia_km', label: 'Distância feita (km)', type: 'number' },
-    { key: 'tempo_total', label: 'Tempo total', type: 'text', placeholder: '1:10:00' },
+    CONCLUSAO,
+    { key: 'distancia_km', label: 'Distância realizada (km)', type: 'number' },
+    { key: 'tempo_min', label: 'Tempo total (min)', type: 'number', placeholder: '60' },
+    { key: 'velocidade_media', label: 'Velocidade média (km/h)', type: 'number', placeholder: '28' },
+    RPE,
+    { key: 'tempo_total', label: 'Tempo total', type: 'text', legado: true },
+  ],
+  brick: [
+    CONCLUSAO,
+    { key: 'bike_distancia_km', label: 'Bike — distância (km)', type: 'number' },
+    { key: 'bike_tempo_min', label: 'Bike — tempo (min)', type: 'number' },
+    { key: 'bike_velocidade_media', label: 'Bike — velocidade média (km/h)', type: 'number' },
+    { key: 'run_distancia_km', label: 'Corrida — distância (km)', type: 'number' },
+    { key: 'run_tempo_min', label: 'Corrida — tempo (min)', type: 'number' },
+    { key: 'run_pace_medio', label: 'Corrida — pace médio (min/km)', type: 'text', placeholder: '5:29' },
+    RPE,
   ],
   funcional: [
     { key: 'rounds_feitos', label: 'Rounds feitos', type: 'number' },
@@ -413,7 +520,10 @@ export function descreverExecucao(modalidade: ModalidadeTipo, d: DetalhesExecuca
   }
   for (const c of RESULTADO_CAMPOS[modalidade]) {
     const v = x.resultado?.[c.key]
-    if (v !== undefined && v !== '') linhas.push(`${c.label}: ${typeof v === 'number' ? formatarNumero(v) : v}`)
+    if (v === undefined || v === '') continue
+    if (c.type === 'opcao') linhas.push(`${c.label} ${c.opcoes?.find((o) => o.valor === v)?.label ?? v}`)
+    else if (c.type === 'rpe') linhas.push(`RPE: ${v}/10`)
+    else linhas.push(`${c.label}: ${typeof v === 'number' ? formatarNumero(v) : v}`)
   }
   for (const l of x.exercicios_livres ?? []) linhas.push(`${l.feito ? '✔' : '✘'} ${l.nome}`)
   return linhas

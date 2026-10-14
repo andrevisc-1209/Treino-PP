@@ -1,5 +1,5 @@
 import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
-import { blocosDe, exerciciosLivresDe, formatarBloco, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { blocosDe, cabecalhoEstruturado, exerciciosLivresDe, formatarBloco, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
 /**
  * Mensagem de WhatsApp com o treino para o aluno fazer por conta (execução assíncrona).
@@ -24,6 +24,8 @@ export function gerarMensagemTreino(args: {
   ]
   const natacao = args.modalidade === 'natacao' ? dadosNatacaoDe(args.detalhes) : null
   if (natacao) blocos.push(`🏊 ${rotuloAmbiente(natacao.ambiente)} · ${resumoTotalNatacao(natacao)}`)
+  const cab = cabecalhoEstruturado(args.modalidade, args.detalhes)
+  if (cab) blocos.push(`${cfg.emoji} ${cab}`)
   const detalhes = linhasDetalhes(args.modalidade, args.detalhes)
   if (detalhes.length > 0) blocos.push(`📋 Detalhes:\n${detalhes.join('\n')}`)
   if (args.exercicios && args.exercicios.length > 0) {

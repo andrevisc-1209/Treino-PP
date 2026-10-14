@@ -24,7 +24,7 @@ import {
   type TipoExecucao,
 } from '@/types/modalidades'
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
-import { natacaoInicial, type DadosNatacao } from '@/types/natacao'
+import { estruturadosDe, estruturadosVazios, type DadosEstruturados } from '@/types/estruturado'
 import { ModalidadeForm } from './ModalidadeForm'
 import { useEnviarTreinoAoAluno } from './useEnviarTreino'
 import { itensIguais } from './compare'
@@ -69,7 +69,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [valoresNovos, setValoresNovos] = useState<Record<string, string>>({})
   const [livresNovos, setLivresNovos] = useState<ExercicioLivre[]>([])
   const [blocosNovos, setBlocosNovos] = useState<BlocoTreino[]>([])
-  const [natacaoNova, setNatacaoNova] = useState<DadosNatacao>({ ambiente: 'piscina', blocos: [] })
+  const [estrNova, setEstrNova] = useState<DadosEstruturados>(estruturadosVazios())
   // aula presencial de modalidade sem lista de exercícios: registra o resultado em uma folha
   const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
   // treino assíncrono acabou de ser criado: oferece enviar ao aluno
@@ -86,7 +86,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
   const [valoresEd, setValoresEd] = useState<Record<string, string>>({})
   const [livresEd, setLivresEd] = useState<ExercicioLivre[]>([])
   const [blocosEd, setBlocosEd] = useState<BlocoTreino[]>([])
-  const [natacaoEd, setNatacaoEd] = useState<DadosNatacao>({ ambiente: 'piscina', blocos: [] })
+  const [estrEd, setEstrEd] = useState<DadosEstruturados>(estruturadosVazios())
   const [legadoNatacaoEd, setLegadoNatacaoEd] = useState<string[]>([])
   const [erro, setErro] = useState<string | null>(null)
 
@@ -122,7 +122,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setValoresNovos({})
     setLivresNovos([])
     setBlocosNovos([])
-    setNatacaoNova({ ambiente: 'piscina', blocos: [] })
+    setEstrNova(estruturadosVazios())
     setErroNovo(null)
   }
 
@@ -133,12 +133,12 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       setErroNovo('Nome é obrigatório')
       return
     }
-    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos, natacaoNova)
+    const erroBlocos = validarBlocos(modalidadeNova, blocosNovos, estrNova)
     if (erroBlocos) {
       setErroNovo(erroBlocos)
       return
     }
-    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos, natacaoNova)
+    const detalhes = montarDetalhes(modalidadeNova, valoresNovos, livresNovos, blocosNovos, estrNova)
     const nomePlano = nomeNovo.trim()
     criar.mutate(
       { name: nomePlano, modalidade: modalidadeNova, tipo_execucao: execucaoNova, modalidade_detalhes: detalhes },
@@ -223,7 +223,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setValoresEd(valoresDoFormulario(p.modalidade_detalhes))
     setLivresEd(exerciciosLivresDe(p.modalidade_detalhes))
     setBlocosEd(blocosDe(p.modalidade ?? 'musculacao', p.modalidade_detalhes))
-    setNatacaoEd(natacaoInicial(p.modalidade_detalhes))
+    setEstrEd(estruturadosDe(p.modalidade ?? 'musculacao', p.modalidade_detalhes))
     setLegadoNatacaoEd(textoLegadoNatacao(p.modalidade_detalhes))
     setErro(null)
     setRenomeando(p)
@@ -236,7 +236,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       return
     }
     if (!renomeando) return
-    const erroBlocos = validarBlocos(modalidadeEd, blocosEd, natacaoEd)
+    const erroBlocos = validarBlocos(modalidadeEd, blocosEd, estrEd)
     if (erroBlocos) {
       setErro(erroBlocos)
       return
@@ -248,7 +248,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         notes: notas.trim(),
         modalidade: modalidadeEd,
         tipo_execucao: execucaoEd,
-        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, natacaoEd),
+        modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, estrEd),
       },
       { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
     )
@@ -456,7 +456,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setValoresNovos({})
               setLivresNovos([])
               setBlocosNovos([])
-              setNatacaoNova({ ambiente: 'piscina', blocos: [] })
+              setEstrNova(estruturadosVazios())
             }}
             tipoExecucao={execucaoNova}
             onTipoExecucao={setExecucaoNova}
@@ -466,8 +466,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onLivres={setLivresNovos}
             blocos={blocosNovos}
             onBlocos={setBlocosNovos}
-            natacao={natacaoNova}
-            onNatacao={setNatacaoNova}
+            estruturado={estrNova}
+            onEstruturado={setEstrNova}
           />
           {erroNovo && <p className="text-sm text-red-600">{erroNovo}</p>}
           <Button onClick={criarDoZero} className="w-full" disabled={criar.isPending}>
@@ -575,7 +575,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               setValoresEd({})
               setLivresEd([])
               setBlocosEd([])
-              setNatacaoEd({ ambiente: 'piscina', blocos: [] })
+              setEstrEd(estruturadosVazios())
               setLegadoNatacaoEd([])
             }}
             tipoExecucao={execucaoEd}
@@ -586,8 +586,8 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             onLivres={setLivresEd}
             blocos={blocosEd}
             onBlocos={setBlocosEd}
-            natacao={natacaoEd}
-            onNatacao={setNatacaoEd}
+            estruturado={estrEd}
+            onEstruturado={setEstrEd}
             legadoNatacao={legadoNatacaoEd}
           />
           {erro && <p className="text-sm text-red-600">{erro}</p>}

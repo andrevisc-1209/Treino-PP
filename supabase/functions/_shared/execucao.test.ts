@@ -39,3 +39,17 @@ describe('linkValido', () => {
     expect(linkValido({ expira_em: '2026-10-09T00:00:00Z', usado_em: null }, agora)).toBe('expirado')
   })
 })
+
+describe('feedback de corrida, ciclismo e brick', () => {
+  it('aceita conclusão, RPE 1–10 e tempo em minutos; descarta valores fora do padrão', () => {
+    const r = validarExecucao('corrida', { detalhes: { resultado: { conclusao: 'parcial', distancia_km: 5.2, tempo_min: '28', rpe: 7, hack: 1 } } }, [])
+    expect(r.ok && r.detalhes).toEqual({ resultado: { conclusao: 'parcial', distancia_km: 5.2, tempo_min: 28, rpe: 7 }, exercicios_livres: [] })
+    const ruim = validarExecucao('corrida', { detalhes: { resultado: { conclusao: 'talvez', rpe: 11 } } }, [])
+    expect(ruim.ok && ruim.detalhes).toEqual({ resultado: {}, exercicios_livres: [] })
+    expect(validarExecucao('ciclismo', { detalhes: { resultado: { rpe: 0 } } }, []).ok).toBe(true)
+  })
+  it('brick tem campos separados de bike e corrida', () => {
+    const r = validarExecucao('brick', { detalhes: { resultado: { bike_distancia_km: 40, run_distancia_km: 10, run_pace_medio: '5:00', rpe: 9 } } }, [])
+    expect(r.ok && r.detalhes).toEqual({ resultado: { bike_distancia_km: 40, run_distancia_km: 10, run_pace_medio: '5:00', rpe: 9 }, exercicios_livres: [] })
+  })
+})

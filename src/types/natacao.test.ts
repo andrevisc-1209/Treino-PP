@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { EXERCICIOS_NATACAO, serveAoAmbiente } from '@/data/natacao-exercicios'
 import { TEMPLATES_NATACAO } from '@/data/natacao-templates'
 import { gerarMensagemTreino } from '@/lib/mensagemTreino'
+import { estruturadosVazios } from './estruturado'
 import { blocosDe, itensChecklist, montarDetalhes, resumoModalidade, textoLegadoNatacao, validarBlocos } from './modalidades'
 import {
   dadosNatacaoDe,
@@ -73,7 +74,7 @@ describe('natação: totais e descrição', () => {
 
 describe('natação: salvar e validar', () => {
   it('grava ambiente + blocos limpos e relê', () => {
-    const d = montarDetalhes('natacao', { observacoes: ' sem pernada ' }, [], [], { ...piscina, blocos: [{ ...piscina.blocos[1], parametros: { ...piscina.blocos[1].parametros, ritmo: '  ' } }] })
+    const d = montarDetalhes('natacao', { observacoes: ' sem pernada ' }, [], [], { ...estruturadosVazios(), natacao: { ...piscina, blocos: [{ ...piscina.blocos[1], parametros: { ...piscina.blocos[1].parametros, ritmo: '  ' } }] } })
     expect(d.ambiente).toBe('piscina')
     expect(d.observacoes).toBe('sem pernada')
     const lido = dadosNatacaoDe(d)
@@ -86,8 +87,8 @@ describe('natação: salvar e validar', () => {
     expect(validarNatacao({ ambiente: 'mar', blocos: [bloco('a', 'A', { tempo: 0, series: 1, descanso: 0 })] })).toMatch(/tempo/)
     expect(validarNatacao({ ambiente: 'piscina', blocos: [bloco('a', 'A', { distancia: 50, series: 21, descanso: 0 })] })).toMatch(/1 a 20/)
     expect(validarNatacao(piscina)).toBeNull()
-    expect(validarBlocos('natacao', [], piscina)).toBeNull()
-    expect(validarBlocos('natacao', [], { ambiente: 'piscina', blocos: [] })).toMatch(/ao menos/)
+    expect(validarBlocos('natacao', [], { ...estruturadosVazios(), natacao: piscina })).toBeNull()
+    expect(validarBlocos('natacao', [], estruturadosVazios())).toMatch(/ao menos/)
   })
 })
 
