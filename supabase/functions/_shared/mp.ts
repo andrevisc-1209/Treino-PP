@@ -67,21 +67,26 @@ export function atualizacaoDoPreapproval(
   return { professionalId, atualizacao }
 }
 
-export type DecisaoWebhook = 'processar' | 'processar_com_aviso' | 'rejeitar_assinatura' | 'rejeitar_sem_segredo'
+export type DecisaoWebhook = 'processar' | 'rejeitar_assinatura' | 'rejeitar_sem_segredo'
 
 /**
- * Política de validação do webhook.
- * - Produção (token de produção configurado): assinatura HMAC é obrigatória; sem
- *   MP_WEBHOOK_SECRET configurado não há como validar, então rejeita (falha fechada).
- * - Sandbox: assinatura válida processa normalmente; ausente/inválida/sem segredo
- *   processa com aviso no log (o MP de teste nem sempre assina, e o estado real vem
- *   de GET na API do MP, não do corpo do webhook).
+ * Política de validação do webhook (só produção): a assinatura HMAC é obrigatória. Sem
+ * MP_WEBHOOK_SECRET configurado não há como validar, então rejeita (falha fechada).
  */
-export function decidirWebhook(args: { producao: boolean; temSegredo: boolean; assinaturaOk: boolean }): DecisaoWebhook {
-  const { producao, temSegredo, assinaturaOk } = args
+export function decidirWebhook(args: { temSegredo: boolean; assinaturaOk: boolean }): DecisaoWebhook {
+  const { temSegredo, assinaturaOk } = args
   if (temSegredo && assinaturaOk) return 'processar'
-  if (producao) return temSegredo ? 'rejeitar_assinatura' : 'rejeitar_sem_segredo'
-  return 'processar_com_aviso'
+  return temSegredo ? 'rejeitar_assinatura' : 'rejeitar_sem_segredo'
+}
+
+/**
+ * Token do MP usado pelas functions: só o de produção (MP_ACCESS_TOKEN). Um token de teste
+ * (prefixo "TEST-") colado por engano no secret de produção é recusado, para nunca criar
+ * cobrança de teste achando que é real.
+ */
+export function tokenMpValido(token: string | undefined | null): token is string {
+  const t = (token ?? '').trim()
+  return t !== '' && !t.startsWith('TEST-')
 }
 
 function hex(buf: ArrayBuffer): string {

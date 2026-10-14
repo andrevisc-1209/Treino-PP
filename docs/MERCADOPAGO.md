@@ -38,10 +38,8 @@ antes do fim soma ao que resta. Nenhum dado de cartão passa pelo nosso código.
 
 ## Assinatura do webhook (`x-signature`)
 
-| Ambiente | Regra |
-|---|---|
-| Produção (`MP_ACCESS_TOKEN` definido) | HMAC obrigatório. Inválida/ausente → 401. Sem `MP_WEBHOOK_SECRET` → 500 (falha fechada). |
-| Sandbox (só `MP_ACCESS_TOKEN_TEST`) | Válida → processa. Ausente/inválida/sem segredo → **loga aviso e processa**. |
+Sempre obrigatória (só produção): HMAC inválido/ausente → 401; sem `MP_WEBHOOK_SECRET` → 500 (falha fechada).
+O token usado é só o `MP_ACCESS_TOKEN`; token de teste (`TEST-…`) é recusado pelas duas functions.
 
 `supabase/config.toml` fixa `verify_jwt = false` pro `mp-webhook`.
 
@@ -51,8 +49,7 @@ Projeto Supabase: `avgrnvpvjhymsrnapfgu`.
 
 1. **Migration** (SQL Editor, **antes do merge**): `supabase/migrations/20261013000000_assinaturas_mp_payment_id.sql`
    (além da `20261010000000_mp_subscription_id.sql`, se ainda não rodou).
-2. **Secrets do Supabase** (nunca em arquivo/PR): `MP_ACCESS_TOKEN` (produção) ou
-   `MP_ACCESS_TOKEN_TEST` (sandbox), `MP_WEBHOOK_SECRET`; `MP_TEST_PAYER_EMAIL` só no sandbox.
+2. **Secrets do Supabase** (nunca em arquivo/PR): `MP_ACCESS_TOKEN` (produção) e `MP_WEBHOOK_SECRET`.
    `SITE_URL` é opcional (padrão `https://treino.personalperto.com.br`; usado nas `back_urls`).
    **A chave pública do MP (`VITE_MP_PUBLIC_KEY`) não é mais usada.**
 3. **Deploy das functions**:
@@ -64,13 +61,10 @@ Projeto Supabase: `avgrnvpvjhymsrnapfgu`.
    enquanto houver recorrentes) em `https://avgrnvpvjhymsrnapfgu.supabase.co/functions/v1/mp-webhook`.
    A preferência também manda `notification_url` com esse endereço.
 
-## Sandbox
+## Produção e testes
 
-- Com token de teste a function devolve `sandbox_init_point`. O MP exige comprador
-  de teste (`MP_TEST_PAYER_EMAIL`); crie via `POST https://api.mercadopago.com/users/test_user`
-  com `{"site_id":"MLB"}`.
-- Cartão de teste que funcionou: **Visa 4509 9535 6623 3704**, CVV 123, validade futura,
-  titular `APRO`, CPF `12345678909`.
+O sandbox foi removido do código (sem `MP_ACCESS_TOKEN_TEST`, `MP_TEST_PAYER_EMAIL` nem `sandbox_init_point`).
+Passo a passo da virada e do teste com pagamento real: [`mp-producao-checklist.md`](mp-producao-checklist.md).
 
 ## Por que sem `preapproval_plan_id`
 

@@ -462,6 +462,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 36 | Fix: seletor de modelos da natação (✕, só modelos) e selo "Carregar exercícios do treino planejado" só em musculação | ✅ em revisão (sem migration) |
 | 37 | Agenda: cabeçalho mostra o dia selecionado + notificação "Ciclo encerrado" no sino (botão Encerrar mês) | ✅ em revisão — **rodar migration `20261033…` antes do merge** (só a notificação; o cabeçalho não depende dela) |
 | 38 | Cadastro/Configurações com CEP (ViaCEP) → bairro, cidade e UF; coluna `bairro` em professionals | ✅ em revisão — **rodar migration `20261034…` antes do merge** |
+| 39 | Mercado Pago só em produção (sem fallback de sandbox) + checklist — `docs/mp-producao-checklist.md` | ✅ em revisão — **secrets, webhook no painel e redeploy de `mp-subscribe`/`mp-webhook`** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
