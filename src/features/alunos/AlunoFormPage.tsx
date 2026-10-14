@@ -25,6 +25,7 @@ import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/Horar
 import { hojeSP, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
+import { payloadDistancia, validarDistancia } from '@/features/financeiro/distancia'
 import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { linkWhatsApp } from '@/lib/whatsapp'
@@ -271,6 +272,11 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
         setErroCobranca('Informe um valor maior que zero')
         return
       }
+      const erroDistancia = cobrancaAtiva ? validarDistancia(cobrancaValor) : null
+      if (erroDistancia) {
+        setErroCobranca(erroDistancia)
+        return
+      }
       setErroCobranca(null)
       setEtapa((e) => e + 1)
       return
@@ -305,6 +311,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             valor_mensal: cobrancaValor.modelo === 'mensal' ? valorNum : null,
             dia_ciclo: Number(cobrancaValor.diaCicloTexto) || 1,
             dias_vencimento: Number(cobrancaValor.diasVencimentoTexto) || 0,
+            ...payloadDistancia(cobrancaValor),
           })
         } catch (e) {
           setErroCobranca(`Aluno salvo, mas houve um erro ao salvar a cobrança: ${(e as Error).message}`)

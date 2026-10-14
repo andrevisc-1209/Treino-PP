@@ -3,6 +3,7 @@ import { Pencil } from 'lucide-react'
 import { Button, BottomSheet } from '@/components/ui'
 import { formatarBRL } from '@/lib/moeda'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from './CobrancaForm'
+import { payloadDistancia, validarDistancia } from './distancia'
 import { useAlunoCobranca, useSalvarAlunoCobranca, type AlunoCobranca } from './api'
 
 function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
@@ -11,6 +12,8 @@ function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
     valorTexto: String(c.modelo === 'por_aula' ? (c.valor_aula ?? '') : (c.valor_mensal ?? '')),
     diaCicloTexto: String(c.dia_ciclo),
     diasVencimentoTexto: String(c.dias_vencimento),
+    cobrarDistancia: !!c.cobrar_distancia,
+    valorDistanciaTexto: c.valor_distancia != null ? String(c.valor_distancia) : '',
   }
 }
 
@@ -42,6 +45,11 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
       setErro('Dia do ciclo deve ser entre 1 e 28')
       return
     }
+    const erroDistancia = validarDistancia(valor)
+    if (erroDistancia) {
+      setErro(erroDistancia)
+      return
+    }
     setErro(null)
     salvar.mutate(
       {
@@ -51,6 +59,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
         valor_mensal: valor.modelo === 'mensal' ? valorNum : null,
         dia_ciclo: diaCiclo,
         dias_vencimento: diasVencimento || 0,
+        ...payloadDistancia(valor),
       },
       { onSuccess: () => setEditando(false), onError: (e) => setErro((e as Error).message) },
     )
@@ -78,6 +87,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
           ) : (
             <>{formatarBRL(cobranca.valor_mensal ?? 0)} por mês</>
           )}
+          {cobranca.modelo === 'por_aula' && cobranca.cobrar_distancia && cobranca.valor_distancia != null && <> · {formatarBRL(cobranca.valor_distancia)} por treino à distância</>}
           {' · '}ciclo a partir do dia {cobranca.dia_ciclo} · vence {cobranca.dias_vencimento} dias após fechar
         </p>
       )}

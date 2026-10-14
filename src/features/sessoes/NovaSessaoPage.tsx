@@ -95,7 +95,7 @@ export function NovaSessaoPage() {
   const [avisoPendente, setAvisoPendente] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [presencial, setPresencial] = useState<PlanoParaExecucao | null>(null)
-  // treino de outra modalidade escolhido (do aluno ou planejado): pergunta presencial/assíncrono antes de iniciar
+  // treino de outra modalidade escolhido (do aluno ou planejado): pergunta presencial/à distância antes de iniciar
   const [escolhaSessao, setEscolhaSessao] = useState<{ plano: Plano } | { modelo: Modelo } | null>(null)
   const [abrindoOutra, setAbrindoOutra] = useState(false)
   const enviarAoAluno = useEnviarTreinoAoAluno(id ?? '')
@@ -383,7 +383,7 @@ export function NovaSessaoPage() {
                 .filter(Boolean)
                 .join(', ')
               if (!temExercicios && p.modalidade && p.modalidade !== 'musculacao') {
-                // treino de outra modalidade (sem lista de exercícios): pergunta presencial/assíncrono antes de iniciar
+                // treino de outra modalidade (sem lista de exercícios): pergunta presencial/à distância antes de iniciar
                 return (
                   <button
                     key={p.id}
@@ -393,7 +393,7 @@ export function NovaSessaoPage() {
                     <p className="font-medium">{p.name}</p>
                     <p className="text-sm text-slate-500">
                       {MODALIDADES_CONFIG[p.modalidade].emoji} {MODALIDADES_CONFIG[p.modalidade].label}
-                      {p.tipo_execucao === 'assincrono' ? ' · assíncrono' : ' · presencial'}
+                      {p.tipo_execucao === 'assincrono' ? ' · à distância' : ' · presencial'}
                     </p>
                   </button>
                 )
@@ -485,7 +485,7 @@ export function NovaSessaoPage() {
                     .filter(Boolean)
                     .join(', ')
                   if (outraMod) {
-                    // sem exercícios do app: pergunta presencial/assíncrono; o treino é criado no aluno ao iniciar
+                    // sem exercícios do app: pergunta presencial/à distância; o treino é criado no aluno ao iniciar
                     return (
                       <button
                         key={m.id}
@@ -495,7 +495,7 @@ export function NovaSessaoPage() {
                         <p className="font-medium">{m.name}</p>
                         <p className="text-sm text-slate-500">
                           {MODALIDADES_CONFIG[m.modalidade].emoji} {MODALIDADES_CONFIG[m.modalidade].label}
-                          {m.tipo_execucao === 'assincrono' ? ' · assíncrono' : ' · presencial'}
+                          {m.tipo_execucao === 'assincrono' ? ' · à distância' : ' · presencial'}
                         </p>
                       </button>
                     )

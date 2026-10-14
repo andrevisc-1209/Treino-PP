@@ -143,5 +143,32 @@ Deno.serve(async (req) => {
   })
   if (errNotif) console.error('treino-publico: treino registrado, mas a notificação falhou', errNotif.message)
 
+  // Cobrança do treino à distância: só no modelo "por aula" e com a opção ligada para este aluno. Falhar aqui não derruba o
+  // registro do aluno (o treino já foi gravado); o personal ainda pode marcar a aula na agenda.
+  try {
+    const { data: cobranca } = await admin
+      .from('aluno_cobranca')
+      .select('modelo, ativo, cobrar_distancia, valor_distancia')
+      .eq('aluno_id', link.aluno_id)
+      .maybeSingle()
+    if (cobranca?.ativo && cobranca.modelo === 'por_aula' && cobranca.cobrar_distancia && cobranca.valor_distancia != null) {
+      const { data: aula, error: errAula } = await admin
+        .from('aulas')
+        .insert({ professional_id: link.professional_id, horario_id: null, starts_at: agora, original_starts_at: null, duration_min: 1, local: null, status: 'realizada', tipo: 'distancia' })
+        .select('id')
+        .single()
+      if (errAula || !aula) throw new Error(errAula?.message ?? 'aula não criada')
+      const { error: errPart } = await admin
+        .from('aula_participantes')
+        .insert({ aula_id: aula.id, aluno_id: link.aluno_id, status: 'presente', cobrar: true, valor: cobranca.valor_distancia, execucao_id: execucao.id })
+      if (errPart) {
+        await admin.from('aulas').delete().eq('id', aula.id)
+        throw new Error(errPart.message)
+      }
+    }
+  } catch (e) {
+    console.error('treino-publico: treino registrado, mas a cobrança à distância falhou', (e as Error).message)
+  }
+
   return json(req, { estado: 'concluido' })
 })

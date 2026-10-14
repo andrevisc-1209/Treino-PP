@@ -10,7 +10,7 @@ import { cicloAtual, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { mapearErroSupabase } from '@/lib/erros'
-import { CicloJaFechadoError, paraItemRecibo, useAlunoCobranca, useFaturaDoCiclo, useFecharCiclo, useParticipacoesAbertas } from './api'
+import { CicloJaFechadoError, paraItemRecibo, useAlunoCobranca, useFaturaDoCiclo, useFecharCiclo, useParticipacoesAbertas, useTreinosADistanciaNoPeriodo } from './api'
 import type { ItemRecibo } from './recibo'
 import { BotaoRelatorio } from './BotaoRelatorio'
 import { rotuloAulaCiclo, rotuloModalidade, type DadosRelatorio } from './relatorio'
@@ -41,6 +41,7 @@ export function FecharCicloPage() {
   const ciclo = useMemo(() => (cobranca ? cicloAtual(cobranca.dia_ciclo, referencia) : null), [cobranca, referencia])
 
   const { data: faturaExistente } = useFaturaDoCiclo(id, ciclo?.inicio)
+  const { data: treinosADistancia } = useTreinosADistanciaNoPeriodo(cobranca?.modelo === 'mensal' ? id : undefined, ciclo?.inicio, ciclo?.fim)
 
   const itensDoCiclo = useMemo(() => {
     if (!participacoes || !ciclo) return []
@@ -77,7 +78,7 @@ export function FecharCicloPage() {
   const cicloNaoTerminou = ciclo ? hoje < ciclo.fim : false
 
   const itensDoRelatorio = (cobranca?.modelo === 'mensal' ? itensDoCiclo : itensIncluidos)
-    .map((i) => paraItemRecibo({ id: i.id, status: i.status, valor: Number((valores[i.id] ?? '0').replace(',', '.')) || 0, aula: i.aula, sessao: i.sessao }))
+    .map((i) => paraItemRecibo({ id: i.id, status: i.status, valor: Number((valores[i.id] ?? '0').replace(',', '.')) || 0, aula: i.aula, execucao: i.execucao, sessao: i.sessao }))
     .filter((i): i is ItemRecibo => !!i)
 
   const dadosRelatorio: DadosRelatorio | null =
@@ -92,6 +93,7 @@ export function FecharCicloPage() {
           ajuste,
           ajusteDescricao: ajusteDescricao.trim() || null,
           total,
+          treinosADistancia: cobranca.modelo === 'mensal' ? (treinosADistancia ?? 0) : undefined,
         }
       : null
 
@@ -176,10 +178,10 @@ export function FecharCicloPage() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className={cn('text-sm font-medium', !incluidos[item.id] && 'text-slate-400 line-through')}>
-                        {item.aula ? rotuloAulaCiclo(item.aula.starts_at, item.aula.duration_min) : '—'}
+                        {item.aula ? rotuloAulaCiclo(item.aula.starts_at, item.aula.duration_min, item.aula.tipo === 'distancia') : '—'}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {[ROTULO_STATUS[item.status] ?? item.status, rotuloModalidade(item.sessao?.plano?.modalidade), item.aula?.local?.trim()].filter(Boolean).join(' · ')}
+                        {[ROTULO_STATUS[item.status] ?? item.status, rotuloModalidade(item.sessao?.plano?.modalidade ?? item.execucao?.modalidade), item.aula?.local?.trim()].filter(Boolean).join(' · ')}
                       </p>
                     </div>
                     <div className="w-24 shrink-0">
@@ -203,6 +205,7 @@ export function FecharCicloPage() {
               <h2 className="font-semibold">Mensalidade</h2>
               <p className="text-sm text-slate-500">
                 {itensDoCiclo.length} aula{itensDoCiclo.length === 1 ? '' : 's'} no ciclo (informativo — o valor cobrado é fixo)
+                {treinosADistancia ? ` · ${treinosADistancia} treino${treinosADistancia === 1 ? '' : 's'} à distância (não cobrado${treinosADistancia === 1 ? '' : 's'} à parte)` : ''}
               </p>
               <p className="text-lg font-semibold">{formatarBRL(cobranca.valor_mensal ?? 0)}</p>
             </div>

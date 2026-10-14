@@ -314,7 +314,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                       {cfgMod.emoji} {cfgMod.label}
                     </span>
                     {p.tipo_execucao === 'assincrono' && (
-                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">📤 Assíncrono</span>
+                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">📤 À distância</span>
                     )}
                   </p>
                   <p className="text-sm text-slate-500">
@@ -404,7 +404,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                   <p className="font-medium">{m.name}</p>
                   <p className="text-sm text-slate-500">
                     {outraMod
-                      ? `${MODALIDADES_CONFIG[m.modalidade].emoji} ${MODALIDADES_CONFIG[m.modalidade].label}${m.tipo_execucao === 'assincrono' ? ' · assíncrono' : ''}`
+                      ? `${MODALIDADES_CONFIG[m.modalidade].emoji} ${MODALIDADES_CONFIG[m.modalidade].label}${m.tipo_execucao === 'assincrono' ? ' · à distância' : ''}`
                       : `${m.modelo_exercicios.length} exercícios`}
                   </p>
                 </button>
@@ -556,7 +556,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
       <BottomSheet open={!!recemCriado} onClose={() => setRecemCriado(null)} title="Treino criado">
         <div className="space-y-3">
           <p className="text-sm text-slate-600">
-            {recemCriado && `${MODALIDADES_CONFIG[recemCriado.modalidade].emoji} "${recemCriado.name}" é assíncrono: envie para o aluno fazer por conta.`}
+            {recemCriado && `${MODALIDADES_CONFIG[recemCriado.modalidade].emoji} "${recemCriado.name}" é um treino à distância: envie para o aluno fazer por conta.`}
           </p>
           <Button
             onClick={() => {

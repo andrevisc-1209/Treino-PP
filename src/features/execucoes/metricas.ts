@@ -81,7 +81,12 @@ export function textoMetrica(modalidade: ModalidadeTipo, d: DetalhesExecucao | n
     default:
       partes.push(fmt(m.valor, m.unidade))
   }
-  return partes.filter(Boolean).join(' · ') || 'Sem resultado preenchido'
+  const resumo = partes.filter(Boolean).join(' · ')
+  if (resumo) return resumo
+  // Sem números de resultado, mas com o checklist do treino marcado: mostra o quanto foi feito.
+  const itens = Array.isArray(d?.exercicios_livres) ? d.exercicios_livres : []
+  if (itens.length > 0) return `${itens.filter((i) => i.feito).length}/${itens.length} itens feitos`
+  return 'Sem resultado preenchido'
 }
 
 /** Pontos do gráfico (mais antigo → mais novo), só execuções que têm a métrica. */

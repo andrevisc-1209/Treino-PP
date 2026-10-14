@@ -222,7 +222,7 @@ export function ModelosPage() {
                       {cfgMod.emoji} {cfgMod.label}
                     </span>
                     {m.tipo_execucao === 'assincrono' && (
-                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">📤 Assíncrono</span>
+                      <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">📤 À distância</span>
                     )}
                   </p>
                   {outraMod ? (

@@ -53,7 +53,7 @@
   src/lib/format.ts).
 - Nada de confirm() nativo: usar ConfirmSheet ou toast com "Desfazer".
 - Vocabulário: Aula (agenda), Treino (lista de exercícios), Treino planejado (modelo
-  reutilizável), Prontidão (antes do treino), Personal (nunca "professor" na interface).
+  reutilizável), Prontidão (antes do treino), Treino à distância (nunca "assíncrono" na interface), Personal (nunca "professor" na interface).
 
 ## Backlog
 - Ao final de cada tarefa, atualizar o status dos itens em docs/BACKLOG.md na mesma PR.

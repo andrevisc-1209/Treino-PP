@@ -17,6 +17,8 @@ export type ItemRecibo = {
   data_sessao: string | null
   /** Duração gravada da sessão (min), se houve sessão e foi informada. */
   duracao_sessao_min?: number | null
+  /** Treino feito pelo aluno à distância (pelo link) e cobrado como aula. */
+  a_distancia?: boolean
   /** Exercícios com ao menos uma série concluída na sessão. */
   exercicios_feitos?: number
   /** Séries concluídas na sessão. */

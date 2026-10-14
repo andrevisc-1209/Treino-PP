@@ -1,4 +1,4 @@
-export const TERMO_VERSAO = '1.3'
+export const TERMO_VERSAO = '1.4'
 
 export const TERMO_AVISO = 'Modelo inicial — revisar com assessoria jurídica.'
 
@@ -23,7 +23,7 @@ Registro do aceite
 Ao confirmar, registramos a data e a hora, a versão deste termo e o endereço IP do aparelho usado, apenas como comprovação do seu consentimento. Essas informações ficam guardadas junto ao registro do consentimento e não são exibidas ao profissional.
 
 Prazo de guarda
-Os dados são mantidos enquanto durar o acompanhamento do aluno pelo profissional, podendo ser excluídos a pedido a qualquer momento.
+Os dados são mantidos enquanto durar o acompanhamento do aluno pelo profissional, podendo ser excluídos a pedido a qualquer momento. O registro do próprio consentimento (data, hora, versão do termo e IP) é mantido pelo prazo necessário para comprovar o aceite, mesmo depois da exclusão dos demais dados.
 
 Direitos do titular
 A qualquer momento, o titular (ou seu responsável) pode pedir ao profissional acesso, correção ou exclusão dos dados, e revogar este consentimento (LGPD, art. 18). A revogação pode ser solicitada diretamente ao profissional, sem necessidade de justificativa.`

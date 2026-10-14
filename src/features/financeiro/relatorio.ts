@@ -9,9 +9,9 @@ import { frequenciaSemanal, metricasDeTreino, notasPorTreino, ordenarItens, resu
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] as const
 
 /** "Ter, 15/10 · 12:30–13:30" */
-export function rotuloAulaCiclo(startsAt: string, durationMin: number): string {
+export function rotuloAulaCiclo(startsAt: string, durationMin: number, aDistancia = false): string {
   const dia = dataSP(startsAt)
-  return `${nomeDiaCurto(dia)}, ${formatarDataCurta(dia)} · ${formatarHoraInicioFim(startsAt, durationMin)}`
+  return `${nomeDiaCurto(dia)}, ${formatarDataCurta(dia)} · ${aDistancia ? 'treino à distância' : formatarHoraInicioFim(startsAt, durationMin)}`
 }
 
 /** "Musculação" a partir da modalidade do treino da sessão; null se a aula não teve sessão (falta, cancelamento…). */
@@ -39,6 +39,8 @@ export type DadosRelatorio = {
   ajuste: number
   ajusteDescricao: string | null
   total: number
+  /** modelo mensal: quantidade de treinos que o aluno fez à distância no ciclo (não cobrados por treino; só informativo) */
+  treinosADistancia?: number
   /** data (aaaa-mm-dd) impressa no rodapé; padrão: hoje (America/Sao_Paulo) */
   geradoEm?: string
 }
@@ -72,7 +74,7 @@ export function linhasDaTabela(d: DadosRelatorio): string[][] {
     const dia = dataSP(i.starts_at)
     return [
       `${nomeDiaCurto(dia)}, ${dm(dia)}`,
-      formatarHoraInicioFim(i.starts_at, i.duration_min).replace('–', '-'),
+      i.a_distancia ? 'À distância' : formatarHoraInicioFim(i.starts_at, i.duration_min).replace('–', '-'),
       i.status !== 'presente' ? ROTULO_STATUS[i.status] : (rotuloModalidade(i.modalidade) ?? ''),
       i.local?.trim() ?? '',
       d.modelo === 'mensal' || i.valor == null ? '-' : formatarBRL(i.valor),
@@ -94,8 +96,9 @@ export type Tile = { valor: string; rotulo: string }
 export function tilesResumo(d: DadosRelatorio): Tile[] {
   const r = resumoRecibo(d.itens)
   const locais: Tile = r.locais.length === 1 ? { valor: r.locais[0], rotulo: 'Local' } : r.locais.length === 0 ? { valor: '—', rotulo: 'Local' } : { valor: String(r.locais.length), rotulo: 'Locais diferentes' }
+  const aDistancia = d.itens.filter((i) => i.status === 'presente' && i.a_distancia).length
   return [
-    { valor: String(r.aulasRealizadas), rotulo: 'Aulas realizadas' },
+    { valor: String(r.aulasRealizadas), rotulo: aDistancia > 0 ? `Aulas (${aDistancia} à distância)` : 'Aulas realizadas' },
     { valor: formatarBRL(d.total), rotulo: 'Valor total do ciclo' },
     { valor: String(r.diasUnicos), rotulo: 'Dias treinados' },
     locais,
@@ -113,11 +116,13 @@ export function formatarDuracao(minutos: number): string {
 /** Totais dos treinos do ciclo; vazio quando não há dado gravado (a seção inteira é omitida). */
 export function tilesTreino(d: DadosRelatorio): Tile[] {
   const m = metricasDeTreino(d.itens)
-  if (!m) return []
+  const distancia: Tile[] = d.treinosADistancia && d.treinosADistancia > 0 ? [{ valor: String(d.treinosADistancia), rotulo: d.treinosADistancia === 1 ? 'Treino à distância' : 'Treinos à distância' }] : []
+  if (!m) return distancia
   return [
     ...(m.exercicios > 0 ? [{ valor: String(m.exercicios), rotulo: m.exercicios === 1 ? 'Exercício realizado' : 'Exercícios realizados' }] : []),
     ...(m.series > 0 ? [{ valor: String(m.series), rotulo: m.series === 1 ? 'Série executada' : 'Séries executadas' }] : []),
     ...(m.minutos > 0 ? [{ valor: formatarDuracao(m.minutos), rotulo: 'Tempo de treino' }] : []),
+    ...distancia,
   ]
 }
 
