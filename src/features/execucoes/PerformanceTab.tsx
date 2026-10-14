@@ -8,6 +8,7 @@ import { hojeSP, dataSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarDataBR, formatarNumero } from '@/lib/format'
 import { descreverExecucao, MODALIDADES, MODALIDADES_CONFIG, type ModalidadeTipo } from '@/types/modalidades'
 import { useExecucoes, type Execucao } from './api'
+import { VolumeSemanal } from './VolumeSemanal'
 import { metricaPrincipal, pontosGrafico, rotuloDias, semanasSeguidasAtuais, textoMetrica } from './metricas'
 
 function Cartao({ titulo, valor, sub }: { titulo: string; valor: string; sub?: string }) {
@@ -60,7 +61,7 @@ export function PerformanceTab({ alunoId }: { alunoId: string }) {
 
   if (isLoading) return <ListaSkeleton />
   if (error) return <p className="text-red-600">{mapearErroSupabase(error)}</p>
-  if (!modalidade) return <p className="text-sm text-slate-500">Nenhuma execução registrada ainda.</p>
+  if (!modalidade) return <VolumeSemanal execucoes={concluidas} />
 
   // unidade e rótulo dependem só da modalidade
   const { unidade, rotulo } = metricaPrincipal(modalidade, undefined)
@@ -72,6 +73,8 @@ export function PerformanceTab({ alunoId }: { alunoId: string }) {
 
   return (
     <div className="space-y-4">
+      <VolumeSemanal execucoes={concluidas} />
+
       <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Modalidade">
         {modalidades.map((m) => (
           <button

@@ -131,3 +131,14 @@ Migration `20261025000000_corrida_ciclismo_brick.sql` (só `brick` é novo no en
   velocidade média, RPE 1–10 e comentário; no brick, campos separados de bike e corrida. Fica em `detalhes_execucao.resultado`.
   **Exige redeploy de `treino-publico`** (a validação do servidor só aceita campos conhecidos).
 - TODO (fase 2): upload de arquivo `.fit` (Garmin/COROS/Apple Watch).
+
+# Perfil de triatleta e volume semanal
+
+Migration `20261026000000_triathlon_perfil.sql` (`treino.alunos`: `modalidade_foco`, `prova_alvo`, `data_prova`).
+
+- **Objetivo esportivo** (bloco colapsável na etapa "Dados" do cadastro/edição do aluno): modalidade foco (Triathlon, Corrida,
+  Natação, Ciclismo), prova alvo (triathlon: Sprint/Olímpico/70.3/Ironman; corrida: 5 km/10 km/meia/maratona) e data. Na ficha: linha
+  em "Dados" e, com a prova no futuro, o selo `🏁 Ironman · 47 dias` no topo.
+- **Volume semanal** (aba Performance): barras empilhadas (natação/ciclismo/corrida, em km) das últimas 8 semanas (seg–dom, SP; "Sem 41")
+  e totais da semana atual. Conta o **realizado** (resultado registrado: natação `distancia_total_m` → km; corrida/ciclismo `distancia_km`;
+  brick = bike + corrida em separado); ciclismo indoor sem distância soma minutos, mostrado à parte. Musculação não entra.

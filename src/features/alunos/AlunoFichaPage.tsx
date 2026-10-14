@@ -28,6 +28,8 @@ import { rotuloBadge, rotuloObjetivos } from './format'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { mapearErroSupabase } from '@/lib/erros'
+import { hojeSP } from '@/lib/datas'
+import { badgeProva, rotuloFoco, rotuloProva } from './provaAlvo'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Performance', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -265,6 +267,10 @@ export function AlunoFichaPage() {
           <div className="mb-4 space-y-2">
             {demograficos.length > 0 && <p className="text-sm text-slate-500">{demograficos.join(' · ')}</p>}
 
+            {badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP()) && (
+              <p className="inline-block rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-hover">{badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP())}</p>
+            )}
+
             {alertasSaude.length > 0 && (
               <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3">
                 <TriangleAlert size={16} className="mt-0.5 shrink-0 text-amber-700" />
@@ -321,6 +327,12 @@ export function AlunoFichaPage() {
               <dd className="truncate">{aluno.email ?? '—'}</dd>
               <dt className="text-slate-500">Medicamentos</dt>
               <dd>{aluno.medications ?? '—'}</dd>
+              {(aluno.modalidade_foco || aluno.data_prova) && (
+                <>
+                  <dt className="text-slate-500">Objetivo esportivo</dt>
+                  <dd>{[rotuloFoco(aluno.modalidade_foco), rotuloProva(aluno.prova_alvo), aluno.data_prova ? formatarDataBR(aluno.data_prova) : null].filter(Boolean).join(' · ') || '—'}</dd>
+                </>
+              )}
             </dl>
           </div>
 
