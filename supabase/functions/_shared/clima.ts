@@ -33,11 +33,17 @@ export function condicao(codigo: number): { texto: string; emoji: string } {
 
 export type Previsao = { temp: number; sensacao: number; vento: number; chuvaProb: number; uv: number }
 
-/** Dica curta para treinar ao ar livre hoje. */
+/**
+ * Recado curto, em tom de colega, para o treino de hoje. Prioridade: chuva quase certa > chuva provável > calor > UV > vento >
+ * dia bom > neutro.
+ */
 export function dicaTreino(p: Previsao): string {
-  if (p.chuvaProb >= 60) return 'Chuva provável — considere treino indoor ou remarcar o outdoor.'
-  if (p.sensacao >= 34 || p.temp >= 32) return 'Calor forte — prefira cedo ou à noite e reforce a hidratação.'
-  if (p.uv >= 8) return 'UV alto — evite o treino outdoor entre 10h e 16h.'
-  if (p.vento >= 35) return 'Vento forte — atenção em bike e natação em mar aberto.'
-  return 'Boas condições para treinar ao ar livre.'
+  if (p.chuvaProb >= 70) return 'Vai chover. Melhor treino indoor hoje'
+  if (p.chuvaProb >= 40) return 'Chance de chuva — vale ter um plano B'
+  if (p.temp >= 35 || p.sensacao >= 35) return 'Calor pesado — hidrata bem os alunos'
+  if (p.uv >= 8) return 'UV alto hoje — melhor treinar cedo ou depois das 16h'
+  if (p.vento >= 35) return 'Vento forte hoje — cuidado com atividades ao ar livre'
+  // dia bom: sem chuva à vista, temperatura agradável, UV e vento tranquilos
+  if (p.chuvaProb < 20 && p.temp >= 18 && p.temp <= 29 && p.uv < 6 && p.vento < 20) return 'Dia perfeito pra treino ao ar livre!'
+  return 'Condições ok pra treinar hoje'
 }
