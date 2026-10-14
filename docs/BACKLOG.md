@@ -459,6 +459,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 33 | Modelos de natação migrados de TypeScript para `treino.templates_treino` (mesmos 10 modelos, mesma UX) | ✅ em revisão — **rodar migration `20261031…` antes do merge** |
 | 34 | "Novo exercício" para todas as modalidades (Modalidade > Tipo > Exercício), com filtro por modalidade na aba Exercícios — `docs/MODALIDADES.md` | ✅ em revisão — **rodar migration `20261032…` antes do merge** |
 | 35 | "Meus exercícios" no seletor de corrida, ciclismo e brick (vira bloco do treino) + ✕ para fechar o seletor de modelos — `docs/MODALIDADES.md` | ✅ em revisão (sem migration; usa a `20261032…` da PR de exercícios) |
+| 36 | Fix: seletor de modelos da natação (✕, só modelos) e selo "Carregar exercícios do treino planejado" só em musculação | ✅ em revisão (sem migration) |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
