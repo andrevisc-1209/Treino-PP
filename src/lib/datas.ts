@@ -145,3 +145,13 @@ export function diasEntre(deISO: string, ateISO: string): number {
   const ms = Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)
   return Math.round(ms / 86_400_000)
 }
+
+/** Rótulo do dia no cabeçalho da Agenda: "Hoje" ou "Qui, 15/10". */
+export function rotuloDiaAgenda(dataISO: string, hojeISO: string): string {
+  return dataISO === hojeISO ? 'Hoje' : `${nomeDiaCurto(dataISO)}, ${formatarDataCurta(dataISO)}`
+}
+
+/** Rótulo da semana no cabeçalho da Agenda: "Esta semana" ou "12/10–18/10". */
+export function rotuloSemanaAgenda(inicioSemanaISO: string, hojeISO: string): string {
+  return inicioSemanaISO === inicioDaSemanaSP(hojeISO) ? 'Esta semana' : `${formatarDataCurta(inicioSemanaISO)}–${formatarDataCurta(somarDiasISO(inicioSemanaISO, 6))}`
+}

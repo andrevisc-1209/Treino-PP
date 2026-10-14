@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { MODALIDADES_CONFIG, ehModalidade, type ModalidadeTipo } from '@/types/modalidades'
+import type { PayloadCiclo } from './ciclo'
 
 export type Notificacao = {
   id: string
   aluno_id: string
-  tipo: 'treino_concluido'
+  tipo: 'treino_concluido' | 'ciclo_encerrado'
   lida: boolean
-  payload: { execucao_id?: string; plano_nome?: string; modalidade?: ModalidadeTipo; tem_notas?: boolean }
+  payload: { execucao_id?: string; plano_nome?: string; modalidade?: ModalidadeTipo; tem_notas?: boolean } & PayloadCiclo
   criada_em: string
   aluno: { name: string } | null
 }
@@ -102,8 +103,12 @@ export function useNotificacoesRealtime(professionalId: string | undefined) {
           qc.invalidateQueries({ queryKey: ['notificacoes-nao-lidas'] })
           qc.invalidateQueries({ queryKey: ['atividade-recente'] })
           qc.invalidateQueries({ queryKey: ['ultima-execucao-por-aluno'] })
-          const nova = evento.new as { aluno_id: string; payload?: Notificacao['payload'] }
+          const nova = evento.new as { aluno_id: string; tipo?: Notificacao['tipo']; payload?: Notificacao['payload'] }
           const { data } = await supabase.from('alunos').select('name').eq('id', nova.aluno_id).maybeSingle()
+          if (nova.tipo === 'ciclo_encerrado') {
+            mostrarInfoGlobal(`Ciclo encerrado — ${data?.name ?? 'aluno'}`)
+            return
+          }
           const m = nova.payload?.modalidade
           mostrarInfoGlobal(`${data?.name ?? 'Um aluno'} concluiu o treino de ${m && ehModalidade(m) ? MODALIDADES_CONFIG[m].emoji : '💪'}`)
         },
@@ -111,6 +116,26 @@ export function useNotificacoesRealtime(professionalId: string | undefined) {
       .subscribe()
     return () => {
       supabase.removeChannel(canal)
+    }
+  }, [professionalId, qc])
+}
+
+/**
+ * Pede ao banco para criar as notificações de "Ciclo encerrado" pendentes (não há agendador: o fechamento de ciclo é manual).
+ * Roda uma vez por abertura do app autenticado; se a migration ainda não foi aplicada, falha em silêncio.
+ */
+export function useGerarNotificacoesCiclo(professionalId: string | undefined) {
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!professionalId) return
+    let ativo = true
+    supabase.rpc('gerar_notificacoes_ciclo').then(({ data, error }) => {
+      if (!ativo || error || !data) return
+      qc.invalidateQueries({ queryKey: ['notificacoes'] })
+      qc.invalidateQueries({ queryKey: ['notificacoes-nao-lidas'] })
+    })
+    return () => {
+      ativo = false
     }
   }, [professionalId, qc])
 }

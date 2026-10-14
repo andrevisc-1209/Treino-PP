@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { formatarHoraInicioFim, hojeSP, somarDias } from '@/lib/datas'
@@ -14,6 +14,7 @@ const ROTULO_STATUS: Record<string, string> = { presente: 'Presente', falta: 'Fa
 export function FecharCicloPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { data: aluno } = useAluno(id)
   const { data: cobranca, isLoading: cobrancaLoading } = useAlunoCobranca(id)
   const { data: participacoes, isLoading: participacoesLoading } = useParticipacoesAbertas(id)
@@ -26,7 +27,10 @@ export function FecharCicloPage() {
   const [erro, setErro] = useState<string | null>(null)
 
   const hoje = hojeSP()
-  const ciclo = useMemo(() => (cobranca ? cicloAtual(cobranca.dia_ciclo, hoje) : null), [cobranca, hoje])
+  // ?ref=aaaa-mm-dd (vindo da notificação "Ciclo encerrado") abre o ciclo que contém essa data; sem ele, o ciclo de hoje
+  const refParam = searchParams.get('ref')
+  const referencia = refParam && /^\d{4}-\d{2}-\d{2}$/.test(refParam) && refParam <= hoje ? refParam : hoje
+  const ciclo = useMemo(() => (cobranca ? cicloAtual(cobranca.dia_ciclo, referencia) : null), [cobranca, referencia])
 
   const itensDoCiclo = useMemo(() => {
     if (!participacoes || !ciclo) return []
