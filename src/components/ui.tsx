@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, Ref } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Plus } from 'lucide-react'
+import { Check, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Componentes base mínimos. Podem ser trocados por shadcn/ui depois
@@ -130,18 +130,30 @@ export function BottomSheet({
   onClose,
   title,
   children,
+  mostrarFechar = false,
 }: {
   open: boolean
   onClose: () => void
   title?: string
   children: ReactNode
+  /** ✕ no canto superior direito (por padrão só toque fora fecha) */
+  mostrarFechar?: boolean
 }) {
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end" data-sem-puxar>
       <div className="flex-1 bg-black/30" onClick={onClose} />
       <div className="max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-4 pb-8 shadow-lg">
-        {title && <h2 className="mb-3 text-lg font-semibold">{title}</h2>}
+        {(title || mostrarFechar) && (
+          <div className="mb-3 flex items-start justify-between gap-2">
+            {title ? <h2 className="text-lg font-semibold">{title}</h2> : <span />}
+            {mostrarFechar && (
+              <button type="button" onClick={onClose} aria-label="Fechar" className="-mr-2 -mt-2 flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100">
+                <X size={20} />
+              </button>
+            )}
+          </div>
+        )}
         {children}
       </div>
     </div>

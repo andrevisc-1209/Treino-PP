@@ -8,6 +8,7 @@ import { rotuloAmbienteCiclismo, totalCiclismo, type AmbienteCiclismo, type Bloc
 import { formatarTempo } from '@/types/natacao'
 import { CabecalhoBloco, Chips, SeletorTipoTreino, ZonasFc } from './comum'
 import { numero } from './numero'
+import { useExerciciosParaBloco } from '@/features/exercicios/api'
 
 const TIPOS_SERIES: TipoCiclismo[] = ['hiit', 'piramide', 'subidas', 'sprints']
 const CHIPS_DESCANSO = [30, 60, 90, 120, 180]
@@ -85,9 +86,10 @@ function CartaoBloco({ bloco, ambiente, indice, total, onChange, onMover, onRemo
 }
 
 /** Treino de ciclismo: ambiente (indoor com watts/cadência, outdoor com km/velocidade) e tipos de treino por ambiente. */
-export function CiclismoForm({ dados, onChange, ambienteFixo }: { dados: DadosCiclismo; onChange: (d: DadosCiclismo) => void; ambienteFixo?: AmbienteCiclismo }) {
+export function CiclismoForm({ dados, onChange, ambienteFixo, incluirBrick }: { dados: DadosCiclismo; onChange: (d: DadosCiclismo) => void; ambienteFixo?: AmbienteCiclismo; incluirBrick?: boolean }) {
   const [seletor, setSeletor] = useState(false)
   const ambiente = ambienteFixo ?? dados.ambiente
+  const meus = useExerciciosParaBloco('ciclismo', { ambiente, incluirBrick })
 
   const trocarAmbiente = async (novo: AmbienteCiclismo) => {
     if (novo === dados.ambiente) return
@@ -144,6 +146,11 @@ export function CiclismoForm({ dados, onChange, ambienteFixo }: { dados: DadosCi
         onClose={() => setSeletor(false)}
         onEscolher={(id) => {
           onChange({ ...dados, blocos: [...dados.blocos, novoBloco(id as TipoCiclismo, ambiente)] })
+          setSeletor(false)
+        }}
+        meus={meus}
+        onEscolherExercicio={(e) => {
+          onChange({ ...dados, blocos: [...dados.blocos, { ...novoBloco(e.tipoId as TipoCiclismo, ambiente), nome: e.nome, exercicio_id: e.id }] })
           setSeletor(false)
         }}
       />

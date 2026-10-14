@@ -10,7 +10,7 @@ export function BrickForm({ dados, onChange }: { dados: DadosBrick; onChange: (d
     <div className="space-y-4">
       <section className="space-y-3 rounded-2xl border border-slate-200 p-3">
         <h3 className="font-semibold">🚴 Ciclismo</h3>
-        <CiclismoForm dados={{ ambiente: 'outdoor', blocos: dados.blocos_bike }} ambienteFixo="outdoor" onChange={(c) => onChange({ ...dados, blocos_bike: c.blocos })} />
+        <CiclismoForm dados={{ ambiente: 'outdoor', blocos: dados.blocos_bike }} ambienteFixo="outdoor" incluirBrick onChange={(c) => onChange({ ...dados, blocos_bike: c.blocos })} />
       </section>
 
       <div className="rounded-2xl bg-slate-50 p-3">
@@ -32,7 +32,7 @@ export function BrickForm({ dados, onChange }: { dados: DadosBrick; onChange: (d
 
       <section className="space-y-3 rounded-2xl border border-slate-200 p-3">
         <h3 className="font-semibold">🏃 Corrida</h3>
-        <CorridaForm dados={{ blocos: dados.blocos_corrida }} onChange={(c) => onChange({ ...dados, blocos_corrida: c.blocos })} />
+        <CorridaForm dados={{ blocos: dados.blocos_corrida }} incluirBrick onChange={(c) => onChange({ ...dados, blocos_corrida: c.blocos })} />
       </section>
     </div>
   )

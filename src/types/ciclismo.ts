@@ -21,6 +21,8 @@ export interface BlocoCiclismo {
   tempo_serie?: number // segundos
   descanso?: number // segundos
   observacao?: string
+  /** bloco criado a partir de um exercício do personal (treino.exercicios) */
+  exercicio_id?: string
 }
 
 export interface DadosCiclismo {

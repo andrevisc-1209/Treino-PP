@@ -35,6 +35,8 @@ export interface BlocoCorrida {
   // strides
   aceleracoes?: number
   observacao?: string
+  /** bloco criado a partir de um exercício do personal (treino.exercicios) */
+  exercicio_id?: string
 }
 
 export interface DadosCorrida {

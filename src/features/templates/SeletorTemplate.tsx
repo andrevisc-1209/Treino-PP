@@ -35,7 +35,7 @@ function Cartao({ t, onUsar }: { t: TemplateTreino; onUsar: () => void }) {
 export function SeletorTemplate({ modalidade, aberto, onClose, onEscolher }: { modalidade: ModalidadeTipo; aberto: boolean; onClose: () => void; onEscolher: (t: TemplateTreino) => void }) {
   const { data, isLoading, error } = useTemplatesTreino(modalidade, aberto)
   return (
-    <BottomSheet open={aberto} onClose={onClose} title="Modelos prontos">
+    <BottomSheet open={aberto} onClose={onClose} title="Modelos prontos" mostrarFechar>
       <div className="space-y-3">
         {isLoading && <p className="py-4 text-center text-sm text-slate-500">Carregando…</p>}
         {error && <p className="text-sm text-red-600">{mapearErroSupabase(error)}</p>}

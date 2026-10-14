@@ -1,6 +1,9 @@
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { ModalidadeTipo } from '@/types/modalidades'
+import type { AmbienteCiclismo } from '@/types/ciclismo'
+import { exerciciosParaBloco } from './paraBloco'
 import type { ParametroPrincipal } from './tipos'
 
 export type Exercicio = {
@@ -116,4 +119,11 @@ export function useExcluirExercicio() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['exercicios'] }),
   })
+}
+
+/** "Meus exercícios" de corrida/ciclismo (e do brick, quando é a parte do brick) prontos para virar bloco do treino. */
+export function useExerciciosParaBloco(alvo: 'corrida' | 'ciclismo', opcoes: { ambiente?: AmbienteCiclismo; incluirBrick?: boolean } = {}) {
+  const { data } = useExercicios()
+  const { ambiente, incluirBrick } = opcoes
+  return useMemo(() => exerciciosParaBloco(data ?? [], alvo, { ambiente, incluirBrick }), [data, alvo, ambiente, incluirBrick])
 }
