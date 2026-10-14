@@ -19,23 +19,31 @@ export type PerfilProfissional = {
   whatsappOptIn: boolean
   uf: string | null
   cidade: string | null
+  bairro: string | null
 }
 
 /** Nome/CPF/telefone (+ UF/cidade, só pra exibir/editar) — quando nome/CPF/telefone está vazio, o app pede pra completar o cadastro (DefinirSenhaPage/AuthCallbackPage). */
+/** Coluna `bairro` ainda não existe (migration 20261034 não rodou): o app segue funcionando sem ela. */
+const colunaBairroAusente = (e: { code?: string; message?: string } | null): boolean => !!e && (e.code === '42703' || e.code === 'PGRST204' || /bairro/i.test(e.message ?? ''))
+
 export async function buscarPerfilProfissional(userId: string): Promise<PerfilProfissional> {
-  const { data, error } = await supabase.from('professionals').select('name, cpf, phone, whatsapp_opt_in, uf, cidade').eq('id', userId).single()
-  if (error) throw error
-  return { name: data.name ?? '', cpf: data.cpf, phone: data.phone, whatsappOptIn: data.whatsapp_opt_in ?? false, uf: data.uf ?? null, cidade: data.cidade ?? null }
+  let { data, error } = await supabase.from('professionals').select('name, cpf, phone, whatsapp_opt_in, uf, cidade, bairro').eq('id', userId).single()
+  if (colunaBairroAusente(error)) {
+    const r = await supabase.from('professionals').select('name, cpf, phone, whatsapp_opt_in, uf, cidade').eq('id', userId).single()
+    data = r.data ? { ...r.data, bairro: null } : null
+    error = r.error
+  }
+  if (error || !data) throw error
+  return { name: data.name ?? '', cpf: data.cpf, phone: data.phone, whatsappOptIn: data.whatsapp_opt_in ?? false, uf: data.uf ?? null, cidade: data.cidade ?? null, bairro: data.bairro ?? null }
 }
 
 export async function salvarPerfilProfissional(
   userId: string,
-  perfil: { name: string; cpf: string; phone: string; whatsappOptIn: boolean; uf: string; cidade: string },
+  perfil: { name: string; cpf: string; phone: string; whatsappOptIn: boolean; uf: string; cidade: string; bairro?: string },
 ): Promise<void> {
-  const { error } = await supabase
-    .from('professionals')
-    .update({ name: perfil.name, cpf: perfil.cpf, phone: perfil.phone, whatsapp_opt_in: perfil.whatsappOptIn, uf: perfil.uf, cidade: perfil.cidade })
-    .eq('id', userId)
+  const base = { name: perfil.name, cpf: perfil.cpf, phone: perfil.phone, whatsapp_opt_in: perfil.whatsappOptIn, uf: perfil.uf, cidade: perfil.cidade }
+  let { error } = await supabase.from('professionals').update({ ...base, bairro: perfil.bairro?.trim() || null }).eq('id', userId)
+  if (colunaBairroAusente(error)) ({ error } = await supabase.from('professionals').update(base).eq('id', userId))
   if (error) throw error
 }
 
@@ -59,12 +67,13 @@ export function useAtualizarWhatsappOptIn(userId: string) {
   })
 }
 
-/** Estado/cidade do personal, editável depois do cadastro (Configurações). */
+/** CEP → bairro/cidade/UF do personal, editável depois do cadastro (Configurações). */
 export function useSalvarLocalidade(userId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ uf, cidade }: { uf: string; cidade: string }) => {
-      const { error } = await supabase.from('professionals').update({ uf, cidade }).eq('id', userId)
+    mutationFn: async ({ uf, cidade, bairro }: { uf: string; cidade: string; bairro?: string }) => {
+      let { error } = await supabase.from('professionals').update({ uf, cidade, bairro: bairro?.trim() || null }).eq('id', userId)
+      if (colunaBairroAusente(error)) ({ error } = await supabase.from('professionals').update({ uf, cidade }).eq('id', userId))
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['perfil-profissional', userId] }),

@@ -461,6 +461,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 35 | "Meus exercícios" no seletor de corrida, ciclismo e brick (vira bloco do treino) + ✕ para fechar o seletor de modelos — `docs/MODALIDADES.md` | ✅ em revisão (sem migration; usa a `20261032…` da PR de exercícios) |
 | 36 | Fix: seletor de modelos da natação (✕, só modelos) e selo "Carregar exercícios do treino planejado" só em musculação | ✅ em revisão (sem migration) |
 | 37 | Agenda: cabeçalho mostra o dia selecionado + notificação "Ciclo encerrado" no sino (botão Encerrar mês) | ✅ em revisão — **rodar migration `20261033…` antes do merge** (só a notificação; o cabeçalho não depende dela) |
+| 38 | Cadastro/Configurações com CEP (ViaCEP) → bairro, cidade e UF; coluna `bairro` em professionals | ✅ em revisão — **rodar migration `20261034…` antes do merge** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

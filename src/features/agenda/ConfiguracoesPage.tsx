@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Lock, LogOut, ShieldCheck } from 'lucide-react'
 import { Acordeao } from '@/components/Acordeao'
-import { SeletorCidade } from '@/components/SeletorCidade'
+import { LocalizacaoCep, type Localizacao } from '@/components/LocalizacaoCep'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { Button, Field, Input, Switch } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -35,8 +35,7 @@ export function ConfiguracoesPage() {
   const atualizarWhatsapp = useAtualizarWhatsappOptIn(session?.user.id ?? '')
   const salvarLocalidade = useSalvarLocalidade(session?.user.id ?? '')
 
-  const [locUf, setLocUf] = useState('')
-  const [locCidade, setLocCidade] = useState('')
+  const [loc, setLoc] = useState<Localizacao>({ cep: '', bairro: '', cidade: '', uf: '' })
   const [cobrarFalta, setCobrarFalta] = useState(PADRAO.cobrarFalta)
   const [cobrarCancel, setCobrarCancel] = useState(PADRAO.cobrarCancel)
   const [duracao, setDuracao] = useState(PADRAO.duracao)
@@ -51,8 +50,7 @@ export function ConfiguracoesPage() {
 
   useEffect(() => {
     if (perfil) {
-      setLocUf(perfil.uf ?? '')
-      setLocCidade(perfil.cidade ?? '')
+      setLoc({ cep: '', bairro: perfil.bairro ?? '', cidade: perfil.cidade ?? '', uf: perfil.uf ?? '' })
     }
   }, [perfil])
 
@@ -78,7 +76,7 @@ export function ConfiguracoesPage() {
     pixTipo !== ((config?.pix_tipo as PixTipo | null) ?? PADRAO.pixTipo) ||
     pixChave !== (config?.pix_chave ?? PADRAO.pixChave) ||
     pixNome !== (config?.pix_nome ?? PADRAO.pixNome)
-  const localizacaoSuja = !!perfil && (locUf !== (perfil.uf ?? '') || locCidade !== (perfil.cidade ?? ''))
+  const localizacaoSuja = !!perfil && (loc.uf !== (perfil.uf ?? '') || loc.cidade !== (perfil.cidade ?? '') || loc.bairro !== (perfil.bairro ?? ''))
   const algoSujo = aulasSujas || pixSujo || localizacaoSuja
 
   const estaAberta = (id: SecaoId, padrao: boolean) => abertas[id] ?? padrao
@@ -96,7 +94,7 @@ export function ConfiguracoesPage() {
 
   const salvarTudo = async () => {
     const novosErros: Partial<Record<SecaoId, string>> = {}
-    if (localizacaoSuja && (!locUf || !locCidade)) novosErros.localizacao = 'Selecione o estado e a cidade'
+    if (localizacaoSuja && (!loc.uf || !loc.cidade)) novosErros.localizacao = 'Informe o CEP para preencher cidade e estado'
     if (pixSujo) {
       const e = validarPix()
       if (e) novosErros.pix = e
@@ -122,7 +120,7 @@ export function ConfiguracoesPage() {
         cfg.pix_nome = normalizarNomePix(pixNome)
       }
       if (Object.keys(cfg).length > 0) await salvarConfig.mutateAsync(cfg)
-      if (localizacaoSuja) await salvarLocalidade.mutateAsync({ uf: locUf, cidade: locCidade })
+      if (localizacaoSuja) await salvarLocalidade.mutateAsync({ uf: loc.uf, cidade: loc.cidade, bairro: loc.bairro })
       mostrarInfoGlobal('Alterações salvas.')
       ;(document.activeElement as HTMLElement | null)?.blur()
     } catch (e) {
@@ -179,16 +177,16 @@ export function ConfiguracoesPage() {
             onAlternar={() => alternar('localizacao', semLocalizacao)}
             alterado={localizacaoSuja}
           >
-            <SeletorCidade
-              uf={locUf}
-              cidade={locCidade}
-              onChange={(uf, cidade) => {
-                setLocUf(uf)
-                setLocCidade(cidade)
+            <LocalizacaoCep
+              valor={loc}
+              preservarSalvo
+              onChange={(patch) => {
+                setLoc((l) => ({ ...l, ...patch }))
                 setErros((e) => ({ ...e, localizacao: undefined }))
               }}
             />
-            {semLocalizacao && <p className="text-sm text-amber-700">Informe seu estado e cidade — são obrigatórios no cadastro.</p>}
+            {!semLocalizacao && !!perfil?.cidade && !perfil.bairro && !loc.bairro && <p className="text-sm text-slate-500">Digite seu CEP para completar o bairro (sua cidade e estado continuam salvos).</p>}
+            {semLocalizacao && <p className="text-sm text-amber-700">Informe seu CEP — cidade e estado são obrigatórios no cadastro.</p>}
             {erros.localizacao && <p className="text-sm text-red-600">{erros.localizacao}</p>}
           </Acordeao>
 
