@@ -472,6 +472,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 46 | Treino à distância: renomeia "assíncrono", cobrança por aluno (valor próprio, modelo por aula), quantidades no mensal, check-in/cobrança do presencial de outras modalidades, histórico "N/M itens feitos" e termo v1.4 | ✅ em revisão — **rodar migration `20261036…` antes do merge; redeploy de `treino-publico` e `confirmar-consentimento-saude`** |
 | 47 | Termos de Uso v1.1 e Política de Privacidade v1.3 no app (texto revisado e alinhado ao que o app faz) | ✅ em revisão (sem migration) — revisar com assessoria jurídica antes do lançamento |
 | 48 | Encarregado (DPO) identificado na Política de Privacidade (v1.4) | ✅ em revisão (sem migration) |
+| 49 | WhatsApp do personal: base com Evolution API (`send-whatsapp`, mensagem de teste em Configurações) — `docs/WHATSAPP.md` | ✅ em revisão — **secrets `EVOLUTION_API_URL`/`EVOLUTION_API_KEY`/`EVOLUTION_INSTANCE` e deploy de `send-whatsapp`**; eventos a definir |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

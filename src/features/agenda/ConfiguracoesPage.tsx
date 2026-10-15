@@ -11,6 +11,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { normalizarChavePix, normalizarNomePix, type PixTipo } from '@/lib/pix'
 import { mascararCPF } from '@/lib/cpf'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
+import { enviarTesteWhatsapp } from './whatsapp'
 import { AssinaturaSecao } from '@/features/assinatura/AssinaturaSecao'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarDadosPessoais, useSalvarLocalidade } from '@/features/auth/api'
@@ -40,6 +41,7 @@ export function ConfiguracoesPage() {
 
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [enviandoTeste, setEnviandoTeste] = useState(false)
 
   const [loc, setLoc] = useState<Localizacao>({ cep: '', bairro: '', cidade: '', uf: '' })
   const [cobrarFalta, setCobrarFalta] = useState(PADRAO.cobrarFalta)
@@ -286,6 +288,34 @@ export function ConfiguracoesPage() {
               />
             </div>
             <p className="text-xs text-slate-400">Este interruptor salva na hora, sem precisar de “Salvar alterações”.</p>
+            {perfil?.whatsappOptIn && (
+              <div className="space-y-2 rounded-xl bg-slate-50 p-3">
+                <p className="text-sm text-slate-600">
+                  {validarTelefone(perfil.phone ?? '')
+                    ? `As mensagens vão para o telefone dos seus Dados pessoais: ${mascararTelefone(perfil.phone ?? '')}.`
+                    : 'Cadastre um telefone válido em Dados pessoais para receber as mensagens.'}
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={enviandoTeste || !validarTelefone(perfil.phone ?? '')}
+                  onClick={async () => {
+                    setEnviandoTeste(true)
+                    try {
+                      await enviarTesteWhatsapp()
+                      mostrarInfoGlobal('Mensagem de teste enviada. Confira seu WhatsApp.')
+                    } catch (e) {
+                      mostrarErroGlobal((e as Error).message)
+                    } finally {
+                      setEnviandoTeste(false)
+                    }
+                  }}
+                >
+                  {enviandoTeste ? 'Enviando…' : 'Enviar mensagem de teste'}
+                </Button>
+                <p className="text-xs text-slate-500">As mensagens nunca incluem dados de saúde dos alunos.</p>
+              </div>
+            )}
           </Acordeao>
 
           <Link to="/consentimentos" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
