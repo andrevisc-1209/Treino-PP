@@ -288,6 +288,7 @@ export function ConfiguracoesPage() {
               />
             </div>
             <p className="text-xs text-slate-400">Este interruptor salva na hora, sem precisar de “Salvar alterações”.</p>
+            <p className="text-xs text-slate-500">Com ele ligado você recebe no WhatsApp: a agenda e a previsão do dia (8h), o pagamento do seu plano, o aviso de plano vencendo, alunos parados há 10 dias e o resumo da semana (domingo à noite).</p>
             {perfil?.whatsappOptIn && (
               <div className="space-y-2 rounded-xl bg-slate-50 p-3">
                 <p className="text-sm text-slate-600">
