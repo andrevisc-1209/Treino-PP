@@ -1,7 +1,5 @@
 export const TERMO_VERSAO = '1.5'
 
-export const TERMO_AVISO = 'Modelo inicial — revisar com assessoria jurídica.'
-
 export const TERMO_TEXTO = `Termo de Consentimento para Uso de Dados de Saúde (v${TERMO_VERSAO})
 
 Quem coleta

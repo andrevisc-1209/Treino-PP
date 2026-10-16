@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { AVISO_MODELO_INICIAL } from './textos'
 
 /** Página pública (sem login) de Termos de Uso / Política de Privacidade. */
 export function LegalPage({ titulo, texto }: { titulo: string; texto: string }) {
@@ -14,7 +13,6 @@ export function LegalPage({ titulo, texto }: { titulo: string; texto: string }) 
       </header>
 
       <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{AVISO_MODELO_INICIAL}</p>
         <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{texto}</p>
       </div>
     </div>

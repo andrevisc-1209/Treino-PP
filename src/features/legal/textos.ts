@@ -1,8 +1,6 @@
 export const TERMOS_USO_VERSAO = '1.1'
 export const PRIVACIDADE_VERSAO = '1.4'
 
-export const AVISO_MODELO_INICIAL = 'Modelo inicial — revisar com assessoria jurídica.'
-
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
 
 Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (aplicativo web) por profissionais de educação física. Ao criar uma conta ou usar o serviço, você concorda com estas condições.

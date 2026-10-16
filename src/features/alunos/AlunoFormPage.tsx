@@ -17,7 +17,7 @@ import { ObjetivoEsportivo } from './ObjetivoEsportivo'
 import { provasDoFoco } from './provaAlvo'
 import { linkWhatsappConsentimento, montarMensagemConsentimento } from '@/lib/consentimentoMensagem'
 import { LocaisTreinoBlock } from './LocaisTreinoBlock'
-import { TERMO_AVISO, TERMO_TEXTO } from './termo'
+import { TERMO_TEXTO } from './termo'
 import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
@@ -811,7 +811,6 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
 
       <BottomSheet open={termoAberto} onClose={() => setTermoAberto(false)} title="Termo de consentimento">
         <div className="space-y-3">
-          <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{TERMO_AVISO}</p>
           <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{TERMO_TEXTO}</p>
         </div>
       </BottomSheet>
