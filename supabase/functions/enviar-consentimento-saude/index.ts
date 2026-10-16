@@ -16,7 +16,8 @@ import { canalValido, emailValido, expiraEm, montarEmailConsentimento, podeEnvia
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
-const ORIGENS_PERMITIDAS = [APP_URL, 'http://localhost:5173']
+// localhost só se ALLOW_LOCALHOST_CORS=true (nunca definido em produção).
+const ORIGENS_PERMITIDAS = [APP_URL, ...(Deno.env.get('ALLOW_LOCALHOST_CORS') === 'true' ? ['http://localhost:5173'] : [])]
 const FROM = 'Treino PP <noreply@personalperto.com.br>'
 
 function cors(req: Request) {

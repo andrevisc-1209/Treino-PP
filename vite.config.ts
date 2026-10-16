@@ -50,7 +50,7 @@ function htmlCspPlugin(): Plugin {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: '/',
   plugins: [
     react(),
@@ -92,9 +92,13 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // Produção: sem console.* e debugger no bundle (só no build; dev não é afetado). Vite 8 usa Rolldown/Oxc, não esbuild.
+  build: {
+    rolldownOptions: command === 'build' ? { output: { minify: { compress: { dropConsole: true, dropDebugger: true } } } } : {},
+  },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   test: {
     // e2e/ são specs do Playwright (test:e2e), não do Vitest.
     exclude: ['node_modules/**', 'e2e/**'],
   },
-})
+}))

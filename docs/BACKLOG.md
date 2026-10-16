@@ -514,4 +514,5 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
   `20261039000000_proteger_is_admin.sql` (GRANT de UPDATE por coluna + trigger).
 - ✅ **Alta**: `admin-actions` não devolve mais o link de recuperação (envia e-mail ao personal).
 - ✅ **Médias**: CSP via meta (build) e rate limiting nas funções públicas (migration `20261040000000_rate_limit.sql`).
-- ⏳ Pendentes: CRON_SECRET em tempo constante, headers reais (proxy), `npm audit fix` (dev).
+- ✅ Gaps dos lotes 1 e 2 (.gitignore, JWT expiry documentado, console fora do build, CORS sem localhost, nome no WhatsApp, `WITH CHECK` das tabelas filhas — migration `20261041000000`).
+- ⏳ Pendentes: `CHECK` de tamanho nas tabelas centrais (PR própria), headers reais (proxy), `npm audit fix` (dev), confirmações no dashboard.

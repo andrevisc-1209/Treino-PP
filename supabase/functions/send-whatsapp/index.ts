@@ -13,7 +13,8 @@ import { limiteExcedido, resposta429 } from '../_shared/rateLimit.ts'
 import { configEvolution, enviarTexto, mensagemDeTeste, numeroWhatsApp } from '../_shared/whatsapp.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
-const ORIGENS_PERMITIDAS = [APP_URL, 'http://localhost:5173']
+// localhost só se ALLOW_LOCALHOST_CORS=true (nunca definido em produção).
+const ORIGENS_PERMITIDAS = [APP_URL, ...(Deno.env.get('ALLOW_LOCALHOST_CORS') === 'true' ? ['http://localhost:5173'] : [])]
 const INTERVALO_TESTE_MS = 30_000
 const ultimoTeste = new Map<string, number>() // melhor esforço: vale por instância da function
 
