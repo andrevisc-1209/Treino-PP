@@ -538,3 +538,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ CSP mais restrita (`src/config/csp.ts`).
 - ✅ Grants mínimos ao `authenticated` (migration `20261044000000`), guarda de RLS/GRANT no CI e teste de isolamento (`supabase/tests/isolamento.sql`).
 - ⏳ Itens 7 e 8 (admin-actions, CHECK de tamanho); etapa 2 dos grants (tirar DELETE/UPDATE não usados).
+
+
+## 25. admin-actions e limites de tamanho (itens 7 e 8 da revisão)
+
+- ✅ `admin-actions`: e-mail validado, destinatário precisa ser personal cadastrado, 10 ações/h por admin, auditoria antes da ação.
+- ✅ Limites de tamanho no banco (42 `CHECK ... NOT VALID`, migration `20261045000000`), Zod do aluno alinhado e mensagem de erro própria.
+- ⏳ MFA do admin; limites de quantidade por conta; `VALIDATE CONSTRAINT` dos limites após conferir `supabase/tests/limites_violadores.sql`.

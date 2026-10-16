@@ -29,6 +29,7 @@ describe('mapearErroSupabase', () => {
   })
   it('mapeia valor inválido (check constraint)', () => {
     expect(mapearErroSupabase({ code: '23514', message: 'violates check constraint' })).toMatch(/inválido/i)
+    expect(mapearErroSupabase({ code: '23514', message: 'new row for relation "alunos" violates check constraint "alunos_name_tamanho_chk"' })).toMatch(/longo demais/i)
   })
   it('cai num texto genérico pra erro desconhecido', () => {
     expect(mapearErroSupabase(new Error('algo bem específico do Postgres'))).toMatch(/algo deu errado/i)
