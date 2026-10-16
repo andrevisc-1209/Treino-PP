@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  alunosInativos, brl, dataBR, dataSP, decidirEnvio, diaSemanaCurto, horaSP, inicioDaSemana, limitesDoDiaSP, montarAlunosInativos, montarBriefing,
+  alunosInativos, ehModalidadeRotulo, montarFaturasVencidas, montarTreinosConcluidos, brl, dataBR, dataSP, decidirEnvio, diaSemanaCurto, horaSP, inicioDaSemana, limitesDoDiaSP, montarAlunosInativos, montarBriefing,
   montarPagamentoPlano, montarPlanoExpirando, montarResumoSemanal, segredoCronValido, somarDias,
 } from './notificacoes.ts'
 
@@ -123,5 +123,44 @@ describe('alunos inativos', () => {
     const dois = [{ nome: 'Carlos', dias: 10, ultimo: '2026-10-05' }, { nome: 'Bia', dias: 10, ultimo: '2026-10-05' }, { nome: 'Ana', dias: 10, ultimo: '2026-10-05' }]
     expect(montarAlunosInativos('André', dois)).toBe('Ana e mais 2 alunos completaram 10 dias sem treinar hoje. Vale dar um oi! 💬')
     expect(montarAlunosInativos('André', dois.slice(0, 2))).toBe('Bia e mais 1 aluno completou 10 dias sem treinar hoje. Vale dar um oi! 💬')
+  })
+})
+
+describe('cobranças de alunos vencidas', () => {
+  const f = (nome: string, dias: number, valor = 300) => ({ nome, dias, valor })
+  it('sem faturas → null', () => {
+    expect(montarFaturasVencidas('André', [])).toBeNull()
+  })
+  it('1 cobrança: textos de 1, 3 e 7 dias (sem presumir gênero do aluno)', () => {
+    expect(montarFaturasVencidas('André Scherer', [f('Carlos Silva', 1)])).toBe('Oi André! A cobrança de Carlos (R$ 300,00) venceu ontem e ainda não foi paga. Só pra não deixar passar 👀')
+    expect(montarFaturasVencidas('André', [f('Carlos', 3)])).toBe('André, a cobrança de Carlos (R$ 300,00) está vencida há 3 dias. Vale uma conversa?')
+    expect(montarFaturasVencidas('André', [f('Carlos', 7)])).toBe('André, faz uma semana que a cobrança de Carlos (R$ 300,00) venceu. Pode ser um bom momento pra entrar em contato.')
+  })
+  it('até 3: lista todas, da mais antiga para a mais nova; mais de 3: top 3 + "...e mais X"', () => {
+    expect(montarFaturasVencidas('André', [f('Marcos', 1), f('Carlos', 7), f('Julia', 3)])).toBe(
+      'André, algumas cobranças venceram e ainda não foram pagas:\n• Carlos — 7 dias\n• Julia — 3 dias\n• Marcos — 1 dia',
+    )
+    const m = montarFaturasVencidas('André', [f('A', 1), f('B', 3), f('C', 7), f('D', 7), f('E', 3)])!
+    expect(m.split('\n').filter((l) => l.startsWith('•'))).toHaveLength(3)
+    expect(m).toContain('...e mais 2.')
+  })
+})
+
+describe('treino à distância concluído', () => {
+  it('sem treinos → null; 1 treino com e sem modalidade', () => {
+    expect(montarTreinosConcluidos([])).toBeNull()
+    expect(montarTreinosConcluidos([{ aluno: 'Carlos Silva', modalidade: 'Natação' }])).toBe('✅ Carlos concluiu o treino de natação à distância. Mandou bem! 💪')
+    expect(montarTreinosConcluidos([{ aluno: 'Carlos Silva', modalidade: null }])).toBe('✅ Carlos acabou de concluir o treino à distância! 💪')
+  })
+  it('vários: lista nomes sem repetir e corta em 5; só nome e modalidade (nada de resultado)', () => {
+    const lista = ['Carlos', 'Julia', 'Marcos', 'Carlos'].map((aluno) => ({ aluno, modalidade: 'natação' }))
+    expect(montarTreinosConcluidos(lista)).toBe('✅ 4 treinos à distância foram concluídos:\n• Carlos\n• Julia\n• Marcos')
+    const muitos = Array.from({ length: 8 }, (_, i) => ({ aluno: `Aluno${i}`, modalidade: null }))
+    expect(montarTreinosConcluidos(muitos)).toContain('...e mais 3.')
+  })
+  it('rótulo da modalidade', () => {
+    expect(ehModalidadeRotulo('natacao')).toBe('natação')
+    expect(ehModalidadeRotulo('xyz')).toBeNull()
+    expect(ehModalidadeRotulo(null)).toBeNull()
   })
 })

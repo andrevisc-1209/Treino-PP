@@ -4,7 +4,7 @@
 
 import { numeroWhatsApp } from './whatsapp.ts'
 
-export const TIPOS_NOTIFICACAO = ['briefing_diario', 'pagamento_plano', 'plano_expirando', 'resumo_semanal', 'aluno_inativo'] as const
+export const TIPOS_NOTIFICACAO = ['briefing_diario', 'pagamento_plano', 'plano_expirando', 'resumo_semanal', 'aluno_inativo', 'plano_vencido', 'treino_concluido'] as const
 export type TipoNotificacao = (typeof TIPOS_NOTIFICACAO)[number]
 
 // ---------- datas (o Brasil não tem horário de verão desde 2019: São Paulo é sempre UTC-3) ----------
@@ -162,3 +162,52 @@ export function montarAlunosInativos(nomePersonal: string | null, lista: (Inativ
   const outros = ordenados.length - 1
   return `${primeiro} e mais ${outros} ${outros === 1 ? 'aluno completou' : 'alunos completaram'} 10 dias sem treinar hoje. Vale dar um oi! 💬`
 }
+
+// ---------- 5. cobrança de aluno vencida e sem pagamento ----------
+export type FaturaVencida = { nome: string; dias: number; valor: number }
+
+const LIMITE_FATURAS_LISTADAS = 3
+
+/** Aviso das cobranças (faturas) de alunos vencidas há 1, 3 ou 7 dias e ainda não pagas; null sem nenhuma. */
+export function montarFaturasVencidas(nomePersonal: string | null, lista: FaturaVencida[]): string | null {
+  if (lista.length === 0) return null
+  const personal = primeiroNome(nomePersonal)
+  const ordenadas = [...lista].sort((a, b) => b.dias - a.dias)
+  if (ordenadas.length === 1) {
+    const { nome, dias, valor } = ordenadas[0]
+    const aluno = primeiroNome(nome) || nome
+    const cobranca = `a cobrança de ${aluno} (${brl(valor)})`
+    if (dias === 1) return `Oi${personal ? ` ${personal}` : ''}! ${cobranca[0].toUpperCase()}${cobranca.slice(1)} venceu ontem e ainda não foi paga. Só pra não deixar passar 👀`
+    if (dias >= 7) return `${personal ? `${personal}, f` : 'F'}az ${dias === 7 ? 'uma semana' : `${dias} dias`} que ${cobranca} venceu. Pode ser um bom momento pra entrar em contato.`
+    return `${personal ? `${personal}, ` : ''}${cobranca} está vencida há ${dias} dias. Vale uma conversa?`
+  }
+  const mostrar = ordenadas.slice(0, LIMITE_FATURAS_LISTADAS)
+  const partes = [`${personal ? `${personal}, a` : 'A'}lgumas cobranças venceram e ainda não foram pagas:`, ...mostrar.map((f) => `• ${primeiroNome(f.nome) || f.nome} — ${f.dias} ${f.dias === 1 ? 'dia' : 'dias'}`)]
+  if (ordenadas.length > LIMITE_FATURAS_LISTADAS) partes.push(`...e mais ${ordenadas.length - LIMITE_FATURAS_LISTADAS}.`)
+  return partes.join('\n')
+}
+
+// ---------- 6. aluno concluiu treino à distância ----------
+export type TreinoConcluido = { aluno: string; modalidade: string | null }
+
+const LIMITE_CONCLUIDOS_LISTADOS = 5
+
+/** Aviso de treinos à distância concluídos (um ou vários de uma vez). Só nome e modalidade: nada de resultado, PSE ou saúde. */
+export function montarTreinosConcluidos(lista: TreinoConcluido[]): string | null {
+  if (lista.length === 0) return null
+  if (lista.length === 1) {
+    const { aluno, modalidade } = lista[0]
+    const nome = primeiroNome(aluno) || aluno
+    return modalidade ? `✅ ${nome} concluiu o treino de ${modalidade.toLowerCase()} à distância. Mandou bem! 💪` : `✅ ${nome} acabou de concluir o treino à distância! 💪`
+  }
+  const nomes = lista.map((t) => primeiroNome(t.aluno) || t.aluno)
+  const unicos = [...new Set(nomes)]
+  const partes = [`✅ ${lista.length} treinos à distância foram concluídos:`, ...unicos.slice(0, LIMITE_CONCLUIDOS_LISTADOS).map((n) => `• ${n}`)]
+  if (unicos.length > LIMITE_CONCLUIDOS_LISTADOS) partes.push(`...e mais ${unicos.length - LIMITE_CONCLUIDOS_LISTADOS}.`)
+  return partes.join('\n')
+}
+
+const ROTULOS_MODALIDADE: Record<string, string> = { musculacao: 'musculação', corrida: 'corrida', natacao: 'natação', ciclismo: 'ciclismo', brick: 'brick (bike + corrida)', funcional: 'funcional', remo: 'remo', boxe: 'boxe', escalada: 'escalada', pilates: 'pilates', yoga: 'yoga', futebol: 'futebol', futevolei: 'futevôlei' }
+
+/** Nome da modalidade para o texto da mensagem; null se desconhecida. */
+export const ehModalidadeRotulo = (modalidade: string | null | undefined): string | null => (modalidade ? (ROTULOS_MODALIDADE[modalidade] ?? null) : null)
