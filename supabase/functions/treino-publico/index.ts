@@ -8,6 +8,8 @@
 // Tudo passa por service_role AQUI — as tabelas não têm acesso anônimo.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { limiteExcedido, resposta429 } from '../_shared/rateLimit.ts'
+import { ipDoCliente } from '../_shared/consentimento.ts'
 import { linkValido, MODALIDADES, validarExecucao, type Modalidade } from '../_shared/execucao.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
@@ -30,6 +32,10 @@ function json(req: Request, body: unknown, status = 200) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) })
   if (req.method !== 'POST') return json(req, { error: 'Método não permitido.' }, 405)
+
+  // Rate limit por IP (60/min): link público com token; barra varredura/abuso.
+  const ipLimite = ipDoCliente(req.headers)
+  if (ipLimite && (await limiteExcedido(`treino-publico:ip:${ipLimite}`, 60))) return resposta429(cors(req))
 
   let body: { token?: unknown; acao?: unknown; detalhes?: unknown; notas?: unknown }
   try {

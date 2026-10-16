@@ -458,14 +458,14 @@ function ModalAcao({ tipo, personal, onFechar }: { tipo: 'reset' | 'trial' | 'pl
 
 function ModalResetSenha({ personal, onFechar }: { personal: PersonalAdmin; onFechar: () => void }) {
   const resetSenha = useAdminResetSenha()
-  const [linkReset, setLinkReset] = useState<string | null>(null)
+  const [enviado, setEnviado] = useState(false)
 
   const gerar = async () => {
     if (!personal.email) return mostrarErroGlobal('Este personal não tem e-mail cadastrado.')
     try {
-      const resultado = await resetSenha.mutateAsync(personal.email)
-      setLinkReset(resultado?.actionLink ?? null)
-      mostrarInfoGlobal('Link de reset gerado — copie e envie pro personal.')
+      await resetSenha.mutateAsync(personal.email)
+      setEnviado(true)
+      mostrarInfoGlobal('Link de recuperação enviado para o e-mail do personal.')
     } catch (e) {
       mostrarErroGlobal(mapearErroSupabase(e))
     }
@@ -475,26 +475,12 @@ function ModalResetSenha({ personal, onFechar }: { personal: PersonalAdmin; onFe
     <ModalBase
       titulo={`Reset de senha — ${personal.name || personal.email}`}
       onCancelar={onFechar}
-      onConfirmar={linkReset ? undefined : gerar}
+      onConfirmar={enviado ? undefined : gerar}
       confirmando={resetSenha.isPending}
-      textoConfirmar="Gerar link"
+      textoConfirmar="Enviar link"
     >
-      <p className="text-sm text-slate-600">Gera um link de redefinição de senha pra {personal.email}. Não envia e-mail sozinho — você copia e manda pro personal.</p>
-      {linkReset && (
-        <div className="space-y-2">
-          <p className="break-all rounded-lg bg-slate-50 p-2 text-xs text-slate-600">{linkReset}</p>
-          <Button
-            variant="outline"
-            className="w-full text-xs"
-            onClick={() => {
-              navigator.clipboard?.writeText(linkReset)
-              mostrarInfoGlobal('Link copiado.')
-            }}
-          >
-            Copiar link
-          </Button>
-        </div>
-      )}
+      <p className="text-sm text-slate-600">Envia um e-mail de redefinição de senha para {personal.email}. O link não aparece aqui: o personal recebe direto na caixa de entrada.</p>
+      {enviado && <p className="rounded-lg bg-slate-50 p-2 text-sm text-slate-600">Link de recuperação enviado para o e-mail do personal.</p>}
     </ModalBase>
   )
 }

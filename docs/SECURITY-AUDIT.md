@@ -13,8 +13,8 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 | Severidade | Qtde | Situação |
 |---|---|---|
 | CRÍTICA | 1 | Corrigida nesta PR (migration 20261039) |
-| ALTA | 1 | Mitigada pela correção crítica; ajuste adicional recomendado |
-| MÉDIA | 3 | Próxima PR / revisão manual |
+| ALTA | 1 | Corrigida |
+| MÉDIA | 3 | 2 corrigidas (CSP parcial); 1 (CRON_SECRET) pendente |
 | BAIXA | 2 | Próxima PR |
 
 ## Achados
@@ -32,27 +32,31 @@ e-mail → **tomada de conta de qualquer personal**.
 (`name, cpf, phone, whatsapp_opt_in, uf, cidade, bairro`) + trigger que bloqueia alteração de `is_admin` por
 `authenticated`/`anon`. **Rodar a migration no SQL Editor ANTES do merge.** Depois, validar que Configurações segue salvando.
 
-### [ALTA] `admin-actions` devolve o link de recuperação de senha na resposta
+### [ALTA] ✅ CORRIGIDA — `admin-actions` devolve o link de recuperação de senha na resposta
 **Arquivo**: `supabase/functions/admin-actions/index.ts` (ação `reset_senha`, retorno de `actionLink`).
 **Descrição**: usa service_role para `generateLink('recovery')` de qualquer e-mail informado e devolve o link ao chamador.
 **Impacto**: combinada com o achado crítico era tomada de conta; mesmo com admin legítimo, o link em texto trafega pelo
 navegador e fica em logs/histórico, e o admin passa a poder assumir a conta do personal.
 **Correção**: enviar o e-mail de redefinição pelo fluxo padrão (`resetPasswordForEmail`) sem devolver o link, registrando
-a ação em `admin_logs`. Não alterado nesta PR (muda o fluxo do admin) — **necessita revisão manual** da decisão de produto.
+a ação em `admin_logs`. **Aplicada** (PR de CSP/rate limiting): a resposta agora é `{ success, email }` e o painel não exibe mais o link.
+Obs.: `generateLink` não envia e-mail; por isso a função passou a usar `resetPasswordForEmail`.
 
-### [MÉDIA] Sem cabeçalhos de segurança / CSP
+### [MÉDIA] ✅ CORRIGIDA (parcial) — Sem cabeçalhos de segurança / CSP
 **Arquivo**: `index.html` (sem `<meta http-equiv="Content-Security-Policy">`); hospedagem GitHub Pages.
 **Descrição**: não há CSP nem proteção contra clickjacking; não encontrei sinks de XSS (`dangerouslySetInnerHTML`, `eval`).
 **Impacto**: defesa em profundidade ausente: um XSS futuro teria acesso ao token em `localStorage`.
-**Correção**: adicionar CSP via `<meta>` (sem `frame-ancestors`, que só vale por header) ou colocar um proxy (Cloudflare) na
-frente para headers reais. **Necessita revisão manual** (testar PWA, Turnstile, Mercado Pago, Supabase).
+**Correção**: CSP e `referrer` via `<meta>` injetados **no build** (`vite.config.ts`, sem `unsafe-eval`). `frame-ancestors` e
+`X-Content-Type-Options` não funcionam via `<meta>`: continuam pendentes e exigem proxy (Cloudflare) para headers reais.
+**Necessita revisão manual** em produção: Turnstile, Google Places, ViaCEP e Realtime (não exercitados no teste).
 
-### [MÉDIA] Rate limiting nas funções públicas
+### [MÉDIA] ✅ CORRIGIDA — Rate limiting nas funções públicas
 **Arquivo**: `supabase/functions/treino-publico/`, `confirmar-consentimento-saude/` (`verify_jwt = false` em `supabase/config.toml`).
 **Descrição**: acesso protegido por token de alta entropia, mas sem limite de tentativas por IP. Envio de consentimento já
 tem intervalo mínimo de 1 min por aluno.
 **Impacto**: enumeração/abuso de volume (baixo, dado o tamanho do token).
-**Correção**: limite por IP na borda (Cloudflare) ou tabela de contagem. **Necessita revisão manual** — não validei o tamanho do token nem o comportamento sob carga.
+**Correção aplicada**: migration `20261040000000_rate_limit.sql` (tabela interna + RPC `upsert_rate_limit`, só service_role) e helper
+`_shared/rateLimit.ts`: `mp-webhook` 30/min por IP, `send-whatsapp` 10/min por personal, `treino-publico` e
+`confirmar-consentimento-saude` 60/min por IP; 429 com `Retry-After`. Falha aberta se o banco errar. Crons seguem só com `CRON_SECRET`.
 
 ### [MÉDIA] Funções de cron com `verify_jwt = false` dependem só de `CRON_SECRET`
 **Arquivo**: `supabase/config.toml` (daily-briefing, avisos-diarios, weekly-summary, avisos-financeiros, aviso-treino-concluido); `supabase/functions/_shared/notificacoes.ts` (`segredoCronValido`).

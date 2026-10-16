@@ -14,7 +14,9 @@
 // 500 em falha nossa (MP/DB) — o MP reenvia nesses casos.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { limiteExcedido, resposta429 } from '../_shared/rateLimit.ts'
 import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
+import { ipDoCliente } from '../_shared/consentimento.ts'
 import { dataSP, montarPagamentoPlano } from '../_shared/notificacoes.ts'
 import { enviarAoPersonal } from '../_shared/whatsappPersonal.ts'
 
@@ -28,6 +30,10 @@ async function mpGet(path: string, token: string) {
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Método não permitido', { status: 405 })
+
+  // Rate limit por IP (30/min): barra rajadas de chamadas forjadas antes de qualquer processamento.
+  const ipWebhook = ipDoCliente(req.headers)
+  if (ipWebhook && (await limiteExcedido(`mp-webhook:ip:${ipWebhook}`, 30))) return resposta429()
 
   const token = Deno.env.get('MP_ACCESS_TOKEN')
   if (!tokenMpValido(token)) {
