@@ -66,13 +66,13 @@ describe('reenvio com motivo e canal', () => {
 
 describe('ipDoCliente', () => {
   const h = (o: Record<string, string>) => ({ get: (n: string) => o[n.toLowerCase()] ?? null })
-  it('prioriza cf-connecting-ip, depois x-real-ip', () => {
-    expect(ipDoCliente(h({ 'cf-connecting-ip': '200.10.20.30', 'x-real-ip': '1.1.1.1' }))).toBe('200.10.20.30')
-    expect(ipDoCliente(h({ 'x-real-ip': '177.1.2.3' }))).toBe('177.1.2.3')
+  it('usa só cf-connecting-ip', () => {
+    expect(ipDoCliente(h({ 'cf-connecting-ip': '200.10.20.30' }))).toBe('200.10.20.30')
   })
-  it('ignora x-forwarded-for (pode ser forjado pelo cliente)', () => {
+  it('ignora x-forwarded-for e x-real-ip (podem ser forjados pelo cliente)', () => {
     expect(ipDoCliente(h({ 'x-forwarded-for': '189.4.5.6, 10.0.0.1' }))).toBeNull()
-    expect(ipDoCliente(h({ 'cf-connecting-ip': '200.10.20.30', 'x-forwarded-for': '1.1.1.1' }))).toBe('200.10.20.30')
+    expect(ipDoCliente(h({ 'x-real-ip': '177.1.2.3' }))).toBeNull()
+    expect(ipDoCliente(h({ 'cf-connecting-ip': '200.10.20.30', 'x-forwarded-for': '1.1.1.1', 'x-real-ip': '2.2.2.2' }))).toBe('200.10.20.30')
   })
   it('aceita IPv6', () => {
     expect(ipDoCliente(h({ 'cf-connecting-ip': '2804:14d:1234::1' }))).toBe('2804:14d:1234::1')
@@ -83,8 +83,8 @@ describe('ipDoCliente', () => {
     expect(ipDoCliente(h({ 'cf-connecting-ip': '999.1.1.1' }))).toBeNull()
     expect(ipDoCliente(h({ 'cf-connecting-ip': '<script>' }))).toBeNull()
   })
-  it('um candidato inválido não impede de usar o próximo header', () => {
-    expect(ipDoCliente(h({ 'cf-connecting-ip': 'lixo', 'x-real-ip': '177.1.2.3' }))).toBe('177.1.2.3')
+  it('cf-connecting-ip inválido não cai em outro header', () => {
+    expect(ipDoCliente(h({ 'cf-connecting-ip': 'lixo', 'x-real-ip': '177.1.2.3' }))).toBeNull()
   })
 })
 
