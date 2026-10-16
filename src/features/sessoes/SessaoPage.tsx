@@ -79,7 +79,7 @@ function SerieRow({
         />
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">kg</span>
       </div>
-      <button
+      <button type="button"
         onClick={() => onSalvar({ reps: reps.trim() ? Number(reps) : null, load_kg: load.trim() ? Number(load) : null })}
         disabled={salvando}
         className={cn(
@@ -164,7 +164,7 @@ function ExercicioBlock({
 
   if (completo && !expandido) {
     return (
-      <button
+      <button type="button"
         onClick={() => setExpandido(true)}
         className="flex w-full items-center justify-between rounded-2xl bg-white p-4 text-left shadow-sm active:bg-slate-50"
       >
@@ -193,11 +193,11 @@ function ExercicioBlock({
           {ultimoUso && <p className="text-sm text-slate-400">{ultimoUso}</p>}
         </div>
         {completo ? (
-          <button onClick={() => setExpandido(false)} className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100">
+          <button type="button" onClick={() => setExpandido(false)} className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100">
             Recolher
           </button>
         ) : (
-          <button
+          <button type="button"
             onClick={() => onPular(item)}
             className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100"
           >
@@ -232,7 +232,7 @@ function ExercicioBlock({
         ))}
       </div>
 
-      <button onClick={adicionarSerie} className="flex min-h-11 items-center gap-1 text-sm font-medium text-brand-hover">
+      <button type="button" onClick={adicionarSerie} className="flex min-h-11 items-center gap-1 text-sm font-medium text-brand-hover">
         <Plus size={16} /> Adicionar série
       </button>
     </div>
@@ -442,7 +442,7 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
             />
           )}
           {fila.fila.length > 0 && (
-            <button
+            <button type="button"
               onClick={() => setAvisoFilaAberto(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800"
             >
@@ -482,7 +482,7 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
           <ul className="max-h-80 space-y-1 overflow-y-auto">
             {exerciciosFiltrados?.map((ex) => (
               <li key={ex.id}>
-                <button onClick={() => escolherExercicio(ex)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+                <button type="button" onClick={() => escolherExercicio(ex)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
                   <p className="font-medium">{ex.name}</p>
                   <p className="text-sm text-slate-500">{ex.muscle_group ?? '—'}</p>
                 </button>

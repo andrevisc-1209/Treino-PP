@@ -281,7 +281,7 @@ export function ExerciciosPage() {
               <p className="text-sm text-slate-500">{i.detalhe}</p>
             </div>
             {origem === 'meus' && i.meu && (
-              <button onClick={() => abrirEditar(i)} className="flex size-12 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100" aria-label={`Editar ${i.nome}`}>
+              <button type="button" onClick={() => abrirEditar(i)} className="flex size-12 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100" aria-label={`Editar ${i.nome}`}>
                 <Pencil size={18} />
               </button>
             )}

@@ -93,13 +93,13 @@ export function AlunosPage() {
       </div>
 
       <div className="mb-4 flex gap-1 rounded-xl bg-slate-100 p-1">
-        <button
+        <button type="button"
           onClick={() => setAba('ativos')}
           className={cn('min-h-11 flex-1 rounded-lg text-sm font-medium', aba === 'ativos' ? 'bg-white shadow-sm' : 'text-slate-500')}
         >
           Ativos
         </button>
-        <button
+        <button type="button"
           onClick={() => setAba('arquivados')}
           className={cn('min-h-11 flex-1 rounded-lg text-sm font-medium', aba === 'arquivados' ? 'bg-white shadow-sm' : 'text-slate-500')}
         >
@@ -155,7 +155,7 @@ export function AlunosPage() {
                 )}
               </div>
             </Link>
-            <button
+            <button type="button"
               onClick={() => setMenuAberto(a)}
               className="flex size-12 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
               aria-label={`Mais ações para ${a.name}`}
@@ -173,7 +173,7 @@ export function AlunosPage() {
       <BottomSheet open={!!menuAberto} onClose={() => setMenuAberto(null)} title={menuAberto?.name}>
         <div className="space-y-1">
           {aba === 'ativos' ? (
-            <button
+            <button type="button"
               onClick={() => menuAberto && arquivarAluno(menuAberto)}
               disabled={arquivar.isPending}
               className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
@@ -181,7 +181,7 @@ export function AlunosPage() {
               Arquivar
             </button>
           ) : (
-            <button
+            <button type="button"
               onClick={() => menuAberto && restaurarAluno(menuAberto)}
               disabled={desarquivar.isPending}
               className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
@@ -189,7 +189,7 @@ export function AlunosPage() {
               Restaurar
             </button>
           )}
-          <button
+          <button type="button"
             onClick={() => menuAberto && apagarAluno(menuAberto)}
             disabled={apagar.isPending}
             className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"

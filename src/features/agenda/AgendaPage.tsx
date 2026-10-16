@@ -95,7 +95,7 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
               </p>
               <div className="space-y-1.5">
                 {doDia.map((a) => (
-                  <button
+                  <button type="button"
                     key={a.id}
                     onClick={() => onAbrirAula(a)}
                     className={cn(
@@ -145,7 +145,7 @@ export function AgendaPage() {
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
           {(['dia', 'semana'] as const).map((m) => (
-            <button
+            <button type="button"
               key={m}
               onClick={() => setModo(m)}
               className={cn(
@@ -158,17 +158,17 @@ export function AgendaPage() {
           ))}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => navegar(-1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Anterior">
+          <button type="button" onClick={() => navegar(-1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Anterior">
             <ChevronLeft size={18} />
           </button>
-          <button
+          <button type="button"
             onClick={irParaHoje}
             aria-label={ehHoje ? 'Hoje' : `${rotulo} — voltar para hoje`}
             className="min-h-9 min-w-24 whitespace-nowrap rounded-xl px-2 text-sm font-medium text-brand-hover active:bg-slate-100"
           >
             {rotulo}
           </button>
-          <button onClick={() => navegar(1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Próximo">
+          <button type="button" onClick={() => navegar(1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Próximo">
             <ChevronRight size={18} />
           </button>
         </div>

@@ -162,16 +162,16 @@ export function AulaAcoesSheet({
           {menu.mensagem && <p className="px-1 pb-2 text-sm text-slate-500">{menu.mensagem}</p>}
           {menu.agirNosAlunos && (
             <>
-              <button
+              <button type="button"
                 onClick={() => (previstos.length === 1 ? iniciarTreino(previstos[0].aluno_id) : setPasso('iniciar'))}
                 className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100"
               >
                 ▶ Iniciar treino
               </button>
-              <button onClick={() => setPasso('checkin')} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
+              <button type="button" onClick={() => setPasso('checkin')} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
                 ✓ Check-in sem treino
               </button>
-              <button onClick={() => setPasso('falta')} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
+              <button type="button" onClick={() => setPasso('falta')} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
                 Falta
               </button>
             </>
@@ -179,10 +179,10 @@ export function AulaAcoesSheet({
           {/* Cancelar e remarcar são da aula inteira: não dependem de haver aluno "previsto" (aula sem alunos também precisa delas). */}
           {menu.agirNaAula && (
             <>
-              <button onClick={abrirCancelar} className="w-full rounded-xl px-3 py-3 text-left font-medium text-red-600 active:bg-slate-100">
+              <button type="button" onClick={abrirCancelar} className="w-full rounded-xl px-3 py-3 text-left font-medium text-red-600 active:bg-slate-100">
                 Cancelar
               </button>
-              <button onClick={abrirRemarcar} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
+              <button type="button" onClick={abrirRemarcar} className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100">
                 Remarcar
               </button>
             </>
@@ -194,7 +194,7 @@ export function AulaAcoesSheet({
         <ul className="space-y-1">
           {previstos.map((p) => (
             <li key={p.id}>
-              <button
+              <button type="button"
                 onClick={() => iniciarTreino(p.aluno_id)}
                 className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100"
               >
@@ -208,7 +208,7 @@ export function AulaAcoesSheet({
       {passo === 'checkin' && previstos.length <= 1 && (
         <div className="space-y-1">
           {previstos.map((p) => (
-            <button
+            <button type="button"
               key={p.id}
               onClick={() => checkIn.mutate({ aulaId: aula.id, alunoIds: [p.aluno_id] }, { onSuccess: fechar })}
               disabled={checkIn.isPending}
@@ -269,7 +269,7 @@ export function AulaAcoesSheet({
         <ul className="space-y-1">
           {previstos.map((p) => (
             <li key={p.id}>
-              <button
+              <button type="button"
                 onClick={() => abrirFalta({ id: p.aluno_id, name: p.aluno?.name ?? 'Aluno' })}
                 className="w-full rounded-xl px-3 py-3 text-left font-medium active:bg-slate-100"
               >

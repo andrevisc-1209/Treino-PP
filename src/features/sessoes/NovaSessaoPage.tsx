@@ -316,7 +316,7 @@ export function NovaSessaoPage() {
         {etapa === 'plano' && !planoDaUrl ? (
           <BotaoSairModoFoco to={`/alunos/${id}`} />
         ) : (
-          <button onClick={voltar} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
+          <button type="button" onClick={voltar} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Voltar">
             <ArrowLeft size={20} />
           </button>
         )}
@@ -356,7 +356,7 @@ export function NovaSessaoPage() {
           {sugestao && (
             <div className="space-y-2">
               <h2 className="text-sm font-semibold text-slate-500">Sugerido</h2>
-              <button
+              <button type="button"
                 onClick={() => avancarComPlano(sugestao.plano, true)}
                 disabled={verificando || sincronizando}
                 className="w-full rounded-2xl border-2 border-brand bg-brand/10 p-4 text-left shadow-sm transition active:bg-brand/20 disabled:opacity-50"
@@ -385,7 +385,7 @@ export function NovaSessaoPage() {
               if (!temExercicios && p.modalidade && p.modalidade !== 'musculacao') {
                 // treino de outra modalidade (sem lista de exercícios): pergunta presencial/à distância antes de iniciar
                 return (
-                  <button
+                  <button type="button"
                     key={p.id}
                     onClick={() => setEscolhaSessao({ plano: p })}
                     className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50"
@@ -409,7 +409,7 @@ export function NovaSessaoPage() {
                 )
               }
               return (
-                <button
+                <button type="button"
                   key={p.id}
                   onClick={() => avancarComPlano(p, true)}
                   disabled={verificando || sincronizando}
@@ -425,7 +425,7 @@ export function NovaSessaoPage() {
 
             {planosInativos && planosInativos.length > 0 && (
               <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                <button
+                <button type="button"
                   onClick={() => setInativosAbertos((v) => !v)}
                   className="flex w-full items-center justify-between p-4 text-left text-sm font-medium text-slate-500"
                 >
@@ -487,7 +487,7 @@ export function NovaSessaoPage() {
                   if (outraMod) {
                     // sem exercícios do app: pergunta presencial/à distância; o treino é criado no aluno ao iniciar
                     return (
-                      <button
+                      <button type="button"
                         key={m.id}
                         onClick={() => setEscolhaSessao({ modelo: m })}
                         className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50"
@@ -513,7 +513,7 @@ export function NovaSessaoPage() {
                     )
                   }
                   return (
-                    <button
+                    <button type="button"
                       key={m.id}
                       onClick={() => escolherTreinoPlanejado(m)}
                       disabled={copiando || verificando || sincronizando}
@@ -533,7 +533,7 @@ export function NovaSessaoPage() {
 
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-slate-500">Outras opções</h2>
-            <button
+            <button type="button"
               onClick={() => {
                 setSelecao('livre')
                 setEtapa('perguntas')
@@ -542,7 +542,7 @@ export function NovaSessaoPage() {
             >
               Treino livre
             </button>
-            <button
+            <button type="button"
               onClick={() => navigate(`/alunos/${id}?tab=Treinos&novo=1`)}
               className="w-full rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-left font-medium text-slate-600 shadow-sm transition active:bg-slate-50"
             >
@@ -639,7 +639,7 @@ export function NovaSessaoPage() {
                   <h2 className="text-xl font-bold">Pré-treino</h2>
                   {aluno && <p className="truncate text-sm text-slate-500">{aluno.name}</p>}
                 </div>
-                <button onClick={() => setEtapa('plano')} className="flex size-11 shrink-0 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Fechar">
+                <button type="button" onClick={() => setEtapa('plano')} className="flex size-11 shrink-0 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Fechar">
                   <X size={20} />
                 </button>
               </div>
@@ -690,7 +690,7 @@ export function NovaSessaoPage() {
             treino planejado ({conflito?.modelo.modelo_exercicios.length} {conflito?.modelo.modelo_exercicios.length === 1 ? 'exercício' : 'exercícios'}).
             O que fazer?
           </p>
-          <button
+          <button type="button"
             onClick={() => {
               const c = conflito
               setConflito(null)
@@ -702,7 +702,7 @@ export function NovaSessaoPage() {
             <p className="font-medium">Usar o treino do aluno</p>
             <p className="text-sm text-slate-500">Mantém os ajustes que já foram feitos pra esse aluno, sem mudar nada.</p>
           </button>
-          <button
+          <button type="button"
             onClick={() => {
               const c = conflito
               setConflito(null)

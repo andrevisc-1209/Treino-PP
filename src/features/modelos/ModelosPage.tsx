@@ -237,7 +237,7 @@ export function ModelosPage() {
                     </p>
                   )}
                 </Link>
-                <button
+                <button type="button"
                   onClick={() => setMenuAberto(m)}
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
                   aria-label={`Mais ações para ${m.name}`}
@@ -292,16 +292,16 @@ export function ModelosPage() {
 
       <BottomSheet open={!!menuAberto} onClose={() => setMenuAberto(null)} title={menuAberto?.name}>
         <div className="space-y-1">
-          <button onClick={() => menuAberto && abrirEditar(menuAberto)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+          <button type="button" onClick={() => menuAberto && abrirEditar(menuAberto)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
             Editar
           </button>
-          <button
+          <button type="button"
             onClick={() => menuAberto && abrirDuplicar(menuAberto)}
             className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
           >
             Duplicar
           </button>
-          <button
+          <button type="button"
             onClick={() => menuAberto && excluirModelo(menuAberto)}
             disabled={excluir.isPending}
             className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"

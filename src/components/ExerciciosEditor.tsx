@@ -153,7 +153,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
         {itens?.map((item, index) => (
           <li key={item.id} className="flex items-center gap-2 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-1">
-              <button
+              <button type="button"
                 onClick={() => mover(index, -1)}
                 disabled={index === 0 || reordenarPending}
                 className="flex size-11 items-center justify-center rounded-lg text-slate-500 disabled:opacity-30 active:bg-slate-100"
@@ -161,7 +161,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               >
                 <ChevronUp size={18} />
               </button>
-              <button
+              <button type="button"
                 onClick={() => mover(index, 1)}
                 disabled={index === itens.length - 1 || reordenarPending}
                 className="flex size-11 items-center justify-center rounded-lg text-slate-500 disabled:opacity-30 active:bg-slate-100"
@@ -179,7 +179,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               </p>
               {item.notes && <p className="text-sm text-slate-400">{item.notes}</p>}
             </div>
-            <button
+            <button type="button"
               onClick={() => abrirEditarItem(item)}
               className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
               aria-label={`Editar ${item.exercicio?.name}`}
@@ -210,7 +210,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               <Input placeholder="Buscar exercício" value={buscaEx} onChange={(e) => setBuscaEx(e.target.value)} className="pl-10" autoFocus />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
-              <button
+              <button type="button"
                 onClick={() => setGrupoEx(null)}
                 className={cn(
                   'min-h-9 shrink-0 whitespace-nowrap rounded-full border px-3 text-sm font-medium',
@@ -220,7 +220,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
                 Todos
               </button>
               {gruposEx.map((g) => (
-                <button
+                <button type="button"
                   key={g}
                   onClick={() => setGrupoEx(g === grupoEx ? null : g)}
                   className={cn(
@@ -235,7 +235,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
             <ul className="max-h-80 space-y-1 overflow-y-auto">
               {exercitiosFiltrados?.map((ex) => (
                 <li key={ex.id}>
-                  <button onClick={() => setEscolhido(ex)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+                  <button type="button" onClick={() => setEscolhido(ex)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
                     <p className="font-medium">{ex.name}</p>
                     <p className="text-sm text-slate-500">{[ex.muscle_group, ex.equipment].filter(Boolean).join(' · ') || '—'}</p>
                   </button>

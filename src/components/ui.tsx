@@ -9,10 +9,12 @@ import { cn } from '@/lib/utils'
 export function Button({
   className,
   variant = 'primary',
+  type = 'button', // sem isso o botão vira "submit" e, dentro de um <form> (ex.: o wizard do aluno), envia o formulário
   ...p
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'outline' | 'ghost' }) {
   return (
     <button
+      type={type}
       className={cn(
         'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-medium transition disabled:opacity-50',
         variant === 'primary' && 'bg-brand text-white active:bg-brand-hover',
