@@ -111,11 +111,12 @@ const IPV6 = /^[0-9a-f:.]+$/i
 
 /**
  * IP do cliente a partir dos headers da requisição (Edge Function atrás do proxy do Supabase):
- * cf-connecting-ip, depois o primeiro IP de x-forwarded-for, depois x-real-ip. Devolve null se
+ * cf-connecting-ip (a Cloudflare sobrescreve o que o cliente mandar; confirmado nos registros do rate_limit) e, na falta
+ * dele, x-real-ip. x-forwarded-for NÃO é usado: o primeiro item pode vir do cliente. Devolve null se
  * nenhum for um IP válido — nunca grava texto solto como "unknown".
  */
 export function ipDoCliente(headers: { get(nome: string): string | null }): string | null {
-  const candidatos = [headers.get('cf-connecting-ip'), headers.get('x-forwarded-for')?.split(',')[0], headers.get('x-real-ip')]
+  const candidatos = [headers.get('cf-connecting-ip'), headers.get('x-real-ip')]
   for (const bruto of candidatos) {
     const ip = bruto?.trim()
     if (!ip || ip.length > 45) continue
