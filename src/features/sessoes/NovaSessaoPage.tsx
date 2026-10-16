@@ -18,6 +18,7 @@ import { ScaleQuestion } from '@/components/ScaleQuestion'
 import { cn } from '@/lib/utils'
 import { MODALIDADES_CONFIG, type TipoExecucao } from '@/types/modalidades'
 import { useEnviarTreinoAoAluno } from '@/features/planos/useEnviarTreino'
+import type { ValidadeLink } from '@/features/planos/validadeLink'
 import { EscolhaSessaoSheet } from './EscolhaSessaoSheet'
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { formatarNumero } from '@/lib/format'
@@ -98,7 +99,7 @@ export function NovaSessaoPage() {
   // treino de outra modalidade escolhido (do aluno ou planejado): pergunta presencial/à distância antes de iniciar
   const [escolhaSessao, setEscolhaSessao] = useState<{ plano: Plano } | { modelo: Modelo } | null>(null)
   const [abrindoOutra, setAbrindoOutra] = useState(false)
-  const enviarAoAluno = useEnviarTreinoAoAluno(id ?? '')
+  const { enviar: enviarAoAluno } = useEnviarTreinoAoAluno(id ?? '')
   const [copiando, setCopiando] = useState(false)
   const [verificando, setVerificando] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
@@ -226,17 +227,25 @@ export function NovaSessaoPage() {
     return { id: planoId, name: m.name, modalidade: m.modalidade, modalidade_detalhes: m.modalidade_detalhes }
   }
 
-  const iniciarOutraModalidade = (tipo: TipoExecucao) => {
+  const iniciarOutraModalidade = (tipo: TipoExecucao, validade: ValidadeLink) => {
     if (tipo === 'assincrono') {
       // enviarAoAluno abre a aba do WhatsApp já no clique (antes de qualquer espera)
       setAbrindoOutra(true)
       enviarAoAluno(async () => {
         const p = await obterPlanoEscolhido()
         return { id: p.id, name: p.name, modalidade: p.modalidade, detalhes: p.modalidade_detalhes }
-      }).finally(() => {
+      }, validade).finally(() => {
         setAbrindoOutra(false)
         setEscolhaSessao(null)
       })
+      return
+    }
+    // musculação presencial segue o fluxo de sempre (pré-treino + sessão com séries); só as outras modalidades abrem a folha de resultado
+    if (escolhaSessao && (('plano' in escolhaSessao ? escolhaSessao.plano.modalidade : escolhaSessao.modelo.modalidade) ?? 'musculacao') === 'musculacao') {
+      const escolha = escolhaSessao
+      setEscolhaSessao(null)
+      if ('plano' in escolha) avancarComPlano(escolha.plano, true)
+      else escolherTreinoPlanejado(escolha.modelo)
       return
     }
     setAbrindoOutra(true)
@@ -411,7 +420,7 @@ export function NovaSessaoPage() {
               return (
                 <button type="button"
                   key={p.id}
-                  onClick={() => avancarComPlano(p, true)}
+                  onClick={() => setEscolhaSessao({ plano: p })}
                   disabled={verificando || sincronizando}
                   className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50 disabled:opacity-50"
                 >
@@ -515,7 +524,7 @@ export function NovaSessaoPage() {
                   return (
                     <button type="button"
                       key={m.id}
-                      onClick={() => escolherTreinoPlanejado(m)}
+                      onClick={() => setEscolhaSessao({ modelo: m })}
                       disabled={copiando || verificando || sincronizando}
                       className="w-full rounded-2xl bg-white p-4 text-left shadow-sm transition active:bg-slate-50 disabled:opacity-50"
                     >

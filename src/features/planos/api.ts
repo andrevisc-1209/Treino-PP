@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { corpoValidade, VALIDADE_PADRAO, type ValidadeLink } from './validadeLink'
 import { supabase } from '@/lib/supabase'
 import type { ItemComparavel } from './compare'
 import type { ModalidadeDetalhes, ModalidadeTipo, TipoExecucao } from '@/types/modalidades'
@@ -442,9 +443,11 @@ export async function buscarExerciciosParaMensagem(planoId: string): Promise<{ n
   }))
 }
 
-/** Link público (7 dias, uso único) para o aluno ver o treino e registrar a execução sem conta. */
-export async function gerarLinkTreino(planoId: string): Promise<string> {
-  const { data, error } = await supabase.functions.invoke<{ link: string }>('gerar-link-treino', { body: { plano_id: planoId } })
+/** Link público (uso único, com a validade escolhida; padrão 48h) para o aluno ver o treino e registrar a execução sem conta. */
+export async function gerarLinkTreino(planoId: string, validade: ValidadeLink = VALIDADE_PADRAO): Promise<{ link: string; expiraEm: string | null }> {
+  const { data, error } = await supabase.functions.invoke<{ link: string; expira_em: string | null }>('gerar-link-treino', {
+    body: { plano_id: planoId, ...corpoValidade(validade) },
+  })
   if (error || !data?.link) {
     let msg = 'Não foi possível gerar o link do treino.'
     const contexto = (error as { context?: Response } | null)?.context
@@ -458,5 +461,5 @@ export async function gerarLinkTreino(planoId: string): Promise<string> {
     }
     throw new Error(msg)
   }
-  return data.link
+  return { link: data.link, expiraEm: data.expira_em ?? null }
 }

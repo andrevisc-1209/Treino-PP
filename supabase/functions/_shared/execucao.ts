@@ -173,12 +173,30 @@ export function validarExecucao(
   return { ok: true, detalhes, notas }
 }
 
+/** `expira_em` nulo = link sem prazo (escolha do personal). */
 export function linkValido(
-  link: { expira_em: string; usado_em: string | null } | null,
+  link: { expira_em: string | null; usado_em: string | null } | null,
   agora: Date = new Date(),
 ): 'valido' | 'invalido' | 'expirado' | 'usado' {
   if (!link) return 'invalido'
   if (link.usado_em) return 'usado'
-  if (new Date(link.expira_em).getTime() < agora.getTime()) return 'expirado'
+  if (link.expira_em && new Date(link.expira_em).getTime() < agora.getTime()) return 'expirado'
   return 'valido'
 }
+
+/** Validades que o personal pode escolher (horas); `null` = sem prazo. Padrão: 48 h. */
+export const VALIDADES_HORAS = [24, 48, 72] as const
+export const VALIDADE_PADRAO_HORAS = 48
+
+/**
+ * Lê a validade pedida pelo navegador: ausente → padrão (48 h); `sem_prazo: true` → sem prazo; só 24/48/72 são aceitas.
+ * Retorna `undefined` se o valor for inválido.
+ */
+export function validadeDoPedido(horas: unknown, semPrazo: unknown): number | null | undefined {
+  if (semPrazo === true) return null
+  if (horas === undefined || horas === null) return VALIDADE_PADRAO_HORAS
+  return (VALIDADES_HORAS as readonly unknown[]).includes(horas) ? (horas as number) : undefined
+}
+
+export const expiraEmDaValidade = (horas: number | null, agora: Date = new Date()): string | null =>
+  horas === null ? null : new Date(agora.getTime() + horas * 3_600_000).toISOString()
