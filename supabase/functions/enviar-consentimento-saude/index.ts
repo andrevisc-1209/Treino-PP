@@ -13,7 +13,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { canalValido, emailValido, expiraEm, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from '../_shared/consentimento.ts'
-import { limiteExcedido, resposta429 } from '../_shared/rateLimit.ts'
+import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
@@ -104,9 +104,13 @@ Deno.serve(async (req) => {
   // viram um relé de spam com o remetente noreply@personalperto.com.br. O limite do dia só conta se o da hora passou.
   if (canal === 'email') {
     const id = userData.user.id
-    if ((await limiteExcedido(`enviar-consentimento:h:${id}`, 20, 3600)) || (await limiteExcedido(`enviar-consentimento:d:${id}`, 60, 86400))) {
-      return resposta429(cors(req))
-    }
+    // falha fechada: se o banco do limite não responder, não envia (é a rota mais abusável)
+    const hora = await verificarLimite(`enviar-consentimento:h:${id}`, 20, 3600)
+    if (hora === 'erro') return resposta503(cors(req))
+    if (hora === 'excedido') return resposta429(cors(req))
+    const dia = await verificarLimite(`enviar-consentimento:d:${id}`, 60, 86400)
+    if (dia === 'erro') return resposta503(cors(req))
+    if (dia === 'excedido') return resposta429(cors(req))
   }
 
   const { data: personal } = await cliente.from('professionals').select('name').eq('id', aluno.professional_id).maybeSingle()
