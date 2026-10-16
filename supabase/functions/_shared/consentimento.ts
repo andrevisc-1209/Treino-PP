@@ -72,6 +72,17 @@ export function escaparHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
+/** Nome vindo do usuário para o corpo do e-mail: sem links, sem quebras de linha, no máximo 60 caracteres. */
+export function nomeSeguroParaEmail(nome: string, padrao: string): string {
+  const limpo = nome
+    .replace(/https?:\/\/\S+|www\.\S+/gi, '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60)
+  return limpo || padrao
+}
+
 export function montarEmailConsentimento(args: { nomeAluno: string; nomePersonal: string; linkAutorizar: string; linkNegar: string }) {
   const aluno = escaparHtml(args.nomeAluno)
   const personal = escaparHtml(args.nomePersonal)

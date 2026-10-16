@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canalValido, emailValido, escaparHtml, estadoDoToken, expiraEm, ipDoCliente, montarEmailConsentimento, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
+import { canalValido, emailValido, escaparHtml, estadoDoToken, expiraEm, ipDoCliente, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
 
 const agora = new Date('2026-10-06T12:00:00.000Z')
 
@@ -84,3 +84,15 @@ describe('ipDoCliente', () => {
     expect(ipDoCliente(h({ 'cf-connecting-ip': 'lixo', 'x-real-ip': '177.1.2.3' }))).toBe('177.1.2.3')
   })
 })
+
+describe('nomeSeguroParaEmail', () => {
+  it('remove links e quebras de linha, limita a 60 caracteres e usa o padrão se sobrar nada', () => {
+    expect(nomeSeguroParaEmail('Ana https://golpe.com/x Souza', 'aluno')).toBe('Ana Souza')
+    expect(nomeSeguroParaEmail('Ana\nwww.golpe.com\tSouza', 'aluno')).toBe('Ana Souza')
+    expect(nomeSeguroParaEmail('a'.repeat(200), 'aluno')).toHaveLength(60)
+    expect(nomeSeguroParaEmail('http://golpe.com', 'aluno')).toBe('aluno')
+    expect(nomeSeguroParaEmail('   ', 'Seu personal')).toBe('Seu personal')
+    expect(nomeSeguroParaEmail('João da Silva', 'aluno')).toBe('João da Silva')
+  })
+})
+
