@@ -187,16 +187,18 @@ export function linkValido(
 /** Validades que o personal pode escolher (horas); `null` = sem prazo. Padrão: 48 h. */
 export const VALIDADES_HORAS = [24, 48, 72] as const
 export const VALIDADE_PADRAO_HORAS = 48
+/** "Sem prazo" vale no máximo 30 dias. */
+export const VALIDADE_MAXIMA_HORAS = 30 * 24
 
 /**
- * Lê a validade pedida pelo navegador: ausente → padrão (48 h); `sem_prazo: true` → sem prazo; só 24/48/72 são aceitas.
+ * Lê a validade pedida pelo navegador: ausente → padrão (48 h); `sem_prazo: true` → teto de 30 dias (o link é uma credencial
+ * que vai na URL: nunca fica válido para sempre); só 24/48/72 são aceitas.
  * Retorna `undefined` se o valor for inválido.
  */
-export function validadeDoPedido(horas: unknown, semPrazo: unknown): number | null | undefined {
-  if (semPrazo === true) return null
+export function validadeDoPedido(horas: unknown, semPrazo: unknown): number | undefined {
+  if (semPrazo === true) return VALIDADE_MAXIMA_HORAS
   if (horas === undefined || horas === null) return VALIDADE_PADRAO_HORAS
   return (VALIDADES_HORAS as readonly unknown[]).includes(horas) ? (horas as number) : undefined
 }
 
-export const expiraEmDaValidade = (horas: number | null, agora: Date = new Date()): string | null =>
-  horas === null ? null : new Date(agora.getTime() + horas * 3_600_000).toISOString()
+export const expiraEmDaValidade = (horas: number, agora: Date = new Date()): string => new Date(agora.getTime() + horas * 3_600_000).toISOString()

@@ -107,17 +107,17 @@ describe('volume e tempo calculados', () => {
 
 describe('validade do link', () => {
   const agora = new Date('2026-10-20T12:00:00Z')
-  it('padrão 48 h; aceita 24/48/72; sem prazo vira null; outro valor é inválido', () => {
+  it('padrão 48 h; aceita 24/48/72; sem prazo vira o teto de 30 dias; outro valor é inválido', () => {
     expect(validadeDoPedido(undefined, undefined)).toBe(48)
     expect(validadeDoPedido(24, false)).toBe(24)
     expect(validadeDoPedido(72, undefined)).toBe(72)
-    expect(validadeDoPedido(undefined, true)).toBeNull()
+    expect(validadeDoPedido(undefined, true)).toBe(720) // "sem prazo" = teto de 30 dias
     expect(validadeDoPedido(5, undefined)).toBeUndefined()
     expect(validadeDoPedido('48', undefined)).toBeUndefined()
   })
-  it('calcula expira_em e deixa null para sem prazo', () => {
+  it('calcula expira_em (sem prazo = 30 dias)', () => {
     expect(expiraEmDaValidade(48, agora)).toBe('2026-10-22T12:00:00.000Z')
-    expect(expiraEmDaValidade(null, agora)).toBeNull()
+    expect(expiraEmDaValidade(validadeDoPedido(undefined, true)!, agora)).toBe('2026-11-19T12:00:00.000Z')
   })
   it('linkValido: expira_em nulo nunca expira; vencido expira; usado vence o prazo', () => {
     expect(linkValido({ expira_em: null, usado_em: null }, agora)).toBe('valido')

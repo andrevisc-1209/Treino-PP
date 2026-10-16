@@ -94,7 +94,7 @@ export function useEnviarTreinoAoAluno(alunoId: string): { enviar: (treino: Trei
         <SeletorValidadeLink valor={validade} onChange={setValidade} />
         <p className="text-sm text-slate-600">
           {validade === 'sem_prazo'
-            ? 'O link não expira: vale até o aluno registrar o treino.'
+            ? 'Sem prazo definido: o link vale até o aluno registrar o treino, no máximo por 30 dias.'
             : `Depois de ${validade}h o link deixa de abrir e o aluno precisa pedir outro.`}
         </p>
         <div className="grid grid-cols-2 gap-2">

@@ -10,7 +10,7 @@ export const OPCOES_VALIDADE: { valor: ValidadeLink; rotulo: string }[] = [
   { valor: 24, rotulo: '24h' },
   { valor: 48, rotulo: '48h (padrão)' },
   { valor: 72, rotulo: '72h' },
-  { valor: 'sem_prazo', rotulo: 'Sem prazo' },
+  { valor: 'sem_prazo', rotulo: 'Sem prazo (até 30 dias)' },
 ]
 
 const CHAVE = 'treino:validade-link'
@@ -41,7 +41,8 @@ export const corpoValidade = (v: ValidadeLink): { validade_horas?: number; sem_p
 
 /** Aviso mostrado ao personal depois de gerar o link. */
 export function avisoValidade(v: ValidadeLink, expiraEm: string | null): string {
-  if (v === 'sem_prazo' || !expiraEm) return 'Link sem prazo de validade: vale até o aluno registrar o treino.'
+  if (!expiraEm) return 'Link enviado.'
+  if (v === 'sem_prazo') return `⚠️ Sem prazo definido, mas o link vale no máximo 30 dias — expira em ${dataHoraSP(expiraEm)}. Avise seu aluno para registrar o treino.`
   return `⚠️ Link válido por ${v}h — expira em ${dataHoraSP(expiraEm)}. Avise seu aluno para registrar o treino dentro desse prazo.`
 }
 

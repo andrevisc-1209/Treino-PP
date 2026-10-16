@@ -12,7 +12,8 @@
 // (remetente fixo: "Treino PP <noreply@personalperto.com.br>").
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { canalValido, emailValido, expiraEm, montarEmailConsentimento, podeEnviarAgora, validarMotivoReenvio } from '../_shared/consentimento.ts'
+import { canalValido, emailValido, expiraEm, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from '../_shared/consentimento.ts'
+import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
@@ -47,6 +48,8 @@ Deno.serve(async (req) => {
   })
   const { data: userData, error: userError } = await cliente.auth.getUser()
   if (userError || !userData.user) return json(req, { error: 'Não autenticado.' }, 401)
+  // Cadastro é aberto: só conta com e-mail confirmado dispara e-mail com a nossa marca.
+  if (!userData.user.email_confirmed_at) return json(req, { error: 'Confirme o seu e-mail para enviar solicitações.' }, 403)
 
   let body: { aluno_id?: unknown; email?: unknown; canal?: unknown; motivo_reenvio?: unknown; motivo_reenvio_livre?: unknown }
   try {
@@ -97,6 +100,19 @@ Deno.serve(async (req) => {
     return json(req, { error: 'A solicitação acabou de ser enviada. Aguarde um minuto para reenviar.' }, 429)
   }
 
+  // Só o canal e-mail envia mensagem de verdade. Limite por personal (hora e dia): sem ele, várias contas/alunos
+  // viram um relé de spam com o remetente noreply@personalperto.com.br. O limite do dia só conta se o da hora passou.
+  if (canal === 'email') {
+    const id = userData.user.id
+    // falha fechada: se o banco do limite não responder, não envia (é a rota mais abusável)
+    const hora = await verificarLimite(`enviar-consentimento:h:${id}`, 20, 3600)
+    if (hora === 'erro') return resposta503(cors(req))
+    if (hora === 'excedido') return resposta429(cors(req))
+    const dia = await verificarLimite(`enviar-consentimento:d:${id}`, 60, 86400)
+    if (dia === 'erro') return resposta503(cors(req))
+    if (dia === 'excedido') return resposta429(cors(req))
+  }
+
   const { data: personal } = await cliente.from('professionals').select('name').eq('id', aluno.professional_id).maybeSingle()
   const nomePersonal = personal?.name?.trim() || 'Seu personal'
 
@@ -122,8 +138,8 @@ Deno.serve(async (req) => {
   const base = `${SITE_URL}/consentimento/saude?token=${tok.token}`
   if (canal === 'email') {
     const msg = montarEmailConsentimento({
-      nomeAluno: aluno.name,
-      nomePersonal,
+      nomeAluno: nomeSeguroParaEmail(aluno.name, 'aluno'),
+      nomePersonal: nomeSeguroParaEmail(nomePersonal, 'Seu personal'),
       linkAutorizar: base,
       linkNegar: `${base}&negar=1`,
     })

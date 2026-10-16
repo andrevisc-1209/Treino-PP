@@ -2,8 +2,10 @@ import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { loadEnv } from 'vite'
 import { defineConfig, type Plugin } from 'vitest/config'
 import { APP_NAME, APP_SHORT_NAME } from './src/config/app.ts'
+import { montarCsp } from './src/config/csp.ts'
 
 /** Troca %APP_NAME%/%APP_SHORT_NAME% no index.html pelos valores de src/config/app.ts — um só lugar de verdade. */
 function htmlAppNamePlugin(): Plugin {
@@ -15,27 +17,8 @@ function htmlAppNamePlugin(): Plugin {
   }
 }
 
-/**
- * CSP e referrer via <meta> (GitHub Pages não permite headers). Só no BUILD: o dev server do Vite
- * injeta scripts inline/HMR por websocket e quebraria com uma CSP restrita. Sem 'unsafe-eval'.
- * frame-ancestors e X-Content-Type-Options NÃO funcionam via <meta> (ignorados pelos browsers) — ficam de fora.
- */
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://maps.googleapis.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https:",
-  "connect-src 'self' data: blob: https://*.supabase.co wss://*.supabase.co https://viacep.com.br https://maps.googleapis.com https://challenges.cloudflare.com",
-  'frame-src https://challenges.cloudflare.com',
-  "worker-src 'self'",
-  "manifest-src 'self'",
-  "form-action 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-].join('; ')
-
-function htmlCspPlugin(): Plugin {
+/** CSP e referrer via <meta>, só no build. A política em si fica em src/config/csp.ts (testada). */
+function htmlCspPlugin(csp: string): Plugin {
   return {
     name: 'html-csp',
     apply: 'build',
@@ -44,19 +27,22 @@ function htmlCspPlugin(): Plugin {
       handler: (html) =>
         html.replace(
           '<meta charset="UTF-8" />',
-          `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />\n    <meta name="referrer" content="strict-origin-when-cross-origin" />`,
+          `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${csp}" />\n    <meta name="referrer" content="strict-origin-when-cross-origin" />`,
         ),
     },
   }
 }
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => {
+  const supabaseUrl = loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_URL
+  if (command === 'build' && !supabaseUrl) console.warn('[csp] VITE_SUPABASE_URL ausente no build: connect-src ficou com o curinga *.supabase.co')
+  return {
   base: '/',
   plugins: [
     react(),
     tailwindcss(),
     htmlAppNamePlugin(),
-    htmlCspPlugin(),
+    htmlCspPlugin(montarCsp(supabaseUrl)),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png'],
@@ -101,4 +87,5 @@ export default defineConfig(({ command }) => ({
     // e2e/ são specs do Playwright (test:e2e), não do Vitest.
     exclude: ['node_modules/**', 'e2e/**'],
   },
-}))
+}
+})

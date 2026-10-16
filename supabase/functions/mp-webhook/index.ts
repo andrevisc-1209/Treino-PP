@@ -14,7 +14,7 @@
 // 500 em falha nossa (MP/DB) — o MP reenvia nesses casos.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { limiteExcedido, resposta429 } from '../_shared/rateLimit.ts'
+import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
 import { ipDoCliente } from '../_shared/consentimento.ts'
 import { dataSP, montarPagamentoPlano } from '../_shared/notificacoes.ts'
@@ -33,7 +33,11 @@ Deno.serve(async (req) => {
 
   // Rate limit por IP (30/min): barra rajadas de chamadas forjadas antes de qualquer processamento.
   const ipWebhook = ipDoCliente(req.headers)
-  if (ipWebhook && (await limiteExcedido(`mp-webhook:ip:${ipWebhook}`, 30))) return resposta429()
+  if (ipWebhook) {
+    const lim = await verificarLimite(`mp-webhook:ip:${ipWebhook}`, 30)
+    if (lim === 'excedido') return resposta429()
+    if (lim === 'erro') return resposta503() // falha fechada: o Mercado Pago reenvia o webhook
+  }
 
   const token = Deno.env.get('MP_ACCESS_TOKEN')
   if (!tokenMpValido(token)) {

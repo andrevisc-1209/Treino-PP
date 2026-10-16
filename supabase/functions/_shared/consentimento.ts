@@ -72,6 +72,17 @@ export function escaparHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
+/** Nome vindo do usuário para o corpo do e-mail: sem links, sem quebras de linha, no máximo 60 caracteres. */
+export function nomeSeguroParaEmail(nome: string, padrao: string): string {
+  const limpo = nome
+    .replace(/https?:\/\/\S+|www\.\S+/gi, '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60)
+  return limpo || padrao
+}
+
 export function montarEmailConsentimento(args: { nomeAluno: string; nomePersonal: string; linkAutorizar: string; linkNegar: string }) {
   const aluno = escaparHtml(args.nomeAluno)
   const personal = escaparHtml(args.nomePersonal)
@@ -100,11 +111,12 @@ const IPV6 = /^[0-9a-f:.]+$/i
 
 /**
  * IP do cliente a partir dos headers da requisição (Edge Function atrás do proxy do Supabase):
- * cf-connecting-ip, depois o primeiro IP de x-forwarded-for, depois x-real-ip. Devolve null se
+ * cf-connecting-ip (a Cloudflare sobrescreve o que o cliente mandar; confirmado nos registros do rate_limit). Nem
+ * x-forwarded-for nem x-real-ip são usados: podem vir do cliente. Devolve null se
  * nenhum for um IP válido — nunca grava texto solto como "unknown".
  */
 export function ipDoCliente(headers: { get(nome: string): string | null }): string | null {
-  const candidatos = [headers.get('cf-connecting-ip'), headers.get('x-forwarded-for')?.split(',')[0], headers.get('x-real-ip')]
+  const candidatos = [headers.get('cf-connecting-ip')]
   for (const bruto of candidatos) {
     const ip = bruto?.trim()
     if (!ip || ip.length > 45) continue

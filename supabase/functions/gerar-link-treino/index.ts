@@ -1,6 +1,6 @@
 // Edge Function: gerar-link-treino   (JWT do personal)
 //
-// POST { plano_id, validade_horas?: 24|48|72, sem_prazo?: true } -> { link, expira_em }. O link (https://…/treino/<token>) abre a página PÚBLICA onde o aluno,
+// POST { plano_id, validade_horas?: 24|48|72, sem_prazo?: true (= teto de 30 dias) } -> { link, expira_em }. O link (https://…/treino/<token>) abre a página PÚBLICA onde o aluno,
 // sem conta, vê o treino e registra o que fez (Edge Function treino-publico). Vale 48 h por padrão (24/48/72 h ou sem prazo, à escolha do personal) e é de uso único.
 // O token fica em treino.links_treino_assincrono (só service_role). Se já existe um link do treino
 // ainda válido e sem uso, devolve o mesmo (não acumula links a cada clique em "enviar").
