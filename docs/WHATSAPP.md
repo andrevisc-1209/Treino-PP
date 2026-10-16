@@ -39,11 +39,11 @@ Todas respeitam `whatsapp_opt_in` + telefone válido do cadastro, mandam **no m�
 
 | Aviso | Quando | Onde |
 |---|---|---|
-| ☀️ Briefing: agenda do dia + previsão | todo dia 8h (Brasília); sem aulas no dia não envia | Edge Function `daily-briefing` |
+| ☀️ Briefing: agenda do dia + aviso de chuva (≥ 40%) | todo dia 5h30 (Brasília); sem aulas no dia não envia; 1 aluno = frase única, 2+ = lista | Edge Function `daily-briefing` |
 | 💰 Pagamento do plano confirmado | ao aprovar o pagamento (webhook do Mercado Pago) | `mp-webhook` |
-| ⏰ Plano vencendo | 3 dias antes do fim do acesso, 8h | `avisos-diarios` |
-| 👋 Aluno inativo | último treino há exatamente 10 dias, 8h (uma mensagem com a lista) | `avisos-diarios` |
-| 📊 Resumo da semana | domingo 21h; sem atividade na semana não envia | `weekly-summary` |
+| ⏰ Plano do personal vencendo | 3 dias antes do fim do acesso, 5h30 | `avisos-diarios` |
+| 👋 Aluno inativo | último treino há exatamente 10 dias, 5h30 (1 aluno = nome; 2+ = "Carlos e mais N") | `avisos-diarios` |
+| 📊 Resumo da semana | domingo 21h; tom de conversa, lista os 3 alunos mais parados + "...e mais N"; sem treinos, receita nem inativos não envia | `weekly-summary` |
 
 Lógica e textos: `supabase/functions/_shared/notificacoes.ts` (testada com vitest). Previsão: Open-Meteo, pela cidade/UF do personal.
 
@@ -63,4 +63,4 @@ e o job o lê a cada chamada. Passo a passo:
 - **Receita da semana** = faturas dos alunos marcadas como pagas na semana (não pagamentos do Mercado Pago).
 - **Alerta de prontidão (4b): não implementado, de propósito.** A prontidão (sono, estresse, fadiga, dor) é preenchida pelo próprio personal na sessão e é dado de saúde:
   a regra do projeto proíbe esse dado em mensagens de WhatsApp. O "motivo" do aluno iria no texto.
-- Horários: 8h de Brasília (11h UTC), não 5h; o domingo 21h do resumo semanal é segunda 0h UTC.
+- Horários (UTC-3, sem horário de verão): briefing e avisos `30 8 * * *` = 5h30 de Brasília; resumo semanal `0 0 * * 1` = domingo 21h. Para mudar um job, rode `cron.schedule` de novo com o mesmo nome.
