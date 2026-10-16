@@ -64,14 +64,14 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
           <li key={g.ids.join(',')} className="flex items-center justify-between gap-2 py-2">
             <p className="text-sm">{descricaoGrupo(g)}</p>
             <div className="flex shrink-0 gap-1">
-              <button
+              <button type="button"
                 onClick={() => setEditando(g)}
                 className="flex size-9 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
                 aria-label="Editar horário"
               >
                 <Pencil size={16} />
               </button>
-              <button
+              <button type="button"
                 onClick={() => pausar.mutate({ ids: g.ids, active: !g.active })}
                 disabled={pausar.isPending}
                 className="flex size-11 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
@@ -79,7 +79,7 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
               >
                 {g.active ? <Pause size={16} /> : <Play size={16} />}
               </button>
-              <button
+              <button type="button"
                 onClick={async () => {
                   const ok = await confirmarAcao({
                     titulo: 'Encerrar horário',

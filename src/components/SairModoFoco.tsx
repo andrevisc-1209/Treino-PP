@@ -23,7 +23,7 @@ export function BotaoSairModoFoco({
   }
 
   return (
-    <button onClick={sair} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Sair">
+    <button type="button" onClick={sair} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Sair">
       <X size={20} />
     </button>
   )

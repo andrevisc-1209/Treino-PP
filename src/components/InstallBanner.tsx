@@ -66,7 +66,7 @@ export function InstallBanner() {
     <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium">Instale o app na tela inicial</p>
-        <button onClick={fechar} aria-label="Fechar aviso" className="flex size-6 shrink-0 items-center justify-center text-slate-400">
+        <button type="button" onClick={fechar} aria-label="Fechar aviso" className="flex size-6 shrink-0 items-center justify-center text-slate-400">
           <X size={16} />
         </button>
       </div>

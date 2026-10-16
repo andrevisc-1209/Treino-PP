@@ -179,7 +179,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
     <div className="space-y-4">
       <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
         {PERIODOS.map((p) => (
-          <button
+          <button type="button"
             key={p.value}
             onClick={() => setPeriodo(p.value)}
             className={cn(
@@ -213,7 +213,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
       <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Prontidão pré-treino</h2>
-          <button onClick={() => setBemEstarDetalhado((v) => !v)} className="text-sm font-medium text-brand-hover">
+          <button type="button" onClick={() => setBemEstarDetalhado((v) => !v)} className="text-sm font-medium text-brand-hover">
             {bemEstarDetalhado ? 'Ver índice' : 'Ver detalhes'}
           </button>
         </div>
@@ -354,7 +354,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
         </div>
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
           {METRICAS_AVALIACAO.map((m) => (
-            <button
+            <button type="button"
               key={m.value}
               onClick={() => setMetricaAvaliacao(m.value)}
               className={cn(

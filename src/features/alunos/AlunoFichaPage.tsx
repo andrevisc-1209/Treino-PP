@@ -301,7 +301,7 @@ export function AlunoFichaPage() {
 
       <div className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
         {TABS.map((t) => (
-          <button
+          <button type="button"
             key={t}
             onClick={() => setTab(t)}
             className={cn(

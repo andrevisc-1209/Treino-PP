@@ -77,7 +77,7 @@ export function ModeloEditorPage() {
           <h1 className="truncate text-xl font-bold">{modelo.name}</h1>
           {modelo.notes && <p className="truncate text-sm text-slate-500">{modelo.notes}</p>}
         </div>
-        <button
+        <button type="button"
           onClick={abrirEditarNome}
           className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
           aria-label="Editar nome e observações"

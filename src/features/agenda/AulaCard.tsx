@@ -70,7 +70,7 @@ export function AulaCard({
       )}
 
       {podeComecar && onComecar && (
-        <button
+        <button type="button"
           onClick={(e) => {
             e.stopPropagation()
             onComecar()

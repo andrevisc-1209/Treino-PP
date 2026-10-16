@@ -51,7 +51,7 @@ export function PlanoOrigemBadge({ plano, alunoId }: { plano: PlanoParaBadge; al
 
   if (vazio) {
     return (
-      <button
+      <button type="button"
         onClick={atualizar}
         disabled={sincronizar.isPending}
         className="mt-1 flex items-center gap-1 text-sm font-medium text-brand-hover disabled:opacity-50"
@@ -64,7 +64,7 @@ export function PlanoOrigemBadge({ plano, alunoId }: { plano: PlanoParaBadge; al
   return (
     <div className="mt-1 flex flex-wrap items-center gap-2">
       <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">Baseado em: {modelo.name} · desatualizado</span>
-      <button onClick={atualizar} disabled={sincronizar.isPending} className="text-xs font-medium text-brand-hover disabled:opacity-50">
+      <button type="button" onClick={atualizar} disabled={sincronizar.isPending} className="text-xs font-medium text-brand-hover disabled:opacity-50">
         Atualizar com o treino planejado
       </button>
     </div>

@@ -322,7 +322,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                   </p>
                 </Link>
                 {p.tipo_execucao === 'assincrono' && p.active && (
-                  <button
+                  <button type="button"
                     onClick={() => enviarAoAluno({ id: p.id, name: p.name, modalidade: p.modalidade, detalhes: p.modalidade_detalhes })}
                     className="flex size-11 shrink-0 items-center justify-center rounded-xl text-brand active:bg-slate-100"
                     aria-label={`Enviar ${p.name} para o aluno pelo WhatsApp`}
@@ -331,7 +331,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                   </button>
                 )}
                 {p.active && outraModalidade && p.tipo_execucao === 'sincrono' && (
-                  <button
+                  <button type="button"
                     onClick={() => setPresencial({ id: p.id, name: p.name, modalidade: p.modalidade, modalidade_detalhes: p.modalidade_detalhes })}
                     className="flex size-11 shrink-0 items-center justify-center rounded-xl text-brand active:bg-slate-100"
                     aria-label={`Registrar aula de ${p.name}`}
@@ -348,7 +348,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
                     <Play size={18} />
                   </Link>
                 )}
-                <button
+                <button type="button"
                   onClick={() => setMenuPlano(p)}
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
                   aria-label={`Mais ações para ${p.name}`}
@@ -364,13 +364,13 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
 
       <BottomSheet open={novoEtapa === 'escolha'} onClose={fecharNovo} title="Novo treino">
         <div className="space-y-2">
-          <button
+          <button type="button"
             onClick={() => setNovoEtapa('modelo')}
             className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
           >
             Usar um treino planejado
           </button>
-          <button
+          <button type="button"
             onClick={() => setNovoEtapa('nome')}
             className="w-full rounded-2xl border border-slate-200 p-4 text-left font-medium active:bg-slate-50"
           >
@@ -396,7 +396,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             }
             return (
               <li key={m.id}>
-                <button
+                <button type="button"
                   onClick={() => usarModelo(m)}
                   disabled={criarDeModelo.isPending || verificandoModelo || sincronizar.isPending}
                   className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100 disabled:opacity-50"
@@ -423,7 +423,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             do treino planejado ({conflitoModelo?.modelo.modelo_exercicios.length}{' '}
             {conflitoModelo?.modelo.modelo_exercicios.length === 1 ? 'exercício' : 'exercícios'}). O que fazer?
           </p>
-          <button
+          <button type="button"
             onClick={() => {
               const c = conflitoModelo
               setConflitoModelo(null)
@@ -437,7 +437,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             <p className="font-medium">Usar o treino do aluno</p>
             <p className="text-sm text-slate-500">Mantém os ajustes que já foram feitos pra esse aluno, sem mudar nada.</p>
           </button>
-          <button
+          <button type="button"
             onClick={() => {
               const c = conflitoModelo
               setConflitoModelo(null)
@@ -496,16 +496,16 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
 
       <BottomSheet open={!!menuPlano} onClose={() => setMenuPlano(null)} title={menuPlano?.name}>
         <div className="space-y-1">
-          <button onClick={() => menuPlano && abrirEditar(menuPlano)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+          <button type="button" onClick={() => menuPlano && abrirEditar(menuPlano)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
             Editar
           </button>
-          <button
+          <button type="button"
             onClick={() => menuPlano && abrirDuplicar(menuPlano)}
             className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
           >
             Duplicar
           </button>
-          <button
+          <button type="button"
             onClick={() => {
               if (menuPlano) salvarComoModelo.mutate({
                   id: menuPlano.id,
@@ -521,7 +521,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
           >
             Salvar como treino planejado
           </button>
-          <button
+          <button type="button"
             onClick={() => {
               if (menuPlano) atualizar.mutate({ id: menuPlano.id, active: !menuPlano.active })
               setMenuPlano(null)
@@ -530,7 +530,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
           >
             {menuPlano?.active ? 'Desativar' : 'Ativar'}
           </button>
-          <button
+          <button type="button"
             onClick={() => menuPlano && excluirPlano(menuPlano)}
             className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"
           >
