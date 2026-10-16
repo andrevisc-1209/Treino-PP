@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 16/10/2026 (PR "fechar gaps lotes 1 e 2")
+Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "correções da revisão adversarial: itens 1 a 6")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -34,6 +34,14 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **CORS com localhost em produção** (BAIXA): `localhost:5173` só entra se `ALLOW_LOCALHOST_CORS=true` (nunca definido em produção), nas 7 funções chamadas pelo navegador.
 - **`WITH CHECK` das tabelas filhas** (BAIXA): `20261041000000_with_check_tabelas_filhas.sql` fecha as colunas FK que apontavam sem checagem para linhas de outro personal (`aula_participantes.execucao_id`, `planos.modelo_origem_id`, `sessao_exercicios.plano_exercicio_id`, `sessoes.aula_id`, `execucoes_assincrono` presencial: `sessao_id`/`plano_id`/`link_id`). Não existe tabela `pagamentos`; `consentimento_evidencias` não tem policy de cliente. As demais tabelas já estavam corretas.
 
+### PR "correções da revisão adversarial" — itens 1 a 6 (revisão como invasor)
+1. **[ALTA] E-mail com a nossa marca sem limite por personal** (`enviar-consentimento-saude`): limite de 20/h e 60/dia por personal (falha fechada), exige e-mail confirmado e limpa links/quebras de linha dos nomes no corpo do e-mail (`nomeSeguroParaEmail`).
+2. **[ALTA] Separação entre personais só pela RLS**: migration `20261044000000_grants_minimos_authenticated.sql` — tabelas futuras não recebem mais grant automático ao cliente; as atuais ficam só com os verbos que alguma policy permite. Guarda no CI (`supabase/migrations.test.ts`: toda tabela nova precisa de RLS e GRANT/REVOKE explícito) e teste de isolamento por SQL (`supabase/tests/isolamento.sql`). **Etapa futura:** tirar DELETE/UPDATE de tabelas com policy `ALL` que o app nunca usa (exige mapear funções `SECURITY INVOKER`).
+3. **[MÉDIA] IP forjável no rate limit**: `ipDoCliente` usa só `cf-connecting-ip` (a Cloudflare o sobrescreve; confirmado nos registros do `rate_limit`). `x-forwarded-for` e `x-real-ip` deixaram de ser usados.
+4. **[MÉDIA] Rate limit falhava aberto e a tabela era inflável**: `verificarLimite` distingue `erro` de `excedido`; `mp-webhook` (503, o Mercado Pago reenvia) e o envio de consentimento por e-mail falham fechados; chave limitada a 120 caracteres; limpeza diária em `supabase/cron/rate_limit.sql`.
+5. **[MÉDIA] Link "sem prazo" era credencial eterna**: "Sem prazo" passou a ter teto de 30 dias (`expira_em` não é mais gravado nulo).
+6. **[MÉDIA] CSP frouxa**: `src/config/csp.ts` — scripts sem `'unsafe-inline'`/`'unsafe-eval'`, `connect-src` com o host exato do Supabase (lido de `VITE_SUPABASE_URL` no build) e `img-src` só com os domínios do Google Places/Maps.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
@@ -45,7 +53,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
 - **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
-- **Estado real do banco**: conferir RLS ligada, `anon` sem SELECT e policies fora do histórico (a tabela `assinaturas` nasceu fora das migrations).
+- **Itens 7 e 8 da revisão adversarial** (média-baixa, fora desta PR): validar o e-mail e exigir que pertença a um personal em `admin-actions` (+ MFA do admin e falhar se o log não gravar); `CHECK` de tamanho e limites de volume por conta.
+- **Google Places/Maps e Turnstile sob a CSP nova**: validar em produção com o console aberto (um host bloqueado aparece no console e é só acrescentar).
+- **Estado real do banco**: rodar `supabase/tests/isolamento.sql` antes e depois da migration 20261044; conferir RLS ligada, `anon` sem SELECT e policies fora do histórico (a tabela `assinaturas` nasceu fora das migrations).
 - **CSP em produção**: validar fluxos logados (Turnstile, Google Places, ViaCEP, Realtime, PDF) com o console aberto.
 - **Rate limiting real e webhook do Mercado Pago**: monitorar 429 e reenvios do mesmo IP.
 

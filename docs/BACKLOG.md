@@ -528,3 +528,13 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ **Musculação à distância**: o filtro estava na tela "Escolher treino" (`NovaSessaoPage`): só treinos de outras modalidades abriam a folha "Presencial / À distância"; musculação ia direto para a sessão presencial. Agora todas as modalidades abrem a folha (a Edge Function e a página pública já aceitavam qualquer modalidade).
 - ✅ **Validade do link**: 24h / 48h (padrão) / 72h / sem prazo, escolhida pelo personal (lembra a última); `expira_em` agora aceita NULL = sem prazo (migration `20261043000000_expiracao_link_treino.sql`; links antigos mantêm o prazo que já tinham). Link vencido → 410 + "Este treino não está mais disponível. Entre em contato com seu personal.". Banner de prazo na página do aluno (âmbar com menos de 6h). Mensagem do WhatsApp ao aluno ganha "⏰ Você tem até …".
+
+
+## 24. Correções da revisão adversarial (itens 1 a 6)
+
+- ✅ Envio de consentimento por e-mail: limite por personal, e-mail confirmado, nomes limpos.
+- ✅ Rate limit: falha fechada nas rotas sensíveis, chave limitada, limpeza diária (`supabase/cron/rate_limit.sql`); `ipDoCliente` só com `cf-connecting-ip`.
+- ✅ "Sem prazo" do link do treino à distância = no máximo 30 dias.
+- ✅ CSP mais restrita (`src/config/csp.ts`).
+- ✅ Grants mínimos ao `authenticated` (migration `20261044000000`), guarda de RLS/GRANT no CI e teste de isolamento (`supabase/tests/isolamento.sql`).
+- ⏳ Itens 7 e 8 (admin-actions, CHECK de tamanho); etapa 2 dos grants (tirar DELETE/UPDATE não usados).
