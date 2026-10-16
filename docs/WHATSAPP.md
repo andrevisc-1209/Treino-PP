@@ -47,6 +47,9 @@ Todas respeitam `whatsapp_opt_in` + telefone válido do cadastro, mandam **no m�
 
 Lógica e textos: `supabase/functions/_shared/notificacoes.ts` (testada com vitest). Previsão: Open-Meteo, pela cidade/UF do personal.
 
+| 🧾 Cobrança de aluno vencida | faturas vencidas há exatamente 1, 3 ou 7 dias e não pagas, 9h (Brasília); uma mensagem por personal (até 3 listados + "...e mais X") | `avisos-financeiros` |
+| ✅ Aluno concluiu treino à distância | a cada 15 min; vários viram uma mensagem só; só nome e modalidade | `aviso-treino-concluido` |
+
 ### Como disparam (pg_cron)
 As três functions têm `verify_jwt = false` e exigem o header `x-cron-secret` igual ao secret **`CRON_SECRET`** (32+ caracteres; sem ele tudo é recusado).
 **A `service_role` não é usada nem colocada em SQL.** Os jobs ficam em `supabase/cron/whatsapp.sql` (rodar uma vez no SQL Editor): o segredo vai para o Vault
@@ -64,3 +67,9 @@ e o job o lê a cada chamada. Passo a passo:
 - **Alerta de prontidão (4b): não implementado, de propósito.** A prontidão (sono, estresse, fadiga, dor) é preenchida pelo próprio personal na sessão e é dado de saúde:
   a regra do projeto proíbe esse dado em mensagens de WhatsApp. O "motivo" do aluno iria no texto.
 - Horários (UTC-3, sem horário de verão): briefing e avisos `30 8 * * *` = 5h30 de Brasília; resumo semanal `0 0 * * 1` = domingo 21h. Para mudar um job, rode `cron.schedule` de novo com o mesmo nome.
+
+### Avisos de cobrança e de treino concluído (fase 3)
+- **Cobrança vencida** (`plano_vencido` no log): alunos não têm "plano" no app; o que vence para eles é a **fatura** do ciclo (`faturas.vencimento`, status aberta/enviada). Por isso a mensagem fala em "cobrança" e traz o valor.
+- **Treino concluído** (`treino_concluido`): vem de `execucoes_assincrono` (origem `link`). `whatsapp_avisado_em` marca a execução já tratada (idempotência); se o envio falhar, a execução fica sem marca e é tentada de novo na rodada seguinte (janela de 24 h). Execuções antigas entraram como já avisadas na migration. Esse tipo pode sair várias vezes no dia (fora do índice "um aviso por tipo por dia").
+- **Pagamento confirmado (Mercado Pago):** o `mp-webhook` já avisa o pagamento do **plano do próprio personal** (`pagamento_plano`) e só dispara quando a decisão é "ativar" — um webhook repetido do mesmo `payment_id` cai em "pagamento já processado", então não duplica. Alunos não pagam pelo Mercado Pago (a fatura é marcada como paga pelo personal), por isso não há aviso de "o aluno pagou". Para exercitar a rota e a assinatura: `MP_WEBHOOK_SECRET=… ./scripts/test-mp-webhook.sh <payment_id>`.
+- Rodar `supabase/cron/whatsapp.sql` de novo cria os dois jobs novos (`whatsapp-avisos-financeiros` e `whatsapp-treinos-concluidos`).

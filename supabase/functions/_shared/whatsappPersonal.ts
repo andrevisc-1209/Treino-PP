@@ -9,7 +9,14 @@ import { dataSP, decidirEnvio, type TipoNotificacao } from './notificacoes.ts'
 export type ResultadoEnvio = 'enviado' | 'pulado' | 'falhou'
 
 /** `admin` = cliente service_role com schema "treino". */
-export async function enviarAoPersonal(admin: SupabaseClient, professionalId: string, tipo: TipoNotificacao, texto: string): Promise<ResultadoEnvio> {
+export async function enviarAoPersonal(
+  admin: SupabaseClient,
+  professionalId: string,
+  tipo: TipoNotificacao,
+  texto: string,
+  opcoes: { umPorDia?: boolean } = {},
+): Promise<ResultadoEnvio> {
+  const umPorDia = opcoes.umPorDia ?? true
   const cfg = configEvolution(Deno.env)
   if (!cfg) {
     console.error('whatsapp: faltam segredos EVOLUTION_API_URL / EVOLUTION_API_KEY / EVOLUTION_INSTANCE')
@@ -18,7 +25,8 @@ export async function enviarAoPersonal(admin: SupabaseClient, professionalId: st
   const dia = dataSP(new Date())
   const [{ data: perfil }, { data: jaEnviado }] = await Promise.all([
     admin.from('professionals').select('whatsapp_opt_in, phone').eq('id', professionalId).maybeSingle(),
-    admin.from('whatsapp_log').select('id').eq('professional_id', professionalId).eq('tipo', tipo).eq('dia', dia).eq('status', 'enviado').limit(1),
+    // Tipos "por evento" (treino concluído) podem sair várias vezes no dia: a idempotência fica na própria execução.
+    umPorDia ? admin.from('whatsapp_log').select('id').eq('professional_id', professionalId).eq('tipo', tipo).eq('dia', dia).eq('status', 'enviado').limit(1) : Promise.resolve({ data: [] as { id: string }[] }),
   ])
   const decisao = decidirEnvio({ optIn: perfil?.whatsapp_opt_in, phone: perfil?.phone, jaEnviadoHoje: (jaEnviado?.length ?? 0) > 0 })
   if (!decisao.enviar) return 'pulado'

@@ -24,3 +24,9 @@ verify_jwt = false
 
 [functions.weekly-summary]
 verify_jwt = false
+
+[functions.avisos-financeiros]
+verify_jwt = false
+
+[functions.aviso-treino-concluido]
+verify_jwt = false

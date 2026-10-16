@@ -475,6 +475,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 49 | WhatsApp do personal: base com Evolution API (`send-whatsapp`, mensagem de teste em Configurações) — `docs/WHATSAPP.md` | ✅ em revisão — **secrets `EVOLUTION_API_URL`/`EVOLUTION_API_KEY`/`EVOLUTION_INSTANCE` e deploy de `send-whatsapp`**; eventos a definir |
 | 50 | WhatsApp do personal, fase 2: briefing diário, pagamento/vencimento do plano, resumo semanal e aluno inativo (pg_cron) — `docs/WHATSAPP.md` | ✅ em revisão — **migration `20261037…`, secret `CRON_SECRET`, deploy de 4 functions e `supabase/cron/whatsapp.sql`** |
 | 51 | Mensagens de WhatsApp escaláveis e em tom humano (briefing, resumo semanal, avisos agrupados) e cron 5h30 BRT | ✅ em revisão — **redeploy de `daily-briefing`, `avisos-diarios`, `weekly-summary` e recriar os jobs (`supabase/cron/whatsapp.sql`)** |
+| 52 | WhatsApp, fase 3: cobrança de aluno vencida (1/3/7 dias) e aluno concluiu treino à distância — `docs/WHATSAPP.md` | ✅ em revisão — **migration `20261038…`, deploy de `avisos-financeiros` e `aviso-treino-concluido`, jobs em `supabase/cron/whatsapp.sql`** |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O
