@@ -1,12 +1,18 @@
 import { diasEntre } from '@/lib/datas'
 
-export type ModalidadeFoco = 'triathlon' | 'corrida' | 'natacao' | 'ciclismo'
+export type ModalidadeFoco = 'ciclismo' | 'corrida' | 'futebol' | 'futevolei' | 'natacao' | 'triathlon' | 'trilha_caminhada' | 'volei' | 'outros'
 
+/** Ordem alfabética (pt-BR); "Outros" sempre por último. Os valores têm CHECK no banco (migration 20261042). */
 export const MODALIDADES_FOCO: { valor: ModalidadeFoco; rotulo: string }[] = [
-  { valor: 'triathlon', rotulo: 'Triathlon' },
-  { valor: 'corrida', rotulo: 'Corrida' },
-  { valor: 'natacao', rotulo: 'Natação' },
   { valor: 'ciclismo', rotulo: 'Ciclismo' },
+  { valor: 'corrida', rotulo: 'Corrida' },
+  { valor: 'futebol', rotulo: 'Futebol' },
+  { valor: 'futevolei', rotulo: 'Futevôlei' },
+  { valor: 'natacao', rotulo: 'Natação' },
+  { valor: 'triathlon', rotulo: 'Triathlon' },
+  { valor: 'trilha_caminhada', rotulo: 'Trilha / Caminhada' },
+  { valor: 'volei', rotulo: 'Vôlei' },
+  { valor: 'outros', rotulo: 'Outros' },
 ]
 
 const PROVAS_TRIATHLON = [

@@ -2,6 +2,7 @@ import { BottomSheet } from '@/components/ui'
 import { dataHoraSP } from '@/features/consentimentos/utils'
 import { descreverExecucao, MODALIDADES_CONFIG } from '@/types/modalidades'
 import type { Execucao } from './api'
+import { resumoVolumeTempo } from './metricas'
 
 const ROTULO_STATUS = { em_andamento: 'Em andamento', concluido: 'Concluído', cancelado: 'Cancelado' } as const
 
@@ -9,6 +10,7 @@ const ROTULO_STATUS = { em_andamento: 'Em andamento', concluido: 'Concluído', c
 export function DetalheExecucaoSheet({ execucao, onClose }: { execucao: Execucao | null; onClose: () => void }) {
   const cfg = execucao ? MODALIDADES_CONFIG[execucao.modalidade] : null
   const linhas = execucao ? descreverExecucao(execucao.modalidade, execucao.detalhes_execucao) : []
+  const resumo = execucao ? resumoVolumeTempo(execucao.modalidade, execucao.detalhes_execucao) : null
   return (
     <BottomSheet open={!!execucao} onClose={onClose} title={execucao && cfg ? `${cfg.emoji} ${execucao.plano_nome ?? cfg.label}` : ''}>
       {execucao && (
@@ -26,6 +28,7 @@ export function DetalheExecucaoSheet({ execucao, onClose }: { execucao: Execucao
               ))}
             </ul>
           )}
+          {resumo && <p className="text-sm font-semibold text-slate-800">{resumo}</p>}
           {execucao.notas_aluno && (
             <div className="rounded-xl bg-slate-50 p-3">
               <p className="text-xs font-medium text-slate-500">Observações</p>

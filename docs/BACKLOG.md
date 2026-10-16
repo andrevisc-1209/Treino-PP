@@ -516,3 +516,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **Médias**: CSP via meta (build) e rate limiting nas funções públicas (migration `20261040000000_rate_limit.sql`).
 - ✅ Gaps dos lotes 1 e 2 (.gitignore, JWT expiry documentado, console fora do build, CORS sem localhost, nome no WhatsApp, `WITH CHECK` das tabelas filhas — migration `20261041000000`).
 - ⏳ Pendentes: `CHECK` de tamanho nas tabelas centrais (PR própria), headers reais (proxy), `npm audit fix` (dev), confirmações no dashboard.
+
+
+## 22. Pré-treino com zero, objetivo esportivo e resultado do treino à distância
+
+- 🔍 **Pré-treino com valor 0**: não reproduzido. Inserir sessão com os 4 campos em 0 (e o fluxo completo com plano/exercícios) funciona no banco; o front trata 0 como válido (`!= null`). Adicionado teste de regressão (`prontidao.test.ts`). Aguardando a mensagem de erro exata para achar a causa.
+- ✅ **Objetivo esportivo**: novas opções Futebol, Futevôlei, Trilha / Caminhada, Vôlei e Outros (último). A coluna é TEXT com CHECK: migration `20261042000000_modalidade_foco_novas_opcoes.sql`.
+- ✅ **Treino à distância**: volume calculado ao concluir (natação: metros dos blocos marcados; musculação: kg·rep), tempo de execução opcional (h + min → `duracao_minutos`) e linha-resumo "📏 4.600 m | ⏱ 45 min" no detalhe do treino concluído. Gravado em `execucoes_assincrono.detalhes_execucao.resultado` (não existe coluna `resultado`); cálculo refeito no servidor (`treino-publico`).

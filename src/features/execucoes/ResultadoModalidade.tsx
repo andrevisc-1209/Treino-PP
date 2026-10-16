@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
-import type { EstadoResultado } from './resultado'
+import { CAMPOS_TEMPO_SUBSTITUIDOS, distanciaNatacaoFeita, type EstadoResultado } from './resultado'
+import { formatarNumero } from '@/lib/format'
 import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
 import { Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -41,6 +42,43 @@ export function ReferenciaTreino({ modalidade, detalhes }: { modalidade: Modalid
         </ul>
       )}
     </div>
+  )
+}
+
+/** "Tempo de execução [h] [min]" — opcional. Usado no resultado das modalidades e na musculação da página pública. */
+export function CampoTempoExecucao({ estado, onEstado }: { estado: EstadoResultado; onEstado: (e: EstadoResultado) => void }) {
+  return (
+    <fieldset className="space-y-1">
+      <legend className="mb-1 text-sm font-medium">Tempo de execução (opcional)</legend>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={24}
+          step={1}
+          aria-label="Horas"
+          placeholder="0"
+          className="w-20"
+          value={estado.duracaoH ?? ''}
+          onChange={(e) => onEstado({ ...estado, duracaoH: e.target.value })}
+        />
+        <span className="text-sm text-slate-600">h</span>
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={59}
+          step={1}
+          aria-label="Minutos"
+          placeholder="0"
+          className="w-20"
+          value={estado.duracaoMin ?? ''}
+          onChange={(e) => onEstado({ ...estado, duracaoMin: e.target.value })}
+        />
+        <span className="text-sm text-slate-600">min</span>
+      </div>
+    </fieldset>
   )
 }
 
@@ -103,7 +141,7 @@ export function FormResultadoModalidade({
       <div className="space-y-3">
         <p className="text-sm font-medium">Resultado</p>
         {RESULTADO_CAMPOS[modalidade]
-          .filter((c) => !c.legado)
+          .filter((c) => !c.legado && !(CAMPOS_TEMPO_SUBSTITUIDOS as readonly string[]).includes(c.key))
           .map((c) => {
             const atual = estado.valores[c.key] ?? ''
             const definir = (v: string) => onEstado({ ...estado, valores: { ...estado.valores, [c.key]: v } })
@@ -156,13 +194,18 @@ export function FormResultadoModalidade({
                   inputMode={c.type === 'number' ? 'decimal' : undefined}
                   min={c.type === 'number' ? 0 : undefined}
                   step={c.type === 'number' ? 'any' : undefined}
-                  placeholder={c.placeholder}
+                  placeholder={
+                    modalidade === 'natacao' && c.key === 'distancia_total_m' && distanciaNatacaoFeita(detalhes, estado.feitos) > 0
+                      ? `${formatarNumero(distanciaNatacaoFeita(detalhes, estado.feitos))} (dos blocos marcados)`
+                      : c.placeholder
+                  }
                   value={atual}
                   onChange={(e) => definir(e.target.value)}
                 />
               </Field>
             )
           })}
+        <CampoTempoExecucao estado={estado} onEstado={onEstado} />
         <Field label="Comentário">
           <textarea
             className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"

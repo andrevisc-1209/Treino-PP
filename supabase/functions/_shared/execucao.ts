@@ -40,6 +40,57 @@ const inteiro = (v: unknown, min: number, max: number): number | null => {
   return Number.isInteger(n) && n >= min && n <= max ? n : null
 }
 
+/** Tempo de execução opcional (h+min já somados no navegador): inteiro de minutos, 1 a 1440. Vale para qualquer modalidade. */
+const CAMPO_DURACAO: CampoServidor = { key: 'duracao_minutos', type: 'number' }
+
+type BlocoNatacaoServidor = { nome: string; parametros: { distancia?: number; series?: number } }
+
+/**
+ * Metros nadados nos blocos marcados (distância × séries, só piscina), a partir do que está salvo no treino —
+ * não do número que o navegador manda. O item i do checklist é o bloco i; o nome precisa bater.
+ * Mantenha igual a distanciaNatacaoFeita em src/features/execucoes/resultado.ts.
+ */
+export function distanciaNatacaoFeita(detalhesPlano: unknown, livres: { nome: string; feito: boolean }[]): number {
+  const blocos = (detalhesPlano as { blocos?: unknown } | null)?.blocos
+  if (!Array.isArray(blocos)) return 0
+  let total = 0
+  blocos.forEach((b, i) => {
+    const bloco = b as Partial<BlocoNatacaoServidor> | null
+    const item = livres[i]
+    if (!bloco || typeof bloco.nome !== 'string' || !item?.feito || item.nome !== bloco.nome.trim().slice(0, 120)) return
+    const dist = bloco.parametros?.distancia
+    const series = bloco.parametros?.series
+    if (typeof dist === 'number' && Number.isFinite(dist) && dist > 0) total += dist * (typeof series === 'number' && series > 0 ? series : 1)
+  })
+  return Math.min(total, 100000)
+}
+
+const primeiroInteiro = (reps: string): number | null => {
+  const m = reps.match(/\d+/)
+  return m ? Number(m[0]) : null
+}
+
+/** Volume da musculação em kg·rep: Σ séries feitas × repetições × carga (só exercícios com carga e repetições numéricas). */
+export function volumeMusculacao(
+  feitos: { exercicio_id: string; series_feitas: number }[],
+  plano: { exercicio_id: string; reps: string; carga_kg: number | null }[],
+): number {
+  const porId = new Map(plano.map((p) => [p.exercicio_id, p]))
+  let total = 0
+  for (const f of feitos) {
+    const p = porId.get(f.exercicio_id)
+    const reps = p ? primeiroInteiro(p.reps) : null
+    if (p && reps !== null && p.carga_kg != null && p.carga_kg > 0) total += f.series_feitas * reps * p.carga_kg
+  }
+  return Math.round(total * 10) / 10
+}
+
+/** Número de minutos do tempo de execução enviado pelo navegador (opcional). */
+function duracaoMinutos(v: unknown): number | null {
+  const n = typeof v === 'number' ? v : Number.NaN
+  return Number.isInteger(n) && n >= 1 && n <= 1440 ? n : null
+}
+
 export type EntradaExecucao = { detalhes?: unknown; notas?: unknown }
 export type ResultadoValidacao = { ok: true; detalhes: Record<string, unknown>; notas: string | null } | { ok: false; erro: string }
 
@@ -50,7 +101,8 @@ export type ResultadoValidacao = { ok: true; detalhes: Record<string, unknown>; 
 export function validarExecucao(
   modalidade: Modalidade,
   entrada: EntradaExecucao,
-  exerciciosPlano: { exercicio_id: string; nome: string; series: number }[],
+  exerciciosPlano: { exercicio_id: string; nome: string; series: number; reps?: string; carga_kg?: number | null }[],
+  detalhesPlano?: unknown,
 ): ResultadoValidacao {
   const bruto = entrada.detalhes && typeof entrada.detalhes === 'object' ? (entrada.detalhes as Record<string, unknown>) : {}
   const notas = texto(entrada.notas, 1000) || null
@@ -78,6 +130,15 @@ export function validarExecucao(
       })
     }
     detalhes.exercicios = exercicios
+    const resultadoMusc: Record<string, number> = {}
+    const minutosMusc = duracaoMinutos((bruto.resultado as Record<string, unknown> | undefined)?.[CAMPO_DURACAO.key])
+    if (minutosMusc !== null) resultadoMusc.duracao_minutos = minutosMusc
+    const volume = volumeMusculacao(
+      exercicios.map((e) => ({ exercicio_id: String(e.exercicio_id), series_feitas: Number(e.series_feitas) })),
+      exerciciosPlano.map((e) => ({ exercicio_id: e.exercicio_id, reps: e.reps ?? '', carga_kg: e.carga_kg ?? null })),
+    )
+    if (volume > 0) resultadoMusc.volume_kg_rep = volume
+    if (Object.keys(resultadoMusc).length > 0) detalhes.resultado = resultadoMusc
   } else {
     const resultadoBruto = bruto.resultado && typeof bruto.resultado === 'object' ? (bruto.resultado as Record<string, unknown>) : {}
     const resultado: Record<string, string | number> = {}
@@ -95,12 +156,19 @@ export function validarExecucao(
         resultado[c.key] = texto(v, 40)
       }
     }
-    detalhes.resultado = resultado
+    const minutos = duracaoMinutos(resultadoBruto[CAMPO_DURACAO.key])
+    if (minutos !== null) resultado.duracao_minutos = minutos
     const livres = Array.isArray(bruto.exercicios_livres) ? bruto.exercicios_livres.slice(0, MAX_ITENS) : []
     detalhes.exercicios_livres = livres
       .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
       .map((x) => ({ nome: texto(x.nome, 120), feito: x.feito === true }))
       .filter((x) => x.nome)
+    // Natação sem distância digitada: vale a soma dos blocos marcados (calculada aqui, do treino salvo).
+    if (modalidade === 'natacao' && resultado.distancia_total_m === undefined) {
+      const metros = distanciaNatacaoFeita(detalhesPlano, detalhes.exercicios_livres as { nome: string; feito: boolean }[])
+      if (metros > 0) resultado.distancia_total_m = metros
+    }
+    detalhes.resultado = resultado
   }
   return { ok: true, detalhes, notas }
 }
