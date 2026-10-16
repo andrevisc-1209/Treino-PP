@@ -68,7 +68,10 @@ Deno.serve(async (req) => {
   // e não devolve link algum. Client anônimo e sem sessão: o envio é do próprio Auth.
   const clienteAuth = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { auth: { persistSession: false } })
   const { error: linkError } = await clienteAuth.auth.resetPasswordForEmail(body.email, { redirectTo: `${APP_URL}definir-senha` })
-  if (linkError) return jsonResponse({ error: linkError.message }, 400)
+  if (linkError) {
+    console.error('admin-actions: falha ao enviar e-mail de redefinição', linkError.status ?? '')
+    return jsonResponse({ error: 'Não foi possível enviar o e-mail de redefinição.' }, 400)
+  }
 
   // Client admin — só pra gravar a trilha de auditoria.
   const clienteAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)

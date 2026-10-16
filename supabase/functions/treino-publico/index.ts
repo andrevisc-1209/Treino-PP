@@ -13,7 +13,8 @@ import { ipDoCliente } from '../_shared/consentimento.ts'
 import { linkValido, MODALIDADES, validarExecucao, type Modalidade } from '../_shared/execucao.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
-const ORIGENS_PERMITIDAS = [APP_URL, 'http://localhost:5173']
+// localhost só se ALLOW_LOCALHOST_CORS=true (nunca definido em produção).
+const ORIGENS_PERMITIDAS = [APP_URL, ...(Deno.env.get('ALLOW_LOCALHOST_CORS') === 'true' ? ['http://localhost:5173'] : [])]
 
 function cors(req: Request) {
   const origem = req.headers.get('Origin') ?? ''

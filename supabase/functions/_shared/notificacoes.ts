@@ -52,7 +52,9 @@ export function diaSemanaCurto(iso: string): string {
 }
 
 export const brl = (v: number): string => `R$ ${v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
-const primeiroNome = (nome: string | null | undefined): string => (nome ?? '').trim().split(/\s+/)[0] || ''
+/** Tira os caracteres de formatação do WhatsApp (* _ ~ `) de nomes vindos do banco: nome não vira negrito/itálico/riscado. */
+export const nomeLimpo = (nome: string | null | undefined): string => (nome ?? '').replace(/[*_~`]/g, '')
+const primeiroNome = (nome: string | null | undefined): string => nomeLimpo(nome).trim().split(/\s+/)[0] || ''
 
 // ---------- regra de envio ----------
 export type DecisaoEnvio = { enviar: true; numero: string } | { enviar: false; motivo: 'sem_opt_in' | 'sem_telefone' | 'ja_enviado_hoje' }
@@ -85,7 +87,7 @@ export function montarBriefing(args: { nome: string | null; aulas: AulaDoDia[]; 
   if (args.aulas.length === 0) return null
   const aulas = [...args.aulas].sort((a, b) => a.horario.localeCompare(b.horario))
   const nome = primeiroNome(args.nome)
-  const primeiroDoAluno = (a: AulaDoDia) => primeiroNome(a.aluno) || a.aluno
+  const primeiroDoAluno = (a: AulaDoDia) => primeiroNome(a.aluno) || nomeLimpo(a.aluno)
   const partes = [`Bom dia${nome ? `, ${nome}` : ''}! 👋`, '']
   if (aulas.length === 1) {
     const a = aulas[0]
@@ -130,7 +132,7 @@ export function montarResumoSemanal(r: ResumoSemana): string | null {
     partes.push('')
     if (total === 1) partes.push('⚠️ 1 aluno está sumido há mais de 10 dias:')
     else partes.push(total > MAX_INATIVOS_LISTADOS ? `⚠️ ${total} alunos estão sumidos há mais de 10 dias. Os mais críticos:` : `⚠️ ${total} alunos estão sumidos há mais de 10 dias:`)
-    partes.push(...mostrar.map((i) => `- ${i.nome} — ${i.dias} dias`))
+    partes.push(...mostrar.map((i) => `- ${nomeLimpo(i.nome)} — ${i.dias} dias`))
     if (total > MAX_INATIVOS_LISTADOS) partes.push(`...e mais ${total - MAX_INATIVOS_LISTADOS}.`)
     partes.push(total === 1 ? 'Vale dar um oi essa semana!' : 'Vale dar um oi pra eles essa semana!')
   }
@@ -155,7 +157,7 @@ export function alunosInativos(alunos: { id: string; nome: string }[], ultimoTre
 export function montarAlunosInativos(nomePersonal: string | null, lista: (Inativo & { ultimo: string })[]): string | null {
   if (lista.length === 0) return null
   const ordenados = [...lista].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-  const primeiro = primeiroNome(ordenados[0].nome) || ordenados[0].nome
+  const primeiro = primeiroNome(ordenados[0].nome) || nomeLimpo(ordenados[0].nome)
   const personal = primeiroNome(nomePersonal)
   // singular sem pronome: não presume o gênero do aluno
   if (ordenados.length === 1) return `Oi${personal ? ` ${personal}` : ''}! ${primeiro} está há ${ordenados[0].dias} dias sem treinar. Que tal mandar uma mensagem? 💬`
@@ -175,14 +177,14 @@ export function montarFaturasVencidas(nomePersonal: string | null, lista: Fatura
   const ordenadas = [...lista].sort((a, b) => b.dias - a.dias)
   if (ordenadas.length === 1) {
     const { nome, dias, valor } = ordenadas[0]
-    const aluno = primeiroNome(nome) || nome
+    const aluno = primeiroNome(nome) || nomeLimpo(nome)
     const cobranca = `a cobrança de ${aluno} (${brl(valor)})`
     if (dias === 1) return `Oi${personal ? ` ${personal}` : ''}! ${cobranca[0].toUpperCase()}${cobranca.slice(1)} venceu ontem e ainda não foi paga. Só pra não deixar passar 👀`
     if (dias >= 7) return `${personal ? `${personal}, f` : 'F'}az ${dias === 7 ? 'uma semana' : `${dias} dias`} que ${cobranca} venceu. Pode ser um bom momento pra entrar em contato.`
     return `${personal ? `${personal}, ` : ''}${cobranca} está vencida há ${dias} dias. Vale uma conversa?`
   }
   const mostrar = ordenadas.slice(0, LIMITE_FATURAS_LISTADAS)
-  const partes = [`${personal ? `${personal}, a` : 'A'}lgumas cobranças venceram e ainda não foram pagas:`, ...mostrar.map((f) => `• ${primeiroNome(f.nome) || f.nome} — ${f.dias} ${f.dias === 1 ? 'dia' : 'dias'}`)]
+  const partes = [`${personal ? `${personal}, a` : 'A'}lgumas cobranças venceram e ainda não foram pagas:`, ...mostrar.map((f) => `• ${primeiroNome(f.nome) || nomeLimpo(f.nome)} — ${f.dias} ${f.dias === 1 ? 'dia' : 'dias'}`)]
   if (ordenadas.length > LIMITE_FATURAS_LISTADAS) partes.push(`...e mais ${ordenadas.length - LIMITE_FATURAS_LISTADAS}.`)
   return partes.join('\n')
 }
@@ -197,10 +199,10 @@ export function montarTreinosConcluidos(lista: TreinoConcluido[]): string | null
   if (lista.length === 0) return null
   if (lista.length === 1) {
     const { aluno, modalidade } = lista[0]
-    const nome = primeiroNome(aluno) || aluno
+    const nome = primeiroNome(aluno) || nomeLimpo(aluno)
     return modalidade ? `✅ ${nome} concluiu o treino de ${modalidade.toLowerCase()} à distância. Mandou bem! 💪` : `✅ ${nome} acabou de concluir o treino à distância! 💪`
   }
-  const nomes = lista.map((t) => primeiroNome(t.aluno) || t.aluno)
+  const nomes = lista.map((t) => primeiroNome(t.aluno) || nomeLimpo(t.aluno))
   const unicos = [...new Set(nomes)]
   const partes = [`✅ ${lista.length} treinos à distância foram concluídos:`, ...unicos.slice(0, LIMITE_CONCLUIDOS_LISTADOS).map((n) => `• ${n}`)]
   if (unicos.length > LIMITE_CONCLUIDOS_LISTADOS) partes.push(`...e mais ${unicos.length - LIMITE_CONCLUIDOS_LISTADOS}.`)

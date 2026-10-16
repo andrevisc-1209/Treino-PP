@@ -1,86 +1,57 @@
 # Auditoria de segurança — Treino PP
 
-Data: 16/10/2026 · Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
+Data da auditoria: 16/10/2026 · Última atualização: 16/10/2026 (PR "fechar gaps lotes 1 e 2")
+Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
 ## Premissas corrigidas
-- **Hospedagem**: o app é publicado no **GitHub Pages** (domínio próprio), não na Vercel. Não é possível definir
-  cabeçalhos HTTP de resposta (CSP, X-Frame-Options, X-Content-Type-Options) no Pages.
-- **Sessão**: o Supabase JS guarda a sessão em `localStorage`; não há cookies próprios do app, então
-  HttpOnly/Secure/SameSite não se aplicam.
+- **Hospedagem**: GitHub Pages (domínio próprio), não Vercel. Não dá para definir cabeçalhos HTTP de resposta.
+- **Sessão**: o Supabase JS guarda a sessão em `localStorage`; não há cookies do app (HttpOnly/Secure/SameSite não se aplicam).
 
-## Resumo
-| Severidade | Qtde | Situação |
-|---|---|---|
-| CRÍTICA | 1 | Corrigida nesta PR (migration 20261039) |
-| ALTA | 1 | Corrigida |
-| MÉDIA | 3 | 2 corrigidas (CSP parcial); 1 (CRON_SECRET) pendente |
-| BAIXA | 2 | Próxima PR |
+## ✅ Corrigido
 
-## Achados
+### PR #114 — [CRÍTICA] Personal virava admin (`professionals.is_admin` gravável)
+**Arquivo**: `supabase/migrations/20260924000000_create_treino_schema.sql` (policy `professionals_self_update`, GRANT de UPDATE na tabela inteira); coluna em `20261007000000_admin_role.sql`.
+**Impacto**: `UPDATE ... SET is_admin = true` pela REST API liberava as funções `admin_*` e o `admin-actions` (tomada de conta).
+**Correção**: `20261039000000_proteger_is_admin.sql` — GRANT de UPDATE por coluna + trigger `tg_bloquear_is_admin`.
 
-### [CRÍTICA] Qualquer personal logado pode se tornar admin (`professionals.is_admin` gravável)
-**Arquivo**: `supabase/migrations/20260924000000_create_treino_schema.sql` (policy `professionals_self_update` ~l.304;
-`GRANT ... UPDATE ON ALL TABLES` l.274 e `ALTER DEFAULT PRIVILEGES` l.276); coluna criada em
-`supabase/migrations/20261007000000_admin_role.sql` (l.23).
-**Descrição**: a policy permite atualizar a própria linha e o GRANT de UPDATE cobria todas as colunas, inclusive
-`is_admin`. Confirmado por teste somente-leitura com a conta de teste fixa (UPDATE sem efeito aceito pelo PostgREST).
-**Impacto**: um `UPDATE professionals SET is_admin = true` pela REST API libera as funções `admin_*` (listar
-personais, alterar trial/plano) e a Edge Function `admin-actions`, que gera link de recuperação de senha de qualquer
-e-mail → **tomada de conta de qualquer personal**.
-**Correção**: `supabase/migrations/20261039000000_proteger_is_admin.sql` — GRANT de UPDATE só nas colunas que o app edita
-(`name, cpf, phone, whatsapp_opt_in, uf, cidade, bairro`) + trigger que bloqueia alteração de `is_admin` por
-`authenticated`/`anon`. **Rodar a migration no SQL Editor ANTES do merge.** Depois, validar que Configurações segue salvando.
+### PR #115 — [ALTA] `admin-actions` devolvia o link de recuperação de senha
+**Arquivo**: `supabase/functions/admin-actions/index.ts`.
+**Correção**: usa `resetPasswordForEmail` (o `generateLink` não envia e-mail); resposta `{ success, email }`; o painel não exibe link.
 
-### [ALTA] ✅ CORRIGIDA — `admin-actions` devolve o link de recuperação de senha na resposta
-**Arquivo**: `supabase/functions/admin-actions/index.ts` (ação `reset_senha`, retorno de `actionLink`).
-**Descrição**: usa service_role para `generateLink('recovery')` de qualquer e-mail informado e devolve o link ao chamador.
-**Impacto**: combinada com o achado crítico era tomada de conta; mesmo com admin legítimo, o link em texto trafega pelo
-navegador e fica em logs/histórico, e o admin passa a poder assumir a conta do personal.
-**Correção**: enviar o e-mail de redefinição pelo fluxo padrão (`resetPasswordForEmail`) sem devolver o link, registrando
-a ação em `admin_logs`. **Aplicada** (PR de CSP/rate limiting): a resposta agora é `{ success, email }` e o painel não exibe mais o link.
-Obs.: `generateLink` não envia e-mail; por isso a função passou a usar `resetPasswordForEmail`.
+### PR #115 — [MÉDIA] Sem CSP
+**Arquivo**: `vite.config.ts` (plugin `htmlCspPlugin`, só no build, sem `unsafe-eval`) + meta `referrer`.
 
-### [MÉDIA] ✅ CORRIGIDA (parcial) — Sem cabeçalhos de segurança / CSP
-**Arquivo**: `index.html` (sem `<meta http-equiv="Content-Security-Policy">`); hospedagem GitHub Pages.
-**Descrição**: não há CSP nem proteção contra clickjacking; não encontrei sinks de XSS (`dangerouslySetInnerHTML`, `eval`).
-**Impacto**: defesa em profundidade ausente: um XSS futuro teria acesso ao token em `localStorage`.
-**Correção**: CSP e `referrer` via `<meta>` injetados **no build** (`vite.config.ts`, sem `unsafe-eval`). `frame-ancestors` e
-`X-Content-Type-Options` não funcionam via `<meta>`: continuam pendentes e exigem proxy (Cloudflare) para headers reais.
-**Necessita revisão manual** em produção: Turnstile, Google Places, ViaCEP e Realtime (não exercitados no teste).
+### PR #115 — [MÉDIA] Sem rate limiting nas funções públicas
+**Correção**: `20261040000000_rate_limit.sql` + `_shared/rateLimit.ts`: `mp-webhook` 30/min/IP, `send-whatsapp` 10/min/personal, `treino-publico` e `confirmar-consentimento-saude` 60/min/IP (429 + `Retry-After`).
 
-### [MÉDIA] ✅ CORRIGIDA — Rate limiting nas funções públicas
-**Arquivo**: `supabase/functions/treino-publico/`, `confirmar-consentimento-saude/` (`verify_jwt = false` em `supabase/config.toml`).
-**Descrição**: acesso protegido por token de alta entropia, mas sem limite de tentativas por IP. Envio de consentimento já
-tem intervalo mínimo de 1 min por aluno.
-**Impacto**: enumeração/abuso de volume (baixo, dado o tamanho do token).
-**Correção aplicada**: migration `20261040000000_rate_limit.sql` (tabela interna + RPC `upsert_rate_limit`, só service_role) e helper
-`_shared/rateLimit.ts`: `mp-webhook` 30/min por IP, `send-whatsapp` 10/min por personal, `treino-publico` e
-`confirmar-consentimento-saude` 60/min por IP; 429 com `Retry-After`. Falha aberta se o banco errar. Crons seguem só com `CRON_SECRET`.
+### Esta PR — gaps dos lotes 1 e 2
+- **`.gitignore`**: passa a cobrir `.env.*` (exceto `.env.example`), incluindo `.env.production`.
+- **`supabase/config.toml`**: `[auth] jwt_expiry = 3600` documentado no repositório (referência; o projeto é remoto).
+- **Console em produção** (BAIXA): `esbuild.drop: ['console', 'debugger']` só no build (`vite.config.ts`).
+- **Erro interno exposto** (BAIXA): `admin-actions` não devolve mais a mensagem do Auth; loga no servidor e responde mensagem fixa.
+- **Formatação do WhatsApp em nomes** (BAIXA): `nomeLimpo` remove `* _ ~` e crases dos nomes vindos do banco (`_shared/notificacoes.ts`).
+- **CORS com localhost em produção** (BAIXA): `localhost:5173` só entra se `ALLOW_LOCALHOST_CORS=true` (nunca definido em produção), nas 7 funções chamadas pelo navegador.
+- **`WITH CHECK` das tabelas filhas** (BAIXA): `20261041000000_with_check_tabelas_filhas.sql` fecha as colunas FK que apontavam sem checagem para linhas de outro personal (`aula_participantes.execucao_id`, `planos.modelo_origem_id`, `sessao_exercicios.plano_exercicio_id`, `sessoes.aula_id`, `execucoes_assincrono` presencial: `sessao_id`/`plano_id`/`link_id`). Não existe tabela `pagamentos`; `consentimento_evidencias` não tem policy de cliente. As demais tabelas já estavam corretas.
 
-### [MÉDIA] Funções de cron com `verify_jwt = false` dependem só de `CRON_SECRET`
-**Arquivo**: `supabase/config.toml` (daily-briefing, avisos-diarios, weekly-summary, avisos-financeiros, aviso-treino-concluido); `supabase/functions/_shared/notificacoes.ts` (`segredoCronValido`).
-**Descrição**: autorização por header `x-cron-secret`. Funciona e nega sem o segredo.
-**Impacto**: vazamento do segredo permitiria disparar WhatsApp em massa.
-**Correção**: comparação em tempo constante e rotação periódica do segredo (Vault). **Necessita revisão manual** da comparação.
+## ⚠️ Risco aceito
+- **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
+- **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
+- **Crons protegidos só por `CRON_SECRET`** (`verify_jwt = false`): a comparação (`segredoCronValido`, `_shared/notificacoes.ts:70`) já é em tempo constante e exige 16+ caracteres. Risco residual: vazamento do segredo — mitigar com rotação periódica no Vault.
+- **Dependências de dev com CVE** (`sharp`, `source-map-js`): produção tem 0 vulnerabilidades; só afeta o build.
 
-### [BAIXA] Dependências de desenvolvimento com CVE (`sharp`, `source-map-js`)
-**Arquivo**: `package-lock.json`. `npm audit` de produção: 0 vulnerabilidades; 2 "high" apenas em dev (build).
-**Impacto**: não chega ao bundle publicado.
-**Correção**: `npm audit fix` em PR própria, com build e testes.
-
-### [BAIXA] Sessão em `localStorage`
-**Arquivo**: configuração do cliente Supabase (`src/lib/supabase.ts`).
-**Descrição/Impacto**: token legível por qualquer XSS. Sem XSS conhecido.
-**Correção**: manter sem sinks de XSS e adicionar CSP (ver achado acima).
+## 🔍 Revisão manual pendente
+- **`CHECK` de tamanho nas tabelas centrais** (`alunos`, `professionals`, `exercicios`, `planos`...): o app escreve direto pelo PostgREST e não há limite de tamanho no banco. Exige análise dos dados existentes (PR separada).
+- **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
+- **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
+- **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
+- **Estado real do banco**: conferir RLS ligada, `anon` sem SELECT e policies fora do histórico (a tabela `assinaturas` nasceu fora das migrations).
+- **CSP em produção**: validar fluxos logados (Turnstile, Google Places, ViaCEP, Realtime, PDF) com o console aberto.
+- **Rate limiting real e webhook do Mercado Pago**: monitorar 429 e reenvios do mesmo IP.
 
 ## Verificado sem achados
-- `anon` sem acesso a nenhuma tabela do schema `treino`; RLS ativa nas tabelas.
-- `gerar-link-treino`: JWT + cliente com escopo do usuário para checar dono do plano; service_role só para gravar o token.
-- `enviar-consentimento-saude`: JWT, aluno checado via RLS, e-mail validado e HTML escapado (`escaparHtml`), intervalo mínimo entre envios, token anterior invalidado.
-- `mp-webhook`: assinatura HMAC obrigatória e idempotência por `mp_payment_id`.
-- `assinaturas`: INSERT/UPDATE/DELETE revogados de `authenticated`.
-- Nenhum secret encontrado no repositório; `.env` fora do git.
-
-## Não testado
-- Rate limiting real, headers em produção, `mp-webhook` com payload forjado em produção e fluxo completo do admin após a migration.
+- `anon` sem acesso a tabelas do schema `treino`; todas as tabelas com RLS nas migrations; funções `SECURITY DEFINER` com `REVOKE` de PUBLIC.
+- Nenhum secret no repositório nem no histórico git (299 commits varridos); `VITE_*` só com valores públicos.
+- Nenhum `dangerouslySetInnerHTML`/`innerHTML`; e-mails com `escaparHtml`; sem SQL dinâmico nas migrations; sem upload de arquivos.
+- `mp-webhook`: HMAC obrigatório, idempotente por `mp_payment_id`.
+- Pentest por leitura: `send-whatsapp` sem JWT → 401; `admin-actions` sem `is_admin` → 403; cron sem segredo → 401; `professional_id` nunca vem do body.

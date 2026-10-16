@@ -30,3 +30,8 @@ verify_jwt = false
 
 [functions.aviso-treino-concluido]
 verify_jwt = false
+
+# Documenta o valor usado no projeto remoto (Dashboard > Auth). O projeto é remoto, então isto não é
+# aplicado por `supabase functions deploy`; serve de referência para novos ambientes.
+[auth]
+jwt_expiry = 3600
