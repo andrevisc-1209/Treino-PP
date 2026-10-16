@@ -14,8 +14,8 @@ CREATE EXTENSION IF NOT EXISTS pg_net;
 -- segredo no Vault: troque COLE_O_VALOR_DO_CRON_SECRET pelo valor real (sem aspas extras, sem <>). Rode só uma vez.
 SELECT vault.create_secret('COLE_O_VALOR_DO_CRON_SECRET', 'cron_secret');
 
--- briefing da agenda: todo dia 8h de Brasília (11h UTC)
-SELECT cron.schedule('whatsapp-briefing-diario', '0 11 * * *', $job$
+-- briefing da agenda: todo dia 5h30 de Brasília (8h30 UTC)
+SELECT cron.schedule('whatsapp-briefing-diario', '30 8 * * *', $job$
   SELECT net.http_post(
     url := 'https://avgrnvpvjhymsrnapfgu.supabase.co/functions/v1/daily-briefing',
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cron_secret')),
@@ -23,8 +23,8 @@ SELECT cron.schedule('whatsapp-briefing-diario', '0 11 * * *', $job$
   )
 $job$);
 
--- plano vencendo e alunos inativos: todo dia 8h de Brasília (11h UTC)
-SELECT cron.schedule('whatsapp-avisos-diarios', '0 11 * * *', $job$
+-- plano vencendo e alunos inativos: todo dia 5h30 de Brasília (8h30 UTC)
+SELECT cron.schedule('whatsapp-avisos-diarios', '30 8 * * *', $job$
   SELECT net.http_post(
     url := 'https://avgrnvpvjhymsrnapfgu.supabase.co/functions/v1/avisos-diarios',
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cron_secret')),
@@ -41,6 +41,7 @@ SELECT cron.schedule('whatsapp-resumo-semanal', '0 0 * * 1', $job$
   )
 $job$);
 
+-- Para mudar o horário de um job já criado, rode de novo o cron.schedule com o MESMO nome e o novo horário (atualiza, não duplica).
 -- conferir / desligar:
 --   SELECT jobid, jobname, schedule FROM cron.job WHERE jobname LIKE 'whatsapp-%';
 --   SELECT cron.unschedule('whatsapp-briefing-diario');

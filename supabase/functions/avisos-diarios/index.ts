@@ -22,18 +22,19 @@ Deno.serve(async (req) => {
   const alvo = limitesDoDiaSP(somarDias(hoje, 3))
   const { data: vencendo } = await admin
     .from('assinaturas')
-    .select('professional_id, plano, assinatura_fim')
+    .select('professional_id, plano, assinatura_fim, professional:professionals(name)')
     .eq('status', 'ativa')
     .gte('assinatura_fim', alvo.inicio.toISOString())
     .lt('assinatura_fim', alvo.fim.toISOString())
-  for (const a of vencendo ?? []) {
-    const texto = montarPlanoExpirando({ plano: a.plano ? (NOME_PLANO[a.plano] ?? null) : null, ate: dataSP(a.assinatura_fim) })
+  for (const a of (vencendo ?? []) as unknown as { professional_id: string; plano: string | null; assinatura_fim: string; professional: { name: string } | null }[]) {
+    const texto = montarPlanoExpirando({ nome: a.professional?.name ?? null, plano: a.plano ? (NOME_PLANO[a.plano] ?? null) : null, ate: dataSP(a.assinatura_fim) })
     contar('plano_expirando', await enviarAoPersonal(admin, a.professional_id, 'plano_expirando', texto))
   }
 
   // 2) alunos inativos há exatamente 10 dias, por personal
-  const { data: personais } = await admin.from('professionals').select('id').eq('whatsapp_opt_in', true).not('phone', 'is', null)
+  const { data: personais } = await admin.from('professionals').select('id, name').eq('whatsapp_opt_in', true).not('phone', 'is', null)
   const ids = (personais ?? []).map((p) => p.id as string)
+  const nomes = new Map((personais ?? []).map((p) => [p.id as string, p.name as string]))
   if (ids.length > 0) {
     const [{ data: alunos }, ultimos] = await Promise.all([
       admin.from('alunos').select('id, name, professional_id').in('professional_id', ids).eq('active', true),
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
     ])
     for (const id of ids) {
       const meus = (alunos ?? []).filter((a) => a.professional_id === id).map((a) => ({ id: a.id as string, nome: a.name as string }))
-      const texto = montarAlunosInativos(alunosInativos(meus, ultimos, hoje, 10, true))
+      const texto = montarAlunosInativos(nomes.get(id) ?? null, alunosInativos(meus, ultimos, hoje, 10, true))
       if (texto) contar('aluno_inativo', await enviarAoPersonal(admin, id, 'aluno_inativo', texto))
     }
   }

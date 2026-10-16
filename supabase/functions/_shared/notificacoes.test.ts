@@ -42,48 +42,70 @@ describe('segredoCronValido', () => {
 })
 
 describe('briefing diário', () => {
-  const clima = { emoji: '🌧️', texto: 'Chuva', min: 19, max: 26, chuvaProb: 70 }
+  const chuva = { emoji: '🌧️', texto: 'Chuva', min: 23, max: 27, chuvaProb: 88 }
+  const aula = (horario: string, aluno: string, local: string | null) => ({ horario, aluno, local })
   it('sem aulas → null (não envia)', () => {
-    expect(montarBriefing({ nome: 'André', aulas: [], clima })).toBeNull()
+    expect(montarBriefing({ nome: 'André', aulas: [], clima: chuva })).toBeNull()
   })
-  it('com aulas: ordena por horário, usa "sem local definido" e avisa de chuva ≥ 40%', () => {
-    const m = montarBriefing({ nome: 'André Scherer', clima, aulas: [{ horario: '18:00', aluno: 'Bruno Paulo', local: null }, { horario: '07:30', aluno: 'Lucas Teste', local: 'Academia X' }] })!
-    expect(m).toContain('☀️ Bom dia, André!')
-    expect(m).toContain('Sua agenda de hoje (2 alunos)')
-    expect(m.indexOf('07:30 Lucas @ Academia X')).toBeLessThan(m.indexOf('18:00 Bruno @ sem local definido'))
-    expect(m).toContain('🌧️ Chuva | 19–26°C')
-    expect(m).toContain('Chuva: 70% de probabilidade')
-    expect(m).toContain('⚠️ Considere avisar alunos de treino ao ar livre.')
+  it('1 aluno: frase única com horário e local', () => {
+    const m = montarBriefing({ nome: 'André Scherer', aulas: [aula('07:00', 'Carlos Silva', 'Smartfit Laranjeiras')], clima: null })!
+    expect(m).toBe('Bom dia, André! 👋\n\nVocê tem 1 treino hoje — Carlos às 07:00 na Smartfit Laranjeiras.\n\nBoa sessão! 💪')
   })
-  it('sem aviso com pouca chuva; sem clima, a seção some', () => {
-    expect(montarBriefing({ nome: null, clima: { ...clima, chuvaProb: 10 }, aulas: [{ horario: '07:00', aluno: 'Ana', local: 'X' }] })).not.toContain('⚠️')
-    const s = montarBriefing({ nome: 'A', clima: null, aulas: [{ horario: '07:00', aluno: 'Ana', local: 'X' }] })!
-    expect(s).not.toContain('Previsão')
-    expect(s).toContain('1 aluno)')
+  it('2+ alunos: lista ordenada por horário com • e aviso de chuva ≥ 40%', () => {
+    const m = montarBriefing({
+      nome: 'André',
+      clima: chuva,
+      aulas: [aula('14:00', 'Paula', 'Smartfit Laranjeiras'), aula('07:00', 'Carlos', 'Smartfit Laranjeiras'), aula('11:00', 'Marcos', 'Arena Fit')],
+    })!
+    expect(m).toBe(
+      'Bom dia, André! 👋\n\nVocê tem 3 treinos hoje:\n• Carlos — 07:00 @ Smartfit Laranjeiras\n• Marcos — 11:00 @ Arena Fit\n• Paula — 14:00 @ Smartfit Laranjeiras\n\n' +
+        '⚠️ 88% de chance de chuva hoje (23–27°C) — vale avisar quem treina ao ar livre.\n\nBoa sessão! 💪',
+    )
+  })
+  it('chuva abaixo de 40% ou clima indisponível: sem o bloco de chuva; sem local, omite o local', () => {
+    const base = [aula('07:00', 'Ana', null), aula('08:00', 'Bia', 'X')]
+    expect(montarBriefing({ nome: 'A', aulas: base, clima: { ...chuva, chuvaProb: 39 } })).not.toContain('chuva')
+    const m = montarBriefing({ nome: 'A', aulas: base, clima: null })!
+    expect(m).not.toContain('chuva')
+    expect(m).toContain('• Ana — 07:00\n')
+    expect(montarBriefing({ nome: 'A', aulas: base, clima: { ...chuva, chuvaProb: 40 } })).toContain('40% de chance de chuva')
   })
 })
 
 describe('financeiro (plano do personal)', () => {
   it('pagamento confirmado e plano expirando', () => {
     expect(montarPagamentoPlano({ plano: 'Mensal', valor: 15, ate: '2026-11-14' })).toBe('💰 Pagamento confirmado!\nPlano: Mensal\nValor: R$ 15,00\nAcesso até: 14/11/2026')
-    const e = montarPlanoExpirando({ plano: 'Mensal', ate: '2026-10-18' })
-    expect(e).toContain('Vence em domingo, 18/out')
-    expect(e).toContain('Plano atual: Mensal')
+    expect(montarPlanoExpirando({ nome: 'André Scherer', plano: 'Mensal', ate: '2026-10-18' })).toBe(
+      'André, seu plano Mensal vence em 3 dias (domingo, 18/out) — vale renovar em Configurações › Assinatura antes de perder o acesso.',
+    )
+    expect(montarPlanoExpirando({ nome: null, plano: null, ate: '2026-10-18' })).toMatch(/^Seu plano vence em 3 dias/)
   })
 })
 
 describe('resumo semanal', () => {
-  it('sem nenhuma atividade → null', () => {
-    expect(montarResumoSemanal({ realizados: 0, agendados: 0, novosAlunos: 0, receita: 0, inativos: [] })).toBeNull()
+  const inat = (n: number) => Array.from({ length: n }, (_, i) => ({ nome: `Aluno ${i}`, dias: 10 + i }))
+  it('sem treinos, receita nem inativos → null', () => {
+    expect(montarResumoSemanal({ nome: 'André', realizados: 0, agendados: 0, receita: 0, inativos: [] })).toBeNull()
   })
-  it('monta o resumo, lista os inativos do mais parado ao menos e corta em 8', () => {
-    const inativos = Array.from({ length: 10 }, (_, i) => ({ nome: `Aluno ${i}`, dias: 10 + i }))
-    const m = montarResumoSemanal({ realizados: 12, agendados: 15, novosAlunos: 2, receita: 1500, inativos })!
-    expect(m).toContain('🏋️ Treinos: 12 realizados / 15 agendados')
-    expect(m).toContain('💰 Receita: R$ 1.500,00')
-    expect(m.indexOf('Aluno 9 (19 dias)')).toBeLessThan(m.indexOf('Aluno 8 (18 dias)'))
-    expect(m).toContain('— e mais 2')
-    expect(montarResumoSemanal({ realizados: 3, agendados: 3, novosAlunos: 0, receita: 0, inativos: [] })).not.toContain('Sem treino há')
+  it('só com treinos e receita: tom de conversa, sem bloco de inativos', () => {
+    expect(montarResumoSemanal({ nome: 'André Scherer', realizados: 3, agendados: 2, receita: 300, inativos: [] })).toBe(
+      'Boa semana, André! Aqui vai o balanço 📋\n\nEssa semana você teve 3 treinos realizados e 2 agendados. Receita: R$ 300,00.\n\nBoa semana! 🚀',
+    )
+  })
+  it('até 3 inativos: lista todos, sem "...e mais"', () => {
+    const m = montarResumoSemanal({ nome: 'A', realizados: 1, agendados: 1, receita: 0, inativos: inat(2) })!
+    expect(m).toContain('⚠️ 2 alunos estão sumidos há mais de 10 dias:')
+    expect(m).toContain('- Aluno 1 — 11 dias\n- Aluno 0 — 10 dias')
+    expect(m).not.toContain('...e mais')
+    expect(montarResumoSemanal({ nome: 'A', realizados: 1, agendados: 1, receita: 0, inativos: inat(1) })).toContain('⚠️ 1 aluno está sumido há mais de 10 dias:')
+  })
+  it('mais de 3 inativos: os 3 mais parados e "...e mais X"', () => {
+    const m = montarResumoSemanal({ nome: 'André', realizados: 3, agendados: 2, receita: 300, inativos: inat(8) })!
+    expect(m).toContain('⚠️ 8 alunos estão sumidos há mais de 10 dias. Os mais críticos:\n- Aluno 7 — 17 dias\n- Aluno 6 — 16 dias\n- Aluno 5 — 15 dias\n...e mais 5.\nVale dar um oi pra eles essa semana!')
+  })
+  it('só inativos (sem treino nem receita) ainda envia', () => {
+    const m = montarResumoSemanal({ nome: 'A', realizados: 0, agendados: 0, receita: 0, inativos: inat(1) })!
+    expect(m).toContain('Essa semana você não teve treinos.')
   })
 })
 
@@ -96,7 +118,10 @@ describe('alunos inativos', () => {
     expect(alunosInativos(alunos, new Map(), '2026-10-15', 10, true)).toEqual([])
   })
   it('mensagem: null sem inativos; texto com nome, dias e último treino', () => {
-    expect(montarAlunosInativos([])).toBeNull()
-    expect(montarAlunosInativos([{ nome: 'Ana', dias: 10, ultimo: '2026-10-05' }])).toBe('👋 Aluno inativo\nAna não registra treino há 10 dias.\nÚltimo: 05/10/2026')
+    expect(montarAlunosInativos('André', [])).toBeNull()
+    expect(montarAlunosInativos('André Scherer', [{ nome: 'Carlos Silva', dias: 10, ultimo: '2026-10-05' }])).toBe('Oi André! Carlos está há 10 dias sem treinar. Que tal mandar uma mensagem? 💬')
+    const dois = [{ nome: 'Carlos', dias: 10, ultimo: '2026-10-05' }, { nome: 'Bia', dias: 10, ultimo: '2026-10-05' }, { nome: 'Ana', dias: 10, ultimo: '2026-10-05' }]
+    expect(montarAlunosInativos('André', dois)).toBe('Ana e mais 2 alunos completaram 10 dias sem treinar hoje. Vale dar um oi! 💬')
+    expect(montarAlunosInativos('André', dois.slice(0, 2))).toBe('Bia e mais 1 aluno completou 10 dias sem treinar hoje. Vale dar um oi! 💬')
   })
 })

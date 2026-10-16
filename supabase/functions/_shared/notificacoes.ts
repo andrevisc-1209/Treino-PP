@@ -78,17 +78,25 @@ export function segredoCronValido(recebido: string | null | undefined, esperado:
 export type AulaDoDia = { horario: string; aluno: string; local: string | null }
 export type ClimaDoDia = { emoji: string; texto: string; min: number; max: number; chuvaProb: number }
 
-/** Mensagem da agenda do dia; null (não enviar) quando não há aula. */
+const LIMITE_AVISO_CHUVA = 40
+
+/** Mensagem da agenda do dia; null (não envia) quando não há aula. O aviso de chuva só aparece com probabilidade >= 40%. */
 export function montarBriefing(args: { nome: string | null; aulas: AulaDoDia[]; clima: ClimaDoDia | null }): string | null {
   if (args.aulas.length === 0) return null
   const aulas = [...args.aulas].sort((a, b) => a.horario.localeCompare(b.horario))
-  const linhas = aulas.map((a) => `${a.horario} ${primeiroNome(a.aluno) || a.aluno} @ ${a.local?.trim() || 'sem local definido'}`)
-  const partes = [`☀️ Bom dia${primeiroNome(args.nome) ? `, ${primeiroNome(args.nome)}` : ''}!`, '', `📅 Sua agenda de hoje (${aulas.length} ${aulas.length === 1 ? 'aluno' : 'alunos'})`, ...linhas]
-  if (args.clima) {
-    partes.push('', '🌤️ Previsão para hoje', `${args.clima.emoji} ${args.clima.texto} | ${args.clima.min}–${args.clima.max}°C`, `Chuva: ${args.clima.chuvaProb}% de probabilidade`)
-    if (args.clima.chuvaProb >= 40) partes.push('⚠️ Considere avisar alunos de treino ao ar livre.')
+  const nome = primeiroNome(args.nome)
+  const primeiroDoAluno = (a: AulaDoDia) => primeiroNome(a.aluno) || a.aluno
+  const partes = [`Bom dia${nome ? `, ${nome}` : ''}! 👋`, '']
+  if (aulas.length === 1) {
+    const a = aulas[0]
+    partes.push(`Você tem 1 treino hoje — ${primeiroDoAluno(a)} às ${a.horario}${a.local?.trim() ? ` na ${a.local.trim()}` : ''}.`)
+  } else {
+    partes.push(`Você tem ${aulas.length} treinos hoje:`, ...aulas.map((a) => `• ${primeiroDoAluno(a)} — ${a.horario}${a.local?.trim() ? ` @ ${a.local.trim()}` : ''}`))
   }
-  partes.push('', 'Bom trabalho! 💪')
+  if (args.clima && args.clima.chuvaProb >= LIMITE_AVISO_CHUVA) {
+    partes.push('', `⚠️ ${args.clima.chuvaProb}% de chance de chuva hoje (${args.clima.min}–${args.clima.max}°C) — vale avisar quem treina ao ar livre.`)
+  }
+  partes.push('', 'Boa sessão! 💪')
   return partes.join('\n')
 }
 
@@ -97,22 +105,34 @@ export function montarPagamentoPlano(args: { plano: string; valor: number; ate: 
   return `💰 Pagamento confirmado!\nPlano: ${args.plano}\nValor: ${brl(args.valor)}\nAcesso até: ${dataBR(args.ate)}`
 }
 
-export function montarPlanoExpirando(args: { plano: string | null; ate: string }): string {
-  return `⏰ Seu acesso vence em breve\nVence em ${diaSemanaCurto(args.ate)}${args.plano ? `\nPlano atual: ${args.plano}` : ''}\nRenove em Configurações › Assinatura para não perder o acesso.`
+/** Aviso do plano do próprio personal (vence em exatamente 3 dias, quando a function roda). */
+export function montarPlanoExpirando(args: { nome: string | null; plano: string | null; ate: string }): string {
+  const nome = primeiroNome(args.nome)
+  return `${nome ? `${nome}, s` : 'S'}eu plano${args.plano ? ` ${args.plano}` : ''} vence em 3 dias (${diaSemanaCurto(args.ate)}) — vale renovar em Configurações › Assinatura antes de perder o acesso.`
 }
 
 // ---------- 3. resumo semanal ----------
 export type Inativo = { nome: string; dias: number }
-export type ResumoSemana = { realizados: number; agendados: number; novosAlunos: number; receita: number; inativos: Inativo[] }
+export type ResumoSemana = { nome: string | null; realizados: number; agendados: number; receita: number; inativos: Inativo[] }
 
-/** Resumo de domingo à noite; null quando não houve nenhuma atividade na semana. */
+const MAX_INATIVOS_LISTADOS = 3
+
+/** Balanço de domingo à noite, em tom de conversa; null quando não houve treino, receita nem aluno parado. */
 export function montarResumoSemanal(r: ResumoSemana): string | null {
-  if (r.realizados === 0 && r.agendados === 0 && r.novosAlunos === 0 && r.receita === 0) return null
-  const partes = ['📊 Resumo da semana', `🏋️ Treinos: ${r.realizados} realizados / ${r.agendados} agendados`, `👥 Novos alunos: ${r.novosAlunos}`, `💰 Receita: ${brl(r.receita)}`]
+  if (r.realizados === 0 && r.agendados === 0 && r.receita === 0 && r.inativos.length === 0) return null
+  const nome = primeiroNome(r.nome)
+  const treinos = r.realizados === 0 && r.agendados === 0 ? 'não teve treinos' : `teve ${r.realizados} ${r.realizados === 1 ? 'treino realizado' : 'treinos realizados'} e ${r.agendados} ${r.agendados === 1 ? 'agendado' : 'agendados'}`
+  const partes = [`Boa semana${nome ? `, ${nome}` : ''}! Aqui vai o balanço 📋`, '', `Essa semana você ${treinos}. Receita: ${brl(r.receita)}.`]
   if (r.inativos.length > 0) {
     const lista = [...r.inativos].sort((a, b) => b.dias - a.dias)
-    partes.push('', '⚠️ Sem treino há 10+ dias:', ...lista.slice(0, 8).map((i) => `— ${i.nome} (${i.dias} dias)`))
-    if (lista.length > 8) partes.push(`— e mais ${lista.length - 8}`)
+    const total = lista.length
+    const mostrar = lista.slice(0, MAX_INATIVOS_LISTADOS)
+    partes.push('')
+    if (total === 1) partes.push('⚠️ 1 aluno está sumido há mais de 10 dias:')
+    else partes.push(total > MAX_INATIVOS_LISTADOS ? `⚠️ ${total} alunos estão sumidos há mais de 10 dias. Os mais críticos:` : `⚠️ ${total} alunos estão sumidos há mais de 10 dias:`)
+    partes.push(...mostrar.map((i) => `- ${i.nome} — ${i.dias} dias`))
+    if (total > MAX_INATIVOS_LISTADOS) partes.push(`...e mais ${total - MAX_INATIVOS_LISTADOS}.`)
+    partes.push(total === 1 ? 'Vale dar um oi essa semana!' : 'Vale dar um oi pra eles essa semana!')
   }
   partes.push('', 'Boa semana! 🚀')
   return partes.join('\n')
@@ -131,8 +151,14 @@ export function alunosInativos(alunos: { id: string; nome: string }[], ultimoTre
   return saida
 }
 
-export function montarAlunosInativos(lista: (Inativo & { ultimo: string })[]): string | null {
+/** Um aviso só com os alunos que completam 10 dias sem treinar hoje; null quando não há nenhum. */
+export function montarAlunosInativos(nomePersonal: string | null, lista: (Inativo & { ultimo: string })[]): string | null {
   if (lista.length === 0) return null
-  const linhas = lista.map((i) => `${i.nome} não registra treino há ${i.dias} dias.\nÚltimo: ${dataBR(i.ultimo)}`)
-  return ['👋 ' + (lista.length === 1 ? 'Aluno inativo' : 'Alunos inativos'), ...linhas].join('\n')
+  const ordenados = [...lista].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+  const primeiro = primeiroNome(ordenados[0].nome) || ordenados[0].nome
+  const personal = primeiroNome(nomePersonal)
+  // singular sem pronome: não presume o gênero do aluno
+  if (ordenados.length === 1) return `Oi${personal ? ` ${personal}` : ''}! ${primeiro} está há ${ordenados[0].dias} dias sem treinar. Que tal mandar uma mensagem? 💬`
+  const outros = ordenados.length - 1
+  return `${primeiro} e mais ${outros} ${outros === 1 ? 'aluno completou' : 'alunos completaram'} 10 dias sem treinar hoje. Vale dar um oi! 💬`
 }
