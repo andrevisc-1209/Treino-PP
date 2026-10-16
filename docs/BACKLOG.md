@@ -505,3 +505,12 @@ da aula inteira. Não era específico do iPhone: reproduzido em viewport de celu
 
 PR: [fix/aula-sem-participantes-menu-vazio](https://github.com/andrevisc-1209/Treino-PP/pull/61)
 
+
+## 21. Auditoria de segurança
+
+Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
+
+- ✅ **Crítica**: `professionals.is_admin` era gravável pelo próprio personal (escalada para admin). Migration
+  `20261039000000_proteger_is_admin.sql` (GRANT de UPDATE por coluna + trigger).
+- ⏳ **Alta**: `admin-actions` devolve o link de recuperação de senha (necessita revisão manual).
+- ⏳ **Médias/baixas**: CSP, rate limiting, CRON_SECRET, `npm audit fix` (dev) — PR separada.
