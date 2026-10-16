@@ -1,3 +1,4 @@
+import { dataHoraSP } from '@/features/consentimentos/utils'
 import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
 import { blocosDe, cabecalhoEstruturado, exerciciosLivresDe, formatarBloco, linhasDetalhes, MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
@@ -15,6 +16,8 @@ export function gerarMensagemTreino(args: {
   exercicios?: { nome: string; series: number; repeticoes: string }[]
   /** link da página pública para o aluno registrar a execução */
   link?: string
+  /** prazo do link (ISO); omitido ou nulo = sem prazo */
+  expiraEm?: string | null
 }): string {
   const cfg = MODALIDADES_CONFIG[args.modalidade]
   const primeiroNome = args.nomeAluno.trim().split(/\s+/)[0] || args.nomeAluno
@@ -37,7 +40,7 @@ export function gerarMensagemTreino(args: {
   if (livres.length > 0) {
     blocos.push(`📋 Exercícios:\n${livres.map((l, i) => `${i + 1}. ${l.nome}${l.descricao ? ` — ${l.descricao}` : ''}`).join('\n')}`)
   }
-  if (args.link) blocos.push(`Para registrar sua execução, acesse:\n🔗 ${args.link}`)
+  if (args.link) blocos.push(`Para registrar sua execução, acesse:\n🔗 ${args.link}${args.expiraEm ? `\n⏰ Você tem até ${dataHoraSP(args.expiraEm)} para registrar.` : ''}`)
   blocos.push(`Qualquer dúvida, me chame!\n— ${args.nomePersonal}`)
   return blocos.join('\n\n')
 }

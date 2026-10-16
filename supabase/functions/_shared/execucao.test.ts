@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { linkValido, validarExecucao } from './execucao.ts'
+import { expiraEmDaValidade, linkValido, validadeDoPedido, validarExecucao } from './execucao.ts'
 
 const plano = [
   { exercicio_id: 'e1', nome: 'Supino', series: 3 },
@@ -104,3 +104,25 @@ describe('volume e tempo calculados', () => {
   })
 })
 
+
+describe('validade do link', () => {
+  const agora = new Date('2026-10-20T12:00:00Z')
+  it('padrão 48 h; aceita 24/48/72; sem prazo vira null; outro valor é inválido', () => {
+    expect(validadeDoPedido(undefined, undefined)).toBe(48)
+    expect(validadeDoPedido(24, false)).toBe(24)
+    expect(validadeDoPedido(72, undefined)).toBe(72)
+    expect(validadeDoPedido(undefined, true)).toBeNull()
+    expect(validadeDoPedido(5, undefined)).toBeUndefined()
+    expect(validadeDoPedido('48', undefined)).toBeUndefined()
+  })
+  it('calcula expira_em e deixa null para sem prazo', () => {
+    expect(expiraEmDaValidade(48, agora)).toBe('2026-10-22T12:00:00.000Z')
+    expect(expiraEmDaValidade(null, agora)).toBeNull()
+  })
+  it('linkValido: expira_em nulo nunca expira; vencido expira; usado vence o prazo', () => {
+    expect(linkValido({ expira_em: null, usado_em: null }, agora)).toBe('valido')
+    expect(linkValido({ expira_em: '2026-10-20T11:59:59Z', usado_em: null }, agora)).toBe('expirado')
+    expect(linkValido({ expira_em: '2026-10-21T12:00:00Z', usado_em: null }, agora)).toBe('valido')
+    expect(linkValido({ expira_em: null, usado_em: '2026-10-20T10:00:00Z' }, agora)).toBe('usado')
+  })
+})

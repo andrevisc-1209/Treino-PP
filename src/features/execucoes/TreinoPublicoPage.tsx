@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Clock } from 'lucide-react'
+import { dataHoraSP } from '@/features/consentimentos/utils'
 import { useParams } from 'react-router-dom'
 import { Check, CircleAlert, CircleCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -7,6 +9,7 @@ import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
+import { tempoRestante } from './prazo'
 import { CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
 import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
 
@@ -22,6 +25,8 @@ type ExercicioPublico = {
 type Treino = { nome: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes; exercicios: ExercicioPublico[] }
 type Resposta = {
   estado: 'valido' | 'invalido' | 'expirado' | 'usado' | 'concluido'
+  /** prazo do link (ISO); nulo = sem prazo */
+  expira_em?: string | null
   treino?: Treino
   primeiro_nome_aluno?: string | null
   nome_personal?: string | null
@@ -29,18 +34,43 @@ type Resposta = {
 
 const MENSAGENS = {
   invalido: { titulo: 'Link inválido', texto: 'Este link não é válido. Peça ao seu personal para enviar o treino de novo.' },
-  expirado: { titulo: 'Link expirado', texto: 'Este link passou da validade (7 dias). Peça ao seu personal para enviar um novo.' },
+  expirado: { titulo: 'Treino indisponível', texto: 'Este treino não está mais disponível. Entre em contato com seu personal.' },
   usado: { titulo: 'Treino já registrado', texto: 'Este treino já foi registrado. Para fazer outro, peça um novo link ao seu personal.' },
 } as const
 
 async function chamar(token: string, corpo: Record<string, unknown>): Promise<Resposta> {
   const { data, error } = await supabase.functions.invoke<Resposta>('treino-publico', { body: { token, ...corpo } })
+  // 410 = link vencido: a função devolve o estado no corpo; mostramos a mensagem de "não disponível"
+  const contexto = (error as { context?: Response } | null)?.context
+  if (contexto?.status === 410) return { estado: 'expirado' }
   if (error || !data) throw new Error('Não foi possível concluir agora. Confira sua conexão e tente novamente.')
   return data
 }
 
 type Progresso = { series: Record<string, boolean[]>; obs: Record<string, string>; resultado: EstadoResultado }
 const PROGRESSO_VAZIO: Progresso = { series: {}, obs: {}, resultado: RESULTADO_VAZIO }
+
+const AVISO_URGENTE_MS = 6 * 3_600_000
+
+/** Banner do prazo no topo do treino. Fica âmbar quando faltam menos de 6 h. */
+function BannerPrazo({ expiraEm, agora }: { expiraEm: string; agora: number }) {
+  const restante = new Date(expiraEm).getTime() - agora
+  const urgente = restante < AVISO_URGENTE_MS
+  return (
+    <div
+      role="status"
+      className={cn(
+        'flex items-start gap-2 rounded-xl border p-3 text-sm',
+        urgente ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white text-slate-700',
+      )}
+    >
+      <Clock size={18} className="mt-0.5 shrink-0" aria-hidden />
+      <span>
+        ⏰ Este treino expira em <strong>{tempoRestante(restante)}</strong> — {dataHoraSP(expiraEm)}
+      </span>
+    </div>
+  )
+}
 
 /** Página PÚBLICA do aluno (sem login): vê o treino, marca o que fez e registra a execução. */
 export function TreinoPublicoPage() {
@@ -49,6 +79,12 @@ export function TreinoPublicoPage() {
   const [erroCarga, setErroCarga] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  // relógio da página (atualiza a cada minuto): o banner acompanha e, vencido o prazo, o formulário some
+  const [agora, setAgora] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setAgora(Date.now()), 60_000)
+    return () => clearInterval(t)
+  }, [])
   const [progresso, setProgresso] = useState<Progresso>(() => {
     // sinal ruim na academia: o que já foi marcado sobrevive a recarregar a página
     try {
@@ -148,8 +184,9 @@ export function TreinoPublicoPage() {
     )
   }
 
-  if (resp.estado !== 'valido' || !treino) {
-    const m = MENSAGENS[resp.estado as keyof typeof MENSAGENS] ?? MENSAGENS.invalido
+  const venceu = !!resp.expira_em && new Date(resp.expira_em).getTime() <= agora
+  if (resp.estado !== 'valido' || !treino || venceu) {
+    const m = venceu ? MENSAGENS.expirado : MENSAGENS[resp.estado as keyof typeof MENSAGENS] ?? MENSAGENS.invalido
     return casca(
       <div className="space-y-3 rounded-2xl bg-white p-6 text-center shadow-sm">
         <div className="flex justify-center text-amber-500" aria-hidden>
@@ -166,6 +203,7 @@ export function TreinoPublicoPage() {
 
   return casca(
     <>
+      {resp.expira_em && <BannerPrazo expiraEm={resp.expira_em} agora={agora} />}
       <header className="space-y-1 text-center">
         <p className="text-sm text-slate-500">{resp.primeiro_nome_aluno ? `Olá, ${resp.primeiro_nome_aluno}!` : 'Olá!'}</p>
         <h1 className="font-heading text-2xl font-bold text-accent">{treino.nome}</h1>

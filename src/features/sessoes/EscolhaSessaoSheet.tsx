@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { BottomSheet, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { lerValidadePadrao, SeletorValidadeLink, type ValidadeLink } from '@/features/planos/validadeLink'
 import { MODALIDADES_CONFIG, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 
 export type TreinoEscolhido = { nome: string; modalidade: ModalidadeTipo; tipoExecucao: TipoExecucao }
 
 /**
- * Passo antes de iniciar um treino que não é de musculação: confirma a modalidade e pergunta se a sessão é
+ * Passo antes de iniciar um treino (de qualquer modalidade): confirma a modalidade e pergunta se a sessão é
  * presencial ou à distância (vem marcado com o que o treino já define, mas pode trocar só para esta vez).
  */
 export function EscolhaSessaoSheet({
@@ -18,13 +19,14 @@ export function EscolhaSessaoSheet({
   treino: TreinoEscolhido | null
   carregando?: boolean
   onCancelar: () => void
-  onIniciar: (tipo: TipoExecucao) => void
+  onIniciar: (tipo: TipoExecucao, validade: ValidadeLink) => void
 }) {
   // o valor escolhido só vale para o treino aberto; ao abrir outro, volta ao padrão dele
   const [escolha, setEscolha] = useState<{ chave: string; tipo: TipoExecucao } | null>(null)
   const chave = treino ? `${treino.nome}|${treino.tipoExecucao}` : ''
   const tipo = escolha && escolha.chave === chave ? escolha.tipo : (treino?.tipoExecucao ?? 'sincrono')
   const cfg = treino ? MODALIDADES_CONFIG[treino.modalidade] : null
+  const [validade, setValidade] = useState<ValidadeLink>(lerValidadePadrao)
 
   return (
     <BottomSheet open={!!treino} onClose={onCancelar} title={cfg ? `${cfg.emoji} Sessão de ${cfg.label}` : ''}>
@@ -57,16 +59,19 @@ export function EscolhaSessaoSheet({
             </div>
             <p className="mt-2 text-sm text-slate-600">
               {tipo === 'sincrono'
-                ? 'Você registra o resultado agora, com o aluno ali.'
+                ? treino.modalidade === 'musculacao'
+                  ? 'Você conduz o treino agora, com o aluno ali.'
+                  : 'Você registra o resultado agora, com o aluno ali.'
                 : 'O treino vai para o aluno pelo WhatsApp, com um link para ele registrar o que fez.'}
             </p>
           </div>
+          {tipo === 'assincrono' && <SeletorValidadeLink valor={validade} onChange={setValidade} />}
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={onCancelar} disabled={carregando}>
               Cancelar
             </Button>
-            <Button onClick={() => onIniciar(tipo)} disabled={carregando}>
-              {carregando ? 'Abrindo…' : 'Iniciar ▶'}
+            <Button onClick={() => onIniciar(tipo, validade)} disabled={carregando}>
+              {carregando ? 'Abrindo…' : tipo === 'assincrono' ? 'Enviar ao aluno' : 'Iniciar ▶'}
             </Button>
           </div>
         </div>

@@ -55,6 +55,8 @@ Deno.serve(async (req) => {
     .eq('token', body.token)
     .maybeSingle()
   const estado = linkValido(link)
+  // Link vencido: 410 (Gone) com mensagem amigável; a página do aluno só mostra o aviso, sem formulário.
+  if (estado === 'expirado') return json(req, { estado, mensagem: 'Este treino não está mais disponível. Entre em contato com seu personal.' }, 410)
   if (estado !== 'valido' || !link) return json(req, { estado })
 
   const { data: plano } = await admin
@@ -90,6 +92,7 @@ Deno.serve(async (req) => {
     ])
     return json(req, {
       estado: 'valido',
+      expira_em: link.expira_em,
       treino: { nome: plano.name, modalidade, detalhes: plano.modalidade_detalhes ?? {}, exercicios },
       primeiro_nome_aluno: (aluno?.name ?? '').trim().split(/\s+/)[0] || null,
       nome_personal: personal?.name?.trim() || null,

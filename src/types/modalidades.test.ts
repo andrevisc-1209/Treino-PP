@@ -121,3 +121,14 @@ describe('blocos de treino', () => {
     expect(blocosDe('musculacao', antigo)).toEqual([])
   })
 })
+
+describe('mensagem do treino à distância: prazo do link', () => {
+  const base = { nomeAluno: 'Ana', nomePersonal: 'Bia', nomeTreino: 'A', modalidade: 'musculacao' as const, detalhes: {}, link: 'https://x/treino/t' }
+  it('inclui "Você tem até …" quando o link tem prazo e omite quando é sem prazo', () => {
+    const com = gerarMensagemTreino({ ...base, expiraEm: '2026-10-22T15:30:00Z' })
+    expect(com).toContain('⏰ Você tem até 22/10/2026 12:30 para registrar.')
+    expect(gerarMensagemTreino({ ...base, expiraEm: null })).not.toContain('⏰')
+    expect(gerarMensagemTreino(base)).not.toContain('⏰')
+  })
+})
+

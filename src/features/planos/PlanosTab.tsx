@@ -130,7 +130,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     setErroNovo(null)
   }
 
-  const enviarAoAluno = useEnviarTreinoAoAluno(alunoId)
+  const { enviar: enviarAoAluno, seletor: seletorEnvio } = useEnviarTreinoAoAluno(alunoId)
 
   const criarDoZero = () => {
     if (!nomeNovo.trim()) {
@@ -551,6 +551,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         </div>
       </BottomSheet>
 
+      {seletorEnvio}
       <ExecucaoPresencialSheet plano={presencial} alunoId={alunoId} onClose={() => setPresencial(null)} />
 
       <BottomSheet open={!!recemCriado} onClose={() => setRecemCriado(null)} title="Treino criado">
