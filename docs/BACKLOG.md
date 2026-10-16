@@ -477,6 +477,7 @@ PR: [feat/remove-pix-cidade](https://github.com/andrevisc-1209/Treino-PP/pull/54
 | 51 | Mensagens de WhatsApp escaláveis e em tom humano (briefing, resumo semanal, avisos agrupados) e cron 5h30 BRT | ✅ em revisão — **redeploy de `daily-briefing`, `avisos-diarios`, `weekly-summary` e recriar os jobs (`supabase/cron/whatsapp.sql`)** |
 | 52 | WhatsApp, fase 3: cobrança de aluno vencida (1/3/7 dias) e aluno concluiu treino à distância — `docs/WHATSAPP.md` | ✅ em revisão — **migration `20261038…`, deploy de `avisos-financeiros` e `aviso-treino-concluido`, jobs em `supabase/cron/whatsapp.sql`** |
 | 53 | Fix: botões do wizard (✏️ de Cobrança/Horários) enviavam o formulário do aluno; `Button` com type="button" por padrão e teste que impede `<button>` sem type | ✅ em revisão (sem migration) |
+| 54 | Remove o aviso "Modelo inicial — revisar com assessoria jurídica" dos Termos de Uso, da Política de Privacidade e do termo de consentimento do aluno (textos aprovados) | ✅ em revisão (sem migration) |
 
 **PR 1**: "Perfil" saiu da bottom nav (6 → 5 itens) e virou uma engrenagem no canto superior direito
 de Hoje, Agenda, Alunos, Financeiro, Exercícios e Treinos planejados (`LinkConfiguracoes`, 48px). O

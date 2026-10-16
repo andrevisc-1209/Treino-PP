@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { TERMO_AVISO, TERMO_TEXTO } from './termo'
+import { TERMO_TEXTO } from './termo'
 
 export function TermoPage() {
   return (
@@ -13,7 +13,6 @@ export function TermoPage() {
       </header>
 
       <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{TERMO_AVISO}</p>
         <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{TERMO_TEXTO}</p>
       </div>
     </div>
