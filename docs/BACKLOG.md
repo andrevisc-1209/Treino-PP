@@ -512,5 +512,6 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ **Crítica**: `professionals.is_admin` era gravável pelo próprio personal (escalada para admin). Migration
   `20261039000000_proteger_is_admin.sql` (GRANT de UPDATE por coluna + trigger).
-- ⏳ **Alta**: `admin-actions` devolve o link de recuperação de senha (necessita revisão manual).
-- ⏳ **Médias/baixas**: CSP, rate limiting, CRON_SECRET, `npm audit fix` (dev) — PR separada.
+- ✅ **Alta**: `admin-actions` não devolve mais o link de recuperação (envia e-mail ao personal).
+- ✅ **Médias**: CSP via meta (build) e rate limiting nas funções públicas (migration `20261040000000_rate_limit.sql`).
+- ⏳ Pendentes: CRON_SECRET em tempo constante, headers reais (proxy), `npm audit fix` (dev).

@@ -9,6 +9,7 @@
 // Segredos: EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { limiteExcedido, resposta429 } from '../_shared/rateLimit.ts'
 import { configEvolution, enviarTexto, mensagemDeTeste, numeroWhatsApp } from '../_shared/whatsapp.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
@@ -43,6 +44,8 @@ Deno.serve(async (req) => {
   const { data: userData, error: userError } = await cliente.auth.getUser()
   if (userError || !userData.user) return json(req, { error: 'Não autenticado.' }, 401)
   const userId = userData.user.id
+  // 10/min por personal: o botão de teste dispara mensagem real no WhatsApp.
+  if (await limiteExcedido(`send-whatsapp:user:${userId}`, 10)) return resposta429(cors(req))
 
   let body: { tipo?: unknown }
   try {

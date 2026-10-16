@@ -15,12 +15,48 @@ function htmlAppNamePlugin(): Plugin {
   }
 }
 
+/**
+ * CSP e referrer via <meta> (GitHub Pages não permite headers). Só no BUILD: o dev server do Vite
+ * injeta scripts inline/HMR por websocket e quebraria com uma CSP restrita. Sem 'unsafe-eval'.
+ * frame-ancestors e X-Content-Type-Options NÃO funcionam via <meta> (ignorados pelos browsers) — ficam de fora.
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://maps.googleapis.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' data: blob: https://*.supabase.co wss://*.supabase.co https://viacep.com.br https://maps.googleapis.com https://challenges.cloudflare.com",
+  'frame-src https://challenges.cloudflare.com',
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join('; ')
+
+function htmlCspPlugin(): Plugin {
+  return {
+    name: 'html-csp',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler: (html) =>
+        html.replace(
+          '<meta charset="UTF-8" />',
+          `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />\n    <meta name="referrer" content="strict-origin-when-cross-origin" />`,
+        ),
+    },
+  }
+}
+
 export default defineConfig({
   base: '/',
   plugins: [
     react(),
     tailwindcss(),
     htmlAppNamePlugin(),
+    htmlCspPlugin(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png'],

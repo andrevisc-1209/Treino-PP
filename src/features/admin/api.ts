@@ -87,7 +87,7 @@ export function useAdminAlterarCpf() {
 export function useAdminResetSenha() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const { data, error } = await supabase.functions.invoke<{ ok: boolean; actionLink: string | null }>('admin-actions', {
+      const { data, error } = await supabase.functions.invoke<{ success: boolean; email: string }>('admin-actions', {
         body: { acao: 'reset_senha', email },
       })
       if (error) throw error

@@ -1,8 +1,7 @@
 // Edge Function: admin-actions
 //
 // Única ação do painel admin que precisa mesmo de server-side com
-// service_role: gerar o link de reset de senha via Supabase Auth Admin
-// API (supabase.auth.admin.generateLink). As outras ações do painel
+// service_role: disparar o e-mail de reset de senha (o link nunca volta na resposta) e gravar admin_logs. As outras ações do painel
 // (alterar trial, alterar plano, listar personais) são funções SQL
 // SECURITY DEFINER (ver migration 20261007000000_admin_role.sql) — não
 // precisam de Edge Function nem de service_role.
@@ -64,17 +63,15 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Ação desconhecida.' }, 400)
   }
 
-  // Client admin — só a partir daqui, e só pra essa chamada específica.
-  const clienteAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-
-  const { data: linkData, error: linkError } = await clienteAdmin.auth.admin.generateLink({
-    type: 'recovery',
-    email: body.email,
-    options: { redirectTo: `${APP_URL}definir-senha` },
-  })
-
+  // generateLink NÃO envia e-mail e devolveria o link a quem chama (tomada de conta se interceptado).
+  // resetPasswordForEmail manda o e-mail de recuperação direto ao personal (SMTP/template do Supabase Auth)
+  // e não devolve link algum. Client anônimo e sem sessão: o envio é do próprio Auth.
+  const clienteAuth = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { auth: { persistSession: false } })
+  const { error: linkError } = await clienteAuth.auth.resetPasswordForEmail(body.email, { redirectTo: `${APP_URL}definir-senha` })
   if (linkError) return jsonResponse({ error: linkError.message }, 400)
 
+  // Client admin — só pra gravar a trilha de auditoria.
+  const clienteAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
   await clienteAdmin.schema('treino').from('admin_logs').insert({
     admin_id: userData.user.id,
     acao: 'reset_senha',
@@ -82,5 +79,5 @@ Deno.serve(async (req) => {
     detalhes: { email: body.email },
   })
 
-  return jsonResponse({ ok: true, actionLink: linkData.properties?.action_link ?? null })
+  return jsonResponse({ success: true, email: body.email })
 })
