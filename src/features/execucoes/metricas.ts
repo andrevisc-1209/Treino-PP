@@ -38,7 +38,7 @@ export function metricaPrincipal(modalidade: ModalidadeTipo, d: DetalhesExecucao
     case 'escalada':
       return { valor: n(r.vias_feitas), unidade: 'vias', rotulo: 'vias feitas' }
     default:
-      return { valor: n(r.duracao_min), unidade: 'min', rotulo: 'minutos' }
+      return { valor: n(r.duracao_minutos) ?? n(r.duracao_min), unidade: 'min', rotulo: 'minutos' }
   }
 }
 
@@ -153,4 +153,35 @@ export function rotuloDias(iso: string, agora: Date = new Date()): string {
   if (d < 30) return `há ${Math.floor(d / 7)} ${Math.floor(d / 7) === 1 ? 'semana' : 'semanas'}`
   const meses = Math.floor(d / 30)
   return `há ${meses} ${meses === 1 ? 'mês' : 'meses'}`
+}
+
+/** 45 → "45 min"; 75 → "1 h 15 min"; 120 → "2 h". */
+export function formatarDuracaoMin(min: number): string {
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return m ? `${h} h ${m} min` : `${h} h`
+}
+
+/**
+ * Linha-resumo do card de treino concluído: "📏 4.600 m  |  ⏱ 45 min". Cada parte só aparece se existir
+ * (distância/volume vem de `resultado`, calculado ao concluir; tempo só se o aluno preencheu). Null se não há nenhuma.
+ */
+export function resumoVolumeTempo(modalidade: ModalidadeTipo, d: DetalhesExecucao | null | undefined): string | null {
+  const r = d?.resultado ?? {}
+  const partes: string[] = []
+  const metros = modalidade === 'natacao' ? n(r.distancia_total_m) : modalidade === 'remo' ? n(r.distancia_m) : null
+  const km =
+    modalidade === 'corrida' || modalidade === 'ciclismo'
+      ? n(r.distancia_km)
+      : modalidade === 'brick'
+        ? (n(r.bike_distancia_km) ?? 0) + (n(r.run_distancia_km) ?? 0) || null
+        : null
+  if (metros !== null && metros > 0) partes.push(`📏 ${formatarNumero(metros, 0)} m`)
+  else if (km !== null && km > 0) partes.push(`📏 ${formatarNumero(km)} km`)
+  const volume = modalidade === 'musculacao' ? n(r.volume_kg_rep) : null
+  if (volume !== null && volume > 0) partes.push(`🏋️ ${formatarNumero(volume, 0)} kg·rep`)
+  const min = n(r.duracao_minutos) ?? n(r.duracao_min) ?? n(r.tempo_min)
+  if (min !== null && min > 0) partes.push(`⏱ ${formatarDuracaoMin(Math.round(min))}`)
+  return partes.length > 0 ? partes.join('  |  ') : null
 }

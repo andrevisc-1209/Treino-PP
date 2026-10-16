@@ -99,7 +99,8 @@ Deno.serve(async (req) => {
   const v = validarExecucao(
     modalidade,
     { detalhes: body.detalhes, notas: body.notas },
-    exercicios.map((e) => ({ exercicio_id: e.exercicio_id, nome: e.nome, series: e.series })),
+    exercicios.map((e) => ({ exercicio_id: e.exercicio_id, nome: e.nome, series: e.series, reps: e.repeticoes, carga_kg: e.carga_kg })),
+    plano.modalidade_detalhes,
   )
   if (!v.ok) return json(req, { error: v.erro }, 400)
 

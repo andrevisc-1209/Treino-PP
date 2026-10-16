@@ -15,7 +15,7 @@ export type Aluno = {
   active: boolean
   objetivos: string[]
   objetivo_notes: string | null
-  /** objetivo esportivo: triathlon | corrida | natacao | ciclismo */
+  /** objetivo esportivo: ver MODALIDADES_FOCO (provaAlvo.ts) */
   modalidade_foco: string | null
   prova_alvo: string | null
   nome_prova: string | null

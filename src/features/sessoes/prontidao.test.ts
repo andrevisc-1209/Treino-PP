@@ -30,3 +30,10 @@ describe('descritorPara', () => {
     expect(descritorPara(DESCRITORES_FADIGA, 0)).toBe('Nenhuma')
   })
 })
+
+describe('pré-treino com zero (escala 0–10 inclusive)', () => {
+  it('0 é resposta válida: calcula a prontidão normalmente', () => {
+    expect(calcularProntidao({ pre_sleep: 0, pre_stress: 0, pre_fatigue: 0, pre_muscle_pain: 0 })).toBe(7.5)
+    expect(calcularProntidao({ pre_sleep: 10, pre_stress: 10, pre_fatigue: 10, pre_muscle_pain: 10 })).toBe(2.5)
+  })
+})

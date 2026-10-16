@@ -7,8 +7,8 @@ import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
-import { FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
-import { detalhesDoResultado, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
+import { CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
+import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
 
 type ExercicioPublico = {
   exercicio_id: string
@@ -100,6 +100,8 @@ export function TreinoPublicoPage() {
                 series_feitas: Math.min(e.series, (progresso.series[e.exercicio_id] ?? []).filter(Boolean).length),
                 obs: progresso.obs[e.exercicio_id] ?? '',
               })),
+              // volume (kg·rep) é calculado no servidor a partir das séries feitas; aqui só o tempo informado
+              resultado: { ...(duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin) !== null ? { duracao_minutos: duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin) } : {}) },
             }
           : detalhesDoResultado(treino.modalidade, treino.detalhes, progresso.resultado)
       const r = await chamar(token, {
@@ -235,6 +237,7 @@ export function TreinoPublicoPage() {
               )
             })}
           </ul>
+          <CampoTempoExecucao estado={progresso.resultado} onEstado={(resultado) => salvarProgresso({ ...progresso, resultado })} />
           <div className="space-y-1">
             <label className="text-sm font-medium" htmlFor="notas-treino">
               Como foi o treino? (opcional)
