@@ -14,7 +14,9 @@
 // 500 em falha nossa (MP/DB) — o MP reenvia nesses casos.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, tokenMpValido } from '../_shared/mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
+import { dataSP, montarPagamentoPlano } from '../_shared/notificacoes.ts'
+import { enviarAoPersonal } from '../_shared/whatsappPersonal.ts'
 
 const ok = (msg = 'ok') => new Response(msg, { status: 200 })
 
@@ -75,6 +77,16 @@ Deno.serve(async (req) => {
       const { data, error } = await supabase.from('assinaturas').update(decisao.atualizacao).eq('professional_id', decisao.professionalId).select('professional_id')
       if (error) throw error
       if (!data?.length) console.warn('mp-webhook: nenhuma assinatura para', decisao.professionalId)
+      // Aviso por WhatsApp ao personal (opt-in): só pagamento aprovado que ativou/renovou o plano. Nunca derruba o webhook.
+      if (data?.length && decisao.tipo === 'ativar') {
+        try {
+          const plano = PLANOS[pagamento.metadata?.plan_slug as keyof typeof PLANOS]
+          const ate = (decisao.atualizacao as { assinatura_fim?: string }).assinatura_fim
+          if (plano && ate) await enviarAoPersonal(supabase, decisao.professionalId, 'pagamento_plano', montarPagamentoPlano({ plano: plano.reason.replace('Treino PP ', ''), valor: plano.amount, ate: dataSP(ate) }))
+        } catch (e) {
+          console.error('mp-webhook: pagamento registrado, mas o aviso por WhatsApp falhou', (e as Error).message)
+        }
+      }
       return ok()
     }
 
