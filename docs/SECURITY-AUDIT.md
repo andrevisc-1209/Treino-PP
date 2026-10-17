@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "correções da revisão adversarial: itens 1 a 6")
+Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "admin-actions e limites de tamanho")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -42,6 +42,10 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 5. **[MÉDIA] Link "sem prazo" era credencial eterna**: "Sem prazo" passou a ter teto de 30 dias (`expira_em` não é mais gravado nulo).
 6. **[MÉDIA] CSP frouxa**: `src/config/csp.ts` — scripts sem `'unsafe-inline'`/`'unsafe-eval'`, `connect-src` com o host exato do Supabase (lido de `VITE_SUPABASE_URL` no build) e `img-src` só com os domínios do Google Places/Maps.
 
+### PR "admin-actions e limites de tamanho" — itens 7 e 8 da revisão adversarial
+7. **[MÉDIA-BAIXA] `admin-actions`**: valida o e-mail (`normalizarEmailAdmin`), exige que o destinatário seja um personal cadastrado (404 caso contrário), limita a 10 ações/hora por admin (falha fechada) e grava `admin_logs` com o alvo **antes** de agir (se o log falhar, a ação é abortada). **Pendente:** MFA (AAL2) para o admin — precisa antes de uma tela de cadastro do segundo fator.
+8. **[MÉDIA-BAIXA] Sem limite de tamanho nas colunas de texto livre**: migration `20261045000000_limites_de_tamanho.sql` — 42 `CHECK ... NOT VALID` (texto em caracteres; JSONB em 64 KB), válidos para gravações novas sem varrer dados antigos; consulta de violadores em `supabase/tests/limites_violadores.sql`; Zod do formulário de aluno alinhado e mensagem "Texto longo demais" no erro 23514 dos limites. **Pendente:** limites de **quantidade** por conta (decisão de produto) e `VALIDATE CONSTRAINT` depois de limpar eventuais dados antigos.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
@@ -49,11 +53,11 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Dependências de dev com CVE** (`sharp`, `source-map-js`): produção tem 0 vulnerabilidades; só afeta o build.
 
 ## 🔍 Revisão manual pendente
-- **`CHECK` de tamanho nas tabelas centrais** (`alunos`, `professionals`, `exercicios`, `planos`...): o app escreve direto pelo PostgREST e não há limite de tamanho no banco. Exige análise dos dados existentes (PR separada).
+- **`VALIDATE CONSTRAINT` dos limites de tamanho** (migration 20261045): depois que `limites_violadores.sql` vier vazio.
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
 - **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
-- **Itens 7 e 8 da revisão adversarial** (média-baixa, fora desta PR): validar o e-mail e exigir que pertença a um personal em `admin-actions` (+ MFA do admin e falhar se o log não gravar); `CHECK` de tamanho e limites de volume por conta.
+- **MFA do admin** (tela de cadastro do segundo fator + exigência de AAL2 em `admin-actions`) e **limites de quantidade por conta** (alunos/treinos no trial).
 - **Google Places/Maps e Turnstile sob a CSP nova**: validar em produção com o console aberto (um host bloqueado aparece no console e é só acrescentar).
 - **Estado real do banco**: rodar `supabase/tests/isolamento.sql` antes e depois da migration 20261044; conferir RLS ligada, `anon` sem SELECT e policies fora do histórico (a tabela `assinaturas` nasceu fora das migrations).
 - **CSP em produção**: validar fluxos logados (Turnstile, Google Places, ViaCEP, Realtime, PDF) com o console aberto.

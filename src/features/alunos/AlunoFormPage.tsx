@@ -35,16 +35,16 @@ const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? 
 
 const schema = z
   .object({
-    name: z.string().min(1, ERROS.FORM.obrigatorio),
+    name: z.string().min(1, ERROS.FORM.obrigatorio).max(120, 'Máximo 120 caracteres'),
     birth_date: z.string().min(1, ERROS.FORM.obrigatorio),
     sex: z.enum(['M', 'F', 'outro']).optional(),
     height_cm: z.preprocess(numOrUndef, z.number().int().min(50, 'Altura inválida').max(250, 'Altura inválida').optional()),
     weight_kg: z.preprocess(numOrUndef, z.number().positive('Peso inválido').optional()),
-    phone: z.string().optional(),
-    email: z.preprocess((v) => (v === '' ? undefined : v), z.string().email('E-mail inválido').optional()),
+    phone: z.string().max(30, 'Máximo 30 caracteres').optional(),
+    email: z.preprocess((v) => (v === '' ? undefined : v), z.string().email('E-mail inválido').max(254, 'Máximo 254 caracteres').optional()),
 
     objetivos: z.array(z.string()),
-    objetivo_notes: z.string().optional(),
+    objetivo_notes: z.string().max(2000, 'Máximo 2000 caracteres').optional(),
     modalidade_foco: z.string().optional(),
     prova_alvo: z.string().optional(),
     nome_prova: z.string().max(60, 'Máximo 60 caracteres').optional(),
@@ -54,18 +54,18 @@ const schema = z
 
     injury: z.boolean().optional(),
     injury_regions: z.array(z.string()),
-    injury_notes: z.string().optional(),
+    injury_notes: z.string().max(2000, 'Máximo 2000 caracteres').optional(),
 
     surgery: z.boolean().optional(),
     surgery_regions: z.array(z.string()),
-    surgery_notes: z.string().optional(),
+    surgery_notes: z.string().max(2000, 'Máximo 2000 caracteres').optional(),
 
     practices_sport: z.boolean().optional(),
     sports: z.array(z.string()),
-    sport_name: z.string().optional(),
+    sport_name: z.string().max(120, 'Máximo 120 caracteres').optional(),
 
     medications_flag: z.boolean().optional(),
-    medications: z.string().optional(),
+    medications: z.string().max(2000, 'Máximo 2000 caracteres').optional(),
   })
   .superRefine((val, ctx) => {
     if (val.birth_date) {

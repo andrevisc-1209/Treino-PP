@@ -35,6 +35,9 @@ export function mapearErroSupabase(erro: unknown): string {
   if (code === 'P0001' && msgMin.includes('cpf não pode ser alterado')) {
     return ERROS.CPF.imutavel
   }
+  if (msgMin.includes('_tamanho_chk')) {
+    return 'Texto longo demais para este campo. Encurte e tente de novo.'
+  }
   if (code === '23514' || msgMin.includes('violates check constraint')) {
     return 'Valor inválido para este campo.'
   }
