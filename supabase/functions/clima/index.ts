@@ -6,11 +6,17 @@
 // Sem cidade cadastrada: { semCidade: true }.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { criarCacheTtl } from '../_shared/cacheTtl.ts'
 import { condicao, dicaTreino, escolherLocal, type ResultadoGeocoding } from '../_shared/clima.ts'
+import { respostaDoLimite, verificarLimite } from '../_shared/rateLimit.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 // localhost só se ALLOW_LOCALHOST_CORS=true (nunca definido em produção).
 const ORIGENS_PERMITIDAS = [APP_URL, ...(Deno.env.get('ALLOW_LOCALHOST_CORS') === 'true' ? ['http://localhost:5173'] : [])]
+
+// Cache por cidade/UF (3 h, até 500 cidades): a previsão é a mesma para todo personal da cidade. Só guarda respostas de sucesso.
+// Melhor esforço: vive na instância da function e some no cold start.
+const cache = criarCacheTtl<Record<string, unknown>>(3 * 3_600_000, 500)
 
 function cors(req: Request) {
   const origem = req.headers.get('Origin') ?? ''
@@ -34,11 +40,18 @@ Deno.serve(async (req) => {
   const cliente = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: auth } }, db: { schema: 'treino' } })
   const { data: u, error: errUser } = await cliente.auth.getUser()
   if (errUser || !u.user) return json(req, { error: 'Não autenticado.' }, 401)
+  // 30/hora por personal, falha ABERTA: a previsão é só um enfeite; se o banco do limite cair, ela continua.
+  const bloqueio = respostaDoLimite(await verificarLimite(`clima:${u.user.id}`, 30, 3600), 'aberta', cors(req))
+  if (bloqueio) return bloqueio
 
   const { data: perfil } = await cliente.from('professionals').select('cidade, uf').eq('id', u.user.id).maybeSingle()
   const cidade = perfil?.cidade?.trim()
   const uf = perfil?.uf?.trim()
   if (!cidade || !uf) return json(req, { semCidade: true })
+
+  const chave = `${cidade.toLowerCase()}|${uf.toUpperCase()}`
+  const guardado = cache.get(chave)
+  if (guardado) return json(req, guardado)
 
   try {
     const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=10&language=pt&countryCode=BR`)
@@ -61,13 +74,15 @@ Deno.serve(async (req) => {
       uv: Math.round((d.daily.uv_index_max[0] ?? 0) * 10) / 10,
     }
     const c = condicao(d.current.weather_code)
-    return json(req, {
+    const resposta = {
       cidade,
       uf,
       atual: { ...atual, texto: c.texto, emoji: c.emoji },
       hoje,
       dica: dicaTreino({ ...atual, chuvaProb: hoje.chuvaProb, uv: hoje.uv }),
-    })
+    }
+    cache.set(chave, resposta)
+    return json(req, resposta)
   } catch (e) {
     console.error('clima:', (e as Error).message)
     return json(req, { error: 'Previsão indisponível no momento.' }, 502)

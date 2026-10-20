@@ -9,6 +9,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { expiraEmDaValidade, validadeDoPedido } from '../_shared/execucao.ts'
+import { respostaDoLimite, verificarLimite } from '../_shared/rateLimit.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
@@ -42,6 +43,9 @@ Deno.serve(async (req) => {
   })
   const { data: userData, error: userError } = await cliente.auth.getUser()
   if (userError || !userData.user) return json(req, { error: 'Não autenticado.' }, 401)
+  // 20/hora por personal, falha ABERTA: se o banco do limite cair, o envio de treino ao aluno não pode parar.
+  const bloqueio = respostaDoLimite(await verificarLimite(`gerar-link:${userData.user.id}`, 20, 3600), 'aberta', cors(req), 'Muitas tentativas. Aguarde alguns minutos e tente de novo.')
+  if (bloqueio) return bloqueio
 
   let body: { plano_id?: unknown; validade_horas?: unknown; sem_prazo?: unknown }
   try {

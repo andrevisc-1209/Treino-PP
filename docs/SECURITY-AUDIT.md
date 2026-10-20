@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "idempotência dos pagamentos do Mercado Pago")
+Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "rate limit em mp-subscribe, clima e gerar-link-treino")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -51,6 +51,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 
 ### PR "idempotência dos pagamentos" — 2ª revisão como invasor, item 2
 - **[MÉDIA] Reentrega fora de ordem do webhook creditava o plano de novo**: a idempotência só comparava o `payment_id` com o último gravado em `assinaturas.mp_payment_id` (`mp.ts`, `decidirPagamento`). Se o Mercado Pago reentregasse o pagamento A depois de o B, A somava outro período. Migration `20261047000000_pagamentos_processados.sql` (tabela interna só `service_role`, semeada com os pagamentos vigentes) + `_shared/pagamento.ts` (`aplicarPagamento`): cada pagamento é reivindicado com `INSERT ... ON CONFLICT DO NOTHING` antes de creditar, e a reivindicação é **desfeita** se creditar falhar (o MP reenvia e o pagamento não se perde).
+
+### PR "rate limit em mp-subscribe, clima e gerar-link-treino" — 2ª revisão como invasor, item 3
+- **[MÉDIA] Funções autenticadas sem limite que chamam serviços externos**: uma conta gratuita podia martelar `mp-subscribe` (cada chamada cria uma preferência no Mercado Pago) e `clima` (duas chamadas ao Open-Meteo), a ponto de estourar a cota do Mercado Pago ou fazer o Open-Meteo bloquear o IP do servidor. Agora: `mp-subscribe` 10/h por personal (falha **fechada**), `gerar-link-treino` 20/h (falha aberta), `clima` 30/h (falha aberta) mais cache por cidade de 3 h (`_shared/cacheTtl.ts`). `respostaDoLimite` concentra a regra 429/503 e é testada.
 
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.

@@ -14,6 +14,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ehPlano, PLANOS, tokenMpValido } from '../_shared/mp.ts'
+import { respostaDoLimite, verificarLimite } from '../_shared/rateLimit.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 const SITE_URL = (Deno.env.get('SITE_URL') || APP_URL).replace(/\/+$/, '')
@@ -51,6 +52,11 @@ Deno.serve(async (req) => {
   if (userError || !userData.user?.email) return json(req, { error: 'Não autenticado.' }, 401)
   const user = userData.user
   const payerEmail = user.email
+
+  // 10/hora por personal, FALHA FECHADA: cada chamada cria uma preferência no Mercado Pago; sem limite, uma conta gratuita
+  // martelaria a API (e a cota/reputação do nosso token) e atrapalharia o pagamento de todo mundo.
+  const bloqueio = respostaDoLimite(await verificarLimite(`mp-subscribe:${user.id}`, 10, 3600), 'fechada', cors(req), 'Muitas tentativas. Aguarde alguns minutos e tente de novo.')
+  if (bloqueio) return bloqueio
 
   let body: { plano?: unknown }
   try {
