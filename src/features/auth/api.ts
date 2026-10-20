@@ -41,7 +41,12 @@ export async function salvarPerfilProfissional(
   userId: string,
   perfil: { name: string; cpf: string; phone: string; whatsappOptIn: boolean; uf: string; cidade: string; bairro?: string },
 ): Promise<void> {
-  const base = { name: perfil.name, cpf: perfil.cpf, phone: perfil.phone, whatsapp_opt_in: perfil.whatsappOptIn, uf: perfil.uf, cidade: perfil.cidade }
+  // CPF só pela RPC atualizar_cpf (valida no servidor, limita 5 tentativas/dia e não confirma se o CPF já existe em outra conta);
+  // o UPDATE direto de `cpf` foi revogado do cliente (migration 20261048). Vem primeiro: se falhar, nada mais é salvo.
+  const { error: errCpf } = await supabase.rpc('atualizar_cpf', { p_cpf: perfil.cpf })
+  if (errCpf) throw errCpf
+
+  const base = { name: perfil.name, phone: perfil.phone, whatsapp_opt_in: perfil.whatsappOptIn, uf: perfil.uf, cidade: perfil.cidade }
   let { error } = await supabase.from('professionals').update({ ...base, bairro: perfil.bairro?.trim() || null }).eq('id', userId)
   if (colunaBairroAusente(error)) ({ error } = await supabase.from('professionals').update(base).eq('id', userId))
   if (error) throw error

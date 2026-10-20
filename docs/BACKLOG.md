@@ -564,3 +564,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ `mp-subscribe` 10/h (falha fechada), `gerar-link-treino` 20/h e `clima` 30/h (falha aberta) por personal; `clima` com cache por cidade de 3 h. Sem migration.
 - ⏳ Última da 2ª revisão: enumeração de CPF (validar dígito, mensagem genérica, RPC com limite). Opcional: 404 do MP como "ignorado".
+
+
+## 29. Enumeração e validação de CPF
+
+- ✅ CPF validado no banco (`treino.cpf_valido` + `CHECK NOT VALID`), gravação pela RPC `atualizar_cpf` (5/dia, mensagem genérica) e `REVOKE UPDATE (cpf)` do cliente — migration `20261048000000`. Mensagem de colisão do CPF no front agora é genérica.
+- ⏳ Última da 2ª revisão concluída. Opcional: 404 do MP como "ignorado"; `VALIDATE CONSTRAINT` do CPF e dos limites de tamanho depois de conferir os violadores.
