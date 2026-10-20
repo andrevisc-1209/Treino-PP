@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   const ids = [...porPersonal.keys()]
   if (ids.length === 0) return Response.json({ enviados: 0, pulados: 0, falhas: 0 })
 
-  const { data: personais } = await admin.from('professionals').select('id, name, cidade, uf').in('id', ids).eq('whatsapp_opt_in', true).not('phone', 'is', null)
+  const { data: personais } = await admin.from('professionals').select('id, name, cidade, uf').in('id', ids).eq('whatsapp_opt_in', true).not('phone', 'is', null).not('phone_verified_at', 'is', null)
   const climaPorCidade = new Map<string, Awaited<ReturnType<typeof previsaoDoDia>>>()
   const contagem = { enviados: 0, pulados: 0, falhas: 0 }
   for (const p of personais ?? []) {

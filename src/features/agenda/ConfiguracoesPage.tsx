@@ -15,6 +15,8 @@ import { enviarTesteWhatsapp } from './whatsapp'
 import { AssinaturaSecao } from '@/features/assinatura/AssinaturaSecao'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarDadosPessoais, useSalvarLocalidade } from '@/features/auth/api'
+import { useTelefoneVerificadoEm } from '@/features/auth/verificacaoTelefone'
+import { VerificacaoTelefone } from './VerificacaoTelefone'
 import { useProfessionalConfig, useSalvarProfessionalConfig, type SalvarProfessionalConfigInput } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -36,6 +38,8 @@ export function ConfiguracoesPage() {
   const salvarConfig = useSalvarProfessionalConfig()
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const atualizarWhatsapp = useAtualizarWhatsappOptIn(session?.user.id ?? '')
+  const { data: telefoneVerificadoEm } = useTelefoneVerificadoEm(session?.user.id)
+  const telefoneVerificado = !!telefoneVerificadoEm
   const salvarLocalidade = useSalvarLocalidade(session?.user.id ?? '')
   const salvarDados = useSalvarDadosPessoais(session?.user.id ?? '')
 
@@ -185,6 +189,14 @@ export function ConfiguracoesPage() {
                 placeholder="(00) 00000-0000"
               />
             </Field>
+            {session && perfil && (
+              <VerificacaoTelefone
+                userId={session.user.id}
+                telefone={perfil.phone ?? ''}
+                verificado={telefoneVerificado && !dadosSujos}
+                salvo={!!perfil.phone && validarTelefone(perfil.phone) && telefone.replace(/\D/g, '') === perfil.phone}
+              />
+            )}
             {session?.user.email && (
               <dl className="text-sm">
                 <div className="flex justify-between gap-3">
@@ -292,14 +304,16 @@ export function ConfiguracoesPage() {
             {perfil?.whatsappOptIn && (
               <div className="space-y-2 rounded-xl bg-slate-50 p-3">
                 <p className="text-sm text-slate-600">
-                  {validarTelefone(perfil.phone ?? '')
-                    ? `As mensagens vão para o telefone dos seus Dados pessoais: ${mascararTelefone(perfil.phone ?? '')}.`
-                    : 'Cadastre um telefone válido em Dados pessoais para receber as mensagens.'}
+                  {!validarTelefone(perfil.phone ?? '')
+                    ? 'Cadastre um telefone válido em Dados pessoais para receber as mensagens.'
+                    : telefoneVerificado
+                      ? `As mensagens vão para o telefone dos seus Dados pessoais: ${mascararTelefone(perfil.phone ?? '')}.`
+                      : 'Verifique seu telefone em Dados pessoais para começar a receber as mensagens.'}
                 </p>
                 <Button
                   variant="outline"
                   className="w-full"
-                  disabled={enviandoTeste || !validarTelefone(perfil.phone ?? '')}
+                  disabled={enviandoTeste || !validarTelefone(perfil.phone ?? '') || !telefoneVerificado}
                   onClick={async () => {
                     setEnviandoTeste(true)
                     try {

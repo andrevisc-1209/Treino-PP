@@ -88,6 +88,10 @@ export function useSalvarDadosPessoais(userId: string) {
       const { error } = await supabase.from('professionals').update({ name, phone }).eq('id', userId)
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['perfil-profissional', userId] }),
+    // trocar o telefone zera a verificação no banco (trigger): recarrega o selo também
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['perfil-profissional', userId] })
+      qc.invalidateQueries({ queryKey: ['telefone-verificado', userId] })
+    },
   })
 }

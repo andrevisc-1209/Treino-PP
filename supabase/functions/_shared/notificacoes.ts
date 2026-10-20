@@ -57,13 +57,17 @@ export const nomeLimpo = (nome: string | null | undefined): string => (nome ?? '
 const primeiroNome = (nome: string | null | undefined): string => nomeLimpo(nome).trim().split(/\s+/)[0] || ''
 
 // ---------- regra de envio ----------
-export type DecisaoEnvio = { enviar: true; numero: string } | { enviar: false; motivo: 'sem_opt_in' | 'sem_telefone' | 'ja_enviado_hoje' }
+export type DecisaoEnvio = { enviar: true; numero: string } | { enviar: false; motivo: 'sem_opt_in' | 'sem_telefone' | 'telefone_nao_verificado' | 'ja_enviado_hoje' }
 
-/** Só envia com opt-in ligado, telefone válido e nenhuma mensagem desse tipo já enviada hoje. */
-export function decidirEnvio(args: { optIn: boolean | null | undefined; phone: string | null | undefined; jaEnviadoHoje: boolean }): DecisaoEnvio {
+/**
+ * Só envia com opt-in ligado, telefone válido E VERIFICADO (o dono provou a posse por código; sem isso o personal poderia
+ * cadastrar o número de outra pessoa) e nenhuma mensagem desse tipo já enviada hoje.
+ */
+export function decidirEnvio(args: { optIn: boolean | null | undefined; phone: string | null | undefined; phoneVerifiedAt: string | null | undefined; jaEnviadoHoje: boolean }): DecisaoEnvio {
   if (!args.optIn) return { enviar: false, motivo: 'sem_opt_in' }
   const numero = numeroWhatsApp(args.phone)
   if (!numero) return { enviar: false, motivo: 'sem_telefone' }
+  if (!args.phoneVerifiedAt) return { enviar: false, motivo: 'telefone_nao_verificado' }
   if (args.jaEnviadoHoje) return { enviar: false, motivo: 'ja_enviado_hoje' }
   return { enviar: true, numero }
 }

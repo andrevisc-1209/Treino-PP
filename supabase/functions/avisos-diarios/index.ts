@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   }
 
   // 2) alunos inativos há exatamente 10 dias, por personal
-  const { data: personais } = await admin.from('professionals').select('id, name').eq('whatsapp_opt_in', true).not('phone', 'is', null)
+  const { data: personais } = await admin.from('professionals').select('id, name').eq('whatsapp_opt_in', true).not('phone', 'is', null).not('phone_verified_at', 'is', null)
   const ids = (personais ?? []).map((p) => p.id as string)
   const nomes = new Map((personais ?? []).map((p) => [p.id as string, p.name as string]))
   if (ids.length > 0) {

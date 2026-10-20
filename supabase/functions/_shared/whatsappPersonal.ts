@@ -24,12 +24,16 @@ export async function enviarAoPersonal(
   }
   const dia = dataSP(new Date())
   const [{ data: perfil }, { data: jaEnviado }] = await Promise.all([
-    admin.from('professionals').select('whatsapp_opt_in, phone').eq('id', professionalId).maybeSingle(),
+    admin.from('professionals').select('whatsapp_opt_in, phone, phone_verified_at').eq('id', professionalId).maybeSingle(),
     // Tipos "por evento" (treino concluído) podem sair várias vezes no dia: a idempotência fica na própria execução.
     umPorDia ? admin.from('whatsapp_log').select('id').eq('professional_id', professionalId).eq('tipo', tipo).eq('dia', dia).eq('status', 'enviado').limit(1) : Promise.resolve({ data: [] as { id: string }[] }),
   ])
-  const decisao = decidirEnvio({ optIn: perfil?.whatsapp_opt_in, phone: perfil?.phone, jaEnviadoHoje: (jaEnviado?.length ?? 0) > 0 })
-  if (!decisao.enviar) return 'pulado'
+  const decisao = decidirEnvio({ optIn: perfil?.whatsapp_opt_in, phone: perfil?.phone, phoneVerifiedAt: perfil?.phone_verified_at, jaEnviadoHoje: (jaEnviado?.length ?? 0) > 0 })
+  if (!decisao.enviar) {
+    // telefone não verificado: pula em silêncio (só o motivo no log, nunca o número) — não derruba o cron inteiro
+    if (decisao.motivo === 'telefone_nao_verificado') console.log('whatsapp: pulado, telefone não verificado', tipo)
+    return 'pulado'
+  }
 
   try {
     await enviarTexto(cfg, decisao.numero, texto)

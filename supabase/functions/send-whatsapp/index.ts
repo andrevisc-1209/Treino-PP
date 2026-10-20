@@ -62,10 +62,12 @@ Deno.serve(async (req) => {
     return json(req, { error: 'WhatsApp indisponível no momento.' }, 503)
   }
 
-  const { data: perfil } = await cliente.from('professionals').select('name, phone, whatsapp_opt_in').eq('id', userId).maybeSingle()
+  const { data: perfil } = await cliente.from('professionals').select('name, phone, whatsapp_opt_in, phone_verified_at').eq('id', userId).maybeSingle()
   if (!perfil?.whatsapp_opt_in) return json(req, { error: 'Ative os alertas por WhatsApp em Configurações › Notificações.' }, 409)
   const numero = numeroWhatsApp(perfil.phone)
   if (!numero) return json(req, { error: 'Cadastre um telefone válido em Configurações › Dados pessoais.' }, 422)
+  // sem prova de posse do número, a plataforma não manda nada (o telefone é digitado pelo próprio usuário)
+  if (!perfil.phone_verified_at) return json(req, { error: 'Verifique seu telefone em Configurações › Dados pessoais antes de receber mensagens.' }, 409)
 
   const agora = Date.now()
   if (agora - (ultimoTeste.get(userId) ?? 0) < INTERVALO_TESTE_MS) return json(req, { error: 'Aguarde alguns segundos para enviar outro teste.' }, 429)
