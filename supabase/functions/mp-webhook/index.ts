@@ -15,7 +15,8 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
+import { aplicarPagamento } from '../_shared/pagamento.ts'
 import { ipDoCliente } from '../_shared/consentimento.ts'
 import { dataSP, montarPagamentoPlano } from '../_shared/notificacoes.ts'
 import { enviarAoPersonal } from '../_shared/whatsappPersonal.ts'
@@ -79,20 +80,41 @@ Deno.serve(async (req) => {
       const { data: atual } = donoId
         ? await supabase.from('assinaturas').select('status, assinatura_fim, mp_payment_id').eq('professional_id', donoId).maybeSingle()
         : { data: null }
-      const decisao = decidirPagamento(pagamento, atual)
-      if (decisao.tipo === 'ignorar') {
-        console.log('mp-webhook: pagamento ignorado:', decisao.motivo, `(status ${pagamento.status})`)
+      // Cada pagamento só credita UMA vez (tabela pagamentos_processados), mesmo reentregue fora de ordem.
+      const resultado = await aplicarPagamento(
+        {
+          reivindicar: async (paymentId) => {
+            const { data, error } = await supabase.from('pagamentos_processados').upsert({ payment_id: paymentId }, { onConflict: 'payment_id', ignoreDuplicates: true }).select('payment_id')
+            if (error) throw error
+            return (data?.length ?? 0) > 0
+          },
+          desfazer: async (paymentId) => {
+            await supabase.from('pagamentos_processados').delete().eq('payment_id', paymentId)
+          },
+          gravar: async (professionalId, atualizacao) => {
+            const { data, error } = await supabase.from('assinaturas').update(atualizacao).eq('professional_id', professionalId).select('professional_id')
+            if (error) throw error
+            return data?.length ?? 0
+          },
+        },
+        pagamento,
+        atual,
+      )
+      if (resultado.tipo === 'ignorado') {
+        console.log('mp-webhook: pagamento ignorado:', resultado.motivo, `(status ${pagamento.status})`)
         return ok('pagamento ignorado')
       }
-      const { data, error } = await supabase.from('assinaturas').update(decisao.atualizacao).eq('professional_id', decisao.professionalId).select('professional_id')
-      if (error) throw error
-      if (!data?.length) console.warn('mp-webhook: nenhuma assinatura para', decisao.professionalId)
+      if (resultado.tipo === 'ja_processado') {
+        console.log('mp-webhook: pagamento já processado (reentrega ignorada)', String(pagamento.id))
+        return ok('pagamento já processado')
+      }
+      if (resultado.linhas === 0) console.warn('mp-webhook: nenhuma assinatura para', resultado.professionalId)
       // Aviso por WhatsApp ao personal (opt-in): só pagamento aprovado que ativou/renovou o plano. Nunca derruba o webhook.
-      if (data?.length && decisao.tipo === 'ativar') {
+      if (resultado.tipo === 'creditado' && resultado.linhas > 0) {
         try {
           const plano = PLANOS[pagamento.metadata?.plan_slug as keyof typeof PLANOS]
-          const ate = (decisao.atualizacao as { assinatura_fim?: string }).assinatura_fim
-          if (plano && ate) await enviarAoPersonal(supabase, decisao.professionalId, 'pagamento_plano', montarPagamentoPlano({ plano: plano.reason.replace('Treino PP ', ''), valor: plano.amount, ate: dataSP(ate) }))
+          const ate = (resultado.atualizacao as { assinatura_fim?: string }).assinatura_fim
+          if (plano && ate) await enviarAoPersonal(supabase, resultado.professionalId, 'pagamento_plano', montarPagamentoPlano({ plano: plano.reason.replace('Treino PP ', ''), valor: plano.amount, ate: dataSP(ate) }))
         } catch (e) {
           console.error('mp-webhook: pagamento registrado, mas o aviso por WhatsApp falhou', (e as Error).message)
         }

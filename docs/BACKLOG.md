@@ -552,3 +552,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Código de 6 dígitos por WhatsApp para provar a posse do telefone (Configurações › Dados pessoais, com selo "Verificado ✓ / Não verificado"). Sem verificação a plataforma não envia notificações (avisos, resumo, teste). Migration `20261046000000`; funções `solicitar-verificacao-phone` e `confirmar-verificacao-phone`.
 - Contas existentes precisam verificar o telefone uma vez (sem backfill).
 - ⏳ Itens seguintes da 2ª revisão: idempotência do webhook do Mercado Pago, rate limit em `mp-subscribe`/`clima`/`gerar-link-treino`, enumeração de CPF.
+
+
+## 27. Idempotência dos pagamentos do Mercado Pago
+
+- ✅ Cada pagamento só credita uma vez, mesmo reentregue fora de ordem (tabela `pagamentos_processados`, migration `20261047000000`; lógica em `_shared/pagamento.ts`). Falha ao creditar desfaz a reivindicação.
+- ⏳ Opcional: tratar 404 do MP (recurso inexistente) como "ignorado" (200) para não gerar reenvios; rate limit em `mp-subscribe`/`clima`/`gerar-link-treino`; enumeração de CPF.
