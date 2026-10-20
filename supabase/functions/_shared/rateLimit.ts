@@ -34,8 +34,8 @@ export async function limiteExcedido(chave: string, max: number, janelaSeg = 60)
   return (await verificarLimite(chave, max, janelaSeg)) === 'excedido'
 }
 
-export function resposta429(headersExtras: Record<string, string> = {}): Response {
-  return new Response(JSON.stringify({ error: 'Too many requests' }), {
+export function resposta429(headersExtras: Record<string, string> = {}, mensagem = 'Too many requests'): Response {
+  return new Response(JSON.stringify({ error: mensagem }), {
     status: 429,
     headers: { 'Content-Type': 'application/json', 'Retry-After': '60', ...headersExtras },
   })
@@ -47,4 +47,14 @@ export function resposta503(headersExtras: Record<string, string> = {}): Respons
     status: 503,
     headers: { 'Content-Type': 'application/json', 'Retry-After': '60', ...headersExtras },
   })
+}
+
+/**
+ * O que responder ao resultado de `verificarLimite` (null = segue o fluxo normal):
+ * excedido → 429; erro do banco do limite → 503 se a rota falha FECHADA (pagamento, e-mail), segue se falha ABERTA (clima, link).
+ */
+export function respostaDoLimite(resultado: ResultadoLimite, falha: 'aberta' | 'fechada', headersExtras: Record<string, string> = {}, mensagem?: string): Response | null {
+  if (resultado === 'excedido') return resposta429(headersExtras, mensagem)
+  if (resultado === 'erro' && falha === 'fechada') return resposta503(headersExtras)
+  return null
 }

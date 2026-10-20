@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('npm:@supabase/supabase-js@2', () => ({ createClient: vi.fn() }))
 
-import { consultarLimite } from './rateLimit.ts'
+import { consultarLimite, respostaDoLimite } from './rateLimit.ts'
 
 describe('consultarLimite', () => {
   it('true da RPC = ok; false = excedido', async () => {
@@ -21,3 +21,29 @@ describe('consultarLimite', () => {
     expect(rpc).toHaveBeenCalledWith({ p_key: 'x'.repeat(120), p_max: 20, p_window_seconds: 3600 })
   })
 })
+
+describe('respostaDoLimite', () => {
+  const cors = { 'Access-Control-Allow-Origin': 'https://treino.personalperto.com.br' }
+  it('excedido → 429 com Retry-After, nos dois modos', () => {
+    for (const modo of ['aberta', 'fechada'] as const) {
+      const r = respostaDoLimite('excedido', modo, cors)
+      expect(r?.status).toBe(429)
+      expect(r?.headers.get('Retry-After')).toBe('60')
+      expect(r?.headers.get('Access-Control-Allow-Origin')).toBe(cors['Access-Control-Allow-Origin'])
+    }
+  })
+  it('erro do banco do limite: modo fechado → 503; modo aberto segue (null)', () => {
+    expect(respostaDoLimite('erro', 'fechada', cors)?.status).toBe(503)
+    expect(respostaDoLimite('erro', 'aberta', cors)).toBeNull()
+  })
+  it('mensagem em português quando a rota informa uma (a tela do usuário mostra o texto)', async () => {
+    const r = respostaDoLimite('excedido', 'fechada', cors, 'Muitas tentativas. Aguarde alguns minutos e tente de novo.')
+    expect(await r?.json()).toEqual({ error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' })
+    expect(await respostaDoLimite('excedido', 'aberta')?.json()).toEqual({ error: 'Too many requests' })
+  })
+  it('ok segue o fluxo normal nos dois modos', () => {
+    expect(respostaDoLimite('ok', 'fechada')).toBeNull()
+    expect(respostaDoLimite('ok', 'aberta')).toBeNull()
+  })
+})
+

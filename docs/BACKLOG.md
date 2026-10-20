@@ -558,3 +558,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ Cada pagamento só credita uma vez, mesmo reentregue fora de ordem (tabela `pagamentos_processados`, migration `20261047000000`; lógica em `_shared/pagamento.ts`). Falha ao creditar desfaz a reivindicação.
 - ⏳ Opcional: tratar 404 do MP (recurso inexistente) como "ignorado" (200) para não gerar reenvios; rate limit em `mp-subscribe`/`clima`/`gerar-link-treino`; enumeração de CPF.
+
+
+## 28. Rate limit em mp-subscribe, clima e gerar-link-treino
+
+- ✅ `mp-subscribe` 10/h (falha fechada), `gerar-link-treino` 20/h e `clima` 30/h (falha aberta) por personal; `clima` com cache por cidade de 3 h. Sem migration.
+- ⏳ Última da 2ª revisão: enumeração de CPF (validar dígito, mensagem genérica, RPC com limite). Opcional: 404 do MP como "ignorado".
