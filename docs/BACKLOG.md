@@ -545,3 +545,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ `admin-actions`: e-mail validado, destinatário precisa ser personal cadastrado, 10 ações/h por admin, auditoria antes da ação.
 - ✅ Limites de tamanho no banco (42 `CHECK ... NOT VALID`, migration `20261045000000`), Zod do aluno alinhado e mensagem de erro própria.
 - ⏳ MFA do admin; limites de quantidade por conta; `VALIDATE CONSTRAINT` dos limites após conferir `supabase/tests/limites_violadores.sql`.
+
+
+## 26. Verificação de posse do telefone (WhatsApp)
+
+- ✅ Código de 6 dígitos por WhatsApp para provar a posse do telefone (Configurações › Dados pessoais, com selo "Verificado ✓ / Não verificado"). Sem verificação a plataforma não envia notificações (avisos, resumo, teste). Migration `20261046000000`; funções `solicitar-verificacao-phone` e `confirmar-verificacao-phone`.
+- Contas existentes precisam verificar o telefone uma vez (sem backfill).
+- ⏳ Itens seguintes da 2ª revisão: idempotência do webhook do Mercado Pago, rate limit em `mp-subscribe`/`clima`/`gerar-link-treino`, enumeração de CPF.

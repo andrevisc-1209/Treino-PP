@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   const inicio = limitesDoDiaSP(segunda).inicio.toISOString()
   const fim = limitesDoDiaSP(hoje).fim.toISOString() // até o fim de hoje
 
-  const { data: personais } = await admin.from('professionals').select('id, name').eq('whatsapp_opt_in', true).not('phone', 'is', null)
+  const { data: personais } = await admin.from('professionals').select('id, name').eq('whatsapp_opt_in', true).not('phone', 'is', null).not('phone_verified_at', 'is', null)
   const ids = (personais ?? []).map((p) => p.id as string)
   const nomes = new Map((personais ?? []).map((p) => [p.id as string, p.name as string]))
   if (ids.length === 0) return Response.json({ enviados: 0, pulados: 0, falhas: 0 })

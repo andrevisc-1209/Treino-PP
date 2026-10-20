@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "admin-actions e limites de tamanho")
+Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "verificação de posse do telefone")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -45,6 +45,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 ### PR "admin-actions e limites de tamanho" — itens 7 e 8 da revisão adversarial
 7. **[MÉDIA-BAIXA] `admin-actions`**: valida o e-mail (`normalizarEmailAdmin`), exige que o destinatário seja um personal cadastrado (404 caso contrário), limita a 10 ações/hora por admin (falha fechada) e grava `admin_logs` com o alvo **antes** de agir (se o log falhar, a ação é abortada). **Pendente:** MFA (AAL2) para o admin — precisa antes de uma tela de cadastro do segundo fator.
 8. **[MÉDIA-BAIXA] Sem limite de tamanho nas colunas de texto livre**: migration `20261045000000_limites_de_tamanho.sql` — 42 `CHECK ... NOT VALID` (texto em caracteres; JSONB em 64 KB), válidos para gravações novas sem varrer dados antigos; consulta de violadores em `supabase/tests/limites_violadores.sql`; Zod do formulário de aluno alinhado e mensagem "Texto longo demais" no erro 23514 dos limites. **Pendente:** limites de **quantidade** por conta (decisão de produto) e `VALIDATE CONSTRAINT` depois de limpar eventuais dados antigos.
+
+### PR "verificação de posse do telefone" — 2ª revisão como invasor, item 1
+- **[ALTA] A plataforma mandava WhatsApp para qualquer número cadastrado**: o telefone é digitado pelo próprio personal e, com `whatsapp_opt_in` ligado (padrão no cadastro), os avisos e o botão de teste saíam para ele sem prova de posse (spam/assédio pelo número da plataforma, com texto controlado pelo invasor). Migration `20261046000000_phone_verification.sql` + Edge Functions `solicitar-verificacao-phone` e `confirmar-verificacao-phone`: código de 6 dígitos por WhatsApp (10 min, hash no banco, 5 tentativas), limites com falha fechada (3/h por personal, 3/dia por número entre contas, 5 confirmações/h). O envio (`decidirEnvio`, `send-whatsapp`, crons) exige `phone_verified_at`; trocar o telefone pelo cliente zera a verificação (trigger). Contas existentes ficam não verificadas (sem backfill).
 
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.

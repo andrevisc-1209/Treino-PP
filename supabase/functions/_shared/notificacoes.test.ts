@@ -19,14 +19,17 @@ describe('datas (fuso de São Paulo)', () => {
 })
 
 describe('decidirEnvio', () => {
-  it('sem opt-in, sem telefone ou já enviado hoje → não envia', () => {
-    expect(decidirEnvio({ optIn: false, phone: '(21) 99999-0000', jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'sem_opt_in' })
-    expect(decidirEnvio({ optIn: true, phone: null, jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'sem_telefone' })
-    expect(decidirEnvio({ optIn: true, phone: '123', jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'sem_telefone' })
-    expect(decidirEnvio({ optIn: true, phone: '(21) 99999-0000', jaEnviadoHoje: true })).toEqual({ enviar: false, motivo: 'ja_enviado_hoje' })
+  const ok = '2026-10-20T12:00:00Z'
+  it('sem opt-in, sem telefone, não verificado ou já enviado hoje → não envia', () => {
+    expect(decidirEnvio({ optIn: false, phone: '(21) 99999-0000', phoneVerifiedAt: ok, jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'sem_opt_in' })
+    expect(decidirEnvio({ optIn: true, phone: null, phoneVerifiedAt: ok, jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'sem_telefone' })
+    expect(decidirEnvio({ optIn: true, phone: '123', phoneVerifiedAt: ok, jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'sem_telefone' })
+    expect(decidirEnvio({ optIn: true, phone: '(21) 99999-0000', phoneVerifiedAt: null, jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'telefone_nao_verificado' })
+    expect(decidirEnvio({ optIn: true, phone: '(21) 99999-0000', phoneVerifiedAt: undefined, jaEnviadoHoje: false })).toEqual({ enviar: false, motivo: 'telefone_nao_verificado' })
+    expect(decidirEnvio({ optIn: true, phone: '(21) 99999-0000', phoneVerifiedAt: ok, jaEnviadoHoje: true })).toEqual({ enviar: false, motivo: 'ja_enviado_hoje' })
   })
-  it('com tudo certo → envia ao número do cadastro', () => {
-    expect(decidirEnvio({ optIn: true, phone: '(21) 99999-0000', jaEnviadoHoje: false })).toEqual({ enviar: true, numero: '5521999990000' })
+  it('com tudo certo (inclusive telefone verificado) → envia ao número do cadastro', () => {
+    expect(decidirEnvio({ optIn: true, phone: '(21) 99999-0000', phoneVerifiedAt: ok, jaEnviadoHoje: false })).toEqual({ enviar: true, numero: '5521999990000' })
   })
 })
 
