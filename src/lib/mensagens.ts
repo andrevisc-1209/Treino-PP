@@ -14,7 +14,9 @@ export const ERROS = {
   },
   CPF: {
     invalido: 'CPF inválido',
-    duplicado: 'CPF já cadastrado. Cada personal só pode ter uma conta.',
+    // genérica DE PROPÓSITO: não confirma que o CPF já está cadastrado em outra conta (evita descobrir quem é personal da plataforma)
+    duplicado: 'Não foi possível salvar o CPF. Confira os dados ou fale com o suporte.',
+    tentativas: 'Muitas tentativas de salvar o CPF. Tente novamente amanhã.',
     imutavel: 'CPF não pode ser alterado depois do cadastro.',
     falhaNoCadastro:
       'Não foi possível concluir o cadastro. Se o CPF ou e-mail já estiverem cadastrados, tente entrar ou recuperar a senha. Dúvidas? Fale com a gente no WhatsApp (21) 98652-1747.',

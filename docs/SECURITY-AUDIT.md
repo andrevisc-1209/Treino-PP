@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "rate limit em mp-subscribe, clima e gerar-link-treino")
+Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "enumeração e validação de CPF")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -54,6 +54,10 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 
 ### PR "rate limit em mp-subscribe, clima e gerar-link-treino" — 2ª revisão como invasor, item 3
 - **[MÉDIA] Funções autenticadas sem limite que chamam serviços externos**: uma conta gratuita podia martelar `mp-subscribe` (cada chamada cria uma preferência no Mercado Pago) e `clima` (duas chamadas ao Open-Meteo), a ponto de estourar a cota do Mercado Pago ou fazer o Open-Meteo bloquear o IP do servidor. Agora: `mp-subscribe` 10/h por personal (falha **fechada**), `gerar-link-treino` 20/h (falha aberta), `clima` 30/h (falha aberta) mais cache por cidade de 3 h (`_shared/cacheTtl.ts`). `respostaDoLimite` concentra a regra 429/503 e é testada.
+
+### PR "enumeração e validação de CPF" — 2ª revisão como invasor, item 4
+- **[MÉDIA-BAIXA] Enumeração de CPF e CPF sem validação no servidor**: o banco aceitava qualquer texto como CPF (API e metadados do cadastro) e o `UPDATE` direto de `cpf` devolvia "CPF já cadastrado" sem limite, confirmando quem é personal da plataforma. Migration `20261048000000_cpf_validacao_e_rpc.sql`: `treino.cpf_valido` (módulo 11) + `CHECK ... NOT VALID`, RPC `atualizar_cpf` (única via do cliente: `auth.uid()`, 5 tentativas/dia, mensagem genérica na colisão) e `REVOKE UPDATE (cpf)`. No front, a mensagem de colisão passou a ser genérica.
+- **Risco aceito que continua**: enquanto o CPF for único, qualquer cadastro/gravação é um "oráculo" (a medida encarece, não elimina) e não há prova de posse do CPF (quem cadastra primeiro o reserva); a correção para o dono real é `admin_alterar_cpf`.
 
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.

@@ -35,4 +35,18 @@ describe('migrations do schema treino', () => {
     expect(grantColuna.length).toBeGreaterThan(0)
     for (const g of grantColuna) expect(g).not.toContain('is_admin')
   })
+
+  it('cpf: o cliente só grava pela RPC atualizar_cpf (REVOKE UPDATE (cpf) depois do GRANT por coluna; RPC sem acesso anônimo)', () => {
+    const idxGrant = semComentarios.lastIndexOf('GRANT UPDATE (name, cpf')
+    const idxRevoke = semComentarios.search(/REVOKE UPDATE \(cpf\) ON treino\.professionals FROM authenticated/)
+    expect(idxGrant).toBeGreaterThan(-1)
+    expect(idxRevoke).toBeGreaterThan(idxGrant)
+    expect(semComentarios).toMatch(/REVOKE ALL ON FUNCTION treino\.atualizar_cpf\(TEXT\) FROM PUBLIC, anon/)
+    expect(semComentarios).toMatch(/GRANT EXECUTE ON FUNCTION treino\.atualizar_cpf\(TEXT\) TO authenticated/)
+    expect(semComentarios).toMatch(/SECURITY DEFINER\s+SET search_path = ''[\s\S]*?atualizar_cpf|FUNCTION treino\.atualizar_cpf[\s\S]*?SECURITY DEFINER/)
+  })
+
+  it('cpf: o banco valida o CPF (CHECK com treino.cpf_valido)', () => {
+    expect(semComentarios).toMatch(/CHECK \(cpf IS NULL OR treino\.cpf_valido\(cpf\)\)/)
+  })
 })

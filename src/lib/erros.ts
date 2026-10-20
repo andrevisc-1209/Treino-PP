@@ -35,6 +35,10 @@ export function mapearErroSupabase(erro: unknown): string {
   if (code === 'P0001' && msgMin.includes('cpf não pode ser alterado')) {
     return ERROS.CPF.imutavel
   }
+  // mensagens da RPC atualizar_cpf (migration 20261048)
+  if (code === 'P0001' && msgMin.includes('muitas tentativas de salvar o cpf')) return ERROS.CPF.tentativas
+  if (code === 'P0001' && msgMin.includes('cpf inválido')) return ERROS.CPF.invalido
+  if (code === 'P0001' && msgMin.includes('não foi possível salvar o cpf')) return ERROS.CPF.duplicado
   if (msgMin.includes('_tamanho_chk')) {
     return 'Texto longo demais para este campo. Encurte e tente de novo.'
   }
