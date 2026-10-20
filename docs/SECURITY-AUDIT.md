@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "verificação de posse do telefone")
+Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "idempotência dos pagamentos do Mercado Pago")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -48,6 +48,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 
 ### PR "verificação de posse do telefone" — 2ª revisão como invasor, item 1
 - **[ALTA] A plataforma mandava WhatsApp para qualquer número cadastrado**: o telefone é digitado pelo próprio personal e, com `whatsapp_opt_in` ligado (padrão no cadastro), os avisos e o botão de teste saíam para ele sem prova de posse (spam/assédio pelo número da plataforma, com texto controlado pelo invasor). Migration `20261046000000_phone_verification.sql` + Edge Functions `solicitar-verificacao-phone` e `confirmar-verificacao-phone`: código de 6 dígitos por WhatsApp (10 min, hash no banco, 5 tentativas), limites com falha fechada (3/h por personal, 3/dia por número entre contas, 5 confirmações/h). O envio (`decidirEnvio`, `send-whatsapp`, crons) exige `phone_verified_at`; trocar o telefone pelo cliente zera a verificação (trigger). Contas existentes ficam não verificadas (sem backfill).
+
+### PR "idempotência dos pagamentos" — 2ª revisão como invasor, item 2
+- **[MÉDIA] Reentrega fora de ordem do webhook creditava o plano de novo**: a idempotência só comparava o `payment_id` com o último gravado em `assinaturas.mp_payment_id` (`mp.ts`, `decidirPagamento`). Se o Mercado Pago reentregasse o pagamento A depois de o B, A somava outro período. Migration `20261047000000_pagamentos_processados.sql` (tabela interna só `service_role`, semeada com os pagamentos vigentes) + `_shared/pagamento.ts` (`aplicarPagamento`): cada pagamento é reivindicado com `INSERT ... ON CONFLICT DO NOTHING` antes de creditar, e a reivindicação é **desfeita** se creditar falhar (o MP reenvia e o pagamento não se perde).
 
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
