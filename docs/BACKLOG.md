@@ -580,3 +580,8 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **D**: dado clínico (lesão, cirurgia, medicamentos, altura, peso) só com consentimento ativo, imposto pelo banco (migration `20261051000000`); salvamento do aluno reordenado; revogação limpa todos os campos clínicos.
 - ✅ **A**: assinatura imposta pelo servidor (modo leitura depois do trial, com banner), RPC `revogar_consentimento`, migration `20261052000000`.
 - ⏳ E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).
+
+
+## 31. Correção: cobrança do aluno perdida no cadastro (erro "Valor inválido para este campo")
+
+- ✅ O cadastro de aluno novo só validava o valor da cobrança; **dia do ciclo (1–28) e vencimento (0–30)** estouravam o CHECK do banco, o aluno era salvo **sem cobrança** e o erro ficava na etapa 2 enquanto a pessoa já estava na 3 (ex.: ao enviar o consentimento por e-mail: o e-mail saía, a tela mostrava o erro genérico). Agora `validarCobranca` usa os limites do banco no cadastro e na ficha, a mensagem diz qual campo estourou e o erro de "aluno salvo, mas sem cobrança" aparece mesmo fora da etapa 2.

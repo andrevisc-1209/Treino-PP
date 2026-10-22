@@ -46,6 +46,9 @@ export function mapearErroSupabase(erro: unknown): string {
   if (msgMin.includes('_tamanho_chk')) {
     return 'Texto longo demais para este campo. Encurte e tente de novo.'
   }
+  // limites da cobrança do aluno (CHECKs de aluno_cobranca): diz QUAL campo estourou em vez do genérico
+  if (textoCompleto.includes('aluno_cobranca_dia_ciclo')) return 'Dia do ciclo deve ser entre 1 e 28.'
+  if (textoCompleto.includes('aluno_cobranca_dias_vencimento')) return 'Vencimento deve ser de 0 a 30 dias após o fechamento.'
   if (code === '23514' || msgMin.includes('violates check constraint')) {
     return 'Valor inválido para este campo.'
   }
