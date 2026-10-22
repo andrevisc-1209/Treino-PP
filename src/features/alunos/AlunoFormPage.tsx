@@ -13,6 +13,8 @@ import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
 import { enviarConsentimentoSaude, useAluno, useAlunos, useConsentimentoAtivo, useConsentimentoSaude, usePesos, useSalvarAluno, type EnvioConsentimento } from './api'
 import { ConsentimentoSaudeBloco } from './ConsentimentoSaudeBloco'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { AVISO_CONSENTIMENTO_DECLARADO, LEMBRETE_PROVA_CONSENTIMENTO, TITULO_CONSENTIMENTO_DECLARADO } from './consentimentoMetodo'
 import { ObjetivoEsportivo } from './ObjetivoEsportivo'
 import { provasDoFoco } from './provaAlvo'
 import { linkWhatsappConsentimento, montarMensagemConsentimento } from '@/lib/consentimentoMensagem'
@@ -395,6 +397,17 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
     }
   }
 
+  // "O aluno já consentiu pessoalmente ou por escrito": o personal DECLARA que tem o consentimento — a plataforma não tem como
+  // verificar um papel, então o aviso é explícito (a prova é dele) e o registro fica como "declarado" (method 'papel').
+  const declararConsentimento = async () => {
+    const ok = await confirmarAcao({
+      titulo: TITULO_CONSENTIMENTO_DECLARADO,
+      mensagem: AVISO_CONSENTIMENTO_DECLARADO,
+      textoConfirmar: 'Declaro que tenho o consentimento',
+    })
+    if (ok) setValue('lgpd_consent', true)
+  }
+
   const outrosAlunos = (outrosAlunosRaw ?? [])
     .filter((a) => a.id !== id)
     .map((a) => ({ id: a.id, name: a.name, birth_date: a.birth_date, phone: a.phone }))
@@ -549,7 +562,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               consentimento={consentimentoSaude}
               onEnviar={enviarSolicitacao}
               onTermo={() => setTermoAberto(true)}
-              onJaConsentiu={() => setValue('lgpd_consent', true)}
+              onJaConsentiu={declararConsentimento}
             />
           ) : (
             <div className="space-y-4">
@@ -559,7 +572,10 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
                 </div>
               ) : (
                 <div className="flex items-center justify-between rounded-xl bg-brand-soft p-3 text-sm text-brand-hover">
-                  <span>Consentimento LGPD dado</span>
+                  <span>
+                    Consentimento LGPD dado
+                    <span className="block text-xs opacity-80">{LEMBRETE_PROVA_CONSENTIMENTO}</span>
+                  </span>
                   <button type="button" onClick={() => setValue('lgpd_consent', false)} className="text-xs underline">
                     Desfazer
                   </button>

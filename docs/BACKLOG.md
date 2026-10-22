@@ -585,3 +585,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 31. Correção: cobrança do aluno perdida no cadastro (erro "Valor inválido para este campo")
 
 - ✅ O cadastro de aluno novo só validava o valor da cobrança; **dia do ciclo (1–28) e vencimento (0–30)** estouravam o CHECK do banco, o aluno era salvo **sem cobrança** e o erro ficava na etapa 2 enquanto a pessoa já estava na 3 (ex.: ao enviar o consentimento por e-mail: o e-mail saía, a tela mostrava o erro genérico). Agora `validarCobranca` usa os limites do banco no cadastro e na ficha, a mensagem diz qual campo estourou e o erro de "aluno salvo, mas sem cobrança" aparece mesmo fora da etapa 2.
+
+
+## 32. Aviso no consentimento declarado pelo personal
+
+- ✅ O botão "O aluno já consentiu pessoalmente ou por escrito" pede confirmação explícita (a prova é do personal), grava `method = 'papel'` e a ficha mostra quem registrou o consentimento (aluno pelo link × declarado por você × antigo).
+- ⏳ Jurídico: conferir a cláusula dos Termos de Uso sobre o consentimento colhido fora da plataforma.

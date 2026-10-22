@@ -23,6 +23,7 @@ import {
   type Peso,
 } from './api'
 import { confirmarAcao } from '@/components/ConfirmSheet'
+import { LEMBRETE_PROVA_CONSENTIMENTO, rotuloMetodoConsentimento } from './consentimentoMetodo'
 import { mostrarDesfazer } from '@/components/UndoToast'
 import { rotuloBadge, rotuloObjetivos } from './format'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
@@ -345,7 +346,8 @@ export function AlunoFichaPage() {
           {consentimento && (
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-600">
-                Consentimento LGPD v{consentimento.consent_version} em {formatarDataBR(consentimento.consented_at)}
+                Consentimento LGPD v{consentimento.consent_version} em {formatarDataBR(consentimento.consented_at)} · {rotuloMetodoConsentimento(consentimento.method)}
+                {consentimento.method === 'papel' && <span className="mt-0.5 block text-xs text-slate-400">{LEMBRETE_PROVA_CONSENTIMENTO}</span>}
               </p>
               <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
                 Revogar

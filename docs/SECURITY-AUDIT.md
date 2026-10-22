@@ -79,6 +79,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Decisões**: conta `cancelada` com período pago futuro continua bloqueada (igual ao front de antes); avisos de WhatsApp seguem sendo enviados em modo leitura.
 - **Limites**: quem paga por Pix/boleto fica em modo leitura até o webhook creditar; gravações offline pendentes de quem venceu ficam na fila com erro até assinar; `UPDATE` de colunas de `professionals` (perfil) não é barrado de propósito.
 
+### PR "consentimento declarado" — aviso do botão "O aluno já consentiu pessoalmente ou por escrito"
+- **Decisão (risco aceito, não bloqueado)**: a plataforma não tem como verificar um consentimento em papel e o personal é quem precisa provar o consentimento (LGPD, art. 8º, §2º). Em vez de bloquear a opção (que é legítima: termo em papel, aluno sem e-mail/WhatsApp), o botão passou a pedir uma **confirmação explícita** com o aviso de que a declaração é do personal, que a prova é dele e que ele pode ser solicitado a apresentá-la; o consentimento é gravado como `papel` ("declarado por você") em vez de `app`; a ficha distingue "confirmado pelo aluno" (link), "declarado por você" (papel) e "registrado no app" (antigo) e lembra de guardar o documento. **Pendente (jurídico)**: conferir se os Termos de Uso trazem a cláusula de que o personal é o responsável pelo consentimento colhido fora da plataforma.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.

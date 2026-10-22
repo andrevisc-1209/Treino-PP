@@ -171,7 +171,7 @@ export async function enviarConsentimentoSaude(alunoId: string, envio: EnvioCons
   return data
 }
 
-export type ConsentimentoAtivo = { id: string; consented_at: string; consent_version: string }
+export type ConsentimentoAtivo = { id: string; consented_at: string; consent_version: string; method: string }
 
 export function useConsentimentoDetalhado(alunoId: string | undefined) {
   return useQuery({
@@ -179,7 +179,7 @@ export function useConsentimentoDetalhado(alunoId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('consentimentos')
-        .select('id, consented_at, consent_version')
+        .select('id, consented_at, consent_version, method')
         .eq('aluno_id', alunoId!)
         .is('revoked_at', null)
         .order('consented_at', { ascending: false })
@@ -283,7 +283,9 @@ export function useSalvarAluno() {
         const { error } = await supabase.from('consentimentos').insert({
           aluno_id: alunoId,
           professional_id,
-          method: 'app',
+          // único caminho de consentimento do cliente: o botão "O aluno já consentiu pessoalmente ou por escrito" = DECLARAÇÃO do personal
+          // (o do aluno pelo link é gravado pela Edge Function com method 'link')
+          method: 'papel',
           consent_version: TERMO_VERSAO,
         })
         if (error) throw error
