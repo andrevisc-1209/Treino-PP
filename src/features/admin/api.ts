@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
 import { supabase } from '@/lib/supabase'
 import type { StatusAssinatura, Plano } from '@/features/assinatura/useAssinatura'
 
@@ -90,7 +91,8 @@ export function useAdminResetSenha() {
       const { data, error } = await supabase.functions.invoke<{ success: boolean; email: string }>('admin-actions', {
         body: { acao: 'reset_senha', email },
       })
-      if (error) throw error
+      // mostra o motivo REAL que a função devolveu (ex.: "Personal não encontrado.", "Confirme o segundo fator…") em vez do genérico
+      if (error) throw new ErroAmigavel(await mensagemDaFuncao(error, 'Não foi possível enviar o e-mail de redefinição.'))
       return data
     },
   })

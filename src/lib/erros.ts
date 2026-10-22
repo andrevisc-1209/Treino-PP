@@ -4,6 +4,7 @@
 // centralizados em mensagens.ts.
 
 import { ERROS } from './mensagens'
+import { ErroAmigavel } from './erroAmigavel'
 
 type ErroComoObjeto = { message?: unknown; code?: unknown; status?: unknown; details?: unknown }
 
@@ -12,6 +13,8 @@ function comoObjeto(erro: unknown): ErroComoObjeto {
 }
 
 export function mapearErroSupabase(erro: unknown): string {
+  // mensagem já escrita para o usuário (ex.: a que a Edge Function devolveu): mostra como está
+  if (erro instanceof ErroAmigavel) return erro.message
   const { message, code, status, details } = comoObjeto(erro)
   const msg = typeof message === 'string' ? message : String(erro ?? '')
   const msgMin = msg.toLowerCase()

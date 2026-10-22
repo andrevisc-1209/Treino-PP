@@ -487,8 +487,8 @@ function ModalResetSenha({ personal, onFechar }: { personal: PersonalAdmin; onFe
       await resetSenha.mutateAsync(personal.email)
       setEnviado(true)
       mostrarInfoGlobal('Link de recuperação enviado para o e-mail do personal.')
-    } catch (e) {
-      mostrarErroGlobal(mapearErroSupabase(e))
+    } catch {
+      // o erro já aparece uma vez no toast global das mutations (com o motivo real); aqui não repete
     }
   }
 

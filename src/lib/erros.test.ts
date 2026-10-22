@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mapearErroSupabase } from './erros'
 import { ERROS } from './mensagens'
+import { ErroAmigavel, mensagemDaFuncao } from './erroAmigavel'
 
 describe('mapearErroSupabase', () => {
   it('mapeia falha de rede', () => {
@@ -50,5 +51,16 @@ describe('mapearErroSupabase', () => {
   it('limites da cobrança do aluno dizem qual campo estourou', () => {
     expect(mapearErroSupabase({ code: '23514', message: 'new row for relation "aluno_cobranca" violates check constraint "aluno_cobranca_dia_ciclo_check"' })).toBe('Dia do ciclo deve ser entre 1 e 28.')
     expect(mapearErroSupabase({ code: '23514', message: 'new row for relation "aluno_cobranca" violates check constraint "aluno_cobranca_dias_vencimento_check"' })).toMatch(/0 a 30/)
+  })
+  it('ErroAmigavel mostra a mensagem como está (a que a Edge Function devolveu)', () => {
+    expect(mapearErroSupabase(new ErroAmigavel('Personal não encontrado.'))).toBe('Personal não encontrado.')
+    expect(mapearErroSupabase(new Error('Personal não encontrado.'))).not.toBe('Personal não encontrado.') // erro comum continua mapeado
+  })
+  it('mensagemDaFuncao lê o { error } do corpo da resposta e cai no padrão sem corpo', async () => {
+    const resp = (corpo: unknown) => ({ context: new Response(JSON.stringify(corpo)) })
+    expect(await mensagemDaFuncao(resp({ error: 'Confirme o segundo fator.' }), 'padrão')).toBe('Confirme o segundo fator.')
+    expect(await mensagemDaFuncao(resp({ x: 1 }), 'padrão')).toBe('padrão')
+    expect(await mensagemDaFuncao({ context: new Response('não é json') }, 'padrão')).toBe('padrão')
+    expect(await mensagemDaFuncao(null, 'padrão')).toBe('padrão')
   })
 })
