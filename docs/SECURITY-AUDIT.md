@@ -85,6 +85,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 ### PR "consentimento declarado" — aviso do botão "O aluno já consentiu pessoalmente ou por escrito"
 - **Decisão (risco aceito, não bloqueado)**: a plataforma não tem como verificar um consentimento em papel e o personal é quem precisa provar o consentimento (LGPD, art. 8º, §2º). Em vez de bloquear a opção (que é legítima: termo em papel, aluno sem e-mail/WhatsApp), o botão passou a pedir uma **confirmação explícita** com o aviso de que a declaração é do personal, que a prova é dele e que ele pode ser solicitado a apresentá-la; o consentimento é gravado como `papel` ("declarado por você") em vez de `app`; a ficha distingue "confirmado pelo aluno" (link), "declarado por você" (papel) e "registrado no app" (antigo) e lembra de guardar o documento. **Pendente (jurídico)**: conferir se os Termos de Uso trazem a cláusula de que o personal é o responsável pelo consentimento colhido fora da plataforma.
 
+### PR "MFA do admin: exigir no servidor" — plano de fechamento da 3ª revisão, item E (etapa 2)
+- **[MÉDIA-BAIXA] Admin sem segundo fator**: migration `20261053000000_admin_exige_mfa.sql` — `treino.is_admin()` passa a exigir também `aal = 'aal2'` no token (a sessão precisa ter passado pelo código do autenticador). Cobre todas as funções `admin_*` e a leitura de `admin_logs`; a Edge Function `admin-actions` (reset de senha) confere a mesma função. No front, `/admin` pede o código (ou leva a `/admin/seguranca` para cadastrar o autenticador) antes de montar o painel. **Acesso de emergência** (perdeu o autenticador): SQL Editor, `DELETE FROM auth.mfa_factors WHERE user_id = (SELECT id FROM auth.users WHERE email = '<e-mail do admin>')` e cadastrar de novo.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
@@ -95,7 +98,7 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
 - **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
-- **MFA do admin, etapa 2 (exigência no servidor)**: `treino.is_admin()` e `admin-actions` exigirem `aal2` (a etapa 1, de cadastro do autenticador, está na PR "MFA do admin: cadastro") e **limites de quantidade por conta** (alunos/treinos no trial).
+- **Limites de quantidade por conta** (alunos/treinos no trial).
 - **Google Places/Maps e Turnstile sob a CSP nova**: validar em produção com o console aberto (um host bloqueado aparece no console e é só acrescentar).
 - **Estado real do banco**: rodar `supabase/tests/isolamento.sql` antes e depois da migration 20261044; conferir RLS ligada, `anon` sem SELECT e policies fora do histórico (a tabela `assinaturas` nasceu fora das migrations).
 - **CSP em produção**: validar fluxos logados (Turnstile, Google Places, ViaCEP, Realtime, PDF) com o console aberto.

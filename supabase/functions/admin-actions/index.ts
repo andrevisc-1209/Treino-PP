@@ -54,6 +54,11 @@ Deno.serve(async (req) => {
 
   if (profError || !professional?.is_admin) return jsonResponse({ error: 'Acesso restrito ao admin.' }, 403)
 
+  // Segundo fator: treino.is_admin() só é verdadeira em sessão que passou pelo código do autenticador (aal2) — a mesma regra das
+  // funções admin_* do banco. Sem isso, admin logado só com Google/senha não dispara reset de senha de ninguém.
+  const { data: comSegundoFator, error: erroMfa } = await clienteChamador.rpc('is_admin')
+  if (erroMfa || comSegundoFator !== true) return jsonResponse({ error: 'Confirme o segundo fator (código do autenticador) para usar o painel.' }, 403)
+
   // 10 ações por hora por admin (falha fechada): admin comprometido não vira disparador de e-mail.
   const limite = await verificarLimite(`admin-actions:user:${userData.user.id}`, 10, 3600)
   if (limite === 'erro') return resposta503(CORS_HEADERS)

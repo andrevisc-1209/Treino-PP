@@ -8,7 +8,7 @@ export type EstadoMfa = 'sem_fator' | 'precisa_codigo' | 'ok'
 
 /**
  * O que o painel admin deve fazer com a sessão atual:
- *  - sem fator cadastrado → 'sem_fator' (E1: segue, com aviso para ativar; a exigência no servidor vem na etapa seguinte);
+ *  - sem fator cadastrado → 'sem_fator' (o servidor não aceita ações de admin sem aal2: leva para cadastrar em /admin/seguranca);
  *  - fator cadastrado mas a sessão ainda é aal1 → 'precisa_codigo' (pede o código de 6 dígitos antes de abrir o painel);
  *  - fator cadastrado e sessão aal2 → 'ok'.
  */
