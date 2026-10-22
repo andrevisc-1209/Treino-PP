@@ -88,6 +88,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 ### PR "MFA do admin: exigir no servidor" — plano de fechamento da 3ª revisão, item E (etapa 2)
 - **[MÉDIA-BAIXA] Admin sem segundo fator**: migration `20261053000000_admin_exige_mfa.sql` — `treino.is_admin()` passa a exigir também `aal = 'aal2'` no token (a sessão precisa ter passado pelo código do autenticador). Cobre todas as funções `admin_*` e a leitura de `admin_logs`; a Edge Function `admin-actions` (reset de senha) confere a mesma função. No front, `/admin` pede o código (ou leva a `/admin/seguranca` para cadastrar o autenticador) antes de montar o painel. **Acesso de emergência** (perdeu o autenticador): SQL Editor, `DELETE FROM auth.mfa_factors WHERE user_id = (SELECT id FROM auth.users WHERE email = '<e-mail do admin>')` e cadastrar de novo.
 
+### Achado operacional — função esquecida no ar (22/10/2026)
+- **[MÉDIA] Cópia antiga do `admin-actions` ainda publicada** com outro endereço (`dynamic-handler`, criada pelo dashboard 22 dias antes): continuava respondendo a usuários logados e **não tinha a exigência do segundo fator**, o que contornaria a MFA do admin. Foi **apagada** (`supabase functions delete dynamic-handler`). Prevenção: depois de cada deploy, conferir no dashboard (Edge Functions) que a lista contém só as funções do repositório (hoje 16).
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
