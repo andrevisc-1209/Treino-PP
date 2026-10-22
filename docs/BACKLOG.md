@@ -579,7 +579,8 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **C**: provas de aceite não fabricáveis pelo cliente (migration `20261050000000`, RPC `registrar_aceite_termos`, checkbox no completar perfil, guard de versões no CI).
 - ✅ **D**: dado clínico (lesão, cirurgia, medicamentos, altura, peso) só com consentimento ativo, imposto pelo banco (migration `20261051000000`); salvamento do aluno reordenado; revogação limpa todos os campos clínicos.
 - ✅ **A**: assinatura imposta pelo servidor (modo leitura depois do trial, com banner), RPC `revogar_consentimento`, migration `20261052000000`.
-- ⏳ E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).
+- ✅ **E1**: cadastro do autenticador do admin (`/admin/seguranca`) e tela de desafio no painel (sem exigência no servidor).
+- ⏳ E2 (exigir `aal2` no servidor), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).
 
 
 ## 31. Correção: cobrança do aluno perdida no cadastro (erro "Valor inválido para este campo")

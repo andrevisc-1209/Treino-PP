@@ -28,6 +28,7 @@ import { FecharCicloPage } from '@/features/financeiro/FecharCicloPage'
 import { FaturaPage } from '@/features/financeiro/FaturaPage'
 import { PwaUpdatePrompt } from '@/components/PwaUpdatePrompt'
 import { AdminPage } from '@/features/admin/AdminPage'
+import { AdminSegurancaPage } from '@/features/admin/AdminSegurancaPage'
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/checkout/failure" element={<RetornoCheckoutPage resultado="failure" />} />
         <Route path="/checkout/pending" element={<RetornoCheckoutPage resultado="pending" />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/seguranca" element={<AdminSegurancaPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/" element={<HojePage />} />
           <Route path="/agenda" element={<AgendaPage />} />

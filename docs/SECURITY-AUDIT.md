@@ -79,6 +79,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Decisões**: conta `cancelada` com período pago futuro continua bloqueada (igual ao front de antes); avisos de WhatsApp seguem sendo enviados em modo leitura.
 - **Limites**: quem paga por Pix/boleto fica em modo leitura até o webhook creditar; gravações offline pendentes de quem venceu ficam na fila com erro até assinar; `UPDATE` de colunas de `professionals` (perfil) não é barrado de propósito.
 
+### PR "MFA do admin: cadastro" — plano de fechamento da 3ª revisão, item E (etapa 1)
+- **MFA do admin (autenticação em dois fatores, TOTP), etapa 1 — sem exigir ainda no servidor**: página `/admin/seguranca` (QR Code e chave em texto para um 2º aparelho, listar e remover autenticadores) e tela de desafio no `/admin` quando o admin já tem autenticador e entrou só com Google/senha (a sessão precisa subir de `aal1` para `aal2` antes de montar o painel). Sem autenticador cadastrado o painel abre com um aviso. **Etapa 2 (depois de o login com código ser confirmado)**: `is_admin()` e `admin-actions` passam a exigir `aal2`. Acesso de emergência: SQL Editor (remover o fator em `auth.mfa_factors`).
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
@@ -89,7 +92,7 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
 - **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
-- **MFA do admin** (tela de cadastro do segundo fator + exigência de AAL2 em `admin-actions`) e **limites de quantidade por conta** (alunos/treinos no trial).
+- **MFA do admin, etapa 2 (exigência no servidor)**: `treino.is_admin()` e `admin-actions` exigirem `aal2` (a etapa 1, de cadastro do autenticador, está na PR "MFA do admin: cadastro") e **limites de quantidade por conta** (alunos/treinos no trial).
 - **Google Places/Maps e Turnstile sob a CSP nova**: validar em produção com o console aberto (um host bloqueado aparece no console e é só acrescentar).
 - **Estado real do banco**: rodar `supabase/tests/isolamento.sql` antes e depois da migration 20261044; conferir RLS ligada, `anon` sem SELECT e policies fora do histórico (a tabela `assinaturas` nasceu fora das migrations).
 - **CSP em produção**: validar fluxos logados (Turnstile, Google Places, ViaCEP, Realtime, PDF) com o console aberto.
