@@ -44,4 +44,7 @@ describe('mapearErroSupabase', () => {
     expect(mapearErroSupabase({ code: 'P0001', message: 'Não foi possível salvar o CPF. Confira os dados ou fale com o suporte.' })).toBe(ERROS.CPF.duplicado)
     expect(mapearErroSupabase({ code: 'P0001', message: 'CPF não pode ser alterado após o cadastro' })).toBe(ERROS.CPF.imutavel)
   })
+  it('trava de dado clínico sem consentimento vira a mensagem da tela', () => {
+    expect(mapearErroSupabase({ code: 'P0001', message: 'O aluno ainda não autorizou o registro de dados de saúde.' })).toBe('O aluno ainda não autorizou o registro de dados de saúde.')
+  })
 })

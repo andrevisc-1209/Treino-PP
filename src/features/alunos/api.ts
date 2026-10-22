@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { payloadAltura } from './medidas'
+import { camposClinicos, camposGerais, semDadoClinico } from './payloadAluno'
 import { TERMO_VERSAO } from './termo'
 
 export type Aluno = {
@@ -204,9 +204,15 @@ export function useRevogarConsentimento(alunoId: string) {
       const { error: e2 } = await supabase
         .from('alunos')
         .update({
+          // limpa TODOS os campos clínicos (lesão, cirurgia, medicamentos e altura); as medidas de peso já registradas são mantidas
           injury: false,
+          injury_regions: [],
           injury_notes: null,
+          surgery: false,
+          surgery_regions: [],
+          surgery_notes: null,
           medications: null,
+          height_cm: null,
           // volta ao zero para poder pedir de novo (o banco só deixa o cliente ZERAR esses campos)
           saude_consentimento_status: null,
           saude_consentimento_enviado_at: null,
@@ -278,43 +284,34 @@ export function useSalvarAluno() {
       if (!u.user) throw new Error('Sessão expirada')
       const professional_id = u.user.id
 
-      const alunoPayload = {
-        professional_id,
-        name: input.name,
-        birth_date: input.birth_date || null,
-        sex: input.sex || null,
-        // Medidas corporais são dado sensível: sem consentimento do aluno nada é gravado nem apagado (a chave nem entra no payload).
-        ...payloadAltura(input.lgpd_consent, input.height_cm),
-        phone: input.phone || null,
-        email: input.email || null,
-        objetivos: input.objetivos,
-        objetivo_notes: input.objetivos.includes('Outros') ? input.objetivo_notes || null : null,
-        modalidade_foco: input.modalidade_foco || null,
-        // prova alvo só existe para triathlon e corrida
-        prova_alvo: input.modalidade_foco === 'triathlon' || input.modalidade_foco === 'corrida' ? input.prova_alvo || null : null,
-        // o nome só existe junto de uma prova alvo
-        nome_prova: (input.modalidade_foco === 'triathlon' || input.modalidade_foco === 'corrida') && input.prova_alvo ? input.nome_prova?.trim().slice(0, 60) || null : null,
-        data_prova: input.data_prova || null,
-        injury: input.injury,
-        injury_regions: input.injury ? input.injury_regions : [],
-        injury_notes: input.injury ? input.injury_notes || null : null,
-        surgery: input.surgery,
-        surgery_regions: input.surgery ? input.surgery_regions : [],
-        surgery_notes: input.surgery ? input.surgery_notes || null : null,
-        practices_sport: input.practices_sport,
-        sports: input.practices_sport ? input.sports : [],
-        sport_name: input.practices_sport ? input.sport_name || null : null,
-        medications: input.medications || null,
-      }
+      // ORDEM (o banco exige — migration 20261051): 1) aluno sem dado clínico, 2) consentimento, 3) dados clínicos, 4) peso.
+      // Lesão, cirurgia, medicamentos, altura e peso só são aceitos com consentimento ativo do aluno.
+      const geral = camposGerais(input, professional_id)
+      const clinico = camposClinicos(input)
 
       let alunoId = input.id
       if (alunoId) {
-        const { error } = await supabase.from('alunos').update(alunoPayload).eq('id', alunoId)
+        const { error } = await supabase.from('alunos').update(geral).eq('id', alunoId)
         if (error) throw error
       } else {
-        const { data, error } = await supabase.from('alunos').insert(alunoPayload).select('id').single()
+        const { data, error } = await supabase.from('alunos').insert(geral).select('id').single()
         if (error) throw error
         alunoId = data.id as string
+      }
+
+      if (input.lgpd_consent && !input.hadActiveConsent) {
+        const { error } = await supabase.from('consentimentos').insert({
+          aluno_id: alunoId,
+          professional_id,
+          method: 'app',
+          consent_version: TERMO_VERSAO,
+        })
+        if (error) throw error
+      }
+
+      if (input.id || !semDadoClinico(clinico)) {
+        const { error } = await supabase.from('alunos').update(clinico).eq('id', alunoId)
+        if (error) throw error
       }
 
       if (input.weight_kg && input.lgpd_consent) {
@@ -334,16 +331,6 @@ export function useSalvarAluno() {
           const { error } = await supabase.from('pesos').insert({ aluno_id: alunoId, weight_kg: input.weight_kg })
           if (error) throw error
         }
-      }
-
-      if (input.lgpd_consent && !input.hadActiveConsent) {
-        const { error } = await supabase.from('consentimentos').insert({
-          aluno_id: alunoId,
-          professional_id,
-          method: 'app',
-          consent_version: TERMO_VERSAO,
-        })
-        if (error) throw error
       }
 
       return alunoId as string

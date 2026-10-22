@@ -80,4 +80,14 @@ describe('migrations do schema treino', () => {
     expect(semComentarios).toMatch(/GRANT UPDATE \(revoked_at\) ON treino\.consentimentos TO authenticated/)
     expect(semComentarios).not.toMatch(/GRANT[^;]*DELETE[^;]*ON treino\.consentimentos TO authenticated/)
   })
+
+  it('saúde: trigger exige consentimento ativo para dado clínico e a policy de pesos também', () => {
+    expect(semComentarios).toMatch(/CREATE TRIGGER tg_exigir_consentimento_saude\s+BEFORE INSERT OR UPDATE ON treino\.alunos/)
+    expect(semComentarios).toMatch(/GRANT EXECUTE ON FUNCTION treino\.aluno_tem_consentimento\(UUID\) TO authenticated/)
+    expect(semComentarios).toMatch(/REVOKE ALL ON FUNCTION treino\.aluno_tem_consentimento\(UUID\) FROM PUBLIC, anon/)
+    expect(semComentarios).toMatch(/CREATE POLICY pesos_own[\s\S]*?treino\.aluno_tem_consentimento\(aluno_id\)/)
+    for (const coluna of ['injury', 'injury_regions', 'injury_notes', 'surgery', 'surgery_regions', 'surgery_notes', 'medications', 'height_cm']) {
+      expect(semComentarios, coluna).toMatch(new RegExp(`NEW\\.${coluna}\\b`))
+    }
+  })
 })

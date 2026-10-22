@@ -219,7 +219,7 @@ export function AlunoFichaPage() {
     if (!consentimento) return
     const ok = await confirmarAcao({
       titulo: 'Revogar consentimento LGPD',
-      mensagem: 'Os dados de lesão e medicamentos serão apagados e os campos de saúde (inclusive novas medidas corporais) ficarão travados até um novo consentimento. As medidas já registradas são mantidas.',
+      mensagem: 'Os dados de lesão, cirurgia, medicamentos e altura serão apagados e os campos de saúde (inclusive novas medidas corporais) ficarão travados até um novo consentimento. As medidas de peso já registradas são mantidas.',
       textoConfirmar: 'Revogar',
       destrutivo: true,
     })

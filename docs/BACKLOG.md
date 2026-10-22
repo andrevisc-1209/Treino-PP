@@ -577,4 +577,5 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **G**: `VALIDATE CONSTRAINT` dos 42 limites de tamanho e do CPF (migration `20261049000000`), com guard no CI.
 - ✅ **B**: cadastro não confirma quais e-mails têm conta (mesma tela de confirmação, mensagens genéricas); mensagem de CPF já cadastrado orienta a recuperar a conta (decisão de produto).
 - ✅ **C**: provas de aceite não fabricáveis pelo cliente (migration `20261050000000`, RPC `registrar_aceite_termos`, checkbox no completar perfil, guard de versões no CI).
-- ⏳ D (saúde só com consentimento), A (assinatura no servidor, modo leitura), E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).
+- ✅ **D**: dado clínico (lesão, cirurgia, medicamentos, altura, peso) só com consentimento ativo, imposto pelo banco (migration `20261051000000`); salvamento do aluno reordenado; revogação limpa todos os campos clínicos.
+- ⏳ A (assinatura no servidor, modo leitura), E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).
