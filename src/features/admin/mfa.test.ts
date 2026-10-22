@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { codigoMfaValido, estadoMfa, mensagemErroMfa } from './mfa'
+import { codigoMfaValido, estadoMfa, MFA_AVISO_DEMORA_MS, mensagemErroMfa, MSG_MFA_DEMORA } from './mfa'
 
 describe('estadoMfa: o que o painel admin faz com a sessão', () => {
   it('sem autenticador cadastrado → sem_fator (segue, com aviso para ativar)', () => {
@@ -29,5 +29,16 @@ describe('mensagemErroMfa', () => {
     expect(mensagemErroMfa({ code: 'over_request_rate_limit', message: 'x' })).toMatch(/muitas tentativas/i)
     expect(mensagemErroMfa(new Error('algo estranho'))).toMatch(/não foi possível confirmar/i)
     expect(mensagemErroMfa(null)).toMatch(/não foi possível confirmar/i)
+  })
+})
+
+describe('aviso de demora na confirmação do código', () => {
+  it('só aparece depois de uns segundos (não assusta quem confirma rápido)', () => {
+    expect(MFA_AVISO_DEMORA_MS).toBeGreaterThanOrEqual(5000)
+    expect(MFA_AVISO_DEMORA_MS).toBeLessThanOrEqual(10000)
+  })
+  it('tranquiliza: não é erro e não pede para digitar de novo', () => {
+    expect(MSG_MFA_DEMORA).toMatch(/aguardando/i)
+    expect(MSG_MFA_DEMORA).toMatch(/não precisa digitar/i)
   })
 })

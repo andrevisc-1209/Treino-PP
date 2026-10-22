@@ -616,3 +616,7 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Os Termos (3.1) diziam que o consentimento era obtido "pelo link gerado pela plataforma" e o 3.2 que a plataforma registrava o aceite de cada aluno com IP, o que não vale para a opção "termo em papel". **Termos 1.2**: o link é o caminho preferencial, mas o termo escrito colhido e guardado pelo personal é admitido (3.1); nova cláusula 3.2.1 (a plataforma só registra a declaração do personal, sem verificar o documento; a prova, a guarda e a apresentação à ANPD/aluno são do personal; a plataforma não guarda cópia). **Política 1.5**: mesma distinção em "dados de saúde" e "mecanismo de consentimento".
 - ⚠️ **Rodar a migration `20261054000000_versoes_termos_consentimento_externo.sql` no SQL Editor ANTES do merge** (registra as versões 1.2 e 1.5; sem ela o cadastro novo é recusado).
 - Redação é minuta do desenvolvimento: a aprovação final é do jurídico. Não existe re-aceite forçado: quem já tem conta continua com o aceite da versão antiga; só cadastros e convites novos aceitam a 1.2/1.5.
+
+## 36. Aviso de demora na confirmação do segundo fator (admin)
+
+- ✅ Se a verificação do código passar de 8 s, a tela do MFA mostra "Está demorando mais que o normal. Continue aguardando, não precisa digitar o código de novo." (o botão segue em "Confirmando…"). Antes parecia travada e levava a digitar o código outra vez.

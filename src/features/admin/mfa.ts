@@ -20,6 +20,10 @@ export function estadoMfa(args: { nivelAtual: NivelAal; temFatorVerificado: bool
 /** Código do autenticador: exatamente 6 dígitos. */
 export const codigoMfaValido = (v: string): boolean => /^\d{6}$/.test(v)
 
+/** Depois de quantos ms de "Confirmando…" a tela avisa que a demora é esperada (rede lenta, não é erro). */
+export const MFA_AVISO_DEMORA_MS = 8000
+export const MSG_MFA_DEMORA = 'Está demorando mais que o normal. Continue aguardando, não precisa digitar o código de novo.'
+
 export type FatorMfa = { id: string; nome: string; criadoEm: string }
 
 export type DadosMfa = { estado: EstadoMfa; nivelAtual: NivelAal; fatores: FatorMfa[] }
