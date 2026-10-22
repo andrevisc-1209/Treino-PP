@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
   CalendarClock,
@@ -13,6 +13,7 @@ import {
   LogOut,
   Pencil,
   Search,
+  ShieldCheck,
   UserCheck,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -26,6 +27,8 @@ import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { APP_NAME } from '@/config/app'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { useIsAdmin } from './useIsAdmin'
+import { MfaDesafio } from './MfaDesafio'
+import { useMfa } from './mfa'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import { ConsentimentosSection } from './ConsentimentosSection'
 import {
@@ -68,7 +71,28 @@ export function AdminPage() {
   // Nunca mostra nada pra quem não é admin — nem uma tela de "sem permissão".
   if (!isAdmin) return <Navigate to="/" replace />
 
-  return <AdminDashboard />
+  return <PortaoMfa />
+}
+
+/** Sessão só com Google/senha mas com autenticador cadastrado: pede o código antes de montar o painel (e antes de qualquer chamada admin). */
+function PortaoMfa() {
+  const mfa = useMfa()
+  if (mfa.isLoading) return <div className="p-8 text-center text-slate-500">Carregando…</div>
+  // se não deu para consultar o MFA, não trava (o servidor é quem decide na etapa de exigência)
+  if (mfa.data?.estado === 'precisa_codigo') return <MfaDesafio factorId={mfa.data.fatores[0].id} onOk={mfa.recarregar} />
+  return (
+    <>
+      {mfa.data?.estado === 'sem_fator' && (
+        <div className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">
+          O painel está protegido só pela senha/Google.{' '}
+          <Link to="/admin/seguranca" className="font-semibold underline">
+            Ativar autenticação em dois fatores
+          </Link>
+        </div>
+      )}
+      <AdminDashboard />
+    </>
+  )
 }
 
 function AdminHeader() {
@@ -83,9 +107,14 @@ function AdminHeader() {
         <img src={iconMark} alt={APP_NAME} className="h-8 w-auto" />
         <h1 className="font-heading text-lg font-bold">Painel Admin</h1>
       </div>
-      <Button variant="ghost" onClick={sair} className="min-h-9 px-3 text-white hover:bg-white/10 active:bg-white/10">
-        <LogOut size={16} /> Sair
-      </Button>
+      <div className="flex items-center gap-1">
+        <Link to="/admin/seguranca" className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-white active:bg-white/10">
+          <ShieldCheck size={16} aria-hidden /> Segurança
+        </Link>
+        <Button variant="ghost" onClick={sair} className="min-h-11 px-3 text-white hover:bg-white/10 active:bg-white/10">
+          <LogOut size={16} /> Sair
+        </Button>
+      </div>
     </header>
   )
 }
