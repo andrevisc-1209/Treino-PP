@@ -10,6 +10,7 @@ import { UndoToastHost } from '@/components/UndoToast'
 import { OfflineBanner, marcarFalhaDeRede } from '@/components/OfflineBanner'
 import App from './App'
 import { ajustarTecladoVirtual } from '@/lib/teclado'
+import { erroPorModoLeitura, MSG_MODO_LEITURA, type DadosAssinatura } from '@/features/assinatura/useAssinatura'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -20,7 +21,9 @@ const queryClient = new QueryClient({
     onError: (error) => {
       const msg = (error as Error).message?.toLowerCase() ?? ''
       if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed')) marcarFalhaDeRede()
-      mostrarErroGlobal(mapearErroSupabase(error))
+      // gravação barrada porque a assinatura venceu (modo leitura, imposto pelo banco): explica o motivo em vez do genérico
+      const assinatura = queryClient.getQueryData<DadosAssinatura>(['assinatura'])
+      mostrarErroGlobal(erroPorModoLeitura(error, assinatura) ? MSG_MODO_LEITURA : mapearErroSupabase(error))
     },
   }),
 })

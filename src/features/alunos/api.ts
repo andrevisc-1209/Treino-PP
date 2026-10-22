@@ -195,31 +195,11 @@ export function useConsentimentoDetalhado(alunoId: string | undefined) {
 export function useRevogarConsentimento(alunoId: string) {
   const qc = useQueryClient()
   return useMutation({
+    // RPC atômica (migration 20261052): revoga, limpa TODOS os campos clínicos e volta o status ao zero, mesmo com a assinatura vencida
+    // (direito do titular); o peso já registrado é mantido.
     mutationFn: async (consentimentoId: string) => {
-      const { error: e1 } = await supabase
-        .from('consentimentos')
-        .update({ revoked_at: new Date().toISOString() })
-        .eq('id', consentimentoId)
-      if (e1) throw e1
-      const { error: e2 } = await supabase
-        .from('alunos')
-        .update({
-          // limpa TODOS os campos clínicos (lesão, cirurgia, medicamentos e altura); as medidas de peso já registradas são mantidas
-          injury: false,
-          injury_regions: [],
-          injury_notes: null,
-          surgery: false,
-          surgery_regions: [],
-          surgery_notes: null,
-          medications: null,
-          height_cm: null,
-          // volta ao zero para poder pedir de novo (o banco só deixa o cliente ZERAR esses campos)
-          saude_consentimento_status: null,
-          saude_consentimento_enviado_at: null,
-          saude_consentimento_confirmado_at: null,
-        })
-        .eq('id', alunoId)
-      if (e2) throw e2
+      const { error } = await supabase.rpc('revogar_consentimento', { p_consentimento_id: consentimentoId })
+      if (error) throw error
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['consentimento-ativo', alunoId] })

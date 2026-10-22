@@ -90,4 +90,39 @@ describe('migrations do schema treino', () => {
       expect(semComentarios, coluna).toMatch(new RegExp(`NEW\\.${coluna}\\b`))
     }
   })
+
+  describe('modo leitura (assinatura imposta pelo banco)', () => {
+    const arquivo = fs.readFileSync(path.join(DIR, '20261052000000_assinatura_no_servidor.sql'), 'utf8').replace(/--[^\n]*/g, '')
+    const listas = [...arquivo.matchAll(/ARRAY\[([^\]]*)\]/g)].map((m) => [...m[1].matchAll(/'(\w+)'/g)].map((x) => x[1]))
+    const [insertUpdate, soInsert] = listas
+
+    it('as tabelas de dados do personal têm policy restritiva de INSERT e UPDATE; consentimentos e execuções só de INSERT', () => {
+      for (const t of ['alunos', 'aluno_cobranca', 'aulas', 'aula_participantes', 'planos', 'plano_exercicios', 'modelos', 'sessoes', 'sessao_series', 'faturas', 'pesos', 'professional_config', 'exercicios']) {
+        expect(insertUpdate, t).toContain(t)
+      }
+      expect(soInsert.sort()).toEqual(['consentimentos', 'execucoes_assincrono'])
+    })
+
+    it('as exceções continuam livres: perfil, notificações, assinaturas e aceites de termos', () => {
+      for (const t of ['professionals', 'notificacoes_professor', 'assinaturas', 'aceites_termos']) {
+        expect([...insertUpdate, ...soInsert], t).not.toContain(t)
+      }
+    })
+
+    it('toda tabela da lista existe nas migrations e as policies são RESTRITIVAS (não substituem as existentes)', () => {
+      for (const t of [...insertUpdate, ...soInsert]) expect(tabelas, t).toContain(t)
+      expect(arquivo).toMatch(/AS RESTRICTIVE FOR INSERT/)
+      expect(arquivo).toMatch(/AS RESTRICTIVE FOR UPDATE/)
+      expect(arquivo).not.toMatch(/DROP POLICY IF EXISTS \w+_own/)
+    })
+
+    it('assinatura_ativa usa o relógio do servidor e a regra do front; revogar_consentimento não depende da assinatura', () => {
+      expect(arquivo).toMatch(/a\.status = 'trial' AND a\.trial_fim > now\(\)/)
+      expect(arquivo).toMatch(/a\.status = 'ativa' AND \(a\.assinatura_fim IS NULL OR a\.assinatura_fim > now\(\)\)/)
+      const rpc = arquivo.slice(arquivo.indexOf('FUNCTION treino.revogar_consentimento'))
+      expect(rpc).not.toMatch(/assinatura_ativa/)
+      expect(arquivo).toMatch(/GRANT EXECUTE ON FUNCTION treino\.revogar_consentimento\(UUID\) TO authenticated/)
+      expect(arquivo).toMatch(/REVOKE ALL ON FUNCTION treino\.revogar_consentimento\(UUID\) FROM PUBLIC, anon/)
+    })
+  })
 })
