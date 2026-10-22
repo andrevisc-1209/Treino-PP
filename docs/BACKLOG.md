@@ -604,3 +604,8 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ A função registra status, código e mensagem do Auth quando o envio do e-mail de redefinição falha e devolve uma mensagem específica quando é limite de envio (429): "Aguarde um minuto…". Antes só o status ia para o log e o painel mostrava sempre o mesmo texto.
 - ✅ Função antiga `dynamic-handler` (cópia esquecida do admin, sem a exigência do segundo fator) apagada do projeto. Depois de cada deploy, conferir no dashboard que a lista de Edge Functions só tem as do repositório.
+
+
+## 35. Correção: reset de senha do admin bloqueado por CORS
+
+- ✅ A `admin-actions` liberava só `authorization, content-type` na pré-checagem CORS; o supabase-js também manda `apikey` e `x-client-info`, então o navegador bloqueava o POST (a função só recebia o OPTIONS, sem nenhum erro no log) e o painel mostrava o texto de reserva "Não foi possível enviar o e-mail de redefinição.". Lista corrigida (igual à das outras funções) e teste que exige os quatro cabeçalhos em toda função com CORS.

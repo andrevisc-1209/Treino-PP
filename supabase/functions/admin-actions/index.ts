@@ -24,7 +24,8 @@ const APP_URL = 'https://treino.personalperto.com.br/'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': APP_URL.replace(/\/$/, ''),
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  // o supabase-js (functions.invoke) também manda apikey e x-client-info: sem eles a pré-checagem do navegador (OPTIONS) bloqueia o POST
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
