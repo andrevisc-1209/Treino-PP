@@ -49,4 +49,12 @@ describe('migrations do schema treino', () => {
   it('cpf: o banco valida o CPF (CHECK com treino.cpf_valido)', () => {
     expect(semComentarios).toMatch(/CHECK \(cpf IS NULL OR treino\.cpf_valido\(cpf\)\)/)
   })
+
+  it('toda constraint NOT VALID é validada numa migration posterior (VALIDATE CONSTRAINT)', () => {
+    const naoValidas = [...semComentarios.matchAll(/ADD CONSTRAINT (\w+)[^;]*?NOT VALID/g)].map((m) => m[1])
+    expect(naoValidas.length).toBeGreaterThan(40)
+    for (const nome of naoValidas) {
+      expect(semComentarios, nome).toMatch(new RegExp(`VALIDATE CONSTRAINT ${nome};`))
+    }
+  })
 })
