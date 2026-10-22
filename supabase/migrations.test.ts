@@ -1,6 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { PRIVACIDADE_VERSAO, TERMOS_USO_VERSAO } from '../src/features/legal/textos'
+import { TERMO_VERSAO } from '../src/features/alunos/termo'
 
 // Guarda de segurança: o app é aberto a qualquer pessoa (cadastro de personal), então toda tabela do schema
 // `treino` precisa de RLS e de grant EXPLÍCITO (o grant padrão ao cliente foi removido na migration 20261044).
@@ -56,5 +58,26 @@ describe('migrations do schema treino', () => {
     for (const nome of naoValidas) {
       expect(semComentarios, nome).toMatch(new RegExp(`VALIDATE CONSTRAINT ${nome};`))
     }
+  })
+
+  it.each([
+    ['termos', TERMOS_USO_VERSAO],
+    ['privacidade', PRIVACIDADE_VERSAO],
+    ['consentimento_saude', TERMO_VERSAO],
+  ])('versão atual do documento "%s" (%s) está em documentos_versoes (publicou texto novo? falta a migration que registra a versão)', (tipo, versao) => {
+    expect(semComentarios).toMatch(new RegExp(`\\('${tipo}',\\s*'${versao.replace('.', '\\.')}'\\)`))
+  })
+
+  it('aceites_termos: o cliente não insere (só a RPC registrar_aceite_termos)', () => {
+    expect(semComentarios).toMatch(/DROP POLICY IF EXISTS aceites_termos_self_insert/)
+    expect(semComentarios).toMatch(/REVOKE INSERT ON treino\.aceites_termos FROM authenticated/)
+    expect(semComentarios).toMatch(/GRANT EXECUTE ON FUNCTION treino\.registrar_aceite_termos\(TEXT, TEXT\) TO authenticated/)
+  })
+
+  it('consentimentos: sem policy FOR ALL, sem method link para o cliente, UPDATE só em revoked_at', () => {
+    expect(semComentarios).toMatch(/DROP POLICY IF EXISTS consentimentos_own/)
+    expect(semComentarios).toMatch(/method IN \('app', 'papel'\)/)
+    expect(semComentarios).toMatch(/GRANT UPDATE \(revoked_at\) ON treino\.consentimentos TO authenticated/)
+    expect(semComentarios).not.toMatch(/GRANT[^;]*DELETE[^;]*ON treino\.consentimentos TO authenticated/)
   })
 })

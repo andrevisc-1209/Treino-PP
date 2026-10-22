@@ -52,6 +52,12 @@ export async function salvarPerfilProfissional(
   if (error) throw error
 }
 
+/** Registra o aceite dos Termos de Uso e da Política de Privacidade (o servidor valida a versão e grava hora e IP). Idempotente. */
+export async function registrarAceiteTermos(termosVersao: string, privacidadeVersao: string): Promise<void> {
+  const { error } = await supabase.rpc('registrar_aceite_termos', { p_termos: termosVersao, p_privacidade: privacidadeVersao })
+  if (error) throw error
+}
+
 export function usePerfilProfissional(userId: string | undefined) {
   return useQuery({
     queryKey: ['perfil-profissional', userId],

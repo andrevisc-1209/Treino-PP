@@ -6,7 +6,8 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { LocalizacaoCep, type Localizacao } from '@/components/LocalizacaoCep'
 import { cepCompleto } from '@/lib/cep'
 import { ERROS } from '@/lib/mensagens'
-import { salvarPerfilProfissional } from './api'
+import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
+import { registrarAceiteTermos, salvarPerfilProfissional } from './api'
 
 /**
  * Nome + CPF + telefone + preferência de WhatsApp — pedidos uma vez, quando
@@ -20,6 +21,8 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
   const [cpfTocado, setCpfTocado] = useState(false)
   const [telefone, setTelefone] = useState('')
   const [whatsappOptIn, setWhatsappOptIn] = useState(false)
+  // quem entra pelo Google ou por convite não passa pelo cadastro com o aceite: registra aqui (o servidor guarda versão, hora e IP)
+  const [aceitouTermos, setAceitouTermos] = useState(false)
   const [local, setLocal] = useState<Localizacao>({ cep: '', bairro: '', cidade: '', uf: '' })
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -30,6 +33,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
     if (!nome.trim()) return setErro('Informe seu nome')
     if (!validarCPF(cpf)) return setErro(ERROS.CPF.invalido)
     if (!validarTelefone(telefone)) return setErro('Telefone inválido')
+    if (!aceitouTermos) return setErro('Aceite os Termos de Uso e a Política de Privacidade para continuar')
     if (!cepCompleto(local.cep) || !local.uf || !local.cidade) return setErro('Informe um CEP válido para preencher cidade e estado')
     setErro(null)
     setSalvando(true)
@@ -43,6 +47,7 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
         cidade: local.cidade,
         bairro: local.bairro,
       })
+      await registrarAceiteTermos(TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO)
       onConcluido()
     } catch (e) {
       setErro(mapearErroSupabase(e))
@@ -74,8 +79,22 @@ export function PerfilObrigatorioForm({ userId, nomeInicial = '', onConcluido }:
         <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
         <Switch checked={whatsappOptIn} onChange={setWhatsappOptIn} label="Aceito receber notificações pelo WhatsApp" />
       </div>
+      <label className="flex items-start gap-3 text-sm text-slate-600">
+        <input type="checkbox" checked={aceitouTermos} onChange={(e) => setAceitouTermos(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-brand" />
+        <span>
+          Li e aceito os{' '}
+          <a href="/termos" target="_blank" rel="noreferrer" className="font-medium text-brand-hover underline">
+            Termos de Uso
+          </a>{' '}
+          e a{' '}
+          <a href="/privacidade" target="_blank" rel="noreferrer" className="font-medium text-brand-hover underline">
+            Política de Privacidade
+          </a>
+          .
+        </span>
+      </label>
       {erro && <p className="text-sm text-red-600">{erro}</p>}
-      <Button onClick={salvar} className="w-full" disabled={salvando || cpfInvalido}>
+      <Button onClick={salvar} className="w-full" disabled={salvando || cpfInvalido || !aceitouTermos}>
         Concluir
       </Button>
     </div>
