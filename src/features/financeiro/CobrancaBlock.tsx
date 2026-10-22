@@ -3,7 +3,8 @@ import { Pencil } from 'lucide-react'
 import { Button, BottomSheet } from '@/components/ui'
 import { formatarBRL } from '@/lib/moeda'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from './CobrancaForm'
-import { payloadDistancia, validarDistancia } from './distancia'
+import { payloadDistancia } from './distancia'
+import { validarCobranca } from './cobrancaValidacao'
 import { useAlunoCobranca, useSalvarAlunoCobranca, type AlunoCobranca } from './api'
 
 function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
@@ -34,22 +35,14 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
   }, [editando])
 
   const confirmarSalvar = () => {
+    const erroValidacao = validarCobranca(valor)
+    if (erroValidacao) {
+      setErro(erroValidacao)
+      return
+    }
     const valorNum = Number(valor.valorTexto.replace(',', '.'))
     const diaCiclo = Number(valor.diaCicloTexto)
     const diasVencimento = Number(valor.diasVencimentoTexto)
-    if (!valor.valorTexto.trim() || Number.isNaN(valorNum) || valorNum <= 0) {
-      setErro('Informe um valor maior que zero')
-      return
-    }
-    if (!diaCiclo || diaCiclo < 1 || diaCiclo > 28) {
-      setErro('Dia do ciclo deve ser entre 1 e 28')
-      return
-    }
-    const erroDistancia = validarDistancia(valor)
-    if (erroDistancia) {
-      setErro(erroDistancia)
-      return
-    }
     setErro(null)
     salvar.mutate(
       {

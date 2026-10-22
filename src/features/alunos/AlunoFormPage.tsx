@@ -25,7 +25,8 @@ import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/Horar
 import { hojeSP, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
-import { payloadDistancia, validarDistancia } from '@/features/financeiro/distancia'
+import { payloadDistancia } from '@/features/financeiro/distancia'
+import { validarCobranca } from '@/features/financeiro/cobrancaValidacao'
 import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { linkWhatsApp } from '@/lib/whatsapp'
@@ -267,14 +268,10 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
 
   const avancar = async () => {
     if (etapa === 2) {
-      const valorNum = Number(cobrancaValor.valorTexto.replace(',', '.'))
-      if (cobrancaAtiva && (!cobrancaValor.valorTexto.trim() || Number.isNaN(valorNum) || valorNum <= 0)) {
-        setErroCobranca('Informe um valor maior que zero')
-        return
-      }
-      const erroDistancia = cobrancaAtiva ? validarDistancia(cobrancaValor) : null
-      if (erroDistancia) {
-        setErroCobranca(erroDistancia)
+      // mesma validação (e mesmos limites) do banco: antes só o valor era conferido e a cobrança estourava no CHECK da tabela
+      const erroCobrancaForm = cobrancaAtiva ? validarCobranca(cobrancaValor) : null
+      if (erroCobrancaForm) {
+        setErroCobranca(erroCobrancaForm)
         return
       }
       setErroCobranca(null)
@@ -314,7 +311,9 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             ...payloadDistancia(cobrancaValor),
           })
         } catch (e) {
-          setErroCobranca(`Aluno salvo, mas houve um erro ao salvar a cobrança: ${(e as Error).message}`)
+          const msg = `Aluno salvo, mas a cobrança não foi salva: ${(e as Error).message}. Ajuste em Cobrança na ficha do aluno.`
+          setErroCobranca(msg)
+          mostrarErroGlobal(msg) // a etapa 2 pode já não estar na tela (ex.: envio do consentimento na etapa 3)
         }
       }
     }
