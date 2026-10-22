@@ -105,8 +105,15 @@ Deno.serve(async (req) => {
   const clienteAuth = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, { auth: { persistSession: false } })
   const { error: linkError } = await clienteAuth.auth.resetPasswordForEmail(email, { redirectTo: `${APP_URL}definir-senha` })
   if (linkError) {
-    console.error('admin-actions: falha ao enviar e-mail de redefinição', linkError.status ?? '')
-    return jsonResponse({ error: 'Não foi possível enviar o e-mail de redefinição.' }, 400)
+    // status + código + mensagem do Auth (sem o e-mail): é o que diz POR QUE o envio falhou (limite, SMTP, instabilidade…)
+    const codigo = (linkError as { code?: string }).code ?? ''
+    console.error('admin-actions: falha ao enviar e-mail de redefinição', linkError.status ?? '', codigo, linkError.message)
+    // Auth permite 1 pedido por minuto por usuário e tem limite de e-mails por hora: diz isso em vez do genérico
+    const limite = linkError.status === 429 || codigo.includes('rate_limit')
+    return jsonResponse(
+      { error: limite ? 'Aguarde um minuto antes de pedir outro e-mail de redefinição para este personal (limite de envio do Supabase).' : 'Não foi possível enviar o e-mail de redefinição.' },
+      limite ? 429 : 400,
+    )
   }
 
   return jsonResponse({ success: true, email })

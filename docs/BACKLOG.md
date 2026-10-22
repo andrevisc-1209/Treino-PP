@@ -598,3 +598,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 33. Correção: erro do reset de senha do admin aparecia genérico e duplicado
 
 - ✅ O reset de senha do painel admin mostrava "Algo deu errado" duas vezes (toast da mutation + toast local) e escondia o motivo real devolvido pela Edge Function. Agora o motivo aparece uma vez, com o texto da função (`ErroAmigavel`/`mensagemDaFuncao`), o que também ajuda a achar a causa de um eventual erro no envio.
+
+
+## 34. admin-actions: motivo do erro no reset de senha
+
+- ✅ A função registra status, código e mensagem do Auth quando o envio do e-mail de redefinição falha e devolve uma mensagem específica quando é limite de envio (429): "Aguarde um minuto…". Antes só o status ia para o log e o painel mostrava sempre o mesmo texto.
+- ✅ Função antiga `dynamic-handler` (cópia esquecida do admin, sem a exigência do segundo fator) apagada do projeto. Depois de cada deploy, conferir no dashboard que a lista de Edge Functions só tem as do repositório.
