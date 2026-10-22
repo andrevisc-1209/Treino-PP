@@ -47,4 +47,8 @@ describe('mapearErroSupabase', () => {
   it('trava de dado clínico sem consentimento vira a mensagem da tela', () => {
     expect(mapearErroSupabase({ code: 'P0001', message: 'O aluno ainda não autorizou o registro de dados de saúde.' })).toBe('O aluno ainda não autorizou o registro de dados de saúde.')
   })
+  it('limites da cobrança do aluno dizem qual campo estourou', () => {
+    expect(mapearErroSupabase({ code: '23514', message: 'new row for relation "aluno_cobranca" violates check constraint "aluno_cobranca_dia_ciclo_check"' })).toBe('Dia do ciclo deve ser entre 1 e 28.')
+    expect(mapearErroSupabase({ code: '23514', message: 'new row for relation "aluno_cobranca" violates check constraint "aluno_cobranca_dias_vencimento_check"' })).toMatch(/0 a 30/)
+  })
 })
