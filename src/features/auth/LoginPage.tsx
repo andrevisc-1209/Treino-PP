@@ -125,6 +125,9 @@ export function LoginPage() {
               ? `Confirme seu e-mail antes de entrar. Enviamos um link para ${emailPendente}.`
               : `Enviamos um link de confirmação para ${emailPendente}. Abra o e-mail e clique no link pra ativar sua conta.`}
           </p>
+          {emailPendenteOrigem !== 'login' && (
+            <p className="text-xs text-slate-500">Já tem conta? Volte ao login e entre com e-mail e senha ou com o Google. Se esqueceu a senha, use “Esqueci minha senha”.</p>
+          )}
           {msg && <p className="text-sm text-red-600">{msg}</p>}
           <div className="flex justify-center">
             <Turnstile onToken={setCaptchaToken} />
@@ -196,14 +199,12 @@ export function LoginPage() {
       setMsg(mapearErroAuth(error))
       return
     }
-    // E-mail já cadastrado (ex.: criado antes via Google): quando "Confirm
-    // email"/"Confirm phone" estão ativos no projeto, o Supabase não retorna
-    // erro nenhum pra não vazar quem já tem conta — devolve um user "fake",
-    // com identities: [] e sem sessão. Sem essa checagem, isso parecia um
-    // cadastro novo que só precisava confirmar o e-mail (bug real relatado:
-    // um e-mail que já existia via Google foi "aceito" pelo cadastro manual).
+    // E-mail que já tem conta (ex.: criada antes via Google): com "Confirm email" ativo o Supabase não devolve erro, só um user
+    // "fake" com identities: [] e sem sessão — de propósito, para não revelar quem já é cliente. Antes o app desfazia isso na tela
+    // ("Este e-mail já está cadastrado"); agora mostra a MESMA tela de confirmação de um cadastro novo (que já orienta quem tem conta).
     if (data.user && data.user.identities?.length === 0) {
-      setMsg('Este e-mail já está cadastrado. Tente fazer login — se usou Google, clique em "Continuar com Google".')
+      setEmailPendenteOrigem('signup')
+      setEmailPendente(f.email)
       return
     }
     if (!data.session) {
