@@ -570,3 +570,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ CPF validado no banco (`treino.cpf_valido` + `CHECK NOT VALID`), gravação pela RPC `atualizar_cpf` (5/dia, mensagem genérica) e `REVOKE UPDATE (cpf)` do cliente — migration `20261048000000`. Mensagem de colisão do CPF no front agora é genérica.
 - ⏳ Última da 2ª revisão concluída. Opcional: 404 do MP como "ignorado"; `VALIDATE CONSTRAINT` do CPF e dos limites de tamanho depois de conferir os violadores.
+
+
+## 30. Fechamento da 3ª revisão (plano G → B → C → D → A → E → F)
+
+- ✅ **G**: `VALIDATE CONSTRAINT` dos 42 limites de tamanho e do CPF (migration `20261049000000`), com guard no CI.
+- ⏳ B (e-mails e mensagem de CPF no cadastro), C (provas de aceite), D (saúde só com consentimento), A (assinatura no servidor, modo leitura), E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).

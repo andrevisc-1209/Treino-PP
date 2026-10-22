@@ -59,6 +59,9 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **[MÉDIA-BAIXA] Enumeração de CPF e CPF sem validação no servidor**: o banco aceitava qualquer texto como CPF (API e metadados do cadastro) e o `UPDATE` direto de `cpf` devolvia "CPF já cadastrado" sem limite, confirmando quem é personal da plataforma. Migration `20261048000000_cpf_validacao_e_rpc.sql`: `treino.cpf_valido` (módulo 11) + `CHECK ... NOT VALID`, RPC `atualizar_cpf` (única via do cliente: `auth.uid()`, 5 tentativas/dia, mensagem genérica na colisão) e `REVOKE UPDATE (cpf)`. No front, a mensagem de colisão passou a ser genérica.
 - **Risco aceito que continua**: enquanto o CPF for único, qualquer cadastro/gravação é um "oráculo" (a medida encarece, não elimina) e não há prova de posse do CPF (quem cadastra primeiro o reserva); a correção para o dono real é `admin_alterar_cpf`.
 
+### PR "validar constraints" — plano de fechamento da 3ª revisão, item G
+- **Constraints `NOT VALID` agora totais**: migration `20261049000000_validar_constraints.sql` valida os 42 limites de tamanho e `professionals_cpf_valido_chk`. Guard no CI: toda constraint `NOT VALID` precisa ter um `VALIDATE CONSTRAINT` em migration posterior.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
@@ -66,7 +69,6 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Dependências de dev com CVE** (`sharp`, `source-map-js`): produção tem 0 vulnerabilidades; só afeta o build.
 
 ## 🔍 Revisão manual pendente
-- **`VALIDATE CONSTRAINT` dos limites de tamanho** (migration 20261045): depois que `limites_violadores.sql` vier vazio.
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
 - **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
