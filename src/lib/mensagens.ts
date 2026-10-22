@@ -6,7 +6,8 @@
 export const ERROS = {
   AUTH: {
     credenciaisInvalidas: 'E-mail ou senha incorretos.',
-    emailDuplicado: 'Esse e-mail já está cadastrado. Tente entrar ou recuperar a senha.',
+    // genérica DE PROPÓSITO: não confirma se o e-mail tem conta (evita listar quem é cliente); orienta quem já tem conta
+    emailDuplicado: 'Não foi possível concluir o cadastro. Se você já tem uma conta, entre com seu e-mail ou use "Esqueci minha senha".',
     emailNaoConfirmado: 'Confirme seu e-mail antes de entrar.',
     senhaFraca: 'Senha fraca. Use pelo menos 8 caracteres.',
     sessaoExpirada: 'Sua sessão expirou. Entre novamente.',
@@ -14,8 +15,9 @@ export const ERROS = {
   },
   CPF: {
     invalido: 'CPF inválido',
-    // genérica DE PROPÓSITO: não confirma que o CPF já está cadastrado em outra conta (evita descobrir quem é personal da plataforma)
-    duplicado: 'Não foi possível salvar o CPF. Confira os dados ou fale com o suporte.',
+    // DECISÃO DE PRODUTO (risco aceito, docs/SECURITY-AUDIT.md): avisa que o CPF já está na plataforma e orienta a recuperar a conta.
+    // Troca: confirma que o CPF é cliente; o limite de 5 tentativas/dia por conta (RPC atualizar_cpf) e o captcha continuam.
+    duplicado: 'Este CPF já está cadastrado na plataforma. Se for você, entre com seu e-mail ou use "Esqueci minha senha".',
     tentativas: 'Muitas tentativas de salvar o CPF. Tente novamente amanhã.',
     imutavel: 'CPF não pode ser alterado depois do cadastro.',
     falhaNoCadastro:

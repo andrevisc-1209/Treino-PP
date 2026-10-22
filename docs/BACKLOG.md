@@ -575,4 +575,5 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 30. Fechamento da 3ª revisão (plano G → B → C → D → A → E → F)
 
 - ✅ **G**: `VALIDATE CONSTRAINT` dos 42 limites de tamanho e do CPF (migration `20261049000000`), com guard no CI.
-- ⏳ B (e-mails e mensagem de CPF no cadastro), C (provas de aceite), D (saúde só com consentimento), A (assinatura no servidor, modo leitura), E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).
+- ✅ **B**: cadastro não confirma quais e-mails têm conta (mesma tela de confirmação, mensagens genéricas); mensagem de CPF já cadastrado orienta a recuperar a conta (decisão de produto).
+- ⏳ C (provas de aceite), D (saúde só com consentimento), A (assinatura no servidor, modo leitura), E (MFA do admin), F (grants, etapa 2). Depois: login com CPF (funcionalidade separada).

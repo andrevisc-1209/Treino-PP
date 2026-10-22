@@ -18,17 +18,18 @@ describe('mapearErroSupabase', () => {
   it('mapeia tentativa de alterar CPF (trigger tg_bloquear_cpf)', () => {
     expect(mapearErroSupabase({ code: 'P0001', message: 'CPF não pode ser alterado após o cadastro' })).toMatch(/não pode ser alterado/i)
   })
-  it('CPF duplicado vira mensagem genérica (não confirma que o CPF existe)', () => {
+  it('CPF duplicado orienta a entrar ou recuperar a senha', () => {
     expect(
       mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint "idx_professionals_cpf"', details: 'Key (cpf)=(11144477735) already exists.' }),
     ).toBe(ERROS.CPF.duplicado)
-    // genérica: não confirma que o CPF já existe
-    expect(ERROS.CPF.duplicado).not.toMatch(/já cadastrado|já existe/i)
+    // decisão de produto: avisa que o CPF já está na plataforma e orienta a recuperar a conta
+    expect(ERROS.CPF.duplicado).toMatch(/já está cadastrado na plataforma/i)
+    expect(ERROS.CPF.duplicado).toMatch(/esqueci minha senha/i)
   })
-  it('mapeia e-mail duplicado pelos details', () => {
+  it('e-mail duplicado vira mensagem genérica que orienta a entrar/recuperar a senha', () => {
     expect(
       mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint "professionals_email_key"', details: 'Key (email)=(a@a.com) already exists.' }),
-    ).toMatch(/e-mail já está cadastrado/i)
+    ).toMatch(/não foi possível concluir o cadastro/i) // genérica: não confirma que o e-mail tem conta
   })
   it('mapeia valor inválido (check constraint)', () => {
     expect(mapearErroSupabase({ code: '23514', message: 'violates check constraint' })).toMatch(/inválido/i)

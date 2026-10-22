@@ -13,7 +13,8 @@ function comoObjeto(erro: unknown): ErroAuth {
 const MENSAGENS_POR_CODE: Record<string, string> = {
   invalid_credentials: ERROS.AUTH.credenciaisInvalidas,
   email_not_confirmed: ERROS.AUTH.emailNaoConfirmado,
-  user_not_found: 'Não encontramos uma conta com esse e-mail.',
+  // não distingue "conta inexistente" de "senha errada": quem tenta adivinhar e-mails não descobre quem é cliente
+  user_not_found: ERROS.AUTH.credenciaisInvalidas,
   user_banned: 'Esta conta está bloqueada. Fale com o suporte.',
   user_already_exists: ERROS.AUTH.emailDuplicado,
   email_exists: ERROS.AUTH.emailDuplicado,

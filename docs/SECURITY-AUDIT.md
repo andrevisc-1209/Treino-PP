@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 20/10/2026 (PR "enumeração e validação de CPF")
+Data da auditoria: 16/10/2026 · Última atualização: 22/10/2026 (PR "enumeração e validação de CPF")
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -61,6 +61,10 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 
 ### PR "validar constraints" — plano de fechamento da 3ª revisão, item G
 - **Constraints `NOT VALID` agora totais**: migration `20261049000000_validar_constraints.sql` valida os 42 limites de tamanho e `professionals_cpf_valido_chk`. Guard no CI: toda constraint `NOT VALID` precisa ter um `VALIDATE CONSTRAINT` em migration posterior.
+
+### PR "mensagens de cadastro" — plano de fechamento da 3ª revisão, item B
+- **[MÉDIA-BAIXA] O cadastro confirmava quais e-mails já têm conta**: `LoginPage.tsx` desfazia a proteção do Supabase ("Este e-mail já está cadastrado" quando `identities` vem vazio) e `errosAuth.ts` tinha mensagens próprias para `user_not_found` e `email_exists`. Agora o caso mostra a **mesma tela de confirmação** de um cadastro novo (com a orientação "Já tem conta? Entre ou use Esqueci minha senha"), e `user_not_found`/`email_exists`/`identity_already_exists` viram mensagens genéricas que não distinguem a existência da conta.
+- **Decisão de produto (risco aceito)**: a colisão de CPF no completar perfil passou a dizer "Este CPF já está cadastrado na plataforma. Se for você, entre com seu e-mail ou use Esqueci minha senha." — ajuda o dono legítimo, mas confirma que o CPF é cliente (o limite de 5 tentativas/dia da RPC `atualizar_cpf` e o captcha continuam). Substitui a mensagem genérica da PR #124 neste ponto.
 
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
