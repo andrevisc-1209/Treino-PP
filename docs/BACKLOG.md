@@ -614,3 +614,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 36. Aviso de demora na confirmação do segundo fator (admin)
 
 - ✅ Se a verificação do código passar de 8 s, a tela do MFA mostra "Está demorando mais que o normal. Continue aguardando, não precisa digitar o código de novo." (o botão segue em "Confirmando…"). Antes parecia travada e levava a digitar o código outra vez.
+
+
+## 38. Grants mínimos, etapa 2 (UPDATE/DELETE que ninguém usa)
+
+- ✅ Migration `20261055000000_grants_minimos_etapa2.sql`: tira de `authenticated` 9 privilégios que o app nunca usa nas tabelas com policy ALL (`pesos` UPDATE+DELETE; DELETE em `sessao_series`, `horarios_fixos`, `aluno_cobranca`, `aula_participantes`, `sessoes`, `professional_config`; UPDATE em `aluno_locais_treino` e `horario_alunos`). Escolha cruzando o código (front e funções SECURITY INVOKER) com `pg_stat_user_tables`; ficaram de fora o que tem uso real (`exercicios` UPDATE, `faturas` DELETE) ou dúvida (`sessao_exercicios` UPDATE). `supabase/grants_cliente.test.ts` falha se o front passar a usar um verbo revogado.
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge.** Depois do merge, usar o app a 390px (alunos, agenda, financeiro, treino) com a conta E2E.
