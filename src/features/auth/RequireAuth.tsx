@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from '@/components/BottomNav'
-import { AssinaturaGuard } from '@/components/AssinaturaGuard'
+import { AssinaturaExpiradaBanner } from '@/components/AssinaturaExpiradaBanner'
 import { TrialBanner } from '@/components/TrialBanner'
 import { useIsAdmin } from '@/features/admin/useIsAdmin'
 import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
@@ -45,14 +45,13 @@ export function RequireAuth() {
   return (
     <div className={modoFoco ? '' : 'pb-16'}>
       <NotificacoesRealtime professionalId={session.user.id} />
-      <AssinaturaGuard>
-        {!modoFoco && (
-          <div className="mx-auto max-w-2xl px-4 pt-4">
-            <TrialBanner />
-          </div>
-        )}
-        <Outlet />
-      </AssinaturaGuard>
+      {!modoFoco && (
+        <div className="mx-auto max-w-2xl px-4 pt-4">
+          <TrialBanner />
+          <AssinaturaExpiradaBanner />
+        </div>
+      )}
+      <Outlet />
       {!modoFoco && <BottomNav />}
     </div>
   )

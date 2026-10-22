@@ -6,7 +6,7 @@ import { PlanoModal } from './PlanoModal'
 /**
  * Aviso do trial no topo do app. Some sozinho quando não está mais em trial
  * (ou já tem assinatura ativa, ou o trial venceu — nesse caso quem assume é
- * o AssinaturaGuard, que bloqueia a tela inteira; não faz sentido duplicar o
+ * o AssinaturaExpiradaBanner, do modo leitura; não faz sentido duplicar o
  * aviso aqui também).
  */
 export function TrialBanner() {
