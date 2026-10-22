@@ -1,6 +1,6 @@
 # Auditoria de segurança — Treino PP
 
-Data da auditoria: 16/10/2026 · Última atualização: 22/10/2026 (PR "enumeração e validação de CPF")
+Data da auditoria: 16/10/2026 · Última atualização: 22/10/2026 (fechamento da 3ª revisão)
 Escopo: front (Vite/React), Edge Functions (Deno), migrations/RLS, dependências.
 Nenhum valor de secret é reproduzido neste documento; achados apontam apenas arquivo e linha.
 
@@ -81,6 +81,8 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 
 ### PR "MFA do admin: cadastro" — plano de fechamento da 3ª revisão, item E (etapa 1)
 - **MFA do admin (autenticação em dois fatores, TOTP), etapa 1 — sem exigir ainda no servidor**: página `/admin/seguranca` (QR Code e chave em texto para um 2º aparelho, listar e remover autenticadores) e tela de desafio no `/admin` quando o admin já tem autenticador e entrou só com Google/senha (a sessão precisa subir de `aal1` para `aal2` antes de montar o painel). Sem autenticador cadastrado o painel abre com um aviso. **Etapa 2 (depois de o login com código ser confirmado)**: `is_admin()` e `admin-actions` passam a exigir `aal2`. Acesso de emergência: SQL Editor (remover o fator em `auth.mfa_factors`).
+### PR "consentimento declarado" — aviso do botão "O aluno já consentiu pessoalmente ou por escrito"
+- **Decisão (risco aceito, não bloqueado)**: a plataforma não tem como verificar um consentimento em papel e o personal é quem precisa provar o consentimento (LGPD, art. 8º, §2º). Em vez de bloquear a opção (que é legítima: termo em papel, aluno sem e-mail/WhatsApp), o botão passou a pedir uma **confirmação explícita** com o aviso de que a declaração é do personal, que a prova é dele e que ele pode ser solicitado a apresentá-la; o consentimento é gravado como `papel` ("declarado por você") em vez de `app`; a ficha distingue "confirmado pelo aluno" (link), "declarado por você" (papel) e "registrado no app" (antigo) e lembra de guardar o documento. **Pendente (jurídico)**: conferir se os Termos de Uso trazem a cláusula de que o personal é o responsável pelo consentimento colhido fora da plataforma.
 
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
