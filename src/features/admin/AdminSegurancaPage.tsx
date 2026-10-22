@@ -116,9 +116,9 @@ function ConteudoSeguranca({ fatores, onMudou }: { fatores: { id: string; nome: 
       ) : (
         <div className="space-y-2 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
           <p className="flex items-center gap-2 font-semibold">
-            <ShieldAlert size={18} aria-hidden /> O painel está protegido só pela senha/Google
+            <ShieldAlert size={18} aria-hidden /> Falta ativar a autenticação em dois fatores
           </p>
-          <p>Ative um aplicativo autenticador (Google Authenticator, Authy ou o seu gerenciador de senhas) para pedir um código de 6 dígitos ao abrir o painel.</p>
+          <p>O painel só funciona com um segundo fator. Ative um aplicativo autenticador (Google Authenticator, Authy ou o seu gerenciador de senhas): ele passa a pedir um código de 6 dígitos ao abrir o painel.</p>
         </div>
       )}
 

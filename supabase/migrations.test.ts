@@ -125,4 +125,13 @@ describe('migrations do schema treino', () => {
       expect(arquivo).toMatch(/REVOKE ALL ON FUNCTION treino\.revogar_consentimento\(UUID\) FROM PUBLIC, anon/)
     })
   })
+
+  it('admin: a versão mais recente de is_admin() exige o segundo fator (aal2) e não vaza para PUBLIC', () => {
+    const defs = [...semComentarios.matchAll(/CREATE OR REPLACE FUNCTION treino\.is_admin\(\)[\s\S]*?AS \$\$[\s\S]*?\$\$/g)].map((m) => m[0])
+    const ultima = defs[defs.length - 1]
+    expect(ultima).toMatch(/auth\.jwt\(\)\) ->> 'aal'/)
+    expect(ultima).toMatch(/= 'aal2'/)
+    expect(ultima).toMatch(/is_admin FROM treino\.professionals/)
+    expect(semComentarios).toMatch(/REVOKE ALL ON FUNCTION treino\.is_admin\(\) FROM PUBLIC/)
+  })
 })

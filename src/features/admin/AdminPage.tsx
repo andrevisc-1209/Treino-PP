@@ -74,25 +74,17 @@ export function AdminPage() {
   return <PortaoMfa />
 }
 
-/** Sessão só com Google/senha mas com autenticador cadastrado: pede o código antes de montar o painel (e antes de qualquer chamada admin). */
+/**
+ * Porta do painel (MFA): o servidor só aceita ações de admin em sessão aal2 (migration 20261053). Autenticador cadastrado e sessão só com
+ * Google/senha → pede o código; sem autenticador → leva para cadastrar em /admin/seguranca. Só monta o dashboard (e suas chamadas admin) em aal2.
+ */
 function PortaoMfa() {
   const mfa = useMfa()
   if (mfa.isLoading) return <div className="p-8 text-center text-slate-500">Carregando…</div>
-  // se não deu para consultar o MFA, não trava (o servidor é quem decide na etapa de exigência)
-  if (mfa.data?.estado === 'precisa_codigo') return <MfaDesafio factorId={mfa.data.fatores[0].id} onOk={mfa.recarregar} />
-  return (
-    <>
-      {mfa.data?.estado === 'sem_fator' && (
-        <div className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">
-          O painel está protegido só pela senha/Google.{' '}
-          <Link to="/admin/seguranca" className="font-semibold underline">
-            Ativar autenticação em dois fatores
-          </Link>
-        </div>
-      )}
-      <AdminDashboard />
-    </>
-  )
+  if (mfa.isError || !mfa.data) return <div className="p-8 text-center text-sm text-red-600">Não foi possível verificar a segurança da conta. Recarregue a página.</div>
+  if (mfa.data.estado === 'sem_fator') return <Navigate to="/admin/seguranca" replace />
+  if (mfa.data.estado === 'precisa_codigo') return <MfaDesafio factorId={mfa.data.fatores[0].id} onOk={mfa.recarregar} />
+  return <AdminDashboard />
 }
 
 function AdminHeader() {
