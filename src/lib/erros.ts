@@ -39,6 +39,10 @@ export function mapearErroSupabase(erro: unknown): string {
   if (code === 'P0001' && msgMin.includes('muitas tentativas de salvar o cpf')) return ERROS.CPF.tentativas
   if (code === 'P0001' && msgMin.includes('cpf inválido')) return ERROS.CPF.invalido
   if (code === 'P0001' && msgMin.includes('não foi possível salvar o cpf')) return ERROS.CPF.duplicado
+  // trava do banco (migration 20261051): dado clínico só com consentimento ativo do aluno
+  if (code === 'P0001' && msgMin.includes('não autorizou o registro de dados de saúde')) {
+    return 'O aluno ainda não autorizou o registro de dados de saúde.'
+  }
   if (msgMin.includes('_tamanho_chk')) {
     return 'Texto longo demais para este campo. Encurte e tente de novo.'
   }
