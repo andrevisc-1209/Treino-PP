@@ -593,3 +593,8 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ O botão "O aluno já consentiu pessoalmente ou por escrito" pede confirmação explícita (a prova é do personal), grava `method = 'papel'` e a ficha mostra quem registrou o consentimento (aluno pelo link × declarado por você × antigo).
 - ⏳ Jurídico: conferir a cláusula dos Termos de Uso sobre o consentimento colhido fora da plataforma.
+
+
+## 33. Correção: erro do reset de senha do admin aparecia genérico e duplicado
+
+- ✅ O reset de senha do painel admin mostrava "Algo deu errado" duas vezes (toast da mutation + toast local) e escondia o motivo real devolvido pela Edge Function. Agora o motivo aparece uma vez, com o texto da função (`ErroAmigavel`/`mensagemDaFuncao`), o que também ajuda a achar a causa de um eventual erro no envio.
