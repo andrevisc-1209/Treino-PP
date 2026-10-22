@@ -609,3 +609,8 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 35. Correção: reset de senha do admin bloqueado por CORS
 
 - ✅ A `admin-actions` liberava só `authorization, content-type` na pré-checagem CORS; o supabase-js também manda `apikey` e `x-client-info`, então o navegador bloqueava o POST (a função só recebia o OPTIONS, sem nenhum erro no log) e o painel mostrava o texto de reserva "Não foi possível enviar o e-mail de redefinição.". Lista corrigida (igual à das outras funções) e teste que exige os quatro cabeçalhos em toda função com CORS.
+
+
+## 36. Aviso de demora na confirmação do segundo fator (admin)
+
+- ✅ Se a verificação do código passar de 8 s, a tela do MFA mostra "Está demorando mais que o normal. Continue aguardando, não precisa digitar o código de novo." (o botão segue em "Confirmando…"). Antes parecia travada e levava a digitar o código outra vez.

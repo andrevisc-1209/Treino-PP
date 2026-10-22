@@ -1,13 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { Button, Field, Input } from '@/components/ui'
-import { codigoMfaValido, mensagemErroMfa, verificarCodigoMfa } from './mfa'
+import { codigoMfaValido, MFA_AVISO_DEMORA_MS, mensagemErroMfa, MSG_MFA_DEMORA, verificarCodigoMfa } from './mfa'
 
 /** Pede o código de 6 dígitos do autenticador antes de abrir o painel admin (sessão ainda só com Google/senha). */
 export function MfaDesafio({ factorId, onOk }: { factorId: string; onOk: () => void }) {
   const [codigo, setCodigo] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [verificando, setVerificando] = useState(false)
+  const [demorando, setDemorando] = useState(false)
+
+  useEffect(() => {
+    if (!verificando) {
+      setDemorando(false)
+      return
+    }
+    const t = setTimeout(() => setDemorando(true), MFA_AVISO_DEMORA_MS)
+    return () => clearTimeout(t)
+  }, [verificando])
 
   const confirmar = async () => {
     setErro(null)
@@ -47,6 +57,11 @@ export function MfaDesafio({ factorId, onOk }: { factorId: string; onOk: () => v
         <Button onClick={confirmar} className="w-full" disabled={verificando || !codigoMfaValido(codigo)}>
           {verificando ? 'Confirmando…' : 'Confirmar'}
         </Button>
+        {demorando && (
+          <p role="status" className="text-sm text-slate-600">
+            {MSG_MFA_DEMORA}
+          </p>
+        )}
       </div>
     </div>
   )
