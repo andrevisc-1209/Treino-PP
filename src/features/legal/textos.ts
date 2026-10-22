@@ -1,5 +1,5 @@
-export const TERMOS_USO_VERSAO = '1.1'
-export const PRIVACIDADE_VERSAO = '1.4'
+export const TERMOS_USO_VERSAO = '1.2'
+export const PRIVACIDADE_VERSAO = '1.5'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
 
@@ -22,11 +22,12 @@ Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (a
 O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, VI). A plataforma atua como OPERADORA (art. 5º, VII), tratando esses dados somente em nome do Personal Trainer e conforme as instruções dele. Estas cláusulas constituem o contrato de tratamento de dados entre Controlador e Operadora (art. 39).
 3.1. O Personal Trainer se compromete a:
 • coletar dados dos alunos somente com base legal válida (consentimento, contrato ou legítimo interesse, conforme o caso);
-• obter o consentimento específico do aluno, pelo link gerado pela plataforma, antes de registrar dados de saúde (medidas corporais, lesões, cirurgias, medicamentos e respostas de bem-estar);
+• obter o consentimento específico do aluno antes de registrar dados de saúde (medidas corporais, lesões, cirurgias, medicamentos e respostas de bem-estar), preferencialmente pelo link gerado pela plataforma ou, se isso não for possível, por termo escrito (por exemplo, em papel) que o próprio Personal Trainer colhe e guarda;
 • informar ao aluno, antes da coleta, quais dados serão coletados e para qual finalidade;
 • para alunos menores de 18 anos, obter o consentimento expresso do responsável legal (LGPD, art. 14);
 • não inserir dados ilícitos, ofensivos ou que extrapolem a finalidade de gestão de treinos.
-3.2. A plataforma registra o aceite de cada aluno (data e hora, versão do termo aceito e endereço IP) como prova auditável, mantida por prazo necessário para comprovar o consentimento.
+3.2. Quando o aluno aceita pelo link, a plataforma registra o aceite (data e hora, versão do termo aceito e endereço IP) como prova auditável, mantida por prazo necessário para comprovar o consentimento.
+3.2.1. Quando o consentimento é colhido fora da plataforma, a plataforma registra apenas a declaração do Personal Trainer de que o obteve (com data e hora), sem verificar o documento. O Personal Trainer é o único responsável por esse consentimento: deve guardar a prova (por exemplo, o termo assinado), pelo tempo necessário, e apresentá-la ao aluno, à ANPD ou à autoridade competente quando solicitado (LGPD, art. 8º, §2º). A plataforma não guarda cópia desse documento e não responde pela sua existência, validade ou conteúdo.
 3.3. Em caso de violação de dados de alunos causada por negligência do Personal Trainer (por exemplo, compartilhamento de senha ou acesso por terceiros), a responsabilidade perante o aluno e perante a ANPD é do Personal Trainer, como Controlador.
 3.4. Quanto aos dados do próprio Personal Trainer (cadastro, cobrança e uso do app), a plataforma atua como controladora, nos termos da Política de Privacidade.
 
@@ -72,8 +73,8 @@ O operador responde solidariamente apenas quando descumpre a lei ou as instruç�
 • Dados de uso e acesso: suporte técnico, melhorias e detecção de falhas (legítimo interesse — art. 7º, IX).
 2.2. Dados dos alunos
 • Nome, contato, objetivos, horários e dados de treino: gestão da agenda e do acompanhamento pelo Personal Trainer.
-• Dados de saúde (sensíveis, art. 11): medidas corporais (altura, peso, percentual de gordura e circunferências), lesões, cirurgias, medicamentos e respostas de bem-estar e de esforço percebido. Só são registrados com o consentimento específico e destacado do aluno (art. 11, I), dado por link enviado pelo Personal Trainer.
-• Mecanismo de consentimento: o aluno aceita ou recusa digitalmente. O aceite registra data e hora, versão do termo e endereço IP, como prova do consentimento. Esse registro não é exibido ao Personal Trainer.
+• Dados de saúde (sensíveis, art. 11): medidas corporais (altura, peso, percentual de gordura e circunferências), lesões, cirurgias, medicamentos e respostas de bem-estar e de esforço percebido. Só são registrados com o consentimento específico e destacado do aluno (art. 11, I), dado preferencialmente por link enviado pelo Personal Trainer ou, em alternativa, por termo escrito colhido e guardado pelo próprio Personal Trainer.
+• Mecanismo de consentimento: pelo link, o aluno aceita ou recusa digitalmente e o aceite registra data e hora, versão do termo e endereço IP, como prova do consentimento (esse registro não é exibido ao Personal Trainer). Quando o consentimento é colhido fora da plataforma, registramos apenas a declaração do Personal Trainer e a data; a prova do consentimento fica sob guarda e responsabilidade dele, como Controlador.
 • Menores de 18 anos: o consentimento deve ser dado pelo responsável legal (art. 14). O Personal Trainer é responsável por garantir isso antes de inserir os dados.
 
 3. Análise de uso da página inicial (PostHog)
