@@ -128,7 +128,7 @@ function NovaAvaliacaoForm({ alunoId, alturaCm, onDone }: { alunoId: string; alt
         ))}
       </div>
       {erro && <p className="text-sm text-red-600">{erro}</p>}
-      {registrar.error && <p className="text-sm text-red-600">{(registrar.error as Error).message}</p>}
+      {registrar.error && <p className="text-sm text-red-600">{mapearErroSupabase(registrar.error)}</p>}
       <div className="flex gap-2">
         <Button type="submit" disabled={registrar.isPending} className="flex-1">
           Salvar

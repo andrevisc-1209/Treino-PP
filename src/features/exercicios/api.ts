@@ -5,6 +5,7 @@ import type { ModalidadeTipo } from '@/types/modalidades'
 import type { AmbienteCiclismo } from '@/types/ciclismo'
 import { exerciciosParaBloco } from './paraBloco'
 import type { ParametroPrincipal } from './tipos'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
 
 export type Exercicio = {
   id: string
@@ -112,7 +113,7 @@ export function useExcluirExercicio() {
       const { error } = await supabase.from('exercicios').delete().eq('id', id)
       if (error) {
         if (error.code === '23503') {
-          throw new Error('Esse exercício está em uso em um ou mais planos de treino e não pode ser excluído.')
+          throw new ErroAmigavel('Esse exercício está em uso em um ou mais planos de treino e não pode ser excluído.')
         }
         throw error
       }

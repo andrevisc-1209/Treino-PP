@@ -26,6 +26,7 @@ import {
 import { formatarUltimoUso } from './ultimoUso'
 import { useFilaOffline } from './useFilaOffline'
 import { DESCRITORES_NOTA, DESCRITORES_PSE } from './descritores'
+import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 
 const DESCANSO_PADRAO_SEGUNDOS = 60
 
@@ -116,10 +117,13 @@ function ExercicioBlock({
   onSerieCompleta: (restSeconds: number) => void
 }) {
   const salvar = useSalvarSerie(sessionId)
+  const { somenteLeitura, abrirPlanos } = useExigirAssinatura()
   const [erroSerie, setErroSerie] = useState<number | null>(null)
   const [expandido, setExpandido] = useState(false)
 
   const salvarSerie = (setNumber: number, input: { reps: number | null; load_kg: number | null }) => {
+    // assinatura vencida: o servidor recusaria (e a fila offline guardaria à toa). Leva à escolha do plano.
+    if (somenteLeitura) return abrirPlanos()
     setErroSerie(null)
     const payload = { sessao_exercicio_id: item.id, set_number: setNumber, completed: true, ...input }
     const restSeconds = item.plano_exercicio?.rest_seconds ?? DESCANSO_PADRAO_SEGUNDOS
@@ -148,6 +152,7 @@ function ExercicioBlock({
   }
 
   const adicionarSerie = () => {
+    if (somenteLeitura) return abrirPlanos()
     const ultima = item.sessao_series[item.sessao_series.length - 1]
     salvar.mutate({
       sessao_exercicio_id: item.id,
@@ -248,6 +253,7 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
   const adicionarExercicio = useAdicionarExercicioSessao(sessionId)
   const removerExercicio = useRemoverExercicioSessao(sessionId)
   const fila = useFilaOffline(sessionId)
+  const { somenteLeitura, abrirPlanos } = useExigirAssinatura()
   const [avisoFilaAberto, setAvisoFilaAberto] = useState(false)
 
   // Cronômetro opcional: pergunta uma vez ao entrar na tela, dá pra pausar/
@@ -358,6 +364,7 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
   }
 
   const clicarFinalizar = () => {
+    if (somenteLeitura) return abrirPlanos()
     if (fila.fila.length > 0) {
       setAvisoFilaAberto(true)
       return
@@ -441,13 +448,22 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
               onPular={() => setDescanso(null)}
             />
           )}
-          {fila.fila.length > 0 && (
+          {fila.recusadas.length > 0 && (
+            <button type="button"
+              onClick={() => setAvisoFilaAberto(true)}
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-800"
+            >
+              <AlertTriangle size={16} />
+              {fila.recusadas.length} {fila.recusadas.length === 1 ? 'série não foi aceita' : 'séries não foram aceitas'} — toque para ver
+            </button>
+          )}
+          {fila.aguardando.length > 0 && (
             <button type="button"
               onClick={() => setAvisoFilaAberto(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800"
             >
               <Clock size={16} />
-              {fila.fila.length} {fila.fila.length === 1 ? 'série ainda não sincronizada' : 'séries ainda não sincronizadas'}
+              {fila.aguardando.length} {fila.aguardando.length === 1 ? 'série ainda não sincronizada' : 'séries ainda não sincronizadas'}
             </button>
           )}
           <Button className="w-full" onClick={clicarFinalizar}>
@@ -458,16 +474,39 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
 
       <BottomSheet open={avisoFilaAberto} onClose={() => setAvisoFilaAberto(false)} title="Séries pendentes">
         <div className="space-y-4">
-          <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
-            <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-            <span>
-              {fila.fila.length} {fila.fila.length === 1 ? 'série ainda não foi sincronizada' : 'séries ainda não foram sincronizadas'} — provavelmente por
-              falta de sinal. Elas ficam guardadas neste aparelho e não se perdem, mas é melhor esperar sincronizar antes de finalizar.
-            </span>
-          </div>
-          <Button onClick={() => fila.sincronizar()} className="w-full" disabled={fila.sincronizando}>
-            {fila.sincronizando ? 'Sincronizando…' : 'Tentar agora'}
-          </Button>
+          {fila.recusadas.length > 0 && (
+            <div className="space-y-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+                <span>
+                  {fila.recusadas.length} {fila.recusadas.length === 1 ? 'série não foi aceita' : 'séries não foram aceitas'} e <strong>não foram salvas</strong>.{' '}
+                  {[...new Set(fila.recusadas.map((i) => i.recusadoMotivo))].join(' ')} Elas continuam guardadas neste aparelho.
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={() => fila.reenviarRecusadas()} disabled={fila.sincronizando}>
+                  Tentar de novo
+                </Button>
+                <Button variant="outline" onClick={() => fila.descartarRecusadas()}>
+                  Descartar
+                </Button>
+              </div>
+            </div>
+          )}
+          {fila.aguardando.length > 0 && (
+            <>
+              <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+                <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+                <span>
+                  {fila.aguardando.length} {fila.aguardando.length === 1 ? 'série ainda não foi sincronizada' : 'séries ainda não foram sincronizadas'} — provavelmente por
+                  falta de sinal. Elas ficam guardadas neste aparelho e não se perdem, mas é melhor esperar sincronizar antes de finalizar.
+                </span>
+              </div>
+              <Button onClick={() => fila.sincronizar()} className="w-full" disabled={fila.sincronizando}>
+                {fila.sincronizando ? 'Sincronizando…' : 'Tentar agora'}
+              </Button>
+            </>
+          )}
           <Button variant="ghost" onClick={() => setAvisoFilaAberto(false)} className="w-full">
             Continuar treinando
           </Button>
@@ -528,7 +567,7 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
         prof_rating: nota,
         prof_notes: observacao.trim() || null,
       },
-      { onSuccess: () => setEditando(false), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setEditando(false), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 
@@ -599,7 +638,7 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
             <dd>{sessao.duration_minutes != null ? `${sessao.duration_minutes} min` : '—'}</dd>
             <dt className="text-slate-500">Carga interna</dt>
             <dd>{cargaInterna != null ? `${cargaInterna} UA` : '—'}</dd>
-            <dt className="text-slate-500">Nota do professor</dt>
+            <dt className="text-slate-500">Nota do personal</dt>
             <dd>{sessao.prof_rating ?? '—'}</dd>
             <dt className="col-span-2 text-slate-500">Observação</dt>
             <dd className="col-span-2">{sessao.prof_notes ?? '—'}</dd>
@@ -610,7 +649,7 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
             <Field label="Duração (minutos)">
               <Input type="number" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value)} />
             </Field>
-            <ScaleQuestion titulo="Avaliação do professor" descritores={DESCRITORES_NOTA} polaridade="positiva" value={nota} onChange={setNota} />
+            <ScaleQuestion titulo="Avaliação do personal" descritores={DESCRITORES_NOTA} polaridade="positiva" value={nota} onChange={setNota} />
             <Field label="Observação">
               <textarea
                 className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"

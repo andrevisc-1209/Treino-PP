@@ -320,7 +320,7 @@ export function ConfiguracoesPage() {
                       await enviarTesteWhatsapp()
                       mostrarInfoGlobal('Mensagem de teste enviada. Confira seu WhatsApp.')
                     } catch (e) {
-                      mostrarErroGlobal((e as Error).message)
+                      mostrarErroGlobal(mapearErroSupabase(e))
                     } finally {
                       setEnviandoTeste(false)
                     }

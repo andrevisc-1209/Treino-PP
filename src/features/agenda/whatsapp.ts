@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
 
 /** Extrai a mensagem em português que a Edge Function devolve em { error } (status não-2xx). */
 async function mensagemDoErro(error: unknown): Promise<string> {
@@ -17,5 +18,5 @@ async function mensagemDoErro(error: unknown): Promise<string> {
 /** Pede à function send-whatsapp uma mensagem de teste para o WhatsApp do próprio personal (o número vem do cadastro, nunca daqui). */
 export async function enviarTesteWhatsapp(): Promise<void> {
   const { error } = await supabase.functions.invoke('send-whatsapp', { body: { tipo: 'teste' } })
-  if (error) throw new Error(await mensagemDoErro(error))
+  if (error) throw new ErroAmigavel(await mensagemDoErro(error))
 }

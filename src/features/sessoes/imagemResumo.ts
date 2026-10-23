@@ -1,4 +1,5 @@
 // Gera a imagem do resumo (canvas puro, sem dependência) para compartilhar.
+import { ErroAmigavel } from '@/lib/erroAmigavel'
 // Nunca recebe prontidão/bem-estar: são dados de saúde (LGPD).
 
 export type DadosImagem = {
@@ -102,7 +103,7 @@ export async function compartilharResumo(d: DadosImagem): Promise<'compartilhado
   const canvas = document.createElement('canvas')
   desenharResumo(canvas, d)
   const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, 'image/png'))
-  if (!blob) throw new Error('Não foi possível gerar a imagem.')
+  if (!blob) throw new ErroAmigavel('Não foi possível gerar a imagem.')
   const arquivo = new File([blob], 'resumo-treino.png', { type: 'image/png' })
 
   if (navigator.canShare?.({ files: [arquivo] })) {

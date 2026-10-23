@@ -8,6 +8,7 @@ import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from
 import { useRegistrarExecucaoPresencial } from './api'
 import { FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
 import { detalhesDoResultado, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
+import { mapearErroSupabase } from '@/lib/erros'
 
 export type PlanoParaExecucao = { id: string; name: string; modalidade: ModalidadeTipo; modalidade_detalhes: ModalidadeDetalhes }
 
@@ -54,10 +55,10 @@ export function ExecucaoPresencialSheet({ plano, alunoId, onClose }: { plano: Pl
               mostrarInfoGlobal('Presença marcada na aula de hoje.')
             }
           } catch (e) {
-            mostrarErroGlobal(`Treino registrado, mas não deu para atualizar a cobrança: ${(e as Error).message}`)
+            mostrarErroGlobal(`Treino registrado, mas não deu para atualizar a cobrança: ${mapearErroSupabase(e)}`)
           }
         },
-        onError: (e) => setErro((e as Error).message),
+        onError: (e) => setErro(mapearErroSupabase(e)),
       },
     )
   }

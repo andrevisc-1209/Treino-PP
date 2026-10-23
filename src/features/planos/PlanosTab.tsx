@@ -42,8 +42,10 @@ import {
   buscarItensComparaveisPlano,
   type Plano,
 } from './api'
+import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 
 export function PlanosTab({ alunoId }: { alunoId: string }) {
+  const { exigir } = useExigirAssinatura()
   const navigate = useNavigate()
   const { data: planos, isLoading, error } = usePlanos(alunoId)
   const { data: modelos } = useModelos()
@@ -113,7 +115,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
     }
     duplicar.mutate(
       { plano: duplicando, novoNome: nomeDuplicado.trim() },
-      { onSuccess: () => setDuplicando(null), onError: (e) => setErroDuplicado((e as Error).message) },
+      { onSuccess: () => setDuplicando(null), onError: (e) => setErroDuplicado(mapearErroSupabase(e)) },
     )
   }
 
@@ -154,14 +156,14 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             try {
               await aplicarItensTemplate({ tabela: 'plano_exercicios', plano_id: planoId }, modeloMusc)
             } catch (e) {
-              mostrarErroGlobal(`O treino foi criado, mas não deu para adicionar os exercícios do modelo: ${(e as Error).message}`)
+              mostrarErroGlobal(`O treino foi criado, mas não deu para adicionar os exercícios do modelo: ${mapearErroSupabase(e)}`)
             }
           }
           // musculação segue para o editor de exercícios, como sempre; as outras modalidades não têm exercícios
           if (modalidadeNova === 'musculacao') navigate(`/alunos/${alunoId}/planos/${planoId}`)
           else if (execucaoNova === 'assincrono') setRecemCriado({ id: planoId, name: nomePlano, modalidade: modalidadeNova, detalhes })
         },
-        onError: (e) => setErroNovo((e as Error).message),
+        onError: (e) => setErroNovo(mapearErroSupabase(e)),
       },
     )
   }
@@ -262,7 +264,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
         tipo_execucao: execucaoEd,
         modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, estrEd),
       },
-      { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setRenomeando(null), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 
@@ -283,7 +285,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
 
   return (
     <div className="space-y-3">
-      <Button variant="outline" onClick={() => setNovoEtapa('escolha')} className="w-full">
+      <Button variant="outline" onClick={exigir(() => setNovoEtapa('escolha'))} className="w-full">
         <Plus size={18} /> Novo treino
       </Button>
 

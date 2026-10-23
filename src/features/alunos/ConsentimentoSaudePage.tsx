@@ -4,6 +4,8 @@ import { CircleAlert, CircleCheck, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import logoPP from '@/assets/brand/logo-personal-perto-sm.png'
 import { Button } from '@/components/ui'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
+import { mapearErroSupabase } from '@/lib/erros'
 
 type Estado = 'valido' | 'invalido' | 'expirado' | 'usado' | 'cancelado' | 'confirmado' | 'negado'
 type Resposta = { estado: Estado; nome_aluno?: string; nome_personal?: string }
@@ -17,7 +19,7 @@ const MENSAGENS: Record<'invalido' | 'expirado' | 'usado' | 'cancelado', { titul
 
 async function chamar(token: string, acao: 'consultar' | 'confirmar' | 'negar'): Promise<Resposta> {
   const { data, error } = await supabase.functions.invoke<Resposta>('confirmar-consentimento-saude', { body: { token, acao } })
-  if (error || !data) throw new Error('Não foi possível concluir agora. Tente novamente em instantes.')
+  if (error || !data) throw new ErroAmigavel('Não foi possível concluir agora. Tente novamente em instantes.')
   return data
 }
 
@@ -49,7 +51,7 @@ export function ConsentimentoSaudePage() {
     try {
       setResp(await chamar(token, acao))
     } catch (e) {
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     } finally {
       setEnviando(false)
     }

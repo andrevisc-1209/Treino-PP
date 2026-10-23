@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { enfileirar, lerFila, removerDaFila, type ItemFila } from './filaOffline'
+import { mapearErroSupabase } from '@/lib/erros'
+import { aguardandoEnvio, classificarErroSerie, enfileirar, lerFila, liberarRecusados, marcarRecusado, recusadas, removerDaFila, type ItemFila } from './filaOffline'
 
 type SerieParaFila = {
   sessao_exercicio_id: string
@@ -27,7 +28,7 @@ export function useFilaOffline(sessaoId: string) {
 
   const sincronizar = useCallback(async () => {
     if (sincronizandoRef.current) return
-    const pendentes = lerFila(sessaoId)
+    const pendentes = aguardandoEnvio(lerFila(sessaoId))
     if (pendentes.length === 0) return
     if (typeof navigator !== 'undefined' && !navigator.onLine) return
 
@@ -44,6 +45,9 @@ export function useFilaOffline(sessaoId: string) {
       if (!error) {
         removerDaFila(sessaoId, item.id)
         sincronizouAlgum = true
+      } else if (classificarErroSerie(error) === 'recusado') {
+        // o servidor respondeu e recusou (ex.: assinatura vencida): repetir não adianta. Guarda o motivo e segue com as outras séries.
+        marcarRecusado(sessaoId, item.id, mapearErroSupabase(error))
       } else {
         break // provavelmente ainda sem conexão — o resto fica na fila pra tentar depois
       }
@@ -52,7 +56,7 @@ export function useFilaOffline(sessaoId: string) {
     setFila(restante)
     setSincronizando(false)
     sincronizandoRef.current = false
-    tentativaRef.current = restante.length > 0 ? tentativaRef.current + 1 : 0
+    tentativaRef.current = aguardandoEnvio(restante).length > 0 ? tentativaRef.current + 1 : 0
     if (sincronizouAlgum) qc.invalidateQueries({ queryKey: ['sessao-exercicios', sessaoId] })
   }, [sessaoId, qc])
 
@@ -65,7 +69,7 @@ export function useFilaOffline(sessaoId: string) {
   }, [sessaoId])
 
   useEffect(() => {
-    if (fila.length === 0) return
+    if (aguardandoEnvio(fila).length === 0) return // só séries recusadas: não reenvia sozinho
     const atrasoMs = Math.min(30_000, 2_000 * 2 ** tentativaRef.current)
     const t = setTimeout(sincronizar, atrasoMs)
     return () => clearTimeout(t)
@@ -79,7 +83,20 @@ export function useFilaOffline(sessaoId: string) {
     [sessaoId, sincronizar],
   )
 
+  /** O personal pediu para tentar de novo as séries recusadas (ex.: depois de assinar o plano). */
+  const reenviarRecusadas = useCallback(() => {
+    setFila(liberarRecusados(sessaoId))
+    tentativaRef.current = 0
+    sincronizar()
+  }, [sessaoId, sincronizar])
+
+  /** Descarta as séries recusadas (o personal registra de novo, se quiser). */
+  const descartarRecusadas = useCallback(() => {
+    for (const i of recusadas(lerFila(sessaoId))) removerDaFila(sessaoId, i.id)
+    setFila(lerFila(sessaoId))
+  }, [sessaoId])
+
   const estaPendente = useCallback((sessaoExercicioId: string, setNumber: number) => fila.some((i) => i.sessao_exercicio_id === sessaoExercicioId && i.set_number === setNumber), [fila])
 
-  return { fila, sincronizando, sincronizar, enfileirarSerie, estaPendente }
+  return { fila, aguardando: aguardandoEnvio(fila), recusadas: recusadas(fila), sincronizando, sincronizar, reenviarRecusadas, descartarRecusadas, enfileirarSerie, estaPendente }
 }

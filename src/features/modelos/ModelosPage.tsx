@@ -27,8 +27,10 @@ import {
 } from '@/types/modalidades'
 import { useAplicarItensTemplate, type TemplateTreino } from '@/features/templates/api'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
+import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 
 export function ModelosPage() {
+  const { exigir } = useExigirAssinatura()
   const navigate = useNavigate()
   const { data: modelos, isLoading, error } = useModelos()
   const criar = useCriarModelo()
@@ -80,7 +82,7 @@ export function ModelosPage() {
     }
     duplicar.mutate(
       { modelo: duplicando, novoNome: nomeDuplicado.trim() },
-      { onSuccess: () => setDuplicando(null), onError: (e) => setErroDuplicado((e as Error).message) },
+      { onSuccess: () => setDuplicando(null), onError: (e) => setErroDuplicado(mapearErroSupabase(e)) },
     )
   }
 
@@ -122,13 +124,13 @@ export function ModelosPage() {
             try {
               await aplicarItensTemplate({ tabela: 'modelo_exercicios', modelo_id: id }, modeloMusc)
             } catch (e) {
-              mostrarErroGlobal(`O treino planejado foi criado, mas não deu para adicionar os exercícios do modelo: ${(e as Error).message}`)
+              mostrarErroGlobal(`O treino planejado foi criado, mas não deu para adicionar os exercícios do modelo: ${mapearErroSupabase(e)}`)
             }
           }
           // musculação segue para a escolha de exercícios; as outras modalidades não têm lista de exercícios do app
           if (modalidadeNova === 'musculacao') navigate(`/meus-treinos/planejados/${id}?adicionar=1`)
         },
-        onError: (e) => setErroNovo((e as Error).message),
+        onError: (e) => setErroNovo(mapearErroSupabase(e)),
       },
     )
   }
@@ -168,7 +170,7 @@ export function ModelosPage() {
         tipo_execucao: execucaoEd,
         modalidade_detalhes: montarDetalhes(modalidadeEd, valoresEd, livresEd, blocosEd, estrEd),
       },
-      { onSuccess: () => setRenomeando(null), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setRenomeando(null), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 
@@ -250,7 +252,7 @@ export function ModelosPage() {
         })}
       </ul>
 
-      <Fab onClick={abrirNovo} label="Novo treino planejado" />
+      <Fab onClick={exigir(abrirNovo)} label="Novo treino planejado" />
 
       <BottomSheet open={criando} onClose={() => setCriando(false)} title="Novo treino planejado">
         <div className="space-y-4">

@@ -6,6 +6,7 @@ import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from './Co
 import { payloadDistancia } from './distancia'
 import { validarCobranca } from './cobrancaValidacao'
 import { useAlunoCobranca, useSalvarAlunoCobranca, type AlunoCobranca } from './api'
+import { mapearErroSupabase } from '@/lib/erros'
 
 function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
   return {
@@ -54,7 +55,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
         dias_vencimento: diasVencimento || 0,
         ...payloadDistancia(valor),
       },
-      { onSuccess: () => setEditando(false), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setEditando(false), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 
