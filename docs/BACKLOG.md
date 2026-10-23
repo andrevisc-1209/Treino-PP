@@ -713,3 +713,6 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - **Para mudar classes da landing** é preciso regenerar o CSS embutido: o comando e a configuração estão no comentário no topo do `<head>` do próprio arquivo.
 - ⏳ **Analytics da landing desligado** (PostHog, banner de consentimento, UTM e eventos saíram da versão antiga). Decisão: religar só junto com a atualização da **Política de Privacidade na mesma PR** (hoje ela ainda cita o PostHog na página inicial; exige versão nova e migration de `documentos_versoes`). Consistência legal antes de ter analytics cedo.
 - ⏳ Testar a landing no celular de verdade antes de divulgar (calculadora e botão "Começar grátis").
+
+- ✅ **Mockups em branco removidos (23/10/2026):** os dois quadros vazios (embaixo do hero e ao lado da lista do Sistema) saíram da landing; a lista do Sistema passou para uma coluna única centralizada. Quando houver prints reais do app (com dados fictícios, em AVIF/WebP), entram em celulares no hero e no Sistema. Briefing do item 05 corrigido: **"Briefing das 5h30 no WhatsApp: você acorda sabendo quem treina hoje, a que horas e onde"** (o briefing diário vai para o personal às 5h30, não para o aluno às 8h).
+- Ao regenerar o CSS embutido, trocar só o conteúdo da tag `style` com id "tailwind" (o comentário do topo cita o nome da tag; a tag real é a última ocorrência).
