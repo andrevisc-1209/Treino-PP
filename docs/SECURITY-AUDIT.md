@@ -99,7 +99,7 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 
 ## 🔍 Revisão manual pendente
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
-- **Chave do Google Maps** (`VITE_GOOGLE_MAPS_API_KEY`, pública no bundle): confirmar restrição por referrer a `treino.personalperto.com.br` e só à Places API.
+- ~~**Chave do Google Maps**~~ → feito em 23/10/2026, ver "Chave do Google Maps" em Risco aceito/Corrigido abaixo. Pendente apenas o alerta de orçamento (Faturamento → Orçamentos e alertas).
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.
 - **Limites de quantidade por conta** (alunos/treinos no trial).
 - **Google Places/Maps e Turnstile sob a CSP nova**: validar em produção com o console aberto (um host bloqueado aparece no console e é só acrescentar).
@@ -118,3 +118,12 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 ## Achado: captcha do login por senha não conferido pelo Auth
 
 Em 22/10/2026, `signInWithPassword` direto na API, sem `captchaToken` e com um token falso, retornou apenas `invalid_credentials`: o Supabase Auth não estava conferindo o Turnstile (o widget do app envia o token, mas ninguém o valida no servidor). Quem chama a API direto não passa por captcha no login por e-mail e senha; só valem os limites do Auth. A função `login-cpf` repassa o token ao Auth; a correção de fato é ligar **Authentication → Attack Protection → CAPTCHA** no painel (ver BACKLOG #39). Depois, repetir o teste: sem token o login deve falhar com `captcha_failed`.
+
+
+## Chave do Google Maps (23/10/2026)
+
+- **Corrigido** (painel Google Cloud, chave `PP_chave`, final `…hqxdmKqI`, a que o bundle publicado embute): restrição de aplicativo por referenciador HTTP e restrição de API. Saíram da lista `*.vercel.app/*` (qualquer pessoa podia usar a chave em um app Vercel próprio, na conta do dono), `http://localhost:5173/*` e entradas duplicadas. Restam só sites do dono: `*.personalperto.com.br/*`, `personalperto.com.br/*`, `treino.personalperto.com.br/*`, `personal-perto2.vercel.app/*` e `andrevisc-1209.github.io/andressa-orcamento/*`. APIs permitidas: **Maps JavaScript API** e **Places API** (o app usa só o widget `google.maps.places.Autocomplete`).
+- **Conferido de fora**: a chave recusa uso como web service (`API keys with referer restrictions cannot be used with this API`) e a Geocoding API nem está ativada no projeto. O teste negativo de `localhost` no navegador ficou inconclusivo.
+- **Risco aceito**: a chave é **compartilhada** com outros apps do dono (Personal Perto e orçamento), então um abuso em qualquer um gasta a mesma cota e o alerta de orçamento não separa o gasto. Ao salvar a restrição de API, o Google avisou de **uso ativo da `geocoding-backend`** (a Geocoding API, que o Treino não usa); o dono confirmou a atualização sabendo que algum outro app pode perder a geocodificação. **Reversão**: abrir a chave e marcar de novo Geocoding API em Restrições de API.
+- **Melhoria futura (opcional)**: chave só do Treino (`https://treino.personalperto.com.br/*`, Maps JavaScript + Places), trocando o secret `VITE_GOOGLE_MAPS_API_KEY` no GitHub e refazendo o deploy da Pages.
+- **Aviso do Google**: `google.maps.places.Autocomplete` não está disponível para clientes novos; segue funcionando para quem já tem a chave e sem data de desligamento (12 meses de aviso). Migração futura para `PlaceAutocompleteElement`.
