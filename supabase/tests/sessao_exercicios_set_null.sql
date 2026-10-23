@@ -40,23 +40,23 @@ BEGIN
 
   BEGIN
     UPDATE treino.sessao_exercicios SET notes = 'x' WHERE id = v_sx;
-    v_log := v_log || '(a) FALHA: o UPDATE do cliente ainda é permitido';
+    v_log := array_append(v_log, '(a) FALHA: o UPDATE do cliente ainda é permitido');
   EXCEPTION WHEN insufficient_privilege THEN
-    v_log := v_log || '(a) OK: UPDATE em sessao_exercicios negado ao cliente (42501)';
+    v_log := array_append(v_log, '(a) OK: UPDATE em sessao_exercicios negado ao cliente (42501)');
   END;
 
   BEGIN
     DELETE FROM treino.plano_exercicios WHERE id = v_item;
-    v_log := v_log || '(b) OK: o personal apagou o item do plano sem erro';
+    v_log := array_append(v_log, '(b) OK: o personal apagou o item do plano sem erro');
   EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS v_erro = MESSAGE_TEXT;
-    v_log := v_log || ('(b) FALHA: apagar o item do plano deu erro: ' || v_erro);
+    v_log := array_append(v_log, '(b) FALHA: apagar o item do plano deu erro: ' || v_erro);
   END;
 
   RESET ROLE;
   SELECT plano_exercicio_id INTO v_pe FROM treino.sessao_exercicios WHERE id = v_sx;
-  IF v_pe IS NULL THEN v_log := v_log || '(c) OK: plano_exercicio_id foi anulado pela FK (ON DELETE SET NULL)';
-  ELSE v_log := v_log || '(c) FALHA: plano_exercicio_id continua preenchido'; END IF;
+  IF v_pe IS NULL THEN v_log := array_append(v_log, '(c) OK: plano_exercicio_id foi anulado pela FK (ON DELETE SET NULL)');
+  ELSE v_log := array_append(v_log, '(c) FALHA: plano_exercicio_id continua preenchido'); END IF;
 
   -- A exceção desfaz tudo (REVOKE, plano, sessão...) e entrega o relatório na mensagem.
   RAISE EXCEPTION 'RESULTADO: % | (nada foi gravado)', array_to_string(v_log, ' | ');
