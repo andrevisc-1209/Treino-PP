@@ -177,7 +177,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
                 {item.target_load_kg != null && ` · ${formatarNumero(item.target_load_kg)}kg`}
                 {item.rest_seconds != null && ` · ${item.rest_seconds}s descanso`}
               </p>
-              {item.notes && <p className="text-sm text-slate-400">{item.notes}</p>}
+              {item.notes && <p className="text-sm text-slate-500">{item.notes}</p>}
             </div>
             <button type="button"
               onClick={() => abrirEditarItem(item)}

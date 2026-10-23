@@ -159,7 +159,7 @@ export function LoginPage() {
           </Button>
           <button
             type="button"
-            className="w-full text-sm text-slate-500"
+            className="min-h-11 w-full text-sm text-slate-500"
             onClick={() => {
               setEmailPendente(null)
               setMode('login')
@@ -277,7 +277,7 @@ export function LoginPage() {
           </Button>
           <button
             type="button"
-            className="w-full text-sm text-brand-hover"
+            className="min-h-11 w-full text-sm text-brand-hover"
             onClick={() => {
               setMode('login')
               setMsg(null)
@@ -355,7 +355,7 @@ export function LoginPage() {
           </Field>
         )}
 
-        <SocialLoginButtons />
+        {mode === 'signup' && <SocialLoginButtons />}
 
         {mode === 'signup' && (
           <>
@@ -412,15 +412,18 @@ export function LoginPage() {
         </Button>
 
         {mode === 'login' && (
-          <button type="button" className="w-full text-sm text-slate-500" onClick={() => setMode('recuperar')}>
+          <button type="button" className="min-h-11 w-full text-sm text-slate-500" onClick={() => setMode('recuperar')}>
             Esqueci minha senha
           </button>
         )}
 
+        {/* No login o Google vem depois: o captcha acima do "Entrar" é só da senha (o Google tem a verificação própria). */}
+        {mode === 'login' && <SocialLoginButtons />}
+
         {ALLOW_SIGNUP && (
           <button
             type="button"
-            className="w-full text-sm text-brand-hover"
+            className="min-h-11 w-full text-sm text-brand-hover"
             onClick={() => {
               setMode(mode === 'login' ? 'signup' : 'login')
               setMsg(null)

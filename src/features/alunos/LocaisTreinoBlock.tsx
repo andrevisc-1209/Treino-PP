@@ -36,7 +36,7 @@ export function LocaisTreinoBlock({ alunoId }: { alunoId: string }) {
               <button
                 type="button"
                 onClick={() => remover.mutate(l.id)}
-                className="flex size-9 shrink-0 items-center justify-center rounded-lg text-slate-400 active:bg-slate-200"
+                className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-500 active:bg-slate-200"
                 aria-label={`Remover ${l.nome}`}
               >
                 <X size={16} />
@@ -47,7 +47,7 @@ export function LocaisTreinoBlock({ alunoId }: { alunoId: string }) {
       )}
 
       {atingiuLimite ? (
-        <p className="text-xs text-slate-400">Limite de {LOCAIS_TREINO_MAX} locais atingido.</p>
+        <p className="text-xs text-slate-500">Limite de {LOCAIS_TREINO_MAX} locais atingido.</p>
       ) : (
         <GooglePlacesAutocomplete onSelecionar={handleSelecionar} placeholder="Buscar endereço…" />
       )}

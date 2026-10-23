@@ -446,7 +446,7 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
             className="flex-1 space-y-1.5 text-left disabled:cursor-default"
           >
             <div className={cn('h-1.5 rounded-full', e.n <= etapa ? 'bg-brand' : 'bg-slate-200')} />
-            <span className={cn('text-xs font-medium', e.n === etapa ? 'text-slate-900' : 'text-slate-400')}>
+            <span className={cn('text-xs font-medium', e.n === etapa ? 'text-slate-900' : 'text-slate-500')}>
               {e.n}. {e.label}
             </span>
           </button>
@@ -690,7 +690,7 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-slate-500">Opcional. Você também pode adicionar horários fixos depois, na ficha do aluno.</p>
-              {horariosPendentes.length === 0 && <p className="text-sm text-slate-400">Nenhum horário adicionado ainda.</p>}
+              {horariosPendentes.length === 0 && <p className="text-sm text-slate-500">Nenhum horário adicionado ainda.</p>}
               <ul className="space-y-2">
                 {horariosPendentes.map((h, i) => (
                   <li key={i} className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-3 text-sm">
@@ -698,7 +698,7 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
                     <button
                       type="button"
                       onClick={() => setHorariosPendentes((atual) => atual.filter((_, idx) => idx !== i))}
-                      className="text-xs font-medium text-red-600"
+                      className="min-h-11 px-2 text-xs font-medium text-red-600"
                     >
                       Remover
                     </button>

@@ -12,7 +12,7 @@ const CORES: Record<FaturaStatus, string> = {
   aberta: 'bg-slate-100 text-slate-600',
   enviada: 'bg-amber-50 text-amber-700',
   paga: 'bg-brand-soft text-brand-hover',
-  cancelada: 'bg-slate-100 text-slate-400',
+  cancelada: 'bg-slate-100 text-slate-600',
 }
 
 export function SeloFatura({ status, vencida }: { status: FaturaStatus; vencida?: boolean }) {

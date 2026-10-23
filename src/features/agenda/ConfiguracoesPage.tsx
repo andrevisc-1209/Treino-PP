@@ -211,7 +211,7 @@ export function ConfiguracoesPage() {
                   <Input value={mascararCPF(perfil.cpf)} disabled readOnly className="cursor-not-allowed border-dashed bg-slate-100 pr-10 text-slate-500" />
                   <Lock size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 </div>
-                <p className="text-xs text-slate-400">CPF não editável após o cadastro.</p>
+                <p className="text-xs text-slate-500">CPF não editável após o cadastro.</p>
               </Field>
             )}
             {erros.dados && <p className="text-sm text-red-600">{erros.dados}</p>}
@@ -299,7 +299,7 @@ export function ConfiguracoesPage() {
                 label="Alertas de aulas via WhatsApp"
               />
             </div>
-            <p className="text-xs text-slate-400">Este interruptor salva na hora, sem precisar de “Salvar alterações”.</p>
+            <p className="text-xs text-slate-500">Este interruptor salva na hora, sem precisar de “Salvar alterações”.</p>
             <p className="text-xs text-slate-500">Com ele ligado você recebe no WhatsApp: a agenda e a previsão do dia (8h), o pagamento do seu plano, o aviso de plano vencendo, alunos parados há 10 dias e o resumo da semana (domingo à noite).</p>
             {perfil?.whatsappOptIn && (
               <div className="space-y-2 rounded-xl bg-slate-50 p-3">

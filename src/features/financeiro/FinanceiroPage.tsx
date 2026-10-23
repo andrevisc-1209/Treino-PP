@@ -4,11 +4,12 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
 import { RolagemHorizontal } from '@/components/RolagemHorizontal'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { formatarBRL } from '@/lib/moeda'
 import { hojeSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 import { cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
+import { alunosComCicloParaFechar } from './cicloPendente'
 import { estaVencida, rotuloModelo, SeloFatura } from './rotulos'
 import { recebidoPorMes } from './desempenho'
 import { useAlunosComCobranca, useFaturasTodas, useParticipacoesCobraveisTodas, type Fatura, type FaturaStatus } from './api'
@@ -28,7 +29,7 @@ function CardResumo({ label, valor, qtd }: { label: string; valor: string; qtd: 
     <div className="w-[42%] shrink-0 snap-start rounded-2xl bg-white p-3 shadow-sm md:w-auto md:shrink">
       <p className="text-xs text-slate-500">{label}</p>
       <p className="text-lg font-bold">{valor}</p>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500">
         {qtd} {qtd === 1 ? 'fatura' : 'faturas'}
       </p>
     </div>
@@ -39,7 +40,8 @@ export function FinanceiroPage() {
   const { data: alunosCobranca, isLoading: alunosLoading } = useAlunosComCobranca()
   const { data: faturas, isLoading: faturasLoading } = useFaturasTodas()
   const { data: participacoes } = useParticipacoesCobraveisTodas()
-  const [filtro, setFiltro] = useState<Filtro>('todos')
+  const [params] = useSearchParams()
+  const [filtro, setFiltro] = useState<Filtro>(params.get('filtro') === 'a_fechar' ? 'a_fechar' : 'todos')
   const qc = useQueryClient()
 
   const hoje = hojeSP()
@@ -87,7 +89,14 @@ export function FinanceiroPage() {
   }, [alunosCobranca, faturas, participacoes, hoje])
 
   const recebimentos = useMemo(() => recebidoPorMes(faturas ?? [], hoje, 6), [faturas, hoje])
-  const linhasFiltradas = filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)
+  const idsCicloEncerrado = useMemo(
+    () => new Set(alunosComCicloParaFechar({ cobrancas: alunosCobranca ?? [], faturas: faturas ?? [], participacoes: participacoes ?? [], hoje })),
+    [alunosCobranca, faturas, participacoes, hoje],
+  )
+  // os de ciclo já encerrado vêm primeiro (são os que precisam de ação); o resto mantém a ordem
+  const linhasFiltradas = (filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)).toSorted(
+    (a, b) => Number(idsCicloEncerrado.has(b.alunoId)) - Number(idsCicloEncerrado.has(a.alunoId)),
+  )
 
   return (
     <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
@@ -164,7 +173,15 @@ export function FinanceiroPage() {
                     {l.ultimaFatura && l.estado !== 'a_fechar' ? (
                       <SeloFatura status={l.ultimaFatura.status as FaturaStatus} vencida={l.estado === 'atraso'} />
                     ) : (
-                      <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">A fechar</span>
+                      <span
+                        className={
+                          idsCicloEncerrado.has(l.alunoId)
+                            ? 'shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-900'
+                            : 'shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'
+                        }
+                      >
+                        {idsCicloEncerrado.has(l.alunoId) ? 'Ciclo encerrado' : 'A fechar'}
+                      </span>
                     )}
                   </div>
                   <p className="mt-1 text-sm text-slate-500">

@@ -115,7 +115,7 @@ export function SeletorTipoTreino({
               onClick={() => setAba(id)}
               className={cn('min-h-11 flex-1 rounded-lg px-2 text-sm font-medium', aba === id ? 'bg-white shadow-sm' : 'text-slate-500')}
             >
-              {rotulo} <span className="text-slate-400">({qtd})</span>
+              {rotulo} <span className="text-slate-600">({qtd})</span>
             </button>
           ))}
         </div>

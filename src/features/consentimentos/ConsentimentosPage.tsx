@@ -20,7 +20,7 @@ import {
 } from './utils'
 
 function IconeCanal({ canal }: { canal: CanalEnvio | null }) {
-  if (!canal) return <span className="text-slate-400">—</span>
+  if (!canal) return <span className="text-slate-500">—</span>
   const Icone = canal === 'email' ? Mail : MessageCircle
   const nome = canal === 'email' ? 'E-mail' : 'WhatsApp'
   return (

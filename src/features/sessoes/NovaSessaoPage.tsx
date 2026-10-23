@@ -413,7 +413,7 @@ function NovaSessaoConteudo() {
               if (!temExercicios) {
                 return (
                   <div key={p.id} className="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
-                    <p className="font-medium text-slate-400">{p.name}</p>
+                    <p className="font-medium text-slate-500">{p.name}</p>
                     <Link to={`/alunos/${id}/planos/${p.id}`} className="text-sm font-medium text-brand-hover">
                       Adicione exercícios
                     </Link>
@@ -452,7 +452,7 @@ function NovaSessaoConteudo() {
                         <li key={p.id} className="flex items-center justify-between gap-2 p-4">
                           <div className="min-w-0">
                             <p className="truncate font-medium text-slate-500">{p.name}</p>
-                            <p className="text-sm text-slate-400">{p.plano_exercicios.length} exercícios</p>
+                            <p className="text-sm text-slate-500">{p.plano_exercicios.length} exercícios</p>
                           </div>
                           {temExercicios ? (
                             <Button variant="ghost" onClick={() => ativarEIniciar(p)} disabled={ativarPlano.isPending} className="shrink-0 px-3">
@@ -519,7 +519,7 @@ function NovaSessaoConteudo() {
                         to={`/meus-treinos/planejados/${m.id}`}
                         className="block rounded-2xl bg-white p-4 opacity-70 shadow-sm"
                       >
-                        <p className="font-medium text-slate-400">{m.name}</p>
+                        <p className="font-medium text-slate-500">{m.name}</p>
                         <span className="text-sm font-medium text-brand-hover">Sem exercícios · toque para montar</span>
                       </Link>
                     )

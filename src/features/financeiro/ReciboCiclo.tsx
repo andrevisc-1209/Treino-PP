@@ -248,7 +248,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
           </>
         )}
 
-        <footer className="pt-2 text-center text-xs text-slate-400">
+        <footer className="pt-2 text-center text-xs text-slate-500">
           <p>Emitido em {dataExtensa(hojeSP())}</p>
           <p>Gerado pelo Treino PP</p>
         </footer>

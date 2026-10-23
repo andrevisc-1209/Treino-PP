@@ -140,16 +140,16 @@ export function AlunosPage() {
               <div className="min-w-0">
                 <p className="font-medium">
                   {a.name}
-                  {desambiguar(a) && <span className="ml-1 font-normal text-slate-400">· {desambiguar(a)}</span>}
+                  {desambiguar(a) && <span className="ml-1 font-normal text-slate-500">· {desambiguar(a)}</span>}
                 </p>
                 <p className="text-sm text-slate-500">
                   {[idade(a.birth_date) != null && `${idade(a.birth_date)} anos`, a.injury && 'lesão'].filter(Boolean).join(' · ') ||
-                    'Ficha incompleta'}
+                    'Sem data de nascimento'}
                   {aba === 'ativos' && !idsComCobranca.has(a.id) && (
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Sem valor definido</span>
                   )}
                 </p>
-                {a.objetivos[0] && <p className="truncate text-xs text-slate-400">{a.objetivos[0]}</p>}
+                {a.objetivos[0] && <p className="truncate text-xs text-slate-500">{a.objetivos[0]}</p>}
                 {aba === 'ativos' && ultimasExecucoes?.get(a.id) && (
                   <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                     {MODALIDADES_CONFIG[ultimasExecucoes.get(a.id)!.modalidade].emoji} {rotuloDias(ultimasExecucoes.get(a.id)!.concluido_em)}

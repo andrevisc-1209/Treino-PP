@@ -57,7 +57,7 @@ function SerieRow({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-5 shrink-0 text-center text-sm text-slate-400">{serie.set_number}</span>
+      <span className="w-5 shrink-0 text-center text-sm text-slate-500">{serie.set_number}</span>
       <input
         type="number"
         inputMode="numeric"
@@ -78,7 +78,7 @@ function SerieRow({
           onChange={(e) => setLoad(e.target.value)}
           className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 pr-8 text-center outline-none focus:border-brand"
         />
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">kg</span>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">kg</span>
       </div>
       <button type="button"
         onClick={() => onSalvar({ reps: reps.trim() ? Number(reps) : null, load_kg: load.trim() ? Number(load) : null })}
@@ -89,7 +89,7 @@ function SerieRow({
             ? 'border-amber-400 bg-amber-50 text-amber-600'
             : serie.completed
               ? 'border-brand bg-brand text-white'
-              : 'border-slate-300 bg-white text-slate-400',
+              : 'border-slate-300 bg-white text-slate-500',
         )}
         aria-label={pendente ? `Série ${serie.set_number} pendente de sincronizar` : `Salvar série ${serie.set_number}`}
       >
@@ -195,7 +195,7 @@ function ExercicioBlock({
             {completo && <Check size={16} className="shrink-0 text-brand" />}
           </div>
           {item.exercicio?.muscle_group && <p className="text-sm text-slate-500">{item.exercicio.muscle_group}</p>}
-          {ultimoUso && <p className="text-sm text-slate-400">{ultimoUso}</p>}
+          {ultimoUso && <p className="text-sm text-slate-500">{ultimoUso}</p>}
         </div>
         {completo ? (
           <button type="button" onClick={() => setExpandido(false)} className="flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-2 text-sm text-slate-500 active:bg-slate-100">
@@ -213,7 +213,7 @@ function ExercicioBlock({
 
       <div className="space-y-2">
         {item.sessao_series.length > 0 && (
-          <div className="flex items-center gap-2 px-0.5 text-xs font-medium text-slate-400">
+          <div className="flex items-center gap-2 px-0.5 text-xs font-medium text-slate-500">
             <span className="w-5 shrink-0 text-center">Série</span>
             <span className="w-full min-w-0 text-center">Reps</span>
             <span className="w-full min-w-0 text-center">Carga (kg)</span>

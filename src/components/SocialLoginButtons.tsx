@@ -34,7 +34,7 @@ export function SocialLoginButtons() {
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs text-slate-400">ou</span>
+        <span className="text-xs text-slate-500">ou</span>
         <div className="h-px flex-1 bg-slate-200" />
       </div>
       <button
