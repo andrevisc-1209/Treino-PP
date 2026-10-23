@@ -5,9 +5,9 @@ export const MSG_LIMITE = 'Muitas tentativas. Aguarde alguns minutos e tente de 
 export const MSG_CAPTCHA = 'Não foi possível confirmar que você não é um robô. Tente de novo.'
 
 /** Limites (janela fixa): por IP e por CPF. Passou, responde a mesma mensagem exista o CPF ou não. Não tranca a conta. */
-export const LIMITE_IP = { max: 30, janelaSeg: 3600 }
+export const LIMITE_IP = { max: 100, janelaSeg: 3600 } // folgado: Wi-Fi de academia e CGNAT de operadora juntam vários personais num IP só
 export const LIMITE_CPF = { max: 10, janelaSeg: 900 }
-export const LIMITE_SEM_IP = { max: 100, janelaSeg: 3600 }
+export const LIMITE_SEM_IP = { max: 300, janelaSeg: 3600 }
 
 /** Tempo mínimo (ms, contado desde o início do pedido) de toda falha de credencial: sem isso, "CPF com conta" demora mais que "sem conta" e o tempo revela quem existe. */
 export const PISO_FALHA_MS = 3000

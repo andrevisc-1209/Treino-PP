@@ -634,3 +634,8 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ⚠️ **Achado: o captcha do login por senha não era conferido pelo Supabase Auth** (login direto na API sem token, e com token falso, passou da verificação). A função repassa o token do Turnstile ao Auth, então **só protege de verdade depois de ligar o captcha no painel**: Authentication → Attack Protection → Enable CAPTCHA protection (Turnstile + secret key, colocada por você no painel). Isso também fecha a brecha do login por e-mail e do cadastro.
 - ⚠️ **Ordem:** (1) deploy da função `login-cpf` (`supabase functions deploy login-cpf --project-ref avgrnvpvjhymsrnapfgu`, a partir da main); (2) merge; (3) testar o login com CPF; (4) só então ligar o captcha no Auth e conferir de novo o login (e-mail e CPF) e o cadastro. Efeito colateral de (4): scripts de teste que entram por senha sem token deixam de funcionar.
 - Sem migration.
+
+
+## 40. login-cpf: limite por IP mais folgado
+
+- ✅ O limite por IP do login com CPF subiu de 30 para **100 por hora** (sem IP identificado: 300). Em Wi-Fi de academia/estúdio e CGNAT de operadora vários personais saem pelo mesmo IP e se bloqueavam sem culpa (os testes ao vivo esgotaram os 30 do IP e o celular do dono, na mesma rede, recebeu "Muitas tentativas"). A proteção de cada conta continua no limite por CPF (10 em 15 min). Redeploy da função `login-cpf`; sem migration.

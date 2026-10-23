@@ -76,8 +76,8 @@ describe('piso de tempo das falhas', () => {
 })
 
 describe('limites', () => {
-  it('estão definidos e são mais folgados por IP que por CPF/hora', () => {
+  it('por CPF protege a conta (10 em 15 min); por IP é folgado para rede compartilhada (100/h)', () => {
     expect(LIMITE_CPF).toEqual({ max: 10, janelaSeg: 900 })
-    expect(LIMITE_IP).toEqual({ max: 30, janelaSeg: 3600 })
+    expect(LIMITE_IP).toEqual({ max: 100, janelaSeg: 3600 })
   })
 })
