@@ -703,3 +703,13 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ Ao salvar um horário fixo (cadastro do aluno, ficha do aluno e edição) que cruza com outro já existente, aparece a confirmação **"Horário já ocupado"** (`ConfirmSheet`) listando os horários que cruzam, com dia, hora e quem está neles ("Seg 07:00 (Paulo Henrique)"), e os botões **Cancelar** e **Salvar mesmo assim**. Antes só havia um aviso amarelo dentro da folha e o Salvar gravava direto. O aviso amarelo agora lista todos os conflitos (não só o primeiro) e avisa que vai pedir confirmação. `conflitosDoHorario` e `descreverConflitos` são puros, com testes (`conflitos.test.ts`).
 - Limite conhecido: no cadastro de um aluno novo, os horários ainda não salvos do próprio aluno não entram na comparação (só os já existentes do personal).
+
+
+## 50. Landing nova (blocos 1–6) e desempenho
+
+- ✅ `public/landing.html` reescrita (PR #153): Hero, O Caos, O Sistema, O aluno vê a curva, A Conta (calculadora + preços) e Fechamento, com GSAP + ScrollTrigger + Lenis (só com `pointer: fine`) e hashes SRI; `prefers-reduced-motion` ou falha dos CDNs deixam tudo no estado final. Selo do **semestral = "Melhor valor"** (igual ao app; "Mais popular" implicaria dado social que não existe). O gráfico leva "(exemplo)" no rótulo.
+- ✅ **Desempenho:** a medição em produção (Lighthouse mobile, Slow 4G simulado) deu **LCP 2,7–2,8 s** (meta: 2,5 s; desempenho 90–92), por causa do Tailwind via CDN play (script de ~124 KB que bloqueia a tela e gera o CSS no navegador). O CSS foi **compilado (Tailwind 3.4.17, mesmos tokens) e embutido** no HTML: **0 diferenças** de estilo em 154 elementos × 39 propriedades, a 1280 px e a 375 px, contra a versão do CDN. Medição local depois da troca: **LCP 1,8 s, desempenho 99, acessibilidade 100, boas práticas 100**. Também ganhou os ícones de aba (antes pedia `/favicon.ico` e dava 404 no console).
+- ⏳ **Re-medir em produção depois do deploy** (Lighthouse → Mobile → Slow 4G). Regra combinada: se o LCP ficar **≤ 2,5 s**, a migração para o Astro espera até haver mais blocos para migrar de uma vez; se passar de 2,5 s, ela sobe para a próxima sprint.
+- **Para mudar classes da landing** é preciso regenerar o CSS embutido: o comando e a configuração estão no comentário no topo do `<head>` do próprio arquivo.
+- ⏳ **Analytics da landing desligado** (PostHog, banner de consentimento, UTM e eventos saíram da versão antiga). Decisão: religar só junto com a atualização da **Política de Privacidade na mesma PR** (hoje ela ainda cita o PostHog na página inicial; exige versão nova e migration de `documentos_versoes`). Consistência legal antes de ter analytics cedo.
+- ⏳ Testar a landing no celular de verdade antes de divulgar (calculadora e botão "Começar grátis").
