@@ -592,7 +592,7 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 32. Aviso no consentimento declarado pelo personal
 
 - ✅ O botão "O aluno já consentiu pessoalmente ou por escrito" pede confirmação explícita (a prova é do personal), grava `method = 'papel'` e a ficha mostra quem registrou o consentimento (aluno pelo link × declarado por você × antigo).
-- ⏳ Jurídico: conferir a cláusula dos Termos de Uso sobre o consentimento colhido fora da plataforma.
+- ✅ Jurídico: cláusula dos Termos sobre o consentimento colhido fora da plataforma — ver #37.
 
 
 ## 33. Correção: erro do reset de senha do admin aparecia genérico e duplicado
@@ -610,6 +610,12 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ A `admin-actions` liberava só `authorization, content-type` na pré-checagem CORS; o supabase-js também manda `apikey` e `x-client-info`, então o navegador bloqueava o POST (a função só recebia o OPTIONS, sem nenhum erro no log) e o painel mostrava o texto de reserva "Não foi possível enviar o e-mail de redefinição.". Lista corrigida (igual à das outras funções) e teste que exige os quatro cabeçalhos em toda função com CORS.
 
+
+## 37. Termos e Política: consentimento colhido fora da plataforma
+
+- ✅ Os Termos (3.1) diziam que o consentimento era obtido "pelo link gerado pela plataforma" e o 3.2 que a plataforma registrava o aceite de cada aluno com IP, o que não vale para a opção "termo em papel". **Termos 1.2**: o link é o caminho preferencial, mas o termo escrito colhido e guardado pelo personal é admitido (3.1); nova cláusula 3.2.1 (a plataforma só registra a declaração do personal, sem verificar o documento; a prova, a guarda e a apresentação à ANPD/aluno são do personal; a plataforma não guarda cópia). **Política 1.5**: mesma distinção em "dados de saúde" e "mecanismo de consentimento".
+- ⚠️ **Rodar a migration `20261054000000_versoes_termos_consentimento_externo.sql` no SQL Editor ANTES do merge** (registra as versões 1.2 e 1.5; sem ela o cadastro novo é recusado).
+- Redação é minuta do desenvolvimento: a aprovação final é do jurídico. Não existe re-aceite forçado: quem já tem conta continua com o aceite da versão antiga; só cadastros e convites novos aceitam a 1.2/1.5.
 
 ## 36. Aviso de demora na confirmação do segundo fator (admin)
 
