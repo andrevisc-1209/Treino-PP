@@ -658,4 +658,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ `CRON_SECRET` trocado em 23/10/2026: valor novo gerado direto para a área de transferência (nunca impresso), gravado nas Edge Functions (`supabase secrets set`) e no Vault (`vault.update_secret` no nome `cron_secret`). Conferido de ponta a ponta: o banco chamou `aviso-treino-concluido` lendo o segredo do Vault e a função respondeu 200. A sem cabeçalho dá 401.
 - Procedimento para a próxima troca: gerar com `openssl rand -hex 32 | pbcopy`, gravar com `"$(pbpaste)"` e colar no SQL do Vault com Cmd+V; provar com `net.http_post` lendo do Vault + `net._http_response`. **Nunca rodar o `openssl` sem `| pbcopy`**: o valor impresso fica no histórico do terminal e do chat (aconteceu uma vez nesta rotação e o valor foi descartado).
-- ⏳ Pendentes de painel (dono): restringir a chave do Google Maps (referenciador `treino.personalperto.com.br/*`, só Places/Maps JavaScript, alerta de orçamento) e checar a exposição da Evolution API (`/manager` e `/docs` sem chave, chave global fora do padrão, porta direta fechada).
+- ⏳ Pendentes de painel (dono): checar a exposição da Evolution API (`/manager` e `/docs` sem chave, chave global fora do padrão, porta direta fechada), criar o alerta de orçamento do Google Cloud e olhar o aviso do OAuth "Personal Perto". A chave do Google Maps está feita (ver #44).
+
+
+## 44. Chave do Google Maps restrita
+
+- ✅ A chave `VITE_GOOGLE_MAPS_API_KEY` agora só vale nos sites do dono (saíram `*.vercel.app/*`, `localhost` e duplicados) e só para **Maps JavaScript API** + **Places API**. Detalhes, risco aceito (chave compartilhada com outros apps; Geocoding API removida, com reversão simples) e a melhoria futura (chave só do Treino) no `docs/SECURITY-AUDIT.md`, seção "Chave do Google Maps".
+- ⏳ Alerta de orçamento (Faturamento → Orçamentos e alertas) ainda a criar. Conferir no site a busca de endereço do cadastro de local do aluno.
