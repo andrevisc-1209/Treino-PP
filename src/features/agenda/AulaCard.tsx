@@ -60,7 +60,7 @@ export function AulaCard({
             {p.aluno?.name ?? 'Aluno'}
           </span>
         ))}
-        {nomes.length === 0 && <span className="text-sm text-slate-400">Sem participantes</span>}
+        {nomes.length === 0 && <span className="text-sm text-slate-500">Sem participantes</span>}
       </div>
 
       {aula.local && (

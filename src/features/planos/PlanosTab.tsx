@@ -307,7 +307,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
             <li key={p.id} className="rounded-2xl bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <Link to={`/alunos/${alunoId}/planos/${p.id}`} className="min-w-0 flex-1">
-                  <p className={`font-medium ${!p.active ? 'text-slate-400' : ''}`}>
+                  <p className={`font-medium ${!p.active ? 'text-slate-500' : ''}`}>
                     {p.name}
                     {!p.active && <span className="ml-2 text-xs font-normal">(inativo)</span>}
                   </p>
@@ -390,7 +390,7 @@ export function PlanosTab({ alunoId }: { alunoId: string }) {
               return (
                 <li key={m.id}>
                   <Link to={`/meus-treinos/planejados/${m.id}`} onClick={fecharNovo} className="block rounded-xl px-3 py-3 opacity-70 active:bg-slate-100">
-                    <p className="font-medium text-slate-400">{m.name}</p>
+                    <p className="font-medium text-slate-500">{m.name}</p>
                     <span className="text-sm font-medium text-brand-hover">Sem exercícios · toque para montar</span>
                   </Link>
                 </li>

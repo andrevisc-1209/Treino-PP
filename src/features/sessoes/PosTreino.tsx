@@ -178,7 +178,7 @@ function TreinoConcluidoResumo({
             { icone: <Clock size={18} />, valor: `${resumo.duracaoMin}`, label: 'minutos' },
           ].map((m) => (
             <div key={m.label} className="flex flex-col items-center gap-0.5">
-              <span className="text-slate-400" aria-hidden>
+              <span className="text-slate-500" aria-hidden>
                 {m.icone}
               </span>
               <p className="text-xl font-bold leading-tight">{m.valor}</p>
@@ -497,7 +497,7 @@ export function PosTreino({
         <div className="rounded-2xl bg-slate-100 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5">
             <p className="text-sm text-slate-500">Carga interna</p>
-            <button type="button" onClick={() => setExplicarCarga(true)} aria-label="O que é carga interna?" className="flex size-6 items-center justify-center text-slate-400">
+            <button type="button" onClick={() => setExplicarCarga(true)} aria-label="O que é carga interna?" className="flex size-6 items-center justify-center text-slate-500">
               <Info size={14} />
             </button>
           </div>

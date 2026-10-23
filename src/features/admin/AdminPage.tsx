@@ -216,7 +216,7 @@ function AdminDashboard() {
                 ))}
                 {listaFiltrada.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-slate-400">
+                    <td colSpan={7} className="py-6 text-center text-slate-500">
                       Nenhum personal encontrado.
                     </td>
                   </tr>
@@ -254,7 +254,7 @@ function AdminDashboard() {
                 </div>
               </div>
             ))}
-            {listaFiltrada.length === 0 && <p className="py-6 text-center text-sm text-slate-400">Nenhum personal encontrado.</p>}
+            {listaFiltrada.length === 0 && <p className="py-6 text-center text-sm text-slate-500">Nenhum personal encontrado.</p>}
           </div>
         </div>
 
@@ -279,7 +279,7 @@ function AdminDashboard() {
                 ))}
                 {(regioes.data ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={2} className="py-6 text-center text-slate-400">
+                    <td colSpan={2} className="py-6 text-center text-slate-500">
                       Nenhum personal com cidade cadastrada ainda.
                     </td>
                   </tr>
@@ -296,7 +296,7 @@ function AdminDashboard() {
 }
 
 function StatusBadge({ status }: { status: StatusAssinatura | null }) {
-  if (!status) return <span className="text-slate-400">—</span>
+  if (!status) return <span className="text-slate-500">—</span>
   return <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${BADGE_STATUS[status]}`}>{ROTULO_STATUS[status]}</span>
 }
 
@@ -425,7 +425,7 @@ function BotaoAcao({ icone, label, onClick }: { icone: ReactNode; label: string;
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition-colors active:bg-slate-100"
+      className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition-colors active:bg-slate-100"
     >
       {icone} {label}
     </button>

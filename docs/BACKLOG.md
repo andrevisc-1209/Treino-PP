@@ -687,4 +687,13 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **Erros crus:** 29 pontos que mostravam `(e as Error).message` passaram para `mapearErroSupabase`; mensagens já escritas em português viraram `ErroAmigavel` (para o mapeador não trocá-las por um genérico). `src/lib/semErroCru.test.ts` falha se alguém voltar a exibir a mensagem crua.
 - ✅ **Revisão do cadastro de aluno:** a etapa 5 passou a mostrar **Horários** (antes só Dados, Cobrança e Saúde), com Editar para voltar à etapa 4.
 - ✅ **Vocabulário:** "Nota do professor" e "Avaliação do professor" viraram "Personal" (`SessaoPage`).
-- ⏳ Parte 2/2 (visual e acessibilidade): login (links de 44 px e captcha acima do "Entrar"), contraste do `slate-400`, "Ficha incompleta" com o motivo, card em Hoje com ciclos a fechar e alvos de 32/24 px.
+- ✅ Parte 2/2: ver #48.
+
+
+## 48. UX 2/2: visual, acessibilidade e aviso de ciclos (auditoria de UX de 23/10/2026)
+
+- ✅ **Login:** "Esqueci minha senha", "Não tem conta? Criar", "Já tenho conta" e "Voltar para o login" passaram de 20 px para 44 px de altura; no login o captcha fica logo acima de "Entrar" e o Google vem depois (separado por "ou"), porque o captcha é só da senha. No cadastro a ordem não mudou. Medido a 375px: nenhum elemento do formulário abaixo de 44 px.
+- ✅ **Contraste:** 43 textos em `text-slate-400` (~2,6:1) passaram para `slate-500` (4,8:1) ou `slate-600` (sobre fundo `slate-100`); `slate-400` ficou só em ícone decorativo. Teste novo em `src/lib/contraste.test.ts` falha se texto voltar a usar `slate-400`.
+- ✅ **"Ficha incompleta"** na lista de alunos agora diz o que falta: "Sem data de nascimento" (é a única condição que a mostrava).
+- ✅ **Hoje:** aviso curto "N alunos com ciclo de cobrança para fechar" (sem lista) que leva ao Financeiro já com o filtro "A fechar". Só conta ciclo **já encerrado** sem fatura (por aula: precisa haver aula cobrável não faturada; mensal: o aluno já tem fatura; fatura cancelada não conta): `src/features/financeiro/cicloPendente.ts`, com testes. No Financeiro essas linhas ganham a etiqueta âmbar "Ciclo encerrado" e vêm primeiro; o filtro "A fechar" continua incluindo também o ciclo em andamento.
+- ✅ **Alvos de toque:** botões do painel admin (32 → 44 px), fechar do aviso de instalar o app (24 → 44 px), lixeira dos locais de treino (36 → 44 px) e "Remover" dos horários do cadastro.

@@ -44,7 +44,7 @@ export function OnboardingChecklist() {
               to={p.to}
               className={cn(
                 'flex min-h-11 items-center justify-between gap-2 py-2',
-                p.feito ? 'text-slate-400' : 'text-slate-900 active:bg-slate-50',
+                p.feito ? 'text-slate-500' : 'text-slate-900 active:bg-slate-50',
               )}
             >
               <span className={cn('flex items-center gap-2 text-sm', p.feito && 'line-through')}>

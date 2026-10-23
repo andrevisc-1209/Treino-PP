@@ -229,7 +229,7 @@ export function ExerciciosPage() {
             onClick={() => trocarOrigem(valor)}
             className={cn('min-h-11 flex-1 rounded-lg px-2 text-sm font-medium transition', origem === valor ? 'bg-brand text-white' : 'text-slate-600 active:bg-slate-100')}
           >
-            {rotulo} <span className={origem === valor ? 'text-white/80' : 'text-slate-400'}>({qtd})</span>
+            {rotulo} <span className={origem === valor ? 'text-white/80' : 'text-slate-600'}>({qtd})</span>
           </button>
         ))}
       </div>

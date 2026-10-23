@@ -69,7 +69,7 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
                 {nomeDiaCurto(d)}, {formatarDataCurta(d)} · {doDia.length} {doDia.length === 1 ? 'aula' : 'aulas'}
               </p>
               {doDia.length === 0 ? (
-                <p className="text-sm text-slate-400">—</p>
+                <p className="text-sm text-slate-500">—</p>
               ) : (
                 <div className="space-y-2">
                   {doDia.map((a) => (

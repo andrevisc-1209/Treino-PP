@@ -56,7 +56,7 @@ export function ConsentimentosSection() {
         </div>
       </div>
 
-      {isLoading && <p className="py-4 text-center text-sm text-slate-400">Carregando…</p>}
+      {isLoading && <p className="py-4 text-center text-sm text-slate-500">Carregando…</p>}
       {error && <p className="py-4 text-sm text-red-600">{mapearErroSupabase(error)}</p>}
 
       {data && (
@@ -114,7 +114,7 @@ export function ConsentimentosSection() {
             ))}
           </div>
 
-          {lista.length === 0 && <p className="py-6 text-center text-sm text-slate-400">Nenhum personal encontrado.</p>}
+          {lista.length === 0 && <p className="py-6 text-center text-sm text-slate-500">Nenhum personal encontrado.</p>}
         </>
       )}
     </div>

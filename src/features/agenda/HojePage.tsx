@@ -10,6 +10,7 @@ import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { OnboardingChecklist } from '@/features/onboarding/OnboardingChecklist'
+import { CiclosParaFecharCard } from './CiclosParaFecharCard'
 import { PixCard } from './PixCard'
 import { ResumoSemAulas } from './ResumoSemAulas'
 import { ClimaCard } from '@/components/ClimaCard'
@@ -76,6 +77,7 @@ export function HojePage() {
       </header>
 
       <OnboardingChecklist />
+      <CiclosParaFecharCard />
       <ClimaCard />
       <PixCard />
       <AtividadeRecente />

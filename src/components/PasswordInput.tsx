@@ -14,7 +14,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HT
       <button
         type="button"
         onClick={() => setVisivel((v) => !v)}
-        className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-slate-400"
+        className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-slate-500"
         aria-label={visivel ? 'Ocultar senha' : 'Mostrar senha'}
         tabIndex={-1}
       >

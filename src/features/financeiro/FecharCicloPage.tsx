@@ -177,7 +177,7 @@ export function FecharCicloPage() {
                       className="size-5 shrink-0 accent-brand"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className={cn('text-sm font-medium', !incluidos[item.id] && 'text-slate-400 line-through')}>
+                      <p className={cn('text-sm font-medium', !incluidos[item.id] && 'text-slate-500 line-through')}>
                         {item.aula ? rotuloAulaCiclo(item.aula.starts_at, item.aula.duration_min, item.aula.tipo === 'distancia') : '—'}
                       </p>
                       <p className="text-xs text-slate-500">

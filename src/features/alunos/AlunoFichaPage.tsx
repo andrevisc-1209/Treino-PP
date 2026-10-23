@@ -110,7 +110,7 @@ function NovaAvaliacaoForm({ alunoId, alturaCm, onDone }: { alunoId: string; alt
         <Input type="number" step="0.1" inputMode="decimal" value={gordura} onChange={(e) => setGordura(e.target.value)} />
       </Field>
       {alturaCm ? (
-        <p className="text-xs text-slate-400">Altura cadastrada: {alturaCm} cm — usada pra calcular o IMC na aba Evolução.</p>
+        <p className="text-xs text-slate-500">Altura cadastrada: {alturaCm} cm — usada pra calcular o IMC na aba Evolução.</p>
       ) : (
         <p className="text-xs text-amber-600">Sem altura cadastrada — edite o aluno pra poder calcular o IMC.</p>
       )}
@@ -159,7 +159,7 @@ function AvaliacaoItem({ peso }: { peso: Peso }) {
       {aberto && (
         <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-lg bg-slate-50 p-2 text-xs text-slate-600">
           {detalhes.length === 0 ? (
-            <span className="col-span-2 text-slate-400">Sem medidas adicionais nesta avaliação.</span>
+            <span className="col-span-2 text-slate-500">Sem medidas adicionais nesta avaliação.</span>
           ) : (
             detalhes.map((d) => (
               <span key={d.label}>
@@ -347,7 +347,7 @@ export function AlunoFichaPage() {
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-600">
                 Consentimento LGPD v{consentimento.consent_version} em {formatarDataBR(consentimento.consented_at)} · {rotuloMetodoConsentimento(consentimento.method)}
-                {consentimento.method === 'papel' && <span className="mt-0.5 block text-xs text-slate-400">{LEMBRETE_PROVA_CONSENTIMENTO}</span>}
+                {consentimento.method === 'papel' && <span className="mt-0.5 block text-xs text-slate-500">{LEMBRETE_PROVA_CONSENTIMENTO}</span>}
               </p>
               <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
                 Revogar
