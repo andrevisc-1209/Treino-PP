@@ -14,6 +14,7 @@ const REVOGADOS: Record<string, string[]> = {
   professional_config: ['delete'],
   aluno_locais_treino: ['update'],
   horario_alunos: ['update'],
+  sessao_exercicios: ['update'], // migration 20261056 (a FK ON DELETE SET NULL anula plano_exercicio_id sem precisar do grant)
 }
 
 function arquivosTs(dir: string): string[] {
@@ -41,11 +42,14 @@ describe('grants mínimos (etapa 2): o app não usa o que foi revogado', () => {
 
   it('nenhum .update/.delete/.upsert do front nas tabelas/verbos revogados', () => expect(usos).toEqual([]))
 
-  it('a migration revoga exatamente a lista combinada', () => {
-    const sql = fs.readFileSync(path.join(import.meta.dirname, 'migrations', '20261055000000_grants_minimos_etapa2.sql'), 'utf8').replace(/--[^\n]*/g, '')
+  it('as migrations de grants (etapa 2) revogam exatamente a lista combinada', () => {
+    const arquivos = ['20261055000000_grants_minimos_etapa2.sql', '20261056000000_grants_sessao_exercicios.sql']
     const revogados: Record<string, string[]> = {}
-    for (const m of sql.matchAll(/REVOKE\s+([A-Z, ]+?)\s+ON\s+treino\.(\w+)\s+FROM\s+authenticated/g)) {
-      revogados[m[2]] = m[1].split(',').map((v) => v.trim().toLowerCase())
+    for (const arquivo of arquivos) {
+      const sql = fs.readFileSync(path.join(import.meta.dirname, 'migrations', arquivo), 'utf8').replace(/--[^\n]*/g, '')
+      for (const m of sql.matchAll(/REVOKE\s+([A-Z, ]+?)\s+ON\s+treino\.(\w+)\s+FROM\s+authenticated/g)) {
+        revogados[m[2]] = [...(revogados[m[2]] ?? []), ...m[1].split(',').map((v) => v.trim().toLowerCase())]
+      }
     }
     expect(revogados).toEqual(REVOGADOS)
   })
