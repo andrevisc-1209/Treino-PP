@@ -4,13 +4,14 @@
 // O CPF é resolvido para o e-mail AQUI, no servidor: o e-mail nunca volta ao navegador e nenhuma resposta diz se o CPF existe.
 // Qualquer falha de credencial (CPF sem conta, senha errada, conta só do Google, e-mail não confirmado) devolve a MESMA resposta (401).
 // Captcha: o token do Turnstile é repassado ao Supabase Auth, que o confere (Dashboard > Auth > Attack Protection).
+// Tempo: falha de credencial responde só depois de PISO_FALHA_MS (o tempo não revela se o CPF existe).
 // Limites: por IP e por CPF, janela fixa, falha FECHADA. Só atrasam: não trancam a conta (ninguém tranca o personal só sabendo o CPF).
 // Nunca logar CPF, e-mail ou senha.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { verificarLimite } from '../_shared/rateLimit.ts'
 import { ipDoCliente } from '../_shared/consentimento.ts'
-import { classificarErroAuth, falhaLogin, LIMITE_CPF, LIMITE_IP, LIMITE_SEM_IP, lerPedido, MSG_LIMITE, type FalhaLogin } from '../_shared/loginCpf.ts'
+import { classificarErroAuth, esperaAteOPiso, falhaLogin, LIMITE_CPF, LIMITE_IP, LIMITE_SEM_IP, lerPedido, MSG_LIMITE, type FalhaLogin } from '../_shared/loginCpf.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
 // localhost só se ALLOW_LOCALHOST_CORS=true (nunca definido em produção).
@@ -33,6 +34,7 @@ function json(req: Request, body: unknown, status = 200) {
 const falha = (req: Request, f: FalhaLogin) => json(req, f.corpo, f.status)
 
 Deno.serve(async (req) => {
+  const inicio = Date.now()
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors(req) })
   if (req.method !== 'POST') return json(req, { error: 'Método não permitido.' }, 405)
 
@@ -68,6 +70,8 @@ Deno.serve(async (req) => {
   if (error || !data.session || !personal?.email) {
     const destino = error ? classificarErroAuth(error) : 'credenciais'
     if (error && destino === 'credenciais' && error.code !== 'invalid_credentials' && error.code !== 'email_not_confirmed') console.error('login-cpf: erro inesperado do Auth', error.status, error.code)
+    // Falha de credencial só responde depois do piso de tempo: existe/não existe levam o mesmo tempo (e adiar ajuda contra adivinhação).
+    if (destino === 'credenciais') await new Promise((r) => setTimeout(r, esperaAteOPiso(Date.now() - inicio)))
     return falha(req, falhaLogin(destino))
   }
 
