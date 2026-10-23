@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classificarErroAuth, cpfValido, falhaLogin, lerPedido, LIMITE_CPF, LIMITE_IP, MSG_CREDENCIAIS, normalizarCpf } from './loginCpf'
+import { classificarErroAuth, cpfValido, falhaLogin, lerPedido, LIMITE_CPF, esperaAteOPiso, LIMITE_IP, MSG_CREDENCIAIS, PISO_FALHA_MS, normalizarCpf } from './loginCpf'
 
 const CPF = '52998224725' // válido (dígitos verificadores corretos)
 
@@ -63,6 +63,16 @@ describe('resposta uniforme', () => {
     expect(falhaLogin('captcha').status).toBe(400)
     expect(falhaLogin('limite').status).toBe(429)
   })
+})
+
+describe('piso de tempo das falhas', () => {
+  it('completa até o piso e nunca espera negativo', () => {
+    expect(esperaAteOPiso(0)).toBe(PISO_FALHA_MS)
+    expect(esperaAteOPiso(1200)).toBe(PISO_FALHA_MS - 1200)
+    expect(esperaAteOPiso(PISO_FALHA_MS + 500)).toBe(0)
+    expect(esperaAteOPiso(-50)).toBe(PISO_FALHA_MS)
+  })
+  it('o piso fica acima do caminho lento observado em produção (~2,4 s)', () => expect(PISO_FALHA_MS).toBeGreaterThanOrEqual(2800))
 })
 
 describe('limites', () => {
