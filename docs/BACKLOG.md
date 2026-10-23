@@ -671,3 +671,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ Conferido de fora, sem credencial (detalhes no `docs/SECURITY-AUDIT.md`): a API exige chave (`401`), `/docs` e `/swagger` não existem (`404`), o HTTP redireciona para HTTPS e a porta direta não responde. Públicos por desenho da Evolution: a página inicial (mostra a versão) e a tela de login do `/manager/`.
 - ⏳ **Dono, no Railway (Variables)**: (1) `AUTHENTICATION_API_KEY` aleatória e longa, não de exemplo — é a defesa real, já que o gerenciador é público; (2) sem TCP Proxy configurado. Manter a Evolution atualizada.
+
+
+## 46. Modo leitura: iniciar treino leva à escolha do plano
+
+- ✅ Com a assinatura vencida o servidor já barra as gravações (migration 20261052), mas o app deixava a pessoa percorrer o fluxo de iniciar treino (prontidão, escolha do plano) e só no fim aparecia o erro técnico do banco (`new row violates row-level security policy "assinatura_ativa_insert" for table "planos"`). Agora `NovaSessaoPage` é protegida por `useModoLeitura`: em modo leitura mostra a tela "Para iniciar um treino, assine o plano" (`BloqueioAssinatura`) já com a escolha do plano aberta e botão Voltar. Todos os caminhos para iniciar (Hoje, Agenda, ficha e lista de alunos, plano) passam por essa rota, então um guarda cobre todos.
+- ✅ O erro da policy `assinatura_ativa_*` deixa de aparecer cru: `mapearErroSupabase` devolve "Assine o plano para fazer esta alteração. Suas informações continuam disponíveis para consulta." (texto central em `ERROS.ASSINATURA.modoLeitura`) e a `NovaSessaoPage` passou a usar o mapeador nos 5 pontos que mostravam `error.message` direto.
+- Não coberto (por escolha): retomar uma sessão já em andamento e outras ações de gravação (novo aluno, novo treino...) continuam abrindo e, ao gravar, mostram a mensagem acima. Dá para estender o mesmo guarda a essas telas se for desejado.

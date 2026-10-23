@@ -13,6 +13,11 @@ describe('mapearErroSupabase', () => {
   it('mapeia RLS/permissão pelo code do Postgres', () => {
     expect(mapearErroSupabase({ code: '42501', message: 'permission denied for table x' })).toMatch(/permissão/i)
   })
+  it('barra por assinatura vencida: texto próprio, sem o nome da policy', () => {
+    const msg = mapearErroSupabase({ code: '42501', message: 'new row violates row-level security policy "assinatura_ativa_insert" for table "planos"' })
+    expect(msg).toBe(ERROS.ASSINATURA.modoLeitura)
+    expect(msg).not.toMatch(/policy|row-level/i)
+  })
   it('mapeia duplicidade (unique constraint)', () => {
     expect(mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint' })).toMatch(/já existe/i)
   })
