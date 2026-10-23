@@ -645,3 +645,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 
 - ✅ Com o captcha ligado no Auth (#39), o cadastro mostrava "Verificação de segurança falhou. Recarregue a página e tente de novo." O token do Turnstile vale para **uma única verificação** e o widget não era reiniciado: depois do primeiro envio (com sucesso ou erro) ele seguia mostrando "Sucesso!" com um token gasto, e o reenvio ia sem token. Agora o `Turnstile` aceita `reiniciar` e a tela do login pede token novo após cada uso (login por e-mail, por CPF, cadastro, reenvio de confirmação e recuperar senha). E, com o captcha ativo, o envio sem token mostra "Aguarde a verificação de segurança terminar…" em vez de chamar a rede e errar.
 - Se, numa página recém-carregada e na PRIMEIRA tentativa, o erro continuar, é configuração: conferir no painel do Supabase (Attack Protection) se a Secret key é a do MESMO widget Turnstile cuja Site key está em `VITE_TURNSTILE_SITE_KEY` e se o domínio treino.personalperto.com.br está nos hostnames do widget na Cloudflare.
+
+
+## 42. Grants: UPDATE de sessao_exercicios (fecha a etapa 2)
+
+- ✅ Migration `20261056000000_grants_sessao_exercicios.sql` revoga UPDATE de `authenticated` em `sessao_exercicios`. Os 11 updates das estatísticas eram a FK `plano_exercicio_id ON DELETE SET NULL` (apagar item do plano anula a referência): ação de chave estrangeira, roda com o privilégio do dono e não precisa do grant do cliente; o app nunca atualiza a tabela. `supabase/tests/sessao_exercicios_set_null.sql` prova isso numa transação com ROLLBACK (UPDATE do cliente negado + apagar item do plano continua funcionando e anula a referência).
+- ⚠️ **Rodar o teste SQL e depois a migration no SQL Editor ANTES do merge.**
