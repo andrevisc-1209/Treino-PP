@@ -11,6 +11,9 @@ import { APP_NAME, APP_URL } from '@/config/app'
 import { Turnstile } from '@/components/Turnstile'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import { mapearErroAuth } from '@/lib/errosAuth'
+import { formatarIdentificador, identificadorValido, tipoIdentificador } from './identificador'
+import { entrarComCpf } from './loginCpf'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
@@ -28,7 +31,7 @@ const REENVIO_ESPERA_SEGUNDOS = 60
 function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
   const base = z.object({
     name: mode === 'signup' ? z.string().min(1, 'Nome é obrigatório') : z.string().optional(),
-    email: z.string().email('E-mail inválido'),
+    email: mode === 'login' ? z.string().refine(identificadorValido, 'Informe um e-mail ou CPF válido') : z.string().email('E-mail inválido'),
     password:
       mode === 'signup'
         ? z
@@ -157,6 +160,15 @@ export function LoginPage() {
 
   const onSubmit = async (f: Form) => {
     setMsg(null)
+    if (mode === 'login' && tipoIdentificador(f.email) === 'cpf') {
+      try {
+        await entrarComCpf(f.email, f.password, captchaToken)
+      } catch (e) {
+        setMsg(e instanceof ErroAmigavel ? e.message : 'Não foi possível entrar agora. Tente de novo.')
+      }
+      setCaptchaToken('')
+      return
+    }
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({
         email: f.email,
@@ -302,8 +314,19 @@ export function LoginPage() {
             />
           </>
         )}
-        <Field label="E-mail" error={formState.errors.email?.message}>
-          <Input type="email" {...register('email')} autoComplete="email" />
+        <Field label={mode === 'login' ? 'CPF ou e-mail' : 'E-mail'} error={formState.errors.email?.message}>
+          {mode === 'login' ? (
+            <Input
+              {...register('email', { onChange: (e) => setValue('email', formatarIdentificador(e.target.value)) })}
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="000.000.000-00 ou voce@email.com"
+            />
+          ) : (
+            <Input type="email" {...register('email')} autoComplete="email" />
+          )}
         </Field>
         <Field label="Senha" error={mode === 'login' ? formState.errors.password?.message : undefined}>
           <PasswordInput {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
