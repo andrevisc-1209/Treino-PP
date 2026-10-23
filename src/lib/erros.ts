@@ -27,6 +27,8 @@ export function mapearErroSupabase(erro: unknown): string {
   if (msgMin.includes('sessão expirada') || msgMin.includes('jwt expired') || status === 401) {
     return ERROS.AUTH.sessaoExpirada
   }
+  // policy restritiva da assinatura (migration 20261052): texto próprio em vez do técnico "violates row-level security policy ..."
+  if (msgMin.includes('assinatura_ativa_')) return ERROS.ASSINATURA.modoLeitura
   if (code === '42501' || msgMin.includes('row-level security') || msgMin.includes('permission denied') || status === 403) {
     return 'Você não tem permissão para fazer isso.'
   }

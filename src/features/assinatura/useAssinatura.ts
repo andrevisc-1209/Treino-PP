@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { ERROS } from '@/lib/mensagens'
 
 export type StatusAssinatura = 'trial' | 'ativa' | 'expirada' | 'cancelada'
 export type Plano = 'mensal' | 'trimestral' | 'semestral'
@@ -62,7 +63,15 @@ export function useAssinatura() {
 }
 
 /** Texto da tela e do toast quando uma gravação é barrada por falta de assinatura (modo leitura). */
-export const MSG_MODO_LEITURA = 'Assine o plano para fazer esta alteração. Suas informações continuam disponíveis para consulta.'
+export const MSG_MODO_LEITURA = ERROS.ASSINATURA.modoLeitura
+
+/** Modo leitura = já sabemos que a assinatura venceu (sem dado ainda, não bloqueia: o servidor é quem barra as gravações). */
+export const emModoLeitura = (assinatura: Assinatura | undefined): boolean => !!assinatura && !assinatura.estaAtivo
+
+export function useModoLeitura(): boolean {
+  const { data } = useAssinatura()
+  return emModoLeitura(data)
+}
 
 /**
  * Esta falha de gravação é por falta de assinatura? Só se o erro for de permissão/RLS E a assinatura já constar como inativa no cache

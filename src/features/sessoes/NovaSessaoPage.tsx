@@ -23,6 +23,9 @@ import { EscolhaSessaoSheet } from './EscolhaSessaoSheet'
 import { ExecucaoPresencialSheet, type PlanoParaExecucao } from '@/features/execucoes/ExecucaoPresencialSheet'
 import { formatarNumero } from '@/lib/format'
 import { Button, BottomSheet, Input } from '@/components/ui'
+import { BloqueioAssinatura } from '@/components/BloqueioAssinatura'
+import { useModoLeitura } from '@/features/assinatura/useAssinatura'
+import { mapearErroSupabase } from '@/lib/erros'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { useIniciarSessao, useSessoes, type PreTreinoInput } from './api'
 import { DESCRITORES_DOR, DESCRITORES_ESTRESSE, DESCRITORES_FADIGA, DESCRITORES_SONO, type Descritor } from './descritores'
@@ -68,7 +71,7 @@ function ResumoProntidao({ bemEstar, alerta }: { bemEstar: number | null; alerta
   )
 }
 
-export function NovaSessaoPage() {
+function NovaSessaoConteudo() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const planoDaUrl = searchParams.get('plano')
@@ -149,7 +152,7 @@ export function NovaSessaoPage() {
         },
         onError: (e) => {
           setCopiando(false)
-          setErro((e as Error).message)
+          setErro(mapearErroSupabase(e))
         },
       },
     )
@@ -172,7 +175,7 @@ export function NovaSessaoPage() {
       avancarComPlano(p, true)
     } catch (e) {
       setSincronizando(false)
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     }
   }
 
@@ -201,7 +204,7 @@ export function NovaSessaoPage() {
       setConflito({ modelo: m, planoExistente: existente })
     } catch (e) {
       setVerificando(false)
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     }
   }
 
@@ -254,7 +257,7 @@ export function NovaSessaoPage() {
         setEscolhaSessao(null)
         setPresencial(p)
       })
-      .catch((e) => setErro((e as Error).message))
+      .catch((e) => setErro(mapearErroSupabase(e)))
       .finally(() => setAbrindoOutra(false))
   }
 
@@ -294,7 +297,7 @@ export function NovaSessaoPage() {
       },
       {
         onSuccess: (sessaoId) => navigate(`/alunos/${id}/sessoes/${sessaoId}`, { replace: true }),
-        onError: (e) => setErro((e as Error).message),
+        onError: (e) => setErro(mapearErroSupabase(e)),
       },
     )
   }
@@ -733,4 +736,12 @@ export function NovaSessaoPage() {
       )}
     </div>
   )
+}
+
+/** Iniciar treino grava no banco: com a assinatura vencida (modo leitura) leva direto à escolha do plano, em vez de errar no fim do fluxo. */
+export function NovaSessaoPage() {
+  const somenteLeitura = useModoLeitura()
+  const navigate = useNavigate()
+  if (somenteLeitura) return <BloqueioAssinatura titulo="Para iniciar um treino, assine o plano" onVoltar={() => navigate(-1)} />
+  return <NovaSessaoConteudo />
 }
