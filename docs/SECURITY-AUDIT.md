@@ -127,3 +127,11 @@ Em 22/10/2026, `signInWithPassword` direto na API, sem `captchaToken` e com um t
 - **Risco aceito**: a chave é **compartilhada** com outros apps do dono (Personal Perto e orçamento), então um abuso em qualquer um gasta a mesma cota e o alerta de orçamento não separa o gasto. Ao salvar a restrição de API, o Google avisou de **uso ativo da `geocoding-backend`** (a Geocoding API, que o Treino não usa); o dono confirmou a atualização sabendo que algum outro app pode perder a geocodificação. **Reversão**: abrir a chave e marcar de novo Geocoding API em Restrições de API.
 - **Melhoria futura (opcional)**: chave só do Treino (`https://treino.personalperto.com.br/*`, Maps JavaScript + Places), trocando o secret `VITE_GOOGLE_MAPS_API_KEY` no GitHub e refazendo o deploy da Pages.
 - **Aviso do Google**: `google.maps.places.Autocomplete` não está disponível para clientes novos; segue funcionando para quem já tem a chave e sem data de desligamento (12 meses de aviso). Migração futura para `PlaceAutocompleteElement`.
+
+
+## Evolution API (WhatsApp) — exposição conferida de fora (23/10/2026)
+
+Hospedada no Railway (domínio público `*.up.railway.app`, não registrado aqui). Testes sem nenhuma credencial, só leituras:
+- **Fechado**: `/instance/fetchInstances` sem chave → `401 Unauthorized`; `/docs`, `/swagger` e `/api/docs` → `404`; HTTP puro (porta 80) → `301` para HTTPS; porta direta `:8080` → não conecta (timeout).
+- **Público (aceito)**: `/` devolve a versão (`2.3.7`) e o nome do cliente; `/manager/` serve a tela de login do gerenciador (sem chave não mostra instância, conversa nem número). Não há como restringir por IP no Railway, então a **força da chave global (`AUTHENTICATION_API_KEY`) é a defesa real** contra tentativa de adivinhação.
+- **Pendente (dono, no Railway → Variables)**: confirmar que `AUTHENTICATION_API_KEY` é aleatória e longa (32+ caracteres, nada de exemplo da documentação; se houver dúvida, gerar outra com `openssl rand -hex 32 | pbcopy`, trocar no Railway e atualizar o secret `EVOLUTION_API_KEY` no Supabase e no Personal Perto) e confirmar que **não existe TCP Proxy** configurado. Manter a Evolution atualizada.
