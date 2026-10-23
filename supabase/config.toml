@@ -15,6 +15,10 @@ verify_jwt = false
 [functions.treino-publico]
 verify_jwt = false
 
+# Login com CPF: pública (o personal ainda não tem sessão). Captcha, limites e resposta uniforme são feitos dentro da função.
+[functions.login-cpf]
+verify_jwt = false
+
 # Chamadas pelo pg_cron (sem JWT do Supabase); cada uma confere o segredo CRON_SECRET no header x-cron-secret.
 [functions.daily-briefing]
 verify_jwt = false

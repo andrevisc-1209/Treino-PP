@@ -113,3 +113,8 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - Nenhum `dangerouslySetInnerHTML`/`innerHTML`; e-mails com `escaparHtml`; sem SQL dinâmico nas migrations; sem upload de arquivos.
 - `mp-webhook`: HMAC obrigatório, idempotente por `mp_payment_id`.
 - Pentest por leitura: `send-whatsapp` sem JWT → 401; `admin-actions` sem `is_admin` → 403; cron sem segredo → 401; `professional_id` nunca vem do body.
+
+
+## Achado: captcha do login por senha não conferido pelo Auth
+
+Em 22/10/2026, `signInWithPassword` direto na API, sem `captchaToken` e com um token falso, retornou apenas `invalid_credentials`: o Supabase Auth não estava conferindo o Turnstile (o widget do app envia o token, mas ninguém o valida no servidor). Quem chama a API direto não passa por captcha no login por e-mail e senha; só valem os limites do Auth. A função `login-cpf` repassa o token ao Auth; a correção de fato é ligar **Authentication → Attack Protection → CAPTCHA** no painel (ver BACKLOG #39). Depois, repetir o teste: sem token o login deve falhar com `captcha_failed`.
