@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from '@/components/BottomNav'
 import { AssinaturaExpiradaBanner } from '@/components/AssinaturaExpiradaBanner'
+import { ExigirAssinaturaProvider } from '@/features/assinatura/ExigirAssinaturaProvider'
 import { TrialBanner } from '@/components/TrialBanner'
 import { useIsAdmin } from '@/features/admin/useIsAdmin'
 import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
@@ -43,16 +44,18 @@ export function RequireAuth() {
   const modoFoco = ROTAS_MODO_FOCO.some((r) => r.test(location.pathname))
 
   return (
-    <div className={modoFoco ? '' : 'pb-16'}>
-      <NotificacoesRealtime professionalId={session.user.id} />
-      {!modoFoco && (
-        <div className="mx-auto max-w-2xl px-4 pt-4">
-          <TrialBanner />
-          <AssinaturaExpiradaBanner />
-        </div>
-      )}
-      <Outlet />
-      {!modoFoco && <BottomNav />}
-    </div>
+    <ExigirAssinaturaProvider>
+      <div className={modoFoco ? '' : 'pb-16'}>
+        <NotificacoesRealtime professionalId={session.user.id} />
+        {!modoFoco && (
+          <div className="mx-auto max-w-2xl px-4 pt-4">
+            <TrialBanner />
+            <AssinaturaExpiradaBanner />
+          </div>
+        )}
+        <Outlet />
+        {!modoFoco && <BottomNav />}
+      </div>
+    </ExigirAssinaturaProvider>
   )
 }

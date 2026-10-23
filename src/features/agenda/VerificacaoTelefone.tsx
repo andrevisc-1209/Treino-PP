@@ -5,6 +5,7 @@ import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { mascararTelefone } from '@/lib/telefone'
 import { confirmarCodigoTelefone, solicitarCodigoTelefone } from '@/features/auth/verificacaoTelefone'
+import { mapearErroSupabase } from '@/lib/erros'
 
 /** Selo "Verificado ✓" / "Não verificado" do telefone. */
 export function SeloTelefone({ verificado }: { verificado: boolean }) {
@@ -46,7 +47,7 @@ export function VerificacaoTelefone({ userId, telefone, verificado, salvo }: { u
       setEtapa('codigo')
       setCodigo('')
     } catch (e) {
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     } finally {
       setCarregando(false)
     }
@@ -61,7 +62,7 @@ export function VerificacaoTelefone({ userId, telefone, verificado, salvo }: { u
       mostrarInfoGlobal('Telefone verificado ✓')
       fechar()
     } catch (e) {
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     } finally {
       setCarregando(false)
     }

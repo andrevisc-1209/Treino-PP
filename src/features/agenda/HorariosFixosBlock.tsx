@@ -7,6 +7,7 @@ import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { agruparHorarios, type GrupoHorario } from './horarioGrupo'
 import { HorarioFormSheet, type HorarioFormValor } from './HorarioFormSheet'
 import { useAtualizarGrupoHorario, useCriarHorario, useEncerrarGrupoHorario, useHorariosDoAluno, useHorariosFixos, usePausarGrupoHorario } from './api'
+import { mapearErroSupabase } from '@/lib/erros'
 
 function descricaoGrupo(g: GrupoHorario): string {
   const dias = g.weekdays.map(nomeDiaCurtoPorWeekday).join(' e ')
@@ -35,7 +36,7 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
     setErro(null)
     criar.mutate(
       { weekdays: v.weekdays, start_time: v.start_time, duration_min: v.duration_min, local: v.local.trim() || null, alunoIds: [alunoId, ...v.coParticipantesIds] },
-      { onSuccess: () => setNovoAberto(false), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setNovoAberto(false), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 
@@ -44,7 +45,7 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
     setErro(null)
     atualizar.mutate(
       { ids: editando.ids, start_time: v.start_time, duration_min: v.duration_min, local: v.local.trim() || null, alunoIds: [alunoId, ...v.coParticipantesIds] },
-      { onSuccess: () => setEditando(null), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setEditando(null), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 

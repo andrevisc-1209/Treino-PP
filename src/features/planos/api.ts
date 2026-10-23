@@ -3,6 +3,7 @@ import { corpoValidade, VALIDADE_PADRAO, type ValidadeLink } from './validadeLin
 import { supabase } from '@/lib/supabase'
 import type { ItemComparavel } from './compare'
 import type { ModalidadeDetalhes, ModalidadeTipo, TipoExecucao } from '@/types/modalidades'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
 
 export type Plano = {
   id: string
@@ -459,7 +460,7 @@ export async function gerarLinkTreino(planoId: string, validade: ValidadeLink = 
         // corpo ausente ou não-JSON
       }
     }
-    throw new Error(msg)
+    throw new ErroAmigavel(msg)
   }
   return { link: data.link, expiraEm: data.expira_em ?? null }
 }

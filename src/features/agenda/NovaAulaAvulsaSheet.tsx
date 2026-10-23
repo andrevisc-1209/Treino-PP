@@ -8,6 +8,7 @@ import { cn, desambiguarPorNome } from '@/lib/utils'
 import { hojeSP, horaMinimaSP, limitesDoDiaSP, montarDataHoraSP } from '@/lib/datas'
 import { aulasSobrepoe } from './conflitos'
 import { useAulasNoIntervalo, useCriarAulaAvulsa, useProfessionalConfig, type Aula } from './api'
+import { mapearErroSupabase } from '@/lib/erros'
 
 function useLocaisUsados() {
   return useQuery({
@@ -89,7 +90,7 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
     setErro(null)
     criar.mutate(
       { alunoIds, startsAt, durationMin: Number(duracao), local: local.trim() || null },
-      { onSuccess: fechar, onError: (e) => setErro((e as Error).message) },
+      { onSuccess: fechar, onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 

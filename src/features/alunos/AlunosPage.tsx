@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { useQueryClient } from '@tanstack/react-query'
 import { Archive, ArchiveRestore, CalendarCheck, MoreVertical, Play, Search, TriangleAlert, Users } from 'lucide-react'
 import { cn, desambiguarPorNome, idade } from '@/lib/utils'
@@ -30,6 +31,7 @@ export function AlunosPage() {
   const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
   const { data: ultimasExecucoes } = useUltimaExecucaoPorAluno()
   const navigate = useNavigate()
+  const { exigir } = useExigirAssinatura()
   const qc = useQueryClient()
   const [busca, setBusca] = useState('')
   const [menuAberto, setMenuAberto] = useState<Aluno | null>(null)
@@ -168,7 +170,7 @@ export function AlunosPage() {
         ))}
       </ul>
 
-      {aba === 'ativos' && <Fab to="/alunos/novo" label="Novo aluno" />}
+      {aba === 'ativos' && <Fab onClick={exigir(() => navigate('/alunos/novo'))} label="Novo aluno" />}
 
       <BottomSheet open={!!menuAberto} onClose={() => setMenuAberto(null)} title={menuAberto?.name}>
         <div className="space-y-1">

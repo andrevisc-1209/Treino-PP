@@ -33,6 +33,14 @@ import { useSalvarAlunoCobranca } from '@/features/financeiro/api'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import { linkWhatsApp } from '@/lib/whatsapp'
 import { ERROS } from '@/lib/mensagens'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
+import { mapearErroSupabase } from '@/lib/erros'
+import { BloqueioAssinatura } from '@/components/BloqueioAssinatura'
+import { useModoLeitura } from '@/features/assinatura/useAssinatura'
+
+/** Texto de um horário fixo ainda não salvo (etapa 4 e revisão da etapa 5). */
+const descreverHorario = (h: HorarioFormValor): string =>
+  `${h.weekdays.map(nomeDiaCurtoPorWeekday).join(' e ')} · ${h.start_time} · ${h.duration_min} min${h.local ? ` · ${h.local}` : ''}`
 
 const numOrUndef = (v: unknown) => (v === '' || v === null || v === undefined ? undefined : Number(v))
 
@@ -177,7 +185,7 @@ const SIM_NAO = [
   { value: 'nao' as const, label: 'Não' },
 ]
 
-export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
+function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -313,7 +321,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
             ...payloadDistancia(cobrancaValor),
           })
         } catch (e) {
-          const msg = `Aluno salvo, mas a cobrança não foi salva: ${(e as Error).message}. Ajuste em Cobrança na ficha do aluno.`
+          const msg = `Aluno salvo, mas a cobrança não foi salva: ${mapearErroSupabase(e)}. Ajuste em Cobrança na ficha do aluno.`
           setErroCobranca(msg)
           mostrarErroGlobal(msg) // a etapa 2 pode já não estar na tela (ex.: envio do consentimento na etapa 3)
         }
@@ -331,7 +339,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
           })
         }
       } catch (e) {
-        setErroHorarios(`Aluno salvo, mas houve um erro ao criar os horários: ${(e as Error).message}`)
+        setErroHorarios(`Aluno salvo, mas houve um erro ao criar os horários: ${mapearErroSupabase(e)}`)
       }
     }
     return alunoId
@@ -345,7 +353,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
   // WhatsApp: a function só gera o link; abrimos o wa.me com a mensagem pronta. A aba é aberta
   // ANTES de esperar a rede (senão o navegador do celular bloqueia o pop-up).
   const abrirWhatsapp = (janela: Window | null, r: { link?: string; nome_aluno?: string; nome_personal?: string }) => {
-    if (!r.link) throw new Error('Não foi possível gerar o link.')
+    if (!r.link) throw new ErroAmigavel('Não foi possível gerar o link.')
     const mensagem = montarMensagemConsentimento({
       nomeAluno: r.nome_aluno ?? String(watch('name') ?? ''),
       nomePersonal: r.nome_personal ?? 'Seu personal',
@@ -370,7 +378,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
       const salvou = await trigger(STEP1_FIELDS as unknown as (keyof FormInput)[])
       if (!salvou) {
         setEtapa(1)
-        throw new Error('Complete os dados do aluno (etapa 1) antes de enviar a solicitação.')
+        throw new ErroAmigavel('Complete os dados do aluno (etapa 1) antes de enviar a solicitação.')
       }
       let erroEnvio: Error | null = null
       let novoId: string | null = null
@@ -383,11 +391,11 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
           erroEnvio = e as Error
         }
       })()
-      if (!novoId) throw new Error('Não foi possível salvar o aluno. Confira os dados e tente de novo.')
+      if (!novoId) throw new ErroAmigavel('Não foi possível salvar o aluno. Confira os dados e tente de novo.')
       navigate(`/alunos/${novoId}/editar?etapa=3`, { replace: true })
       if (erroEnvio) {
         janela?.close()
-        mostrarErroGlobal(`Aluno salvo, mas a solicitação não foi enviada: ${(erroEnvio as Error).message}`)
+        mostrarErroGlobal(`Aluno salvo, mas a solicitação não foi enviada: ${mapearErroSupabase(erroEnvio)}`)
       } else if (envio.canal === 'whatsapp' && resultado) {
         abrirWhatsapp(janela, resultado)
       }
@@ -686,10 +694,7 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <ul className="space-y-2">
                 {horariosPendentes.map((h, i) => (
                   <li key={i} className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-3 text-sm">
-                    <span>
-                      {h.weekdays.map(nomeDiaCurtoPorWeekday).join(' e ')} · {h.start_time} · {h.duration_min} min
-                      {h.local && ` · ${h.local}`}
-                    </span>
+                    <span>{descreverHorario(h)}</span>
                     <button
                       type="button"
                       onClick={() => setHorariosPendentes((atual) => atual.filter((_, idx) => idx !== i))}
@@ -800,7 +805,27 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
               </dl>
             </div>
 
-            {salvar.error && <p className="text-sm text-red-600">{(salvar.error as Error).message}</p>}
+            {mode === 'create' && (
+              <div className="space-y-2 rounded-xl bg-slate-50 p-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold">Horários</h2>
+                  <button type="button" onClick={() => setEtapa(4)} className="flex items-center gap-1 text-sm text-brand-hover">
+                    <Pencil size={14} /> Editar
+                  </button>
+                </div>
+                {horariosPendentes.length === 0 ? (
+                  <p className="text-sm text-slate-500">Nenhum horário fixo. Você pode adicionar depois, na ficha do aluno.</p>
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {horariosPendentes.map((h, i) => (
+                      <li key={i}>{descreverHorario(h)}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {salvar.error && <p className="text-sm text-red-600">{mapearErroSupabase(salvar.error)}</p>}
           </div>
         )}
       </form>
@@ -831,4 +856,12 @@ export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
       </BottomSheet>
     </div>
   )
+}
+
+/** Cadastrar aluno grava no banco: com a assinatura vencida leva à escolha do plano em vez de percorrer 5 etapas e errar no fim. */
+export function AlunoFormPage({ mode }: { mode: 'create' | 'edit' }) {
+  const somenteLeitura = useModoLeitura()
+  const navigate = useNavigate()
+  if (mode === 'create' && somenteLeitura) return <BloqueioAssinatura titulo="Para cadastrar alunos, assine o plano" onVoltar={() => navigate(-1)} />
+  return <AlunoFormConteudo mode={mode} />
 }

@@ -12,6 +12,8 @@ import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from
 import { tempoRestante } from './prazo'
 import { CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
 import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
+import { mapearErroSupabase } from '@/lib/erros'
 
 type ExercicioPublico = {
   exercicio_id: string
@@ -43,7 +45,7 @@ async function chamar(token: string, corpo: Record<string, unknown>): Promise<Re
   // 410 = link vencido: a função devolve o estado no corpo; mostramos a mensagem de "não disponível"
   const contexto = (error as { context?: Response } | null)?.context
   if (contexto?.status === 410) return { estado: 'expirado' }
-  if (error || !data) throw new Error('Não foi possível concluir agora. Confira sua conexão e tente novamente.')
+  if (error || !data) throw new ErroAmigavel('Não foi possível concluir agora. Confira sua conexão e tente novamente.')
   return data
 }
 
@@ -154,7 +156,7 @@ export function TreinoPublicoPage() {
       }
       setResp(r)
     } catch (e) {
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     } finally {
       setEnviando(false)
     }

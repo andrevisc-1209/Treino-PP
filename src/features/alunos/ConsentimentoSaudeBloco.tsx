@@ -4,6 +4,7 @@ import { Button, Input } from '@/components/ui'
 import { dataSP } from '@/lib/datas'
 import { formatarDataBR } from '@/lib/format'
 import type { ConsentimentoSaude, EnvioConsentimento } from './api'
+import { mapearErroSupabase } from '@/lib/erros'
 
 const DIAS_VALIDADE = 7
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -83,7 +84,7 @@ export function ConsentimentoSaudeBloco({
       setMotivo('')
       setMotivoLivre('')
     } catch (e) {
-      setErro((e as Error).message)
+      setErro(mapearErroSupabase(e))
     } finally {
       setEnviando(null)
     }

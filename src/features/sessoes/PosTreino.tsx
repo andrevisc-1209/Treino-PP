@@ -34,6 +34,7 @@ import {
 } from './resumoSessao'
 import { compartilharResumo } from './imagemResumo'
 import { registrarExecucaoDaSessao } from '@/features/execucoes/api'
+import { mapearErroSupabase } from '@/lib/erros'
 
 const CHIPS_PSE = [
   { valor: 1, label: 'Repouso' },
@@ -140,7 +141,7 @@ function TreinoConcluidoResumo({
         marca: APP_NAME,
       })
     } catch (e) {
-      mostrarErroGlobal((e as Error).message)
+      mostrarErroGlobal(mapearErroSupabase(e))
     } finally {
       setCompartilhando(false)
     }
@@ -420,7 +421,7 @@ export function PosTreino({
           }
           setResumo(novoResumo)
         },
-        onError: (e) => setErro((e as Error).message),
+        onError: (e) => setErro(mapearErroSupabase(e)),
       },
     )
   }

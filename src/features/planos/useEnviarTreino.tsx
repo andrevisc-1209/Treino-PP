@@ -9,6 +9,7 @@ import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import type { ModalidadeDetalhes, ModalidadeTipo } from '@/types/modalidades'
 import { buscarExerciciosParaMensagem, gerarLinkTreino } from './api'
 import { avisoValidade, lerValidadePadrao, salvarValidadePadrao, SeletorValidadeLink, type ValidadeLink } from './validadeLink'
+import { mapearErroSupabase } from '@/lib/erros'
 
 export type TreinoParaEnvio = { id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes }
 type Treino = TreinoParaEnvio | (() => Promise<TreinoParaEnvio>)
@@ -53,7 +54,7 @@ export function useEnviarTreinoAoAluno(alunoId: string): { enviar: (treino: Trei
       mostrarInfoGlobal(avisoValidade(escolhida, gerado.expiraEm))
     } catch (e) {
       janela?.close()
-      mostrarErroGlobal((e as Error).message)
+      mostrarErroGlobal(mapearErroSupabase(e))
     }
   }
 

@@ -12,6 +12,7 @@ import {
   useRemoverItemModelo,
   useReordenarItemModelo,
 } from './api'
+import { mapearErroSupabase } from '@/lib/erros'
 
 export function ModeloEditorPage() {
   const { modeloId } = useParams<{ modeloId: string }>()
@@ -63,7 +64,7 @@ export function ModeloEditorPage() {
     }
     atualizarModelo.mutate(
       { id: modeloId, name: nome.trim(), notes: notas.trim() },
-      { onSuccess: () => setEditandoNome(false), onError: (e) => setErro((e as Error).message) },
+      { onSuccess: () => setEditandoNome(false), onError: (e) => setErro(mapearErroSupabase(e)) },
     )
   }
 

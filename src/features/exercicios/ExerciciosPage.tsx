@@ -14,6 +14,7 @@ import { MODALIDADES_CONFIG, type ModalidadeTipo } from '@/types/modalidades'
 import type { GrupoNatacao } from '@/types/natacao'
 import { ehMusculacao, useAtualizarExercicio, useCriarExercicio, useExcluirExercicio, useExercicios, type Exercicio } from './api'
 import { modalidadesDeExercicio, parametroPadrao, prefillNovoExercicio, rotuloTipo, tiposDaModalidade, type ParametroPrincipal } from './tipos'
+import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 
 type Ambiente = 'piscina' | 'mar' | 'ambos'
 type FormState = { modalidade: ModalidadeTipo; tipo: string; name: string; equipment: string; description: string; parametro: ParametroPrincipal; ambiente: Ambiente }
@@ -38,6 +39,7 @@ const formVazio = (modalidade: ModalidadeTipo, tipo: string): FormState => ({
 })
 
 export function ExerciciosPage() {
+  const { exigir } = useExigirAssinatura()
   const { session } = useAuth()
   const { data: exercicios, isLoading, error } = useExercicios()
   const { data: natacaoMeus } = useExerciciosNatacaoCustom()
@@ -289,7 +291,7 @@ export function ExerciciosPage() {
         ))}
       </ul>
 
-      <Fab onClick={abrirCriar} label="Novo exercício" />
+      <Fab onClick={exigir(abrirCriar)} label="Novo exercício" />
 
       <BottomSheet open={criando || !!editando} onClose={fechar} title={editando ? 'Editar exercício' : 'Novo exercício'}>
         <div className="space-y-4">

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { camposClinicos, camposGerais, semDadoClinico } from './payloadAluno'
 import { TERMO_VERSAO } from './termo'
+import { ErroAmigavel } from '@/lib/erroAmigavel'
 
 export type Aluno = {
   id: string
@@ -167,7 +168,7 @@ export async function enviarConsentimentoSaude(alunoId: string, envio: EnvioCons
       motivo_reenvio_livre: envio.motivoLivre?.trim() || undefined,
     },
   })
-  if (error || !data) throw new Error(await mensagemDoErroFuncao(error))
+  if (error || !data) throw new ErroAmigavel(await mensagemDoErroFuncao(error))
   return data
 }
 
@@ -332,7 +333,7 @@ export function useRegistrarPeso(alunoId: string | undefined) {
     mutationFn: async (input: NovaAvaliacaoInput) => {
       if (!alunoId) throw new Error('Aluno inválido')
       const { data: ativo } = await supabase.from('consentimentos').select('id').eq('aluno_id', alunoId).is('revoked_at', null).limit(1).maybeSingle()
-      if (!ativo) throw new Error('O aluno ainda não autorizou o registro de medidas corporais.')
+      if (!ativo) throw new ErroAmigavel('O aluno ainda não autorizou o registro de medidas corporais.')
       const { error } = await supabase.from('pesos').insert({ aluno_id: alunoId, ...input })
       if (error) throw error
     },
