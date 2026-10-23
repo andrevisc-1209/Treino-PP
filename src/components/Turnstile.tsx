@@ -14,6 +14,7 @@ declare global {
         },
       ) => string
       remove: (widgetId: string) => void
+      reset: (widgetId: string) => void
     }
   }
 }
@@ -43,7 +44,7 @@ function carregarScript(): Promise<void> {
  * tela; passe `size="normal"` explicitamente se algum caller futuro precisar do
  * widget maior.
  */
-export function Turnstile({ onToken, size = 'compact' }: { onToken: (token: string) => void; size?: 'normal' | 'compact' }) {
+export function Turnstile({ onToken, size = 'compact', reiniciar = 0 }: { onToken: (token: string) => void; size?: 'normal' | 'compact'; reiniciar?: number }) {
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
   const containerId = useId()
   const widgetIdRef = useRef<string | null>(null)
@@ -67,6 +68,11 @@ export function Turnstile({ onToken, size = 'compact' }: { onToken: (token: stri
       if (widgetIdRef.current && window.turnstile) window.turnstile.remove(widgetIdRef.current)
     }
   }, [siteKey, containerId, size, onToken])
+
+  // O token vale para UMA verificação: quem o usou muda `reiniciar` e o widget pede um token novo (sem isso fica "Sucesso!" com token gasto).
+  useEffect(() => {
+    if (reiniciar > 0 && widgetIdRef.current && window.turnstile) window.turnstile.reset(widgetIdRef.current)
+  }, [reiniciar])
 
   if (!siteKey) return null
   return <div id={containerId} />

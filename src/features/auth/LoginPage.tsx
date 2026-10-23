@@ -25,6 +25,7 @@ import { cepCompleto } from '@/lib/cep'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
 
+const CAPTCHA_ATIVO = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
 const REENVIO_ESPERA_SEGUNDOS = 60
 
@@ -73,6 +74,7 @@ export function LoginPage() {
   )
   const [msg, setMsg] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaVez, setCaptchaVez] = useState(0)
   const [emailPendente, setEmailPendente] = useState<string | null>(null)
   const [emailPendenteOrigem, setEmailPendenteOrigem] = useState<'signup' | 'login'>('signup')
   const [reenviando, setReenviando] = useState(false)
@@ -101,8 +103,21 @@ export function LoginPage() {
 
   if (session) return <Navigate to="/" replace />
 
+  // O token do Turnstile vale para uma única chamada ao Auth: depois de usar (com sucesso ou erro) pede-se um novo ao widget.
+  const gastarCaptcha = () => {
+    setCaptchaToken('')
+    setCaptchaVez((v) => v + 1)
+  }
+  // Com o captcha ligado no Auth, enviar sem token só gera erro: espera o widget terminar em vez de chamar a rede.
+  const faltaCaptcha = (): boolean => {
+    if (!CAPTCHA_ATIVO || captchaToken) return false
+    setMsg('Aguarde a verificação de segurança terminar (alguns segundos) e tente de novo.')
+    return true
+  }
+
   if (emailPendente) {
     const reenviar = async () => {
+      if (faltaCaptcha()) return
       setReenviando(true)
       setMsg(null)
       const { error } = await supabase.auth.resend({
@@ -111,7 +126,7 @@ export function LoginPage() {
         options: { captchaToken: captchaToken || undefined },
       })
       setReenviando(false)
-      setCaptchaToken('')
+      gastarCaptcha()
       if (error) setMsg(mapearErroAuth(error))
       else {
         mostrarInfoGlobal('E-mail reenviado')
@@ -133,7 +148,7 @@ export function LoginPage() {
           )}
           {msg && <p className="text-sm text-red-600">{msg}</p>}
           <div className="flex justify-center">
-            <Turnstile onToken={setCaptchaToken} />
+            <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
           </div>
           <Button onClick={reenviar} variant="outline" className="w-full" disabled={reenviando || esperaReenvio > 0}>
             {esperaReenvio > 0
@@ -160,13 +175,14 @@ export function LoginPage() {
 
   const onSubmit = async (f: Form) => {
     setMsg(null)
+    if (faltaCaptcha()) return
     if (mode === 'login' && tipoIdentificador(f.email) === 'cpf') {
       try {
         await entrarComCpf(f.email, f.password, captchaToken)
       } catch (e) {
         setMsg(e instanceof ErroAmigavel ? e.message : 'Não foi possível entrar agora. Tente de novo.')
       }
-      setCaptchaToken('')
+      gastarCaptcha()
       return
     }
     if (mode === 'login') {
@@ -175,7 +191,7 @@ export function LoginPage() {
         password: f.password,
         options: { captchaToken: captchaToken || undefined },
       })
-      setCaptchaToken('')
+      gastarCaptcha()
       if (error) {
         if (error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message)) {
           setEmailPendenteOrigem('login')
@@ -206,7 +222,7 @@ export function LoginPage() {
         captchaToken: captchaToken || undefined,
       },
     })
-    setCaptchaToken('')
+    gastarCaptcha()
     if (error) {
       setMsg(mapearErroAuth(error))
       return
@@ -231,11 +247,12 @@ export function LoginPage() {
 
   const onSubmitRecuperar = async (f: FormRecuperar) => {
     setMsg(null)
+    if (faltaCaptcha()) return
     const { error } = await supabase.auth.resetPasswordForEmail(f.email, {
       redirectTo: APP_URL + 'definir-senha',
       captchaToken: captchaToken || undefined,
     })
-    setCaptchaToken('')
+    gastarCaptcha()
     if (error) setMsg(mapearErroAuth(error))
     else setMsg('Se o e-mail existir, enviamos um link para redefinir a senha.')
   }
@@ -252,7 +269,7 @@ export function LoginPage() {
             <Input type="email" {...recuperarForm.register('email')} autoComplete="email" autoFocus />
           </Field>
           <div className="flex justify-center">
-            <Turnstile onToken={setCaptchaToken} />
+            <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
           </div>
           {msg && <p className="text-sm text-slate-600">{msg}</p>}
           <Button type="submit" className="w-full" disabled={recuperarForm.formState.isSubmitting}>
@@ -372,14 +389,14 @@ export function LoginPage() {
             </div>
 
             <div className="flex justify-center">
-              <Turnstile onToken={setCaptchaToken} />
+              <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
             </div>
           </>
         )}
 
         {mode === 'login' && (
           <div className="flex justify-center">
-            <Turnstile onToken={setCaptchaToken} />
+            <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
           </div>
         )}
 

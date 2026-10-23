@@ -639,3 +639,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 ## 40. login-cpf: limite por IP mais folgado
 
 - ✅ O limite por IP do login com CPF subiu de 30 para **100 por hora** (sem IP identificado: 300). Em Wi-Fi de academia/estúdio e CGNAT de operadora vários personais saem pelo mesmo IP e se bloqueavam sem culpa (os testes ao vivo esgotaram os 30 do IP e o celular do dono, na mesma rede, recebeu "Muitas tentativas"). A proteção de cada conta continua no limite por CPF (10 em 15 min). Redeploy da função `login-cpf`; sem migration.
+
+
+## 41. Correção: captcha do Turnstile reiniciado depois de cada envio
+
+- ✅ Com o captcha ligado no Auth (#39), o cadastro mostrava "Verificação de segurança falhou. Recarregue a página e tente de novo." O token do Turnstile vale para **uma única verificação** e o widget não era reiniciado: depois do primeiro envio (com sucesso ou erro) ele seguia mostrando "Sucesso!" com um token gasto, e o reenvio ia sem token. Agora o `Turnstile` aceita `reiniciar` e a tela do login pede token novo após cada uso (login por e-mail, por CPF, cadastro, reenvio de confirmação e recuperar senha). E, com o captcha ativo, o envio sem token mostra "Aguarde a verificação de segurança terminar…" em vez de chamar a rede e errar.
+- Se, numa página recém-carregada e na PRIMEIRA tentativa, o erro continuar, é configuração: conferir no painel do Supabase (Attack Protection) se a Secret key é a do MESMO widget Turnstile cuja Site key está em `VITE_TURNSTILE_SITE_KEY` e se o domínio treino.personalperto.com.br está nos hostnames do widget na Cloudflare.
