@@ -4,7 +4,8 @@ import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
 import { cn, desambiguarPorNome } from '@/lib/utils'
 import { ORDEM_SEMANA_SEG_DOM, nomeDiaCurtoPorWeekday } from '@/lib/datas'
-import { horariosFixosSobrepoe } from './conflitos'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { conflitosDoHorario, descreverConflitos } from './conflitos'
 import type { HorarioFixoLinha } from './horarioGrupo'
 
 export type HorarioFormValor = {
@@ -43,6 +44,7 @@ export function HorarioFormSheet({
 }) {
   const [valor, setValor] = useState<HorarioFormValor>(valorInicial ?? VAZIO)
   const [erro, setErro] = useState<string | null>(null)
+  const [confirmando, setConfirmando] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -63,11 +65,9 @@ export function HorarioFormSheet({
 
   const desambiguarOutrosAlunos = desambiguarPorNome(outrosAlunos)
 
-  const conflito = (outrosHorarios ?? []).find((h) =>
-    valor.weekdays.some((weekday) => horariosFixosSobrepoe({ weekday, start_time: valor.start_time, duration_min: valor.duration_min }, h)),
-  )
+  const conflitos = conflitosDoHorario(valor, outrosHorarios ?? [])
 
-  const salvar = () => {
+  const salvar = async () => {
     if (valor.weekdays.length === 0) {
       setErro('Selecione ao menos um dia da semana')
       return
@@ -77,6 +77,17 @@ export function HorarioFormSheet({
       return
     }
     setErro(null)
+    // horário já ocupado: o aviso amarelo é fácil de não ver; ao salvar, o personal precisa confirmar que quer mesmo usar essa agenda
+    if (conflitos.length > 0) {
+      setConfirmando(true)
+      const ok = await confirmarAcao({
+        titulo: 'Horário já ocupado',
+        mensagem: `Este horário cruza com: ${descreverConflitos(conflitos)}. Você vai atender mais de um aluno no mesmo horário. Salvar mesmo assim?`,
+        textoConfirmar: 'Salvar mesmo assim',
+      })
+      setConfirmando(false)
+      if (!ok) return
+    }
     onSalvar(valor)
   }
 
@@ -150,17 +161,15 @@ export function HorarioFormSheet({
           </Field>
         )}
 
-        {conflito && (
+        {conflitos.length > 0 && (
           <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
             <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-            <span>
-              Conflita com outro horário fixo às {conflito.start_time} ({conflito.aluno_nomes.join(', ') || 'sem alunos'}).
-            </span>
+            <span>Conflita com outro horário fixo: {descreverConflitos(conflitos)}. Ao salvar, vamos pedir sua confirmação.</span>
           </div>
         )}
 
         {(erro || erroExterno) && <p className="text-sm text-red-600">{erro ?? erroExterno}</p>}
-        <Button onClick={salvar} className="w-full" disabled={salvando}>
+        <Button onClick={salvar} className="w-full" disabled={salvando || confirmando}>
           Salvar
         </Button>
       </div>

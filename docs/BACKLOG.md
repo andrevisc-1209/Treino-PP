@@ -697,3 +697,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **"Ficha incompleta"** na lista de alunos agora diz o que falta: "Sem data de nascimento" (é a única condição que a mostrava).
 - ✅ **Hoje:** aviso curto "N alunos com ciclo de cobrança para fechar" (sem lista) que leva ao Financeiro já com o filtro "A fechar". Só conta ciclo **já encerrado** sem fatura (por aula: precisa haver aula cobrável não faturada; mensal: o aluno já tem fatura; fatura cancelada não conta): `src/features/financeiro/cicloPendente.ts`, com testes. No Financeiro essas linhas ganham a etiqueta âmbar "Ciclo encerrado" e vêm primeiro; o filtro "A fechar" continua incluindo também o ciclo em andamento.
 - ✅ **Alvos de toque:** botões do painel admin (32 → 44 px), fechar do aviso de instalar o app (24 → 44 px), lixeira dos locais de treino (36 → 44 px) e "Remover" dos horários do cadastro.
+
+
+## 49. Horário fixo: confirmação ao salvar com conflito
+
+- ✅ Ao salvar um horário fixo (cadastro do aluno, ficha do aluno e edição) que cruza com outro já existente, aparece a confirmação **"Horário já ocupado"** (`ConfirmSheet`) listando os horários que cruzam, com dia, hora e quem está neles ("Seg 07:00 (Paulo Henrique)"), e os botões **Cancelar** e **Salvar mesmo assim**. Antes só havia um aviso amarelo dentro da folha e o Salvar gravava direto. O aviso amarelo agora lista todos os conflitos (não só o primeiro) e avisa que vai pedir confirmação. `conflitosDoHorario` e `descreverConflitos` são puros, com testes (`conflitos.test.ts`).
+- Limite conhecido: no cadastro de um aluno novo, os horários ainda não salvos do próprio aluno não entram na comparação (só os já existentes do personal).
