@@ -79,6 +79,7 @@ export function LoginPage() {
   const [emailPendenteOrigem, setEmailPendenteOrigem] = useState<'signup' | 'login'>('signup')
   const [reenviando, setReenviando] = useState(false)
   const [esperaReenvio, setEsperaReenvio] = useState(0)
+  const [captchaDemorou, setCaptchaDemorou] = useState(false)
 
   const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
@@ -94,6 +95,16 @@ export function LoginPage() {
   const ufValor = watch('uf')
   const cidadeValor = watch('cidade')
   const senhaValor = watch('password')
+
+  // sem token depois de 12 s (rede lenta, bloqueador de anúncios): em vez de ficar travado em "Verificando…", oferece tentar de novo
+  useEffect(() => {
+    if (!CAPTCHA_ATIVO || captchaToken) return
+    const t = setTimeout(() => setCaptchaDemorou(true), 12_000)
+    return () => {
+      clearTimeout(t)
+      setCaptchaDemorou(false)
+    }
+  }, [captchaToken, captchaVez, mode])
 
   useEffect(() => {
     if (esperaReenvio <= 0) return
@@ -298,6 +309,8 @@ export function LoginPage() {
           <h1 className="mt-2 text-xl font-bold">{APP_NAME}</h1>
           <p className="text-sm text-slate-500">Assistente do personal</p>
         </div>
+        {/* Google primeiro nas duas telas: quem tem conta Google resolve em um toque, sem ler campo nenhum */}
+        <SocialLoginButtons acao={mode === 'login' ? 'entrar' : 'criar'} />
         {mode === 'signup' && (
           <>
             <Field label="Nome" error={formState.errors.name?.message}>
@@ -355,14 +368,12 @@ export function LoginPage() {
           </Field>
         )}
 
-        {mode === 'signup' && <SocialLoginButtons />}
-
         {mode === 'signup' && (
           <>
-            <label className="flex items-start gap-2">
+            <label className="flex min-h-11 items-start gap-3 py-1">
               <input
                 type="checkbox"
-                className="mt-0.5 size-5 shrink-0 accent-brand"
+                className="mt-0.5 size-6 shrink-0 accent-brand"
                 checked={!!termosAceitos}
                 onChange={(e) => setValue('termosAceitos', e.target.checked, { shouldValidate: true })}
               />
@@ -401,35 +412,59 @@ export function LoginPage() {
         )}
 
         {msg && <p className="text-sm text-slate-600">{msg}</p>}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={
-            formState.isSubmitting || (mode === 'signup' && (!!formState.errors.cpf || !senhaAtendeTodasRegras(senhaValor ?? '')))
-          }
-        >
-          {mode === 'login' ? 'Entrar' : 'Criar conta'}
-        </Button>
+        {(() => {
+          // o que impede de continuar, em palavras (o botão cinza sem explicação era um beco sem saída)
+          const faltas: string[] = []
+          if (mode === 'signup' && !senhaAtendeTodasRegras(senhaValor ?? '')) faltas.push('uma senha que atenda todos os requisitos')
+          if (mode === 'signup' && formState.errors.cpf) faltas.push('um CPF válido')
+          const verificando = CAPTCHA_ATIVO && !captchaToken
+          return (
+            <>
+              {faltas.length > 0 && <p className="text-xs text-slate-600">Para continuar, informe {faltas.join(' e ')}.</p>}
+              {verificando && captchaDemorou && (
+                <p className="text-sm text-slate-600">
+                  A verificação de segurança está demorando. Confira a conexão ou desative o bloqueador de anúncios e{' '}
+                  <button type="button" className="font-medium text-brand-hover underline" onClick={() => setCaptchaVez((v) => v + 1)}>
+                    tente de novo
+                  </button>
+                  .
+                </p>
+              )}
+              <Button type="submit" className="w-full" disabled={formState.isSubmitting || faltas.length > 0 || verificando}>
+                {formState.isSubmitting
+                  ? mode === 'login'
+                    ? 'Entrando…'
+                    : 'Criando conta…'
+                  : verificando && faltas.length === 0
+                    ? 'Verificando segurança…'
+                    : mode === 'login'
+                      ? 'Entrar'
+                      : 'Criar conta'}
+              </Button>
+            </>
+          )
+        })()}
 
         {mode === 'login' && (
-          <button type="button" className="min-h-11 w-full text-sm text-slate-500" onClick={() => setMode('recuperar')}>
+          <button type="button" className="min-h-11 w-full text-sm text-slate-600 underline" onClick={() => setMode('recuperar')}>
             Esqueci minha senha
           </button>
         )}
 
-        {/* No login o Google vem depois: o captcha acima do "Entrar" é só da senha (o Google tem a verificação própria). */}
-        {mode === 'login' && <SocialLoginButtons />}
-
         {ALLOW_SIGNUP && (
           <button
             type="button"
-            className="min-h-11 w-full text-sm text-brand-hover"
+            className={
+              mode === 'login'
+                ? 'min-h-12 w-full rounded-xl border border-brand text-sm font-semibold text-brand-hover active:bg-brand-soft'
+                : 'min-h-11 w-full text-sm text-brand-hover'
+            }
             onClick={() => {
               setMode(mode === 'login' ? 'signup' : 'login')
               setMsg(null)
             }}
           >
-            {mode === 'login' ? 'Não tem conta? Criar' : 'Já tenho conta'}
+            {mode === 'login' ? 'Criar minha conta' : 'Já tenho conta'}
           </button>
         )}
       </form>

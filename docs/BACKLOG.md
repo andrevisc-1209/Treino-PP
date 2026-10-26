@@ -877,3 +877,14 @@ Origem: análise de UX do /admin por três ferramentas de IA. Conferi cada ponto
 
 - ✅ O cabeçalho do /admin troca o símbolo pequeno por **a logo completa** (`logo-personal-perto-sm.png`, 320×121) sobre **fundo branco** (a logo tem texto azul-escuro e não aparece no azul do cabeçalho antigo); botões Segurança e Sair em cinza-escuro (contraste AA). Só visual, sem migration.
 - ⚠️ Não conferi visualmente (o /admin exige MFA): olhar no celular e no desktop.
+
+
+## 67. Login e cadastro: ajustes de UX (análise de 3 ferramentas de IA) — PR 1
+
+Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" sem contraste (era slate-500 sobre branco, 4,76:1, passa AA; mesmo assim ficou slate-600 e sublinhado), placeholder no lugar do rótulo (o rótulo "CPF ou e-mail" já existia), erro só por cor no checklist (já havia ícone e texto), "sublinhado duplicado" nos termos. **Meia verdade:** o botão "Criar conta" só ficava cinza por senha/CPF (o aceite dos termos nunca o desabilitou).
+- ✅ **Turnstile:** sempre tema claro (o bloco preto era o tema "auto" seguindo o modo escuro do aparelho) e `appearance: interaction-only` (só aparece se o Cloudflare pedir um clique). Enquanto não há token o botão diz "Verificando segurança…"; passados 12 s aparece "está demorando… tente de novo" (sem isso, um bloqueio do widget deixaria o botão travado sem explicação).
+- ✅ **Google no topo** das duas telas ("Entrar com Google" / "Criar conta com Google") com o divisor "ou entre com CPF ou e-mail" / "ou crie com seus dados".
+- ✅ **Checklist de senha** neutro (círculo cinza) até o requisito ser atendido (✓ verde); sem vermelho de erro antes de digitar.
+- ✅ **Botão desabilitado explica o motivo** ("Para continuar, informe uma senha que atenda todos os requisitos"); rótulos "Entrando…" e "Criando conta…".
+- ✅ Aceite dos termos com alvo de toque ≥ 44 px (linha inteira); "Bairro (opcional)"; "Criar minha conta" vira botão com borda no login.
+- Decisões do dono: **manter o WhatsApp ligado por padrão** no cadastro (o envio já exige telefone verificado) e **dividir o cadastro em duas etapas** (PR seguinte).

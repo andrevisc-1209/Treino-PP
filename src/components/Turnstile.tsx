@@ -11,6 +11,7 @@ declare global {
           'expired-callback'?: () => void
           size?: 'normal' | 'compact'
           appearance?: 'always' | 'execute' | 'interaction-only'
+          theme?: 'auto' | 'light' | 'dark'
         },
       ) => string
       remove: (widgetId: string) => void
@@ -41,7 +42,7 @@ function carregarScript(): Promise<void> {
  * Widget do Cloudflare Turnstile. Some sem quebrar nada se VITE_TURNSTILE_SITE_KEY
  * não estiver definida (os fluxos de auth funcionam sem captcha em dev) — ver
  * README. `compact` por padrão em todos os formulários de auth pra não dominar a
- * tela; passe `size="normal"` explicitamente se algum caller futuro precisar do
+ * tela e `interaction-only` (o widget só aparece se o Cloudflare pedir um clique; quem chama mostra "verificando" enquanto não há token); passe `size="normal"` explicitamente se algum caller futuro precisar do
  * widget maior.
  */
 export function Turnstile({ onToken, size = 'compact', reiniciar = 0 }: { onToken: (token: string) => void; size?: 'normal' | 'compact'; reiniciar?: number }) {
@@ -61,6 +62,9 @@ export function Turnstile({ onToken, size = 'compact', reiniciar = 0 }: { onToke
         callback: onToken,
         'expired-callback': () => onToken(''),
         size,
+        // sempre claro (a tela é clara; no modo escuro do aparelho o 'auto' virava um bloco preto) e só aparece se pedir interação
+        theme: 'light',
+        appearance: 'interaction-only',
       })
     })
     return () => {

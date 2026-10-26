@@ -28,23 +28,23 @@ function GoogleIcon() {
   )
 }
 
-/** Botão "Continuar com Google" — usado no login e no cadastro. */
-export function SocialLoginButtons() {
+/** Botão do Google (login e cadastro), com o divisor "ou" logo abaixo: vem no TOPO do formulário, antes dos campos. */
+export function SocialLoginButtons({ acao }: { acao: 'entrar' | 'criar' }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs text-slate-500">ou</span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
       <button
         type="button"
         onClick={entrarComGoogle}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 active:bg-slate-50"
       >
         <GoogleIcon />
-        Continuar com Google
+        {acao === 'criar' ? 'Criar conta com Google' : 'Entrar com Google'}
       </button>
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs text-slate-500">{acao === 'criar' ? 'ou crie com seus dados' : 'ou entre com CPF ou e-mail'}</span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
     </div>
   )
 }

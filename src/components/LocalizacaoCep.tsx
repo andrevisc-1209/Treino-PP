@@ -66,7 +66,7 @@ export function LocalizacaoCep({
         />
         {buscando && <span className="mt-1 block text-xs text-slate-500" role="status">Buscando CEP…</span>}
       </Field>
-      <Field label="Bairro">
+      <Field label="Bairro (opcional)">
         <Input value={valor.bairro} onChange={(e) => onChange({ bairro: e.target.value })} maxLength={120} autoComplete="off" />
       </Field>
       <div className="grid grid-cols-[1fr_5rem] gap-3">
