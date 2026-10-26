@@ -14,6 +14,8 @@ export type Aluno = {
   phone: string | null
   email: string | null
   active: boolean
+  /** quando foi para a lixeira (só aluno arquivado); some de vez 30 dias depois */
+  apagado_em: string | null
   objetivos: string[]
   objetivo_notes: string | null
   /** objetivo esportivo: ver MODALIDADES_FOCO (provaAlvo.ts) */
@@ -377,24 +379,60 @@ export function useAlunosArquivados() {
   return useQuery({
     queryKey: ['alunos', 'arquivados'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('alunos').select('*').eq('active', false).order('name')
+      const { data, error } = await supabase.from('alunos').select('*').eq('active', false).is('apagado_em', null).order('name')
       if (error) throw error
       return data as Aluno[]
     },
   })
 }
 
+export function useAlunosNaLixeira() {
+  return useQuery({
+    queryKey: ['alunos', 'lixeira'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('alunos').select('*').not('apagado_em', 'is', null).order('apagado_em', { ascending: false })
+      if (error) throw error
+      return data as Aluno[]
+    },
+  })
+}
+
+function useMudarLixeira(apagadoEm: () => string | null) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('alunos').update({ apagado_em: apagadoEm() }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alunos'] })
+      qc.invalidateQueries({ queryKey: ['aluno'] })
+    },
+  })
+}
+
+/** Aluno arquivado vai para a lixeira por 30 dias (o banco grava a data). Só de aluno ARQUIVADO. */
+export function useMoverParaLixeira() {
+  return useMudarLixeira(() => new Date().toISOString())
+}
+
+/** Tira da lixeira: o aluno volta para Arquivados. */
+export function useRestaurarDaLixeira() {
+  return useMudarLixeira(() => null)
+}
+
 /**
  * Hard delete — plano/sessões/séries/pesos/consentimentos somem em cascata (ON DELETE CASCADE). Irreversível.
- * SÓ de aluno ARQUIVADO (active = false): o banco também recusa (migration 20261057), para que nem uma versão antiga do app apague por engano.
+ * SÓ de aluno que está na LIXEIRA: o banco também recusa (migrations 20261057 e 20261059), para que nem uma versão antiga do app apague por engano.
+ * Sem esta ação o aluno some sozinho 30 dias depois de entrar na lixeira (job do pg_cron).
  */
 export function useApagarAluno() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase.from('alunos').delete().eq('id', id).eq('active', false).select('id')
+      const { data, error } = await supabase.from('alunos').delete().eq('id', id).not('apagado_em', 'is', null).select('id')
       if (error) throw error
-      if (!data || data.length === 0) throw new ErroAmigavel('Arquive o aluno antes de apagar.')
+      if (!data || data.length === 0) throw new ErroAmigavel('Mande o aluno para a lixeira antes de apagar de vez.')
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['alunos'] })
