@@ -819,3 +819,11 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Mensagens de erro em português para as travas da lixeira (#57) e do limite de relatos (`mapearErroSupabase`).
 - ⏳ Sem aviso automático ao admin (WhatsApp/e-mail) quando chega relato novo: hoje é conferir o painel. Possível próxima etapa (Edge Function + pg_net). Política 1.6 já cobre "suporte técnico" e "dados de uso e acesso"; jurídico pode querer citar o relato explicitamente.
 - ⚠️ Dono: rodar a migration e o teste `supabase/tests/relatos_problema.sql`. Telas autenticadas não testadas ao vivo.
+
+
+## 61. Aviso automático ao admin quando chega relato novo
+
+- ✅ Quando um personal envia um relato (#59), o **admin recebe um WhatsApp**: "Novo problema/dúvida/sugestão de {primeiro nome} na central de ajuda. Veja em …/admin → Relatos dos personais." **O texto do relato não vai na mensagem** (texto livre: só no painel), em linha com a regra de privacidade.
+- Mecanismo: trigger `AFTER INSERT` em `treino.relatos` → `pg_net` → Edge Function **`avisar-relato`** (verify_jwt desligado, protegida pelo mesmo `CRON_SECRET`/`cron_secret` do Vault dos outros avisos). O trigger **nunca bloqueia** o relato: se pg_net/Vault/função falharem, o relato é gravado e só sai um aviso no log do banco.
+- ✅ Migration `20261062_aviso_relato_admin.sql` (tipo `relato_novo` em `whatsapp_log`, fora do "um por dia"; função e trigger) e teste `supabase/tests/aviso_relato_admin.sql`. Texto em `montarRelatoNovo` (com testes).
+- ⚠️ Dono: (1) rodar a migration e o teste; (2) **deploy** de `avisar-relato`; (3) o admin precisa ter **WhatsApp ligado e telefone verificado** (Configurações → Notificações), senão o envio é pulado (sem erro); (4) conferir o ponta a ponta mandando um relato real. Alternativa por e-mail ficou de fora (não há remetente de e-mail transacional nas Edge Functions hoje).

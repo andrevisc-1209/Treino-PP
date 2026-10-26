@@ -4,7 +4,7 @@
 
 import { numeroWhatsApp } from './whatsapp.ts'
 
-export const TIPOS_NOTIFICACAO = ['briefing_diario', 'pagamento_plano', 'plano_expirando', 'resumo_semanal', 'aluno_inativo', 'plano_vencido', 'treino_concluido'] as const
+export const TIPOS_NOTIFICACAO = ['briefing_diario', 'pagamento_plano', 'plano_expirando', 'resumo_semanal', 'aluno_inativo', 'plano_vencido', 'treino_concluido', 'relato_novo'] as const
 export type TipoNotificacao = (typeof TIPOS_NOTIFICACAO)[number]
 
 // ---------- datas (o Brasil não tem horário de verão desde 2019: São Paulo é sempre UTC-3) ----------
@@ -217,3 +217,16 @@ const ROTULOS_MODALIDADE: Record<string, string> = { musculacao: 'musculação',
 
 /** Nome da modalidade para o texto da mensagem; null se desconhecida. */
 export const ehModalidadeRotulo = (modalidade: string | null | undefined): string | null => (modalidade ? (ROTULOS_MODALIDADE[modalidade] ?? null) : null)
+
+// ---------- 7. relato novo na central de ajuda (aviso ao ADMIN) ----------
+const ROTULO_RELATO: Record<string, string> = { problema: 'problema', duvida: 'dúvida', sugestao: 'sugestão' }
+
+/**
+ * Aviso ao admin de que chegou um relato. Só tipo e nome do personal: o TEXTO do relato fica no painel (/admin), nunca no WhatsApp,
+ * porque é texto livre e poderia trazer dado de aluno ou de saúde apesar do aviso no formulário.
+ */
+export function montarRelatoNovo(tipo: string, nomePersonal: string | null): string {
+  const quem = primeiroNome(nomePersonal) || 'Um personal'
+  const rotulo = ROTULO_RELATO[tipo] ?? 'relato'
+  return `Novo ${rotulo} de ${quem} na central de ajuda. Veja em treino.personalperto.com.br/admin → Relatos dos personais.`
+}
