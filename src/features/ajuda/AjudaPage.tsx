@@ -6,7 +6,7 @@ import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import { buscarArtigos, CATEGORIAS } from './artigos'
 
 export const WHATSAPP_SUPORTE = '(21) 98652-1747'
-const TEXTO_SUPORTE = 'Olá! Preciso de ajuda com o app do Personal Perto.'
+const TEXTO_SUPORTE = 'Olá! Preciso de ajuda com o app do Personal Perto (Treino).'
 
 export function AjudaPage() {
   const [busca, setBusca] = useState('')
