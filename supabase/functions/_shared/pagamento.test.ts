@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aplicarPagamento, type DepsPagamento } from './pagamento.ts'
+import { aplicarPagamento, linhaLivroPagamento, type DepsPagamento } from './pagamento.ts'
 import type { AssinaturaAtual, PagamentoMP } from './mp.ts'
 
 const uid = '123e4567-e89b-42d3-a456-426614174000'
@@ -116,5 +116,20 @@ describe('aplicarPagamento — idempotência', () => {
     expect(r).toMatchObject({ tipo: 'cancelado', linhas: 1 })
     expect(db.assinatura.status).toBe('cancelada')
     expect(db.processados.size).toBe(antes)
+  })
+})
+
+describe('linhaLivroPagamento', () => {
+  const base = { id: 98765, transaction_amount: 39, date_approved: '2026-10-05T10:00:00.000-03:00', metadata: { plan_slug: 'trimestral' } }
+  it('monta a linha com o valor realmente pago e a data de aprovação', () => {
+    expect(linhaLivroPagamento(base, uid, agora)).toEqual({ payment_id: '98765', professional_id: uid, plano: 'trimestral', valor: 39, pago_em: '2026-10-05T13:00:00.000Z' })
+  })
+  it('sem data de aprovação usa o relógio recebido', () => {
+    expect(linhaLivroPagamento({ ...base, date_approved: undefined }, uid, agora)?.pago_em).toBe(agora.toISOString())
+  })
+  it('plano inválido ou valor ausente/zerado: null (nada vai para o livro)', () => {
+    expect(linhaLivroPagamento({ ...base, metadata: { plan_slug: 'anual' } }, uid, agora)).toBeNull()
+    expect(linhaLivroPagamento({ ...base, transaction_amount: 0 }, uid, agora)).toBeNull()
+    expect(linhaLivroPagamento({ ...base, transaction_amount: undefined }, uid, agora)).toBeNull()
   })
 })

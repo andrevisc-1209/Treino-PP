@@ -850,3 +850,13 @@ Origem: análise de UX do /admin por três ferramentas de IA. Conferi cada ponto
 - ✅ **Relatos:** "Ver cadastro" abre a aba Personais já filtrada pelo e-mail do personal; "Responder no WhatsApp" passa um relato "Novo" para "Em andamento" (resolver continua manual).
 - ⏳ **PR C:** painel financeiro do negócio (receita, conversão de trial, cancelamentos), a propor antes de fazer.
 - ⚠️ Dono: rodar a migration e o teste SQL. Telas autenticadas (e o MFA do admin) não testadas ao vivo.
+
+
+## 64. Painel /admin: Financeiro do negócio (PR C)
+
+- ✅ **Aba Financeiro** no /admin: receita do mês e total (REAL, do livro de pagamentos), **receita mensal recorrente estimada** (assinantes ativos × valor mensal equivalente: R$ 15, R$ 13 e R$ 10, marcada "estimativa"), assinantes ativos e trials em curso, **conversão de trial** (já pagaram ÷ trials encerrados) e **não renovaram** (plano pago que venceu).
+- ✅ **Decisão do dono:** registrar os pagamentos daqui para frente + estimativa agora. Até esta PR o banco só guardava o id do pagamento (`pagamentos_processados`), sem valor nem data, então **a receita anterior não tem como ser recuperada**; o painel diz "registrada desde DD/MM/AAAA".
+- ✅ **Migration `20261066_admin_financeiro.sql`**: tabela `treino.pagamentos_assinatura` (interna, só service_role) e função `admin_financeiro()` (só agregados, exige `is_admin()`/MFA). Teste `supabase/tests/admin_financeiro.sql` e teste de paridade dos preços SQL × `mp.ts`.
+- ✅ **Edge Function `mp-webhook`** grava o pagamento no livro depois de creditar (idempotente por `payment_id`) e **remove a linha em estorno/chargeback**; falha no livro nunca derruba o webhook. **Precisa de deploy.**
+- Fora do escopo: o financeiro dos personais com seus alunos (já existe no app do personal); nenhuma conciliação com o extrato do Mercado Pago.
+- ⚠️ Dono: rodar a migration e o teste, **deploy do `mp-webhook`**, e conferir o primeiro pagamento real aparecendo na aba. Telas autenticadas/MFA não testadas ao vivo.

@@ -5,7 +5,7 @@
 // creditar; só quem inseriu credita. Se creditar falhar, a reivindicação é DESFEITA e o erro sobe (o webhook devolve 500 e o MP
 // reenvia) — senão um pagamento já cobrado ficaria marcado como processado e nunca seria creditado.
 
-import { decidirPagamento, type AssinaturaAtual, type PagamentoMP } from './mp.ts'
+import { decidirPagamento, ehPlano, type AssinaturaAtual, type PagamentoMP, type Plano } from './mp.ts'
 
 export type DepsPagamento = {
   /** true = este payment_id ainda não tinha sido processado (a linha foi inserida agora). */
@@ -45,4 +45,19 @@ export async function aplicarPagamento(deps: DepsPagamento, pagamento: Pagamento
   // Nenhuma assinatura para atualizar: nada foi creditado, então não deixa o pagamento marcado como processado.
   if (linhas === 0) await deps.desfazer(paymentId).catch(() => {})
   return { tipo: 'creditado', professionalId: decisao.professionalId, atualizacao: decisao.atualizacao, linhas }
+}
+
+/** Linha do livro de pagamentos (treino.pagamentos_assinatura) para um pagamento creditado. null se faltar valor/plano confiável. */
+export function linhaLivroPagamento(
+  pagamento: { id: string | number; transaction_amount?: unknown; date_approved?: unknown; metadata?: { plan_slug?: unknown } | null },
+  professionalId: string,
+  agora: Date = new Date(),
+): { payment_id: string; professional_id: string; plano: Plano; valor: number; pago_em: string } | null {
+  const slug = pagamento.metadata?.plan_slug
+  if (!ehPlano(slug)) return null
+  const valor = typeof pagamento.transaction_amount === 'number' && pagamento.transaction_amount > 0 ? pagamento.transaction_amount : null
+  if (valor === null) return null
+  const aprovado = typeof pagamento.date_approved === 'string' ? new Date(pagamento.date_approved) : null
+  const pagoEm = aprovado && !Number.isNaN(aprovado.getTime()) ? aprovado : agora
+  return { payment_id: String(pagamento.id), professional_id: professionalId, plano: slug, valor: Math.round(valor * 100) / 100, pago_em: pagoEm.toISOString() }
 }

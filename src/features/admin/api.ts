@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { StatusAssinatura, Plano } from '@/features/assinatura/useAssinatura'
 import type { StatusRelato, TipoRelato } from '@/features/ajuda/relatos'
 import type { MetricasPersonal } from './personais'
+import { normalizarFinanceiro } from './financeiro'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
 
@@ -208,6 +209,17 @@ export function useAdminHistorico() {
       const { data, error } = await supabase.rpc('admin_historico_acoes')
       if (error) throw error
       return (data ?? []) as HistoricoAdmin[]
+    },
+  })
+}
+
+export function useAdminFinanceiro() {
+  return useQuery({
+    queryKey: ['admin', 'financeiro'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_financeiro').single()
+      if (error) throw error
+      return normalizarFinanceiro(data as Record<string, unknown>)
     },
   })
 }
