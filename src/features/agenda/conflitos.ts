@@ -1,6 +1,7 @@
 // Lógica pura de detecção de conflito de horário. Sem I/O.
 
 import { nomeDiaCurtoPorWeekday } from '@/lib/datas'
+import type { HorarioFixoLinha } from './horarioGrupo'
 
 function minutosDoDia(hora: string): number {
   const [h, m] = hora.split(':').map(Number)
@@ -47,4 +48,29 @@ export function aulasSobrepoe(
   const bIni = new Date(b.starts_at).getTime()
   const bFim = bIni + b.duration_min * 60_000
   return aIni < bFim && bIni < aFim
+}
+
+/**
+ * Horários ainda não salvos (cadastro de aluno novo) no formato dos já existentes, uma linha por dia,
+ * para entrarem na checagem de conflito. `nomeDe` resolve o nome de cada participante.
+ */
+export function pendentesComoExistentes(
+  pendentes: { weekdays: number[]; start_time: string; duration_min: number; local: string; coParticipantesIds: string[] }[],
+  nomeAluno: string,
+  nomeDe: (alunoId: string) => string | undefined,
+): HorarioFixoLinha[] {
+  return pendentes.flatMap((p, i) =>
+    p.weekdays.map((weekday) => ({
+      id: `pendente-${i}-${weekday}`,
+      weekday,
+      start_time: p.start_time,
+      duration_min: p.duration_min,
+      local: p.local.trim() || null,
+      valid_from: '',
+      valid_until: null,
+      active: true,
+      aluno_ids: p.coParticipantesIds,
+      aluno_nomes: [nomeAluno.trim() || 'este aluno', ...p.coParticipantesIds.map(nomeDe).filter((n): n is string => !!n)],
+    })),
+  )
 }

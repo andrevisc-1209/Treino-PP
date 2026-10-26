@@ -24,6 +24,7 @@ import { TERMO_TEXTO } from './termo'
 import { ESPORTES, OBJETIVOS, REGIOES_CORPO } from './opcoes'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
+import { pendentesComoExistentes } from '@/features/agenda/conflitos'
 import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
 import { hojeSP, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
@@ -716,7 +717,10 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
                 onClose={() => setNovoHorarioAberto(false)}
                 title="Novo horário fixo"
                 outrosAlunos={outrosAlunos}
-                outrosHorarios={horariosDoPersonal}
+                outrosHorarios={[
+                  ...(horariosDoPersonal ?? []),
+                  ...pendentesComoExistentes(horariosPendentes, watch('name') ?? '', (alunoId) => outrosAlunos.find((a) => a.id === alunoId)?.name),
+                ]}
                 onSalvar={salvarHorarioPendente}
               />
             </div>

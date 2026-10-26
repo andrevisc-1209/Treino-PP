@@ -774,6 +774,11 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ⚠️ Telas autenticadas não foram testadas ao vivo (o captcha do login bloqueia a automação): validar no celular `/ajuda`, a busca e o botão do WhatsApp.
 
 
+## 56. Conflito de horário também com horários ainda não salvos
+
+- ✅ No cadastro de aluno novo (etapa Horários), a checagem de conflito agora considera também os horários que o personal já adicionou naquele cadastro e ainda não foram salvos (antes só via os já gravados). Função pura `pendentesComoExistentes` + testes. O aviso nomeia o aluno ("este aluno" se o nome ainda não foi digitado).
+- ⚠️ Tela autenticada não testada ao vivo: no celular, adicionar dois horários sobrepostos no cadastro e ver o aviso/confirmação.
+
 ## 55. Esqueleto no lugar de "Carregando…"
 
 - ✅ Telas de lista, aba e ficha (Alunos, Aluno, Planos, Modelos, Sessão, Finalizar sessão, Fatura, Financeiro, Fechar ciclo, Agenda, Evolução, Histórico, Exercícios, Consentimentos, Configurações, Assinatura, Cobrança) agora mostram esqueleto (`ListaSkeleton`/novo `PaginaSkeleton`, com `role="status"` e `aria-label="Carregando"`) em vez do texto solto. Reduz o salto de layout.
