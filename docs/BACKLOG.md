@@ -762,3 +762,12 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **Histórico no bloco "sem refém":** print da aba Histórico (recorte só da lista e das abas; sem nome nem contato), em duas colunas no desktop.
 - ⚠️ **No painel do PostHog (dono):** (1) confirmar que **Session replay** está desligado no projeto (a landing já não envia, mas o texto promete); (2) o texto diz que o IP é tratado para localização aproximada: se preferir **descartar o IP**, ligar "Discard client IP data" em Project settings e ajustar a frase da seção 3; (3) o **jurídico** deve revisar o novo texto da seção 3.
 - Medição local (Lighthouse mobile, Slow 4G): LCP 1,1 s, desempenho/acessibilidade/boas práticas 100.
+
+
+## 54. Central de ajuda dentro do app
+
+- ✅ **Rota `/ajuda`** (Configurações → "Central de ajuda"): 16 artigos em 7 categorias (Começando, Alunos, Treinos, Agenda, Financeiro, Conta e plano, Privacidade), busca sem acento/maiúsculas (todas as palavras precisam aparecer) e artigos em `<details>` (acessível, alvos ≥ 44 px). Os passos usam os rótulos reais do app (conferidos no código).
+- ✅ **Contato:** botão "Falar no WhatsApp" com mensagem pronta, sem dados pessoais; o texto pede para não enviar dados de saúde de alunos na conversa.
+- ✅ Testes (`artigos.test.ts`): ids únicos, categorias válidas, vocabulário (sem "professor"/"assíncrono") e busca.
+- ⏳ **Não feito de propósito:** formulário "Reportar problema" (exige backend/tabela e tratamento LGPD, decidir depois) e link no card de primeiros passos. Os textos descrevem o app de hoje: revisar quando a interface mudar.
+- ⚠️ Telas autenticadas não foram testadas ao vivo (o captcha do login bloqueia a automação): validar no celular `/ajuda`, a busca e o botão do WhatsApp.
