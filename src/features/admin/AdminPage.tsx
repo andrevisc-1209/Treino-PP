@@ -26,7 +26,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { ERROS } from '@/lib/mensagens'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { APP_NAME } from '@/config/app'
-import iconMark from '@/assets/brand/icon-mark.png'
+import logo from '@/assets/brand/logo-personal-perto-sm.png'
 import { useIsAdmin } from './useIsAdmin'
 import { MfaDesafio } from './MfaDesafio'
 import { useMfa } from './mfa'
@@ -103,16 +103,16 @@ function AdminHeader() {
     navigate('/')
   }
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between bg-accent px-4 py-3 text-white">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 text-accent">
       <div className="flex items-center gap-2">
-        <img src={iconMark} alt={APP_NAME} className="h-8 w-auto" />
+        <img src={logo} alt={APP_NAME} className="h-10 w-auto" />
         <h1 className="font-heading text-lg font-bold">Painel Admin</h1>
       </div>
       <div className="flex items-center gap-1">
-        <Link to="/admin/seguranca" className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-white active:bg-white/10">
+        <Link to="/admin/seguranca" className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-slate-700 active:bg-slate-100">
           <ShieldCheck size={16} aria-hidden /> Segurança
         </Link>
-        <Button variant="ghost" onClick={sair} className="min-h-11 px-3 text-white hover:bg-white/10 active:bg-white/10">
+        <Button variant="ghost" onClick={sair} className="min-h-11 px-3 text-slate-700 hover:bg-slate-100 active:bg-slate-100">
           <LogOut size={16} /> Sair
         </Button>
       </div>
