@@ -827,3 +827,16 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - Mecanismo: trigger `AFTER INSERT` em `treino.relatos` → `pg_net` → Edge Function **`avisar-relato`** (verify_jwt desligado, protegida pelo mesmo `CRON_SECRET`/`cron_secret` do Vault dos outros avisos). O trigger **nunca bloqueia** o relato: se pg_net/Vault/função falharem, o relato é gravado e só sai um aviso no log do banco.
 - ✅ Migration `20261062_aviso_relato_admin.sql` (tipo `relato_novo` em `whatsapp_log`, fora do "um por dia"; função e trigger) e teste `supabase/tests/aviso_relato_admin.sql`. Texto em `montarRelatoNovo` (com testes).
 - ⚠️ Dono: (1) rodar a migration e o teste; (2) **deploy** de `avisar-relato`; (3) o admin precisa ter **WhatsApp ligado e telefone verificado** (Configurações → Notificações), senão o envio é pulado (sem erro); (4) conferir o ponta a ponta mandando um relato real. Alternativa por e-mail ficou de fora (não há remetente de e-mail transacional nas Edge Functions hoje).
+
+
+## 62. Painel /admin: ajustes de UX, treinos por personal e cidade com Maps (PR A)
+
+Origem: análise de UX do /admin por três ferramentas de IA. Conferi cada ponto no código antes de agir: **P3 (sem confirmação), P6 (KPIs sem rótulo), P8 (sem data do trial) e P20 (só cor) estavam errados** (os modais, rótulos, a coluna "Trial/plano até" e os textos dos status já existiam). P5 (papéis de acesso) fica para quando houver equipe.
+- ✅ **"+ 7 dias de trial" agora pede confirmação** (era a única ação do painel sem modal).
+- ✅ **Treinos por personal** (só números agregados, sem dados de alunos): montados e realizados, presencial x à distância, e realizados nos últimos 30 dias, na tabela e nos cards do celular. **Migration `20261064_admin_personais_metricas.sql`** (função `admin_personais_metricas()`, exige `is_admin()`/MFA) e teste `supabase/tests/admin_personais_metricas.sql`.
+- ✅ **Cidade/UF do personal com link para o Google Maps** (lista de personais e tabela de Cidades); vazio = "Não informado". Sem endereço de aluno.
+- ✅ **Relatos:** filtro por status (Em aberto, Novo, Em andamento, Resolvido, Todos, com contagem) e o navegador vira "iPhone · Safari" (texto completo só no tooltip).
+- ✅ **Inadimplentes zerado:** uma linha discreta no lugar de um card inteiro.
+- ✅ **Contraste:** a pílula "Cancelada" (slate-500 sobre slate-100, ~4,3:1) passou para slate-600; teste novo cobre todas as pílulas do /admin.
+- ⏳ **Próximas (PR B):** menu "⋮" por personal no lugar dos 4 botões, abas do painel (Visão geral, Personais, Suporte, Privacidade) e tela de histórico de ações (`admin_logs` já existe no banco). **PR C:** painel financeiro do negócio (receita, conversão de trial, cancelamentos) — propor antes.
+- ⚠️ Dono: rodar a migration e o teste SQL. Telas autenticadas não testadas ao vivo.
