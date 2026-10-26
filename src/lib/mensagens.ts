@@ -6,6 +6,9 @@
 export const ERROS = {
   ALUNO: {
     arquivarAntes: 'Arquive o aluno antes de apagar.',
+    lixeiraAntes: 'Mande o aluno para a lixeira antes de apagar de vez.',
+    restaurarAntes: 'Restaure o aluno da lixeira antes de reativar.',
+    arquivarAntesLixeira: 'Arquive o aluno antes de mandar para a lixeira.',
   },
   ASSINATURA: {
     // modo leitura (trial/assinatura vencidos): o banco barra as gravações (policies assinatura_ativa_*, migration 20261052)

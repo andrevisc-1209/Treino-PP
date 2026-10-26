@@ -31,6 +31,7 @@ import { MfaDesafio } from './MfaDesafio'
 import { useMfa } from './mfa'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import { ConsentimentosSection } from './ConsentimentosSection'
+import { RelatosSection } from './RelatosSection'
 import {
   useAdminAlterarCpf,
   useAdminAlterarPlano,
@@ -257,6 +258,8 @@ function AdminDashboard() {
             {listaFiltrada.length === 0 && <p className="py-6 text-center text-sm text-slate-500">Nenhum personal encontrado.</p>}
           </div>
         </div>
+
+        <RelatosSection />
 
         <ConsentimentosSection />
 

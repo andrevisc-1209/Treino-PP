@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
 import { supabase } from '@/lib/supabase'
 import type { StatusAssinatura, Plano } from '@/features/assinatura/useAssinatura'
+import type { StatusRelato, TipoRelato } from '@/features/ajuda/relatos'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
 
@@ -128,5 +129,40 @@ export function useAdminConsentimentos() {
         nao_solicitados: Number(l.nao_solicitados),
       })) as ConsentimentosPersonal[]
     },
+  })
+}
+
+export type RelatoAdmin = {
+  id: string
+  criado_em: string
+  tipo: TipoRelato
+  mensagem: string
+  dispositivo: string | null
+  status: StatusRelato
+  professional_id: string
+  nome: string
+  email: string | null
+  telefone: string | null
+}
+
+export function useAdminRelatos() {
+  return useQuery({
+    queryKey: ['admin', 'relatos'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_relatos')
+      if (error) throw error
+      return (data ?? []) as RelatoAdmin[]
+    },
+  })
+}
+
+export function useAdminRelatoStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: StatusRelato }) => {
+      const { error } = await supabase.rpc('admin_relato_status', { p_id: id, p_status: status })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'relatos'] }),
   })
 }
