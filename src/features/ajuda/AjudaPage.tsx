@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, MessageCircle, Search } from 'lucide-react'
+import { ArrowLeft, Flag, MessageCircle, Search } from 'lucide-react'
 import { Input } from '@/components/ui'
 import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import { buscarArtigos, CATEGORIAS } from './artigos'
+import { RelatarProblemaSheet } from './RelatarProblemaSheet'
 
 export const WHATSAPP_SUPORTE = '(21) 98652-1747'
 const TEXTO_SUPORTE = 'Olá! Preciso de ajuda com o app do Personal Perto (Treino).'
 
 export function AjudaPage() {
   const [busca, setBusca] = useState('')
+  const [relatando, setRelatando] = useState(false)
   const encontrados = buscarArtigos(busca)
   const buscando = busca.trim().length > 0
 
@@ -80,7 +82,16 @@ export function AjudaPage() {
           <MessageCircle size={18} aria-hidden />
           Falar no WhatsApp
         </a>
+        <button
+          type="button"
+          onClick={() => setRelatando(true)}
+          className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 font-semibold text-slate-800 active:bg-slate-50"
+        >
+          <Flag size={18} aria-hidden />
+          Reportar um problema
+        </button>
       </section>
+      <RelatarProblemaSheet open={relatando} onClose={() => setRelatando(false)} />
     </div>
   )
 }

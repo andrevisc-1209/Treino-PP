@@ -810,3 +810,12 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Edge Function `avisos-financeiros`: não avisa cobrança vencida de aluno na lixeira. **Precisa de deploy** da função.
 - Sem mudança: briefing, resumo semanal e avisos diários já filtram por aluno ativo ou dependem das aulas futuras (que saem no passo acima).
 - ⚠️ Dono: rodar a migration e `supabase/tests/lixeira_esconde_aluno.sql` (esperado `(a) OK` … `(e) OK`), e fazer o deploy de `avisos-financeiros`. Telas autenticadas não testadas ao vivo.
+
+## 59. Reportar problema (central de ajuda)
+
+- ✅ Botão **"Reportar um problema"** na central de ajuda (`/ajuda`): o personal escolhe Problema/Dúvida/Sugestão e escreve (10 a 1500 caracteres). Aviso no formulário: não escrever nome, telefone nem dados de saúde de alunos. O banco guarda só tipo, texto, aparelho/navegador (user agent, até 200) e o personal; **nenhum dado de aluno** e nada de saúde.
+- ✅ **Migration `20261060_relatos_problema.sql`**: tabela `treino.relatos` com RLS (personal só insere e lê os próprios; sem editar/apagar), status sempre "novo" na criação, **limite de 5 relatos por hora** por personal e **sem trava de assinatura vencida** (quem está em modo leitura também precisa conseguir pedir ajuda). Funções `admin_relatos()` e `admin_relato_status()` exigem `is_admin()` (MFA).
+- ✅ **Painel /admin → "Relatos dos personais"**: lista (abertos primeiro), nome/e-mail/telefone do personal, status Novo/Em andamento/Resolvido e "Responder no WhatsApp". O admin vê dados do personal e o texto dele, nunca de alunos.
+- ✅ Mensagens de erro em português para as travas da lixeira (#57) e do limite de relatos (`mapearErroSupabase`).
+- ⏳ Sem aviso automático ao admin (WhatsApp/e-mail) quando chega relato novo: hoje é conferir o painel. Possível próxima etapa (Edge Function + pg_net). Política 1.6 já cobre "suporte técnico" e "dados de uso e acesso"; jurídico pode querer citar o relato explicitamente.
+- ⚠️ Dono: rodar a migration e o teste `supabase/tests/relatos_problema.sql`. Telas autenticadas não testadas ao vivo.
