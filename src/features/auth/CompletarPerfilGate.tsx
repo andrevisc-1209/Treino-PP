@@ -35,7 +35,6 @@ export function CompletarPerfilGate({ userId, children }: { userId: string; chil
           userId={userId}
           nomeInicial={data.perfil.name}
           cpfInicial={data.perfil.cpf ?? ''}
-          whatsappInicial={data.perfil.whatsappOptIn}
           pedirAceite={!data.aceitou}
           onConcluido={() => qc.invalidateQueries({ queryKey: ['perfil-obrigatorio', userId] })}
         />

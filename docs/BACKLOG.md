@@ -913,3 +913,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Função com limite de 40 consultas/IP/hora, falha fechada; se a consulta falhar, o cadastro segue sem o aviso. Testes das regras puras (`verificarCadastro.test.ts`). **Risco aceito (enumeração) registrado em `docs/SECURITY-AUDIT.md`.**
 - ⏳ Recuperar a senha **pelo CPF** (hoje precisa do e-mail): exigiria uma função que envia o reset ao e-mail do cadastro sem revelá-lo. Não feito.
 - ⚠️ Dono: **deploy da função `verificar-cadastro`** (`--no-verify-jwt` já vem do `config.toml`) e testar no celular com CPF e e-mail já usados e com novos.
+
+
+## 71. Cadastro: WhatsApp só no passo 2 e rótulos de login
+
+- ✅ O seletor de **WhatsApp saiu do cadastro** (passo 1) e ficou **só no "Complete seu perfil"**, logo abaixo do telefone (é o telefone que o WhatsApp usa), com texto explicando o que chega ("agenda do dia e avisos do app; você desliga quando quiser"). **Segue ligado por padrão** (decisão do dono); vale para todo mundo que passa por essa tela (e-mail, Google e convite). Antes aparecia nas duas telas.
+- ✅ Os botões "Já tenho conta" viraram **"Ir para o login"** (tela de confirmar e-mail) e **"Fazer login"** (rodapé do cadastro).
