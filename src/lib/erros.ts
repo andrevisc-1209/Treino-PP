@@ -53,6 +53,11 @@ export function mapearErroSupabase(erro: unknown): string {
   }
   // trava do banco (migration 20261057): aluno só é apagado depois de arquivado
   if (code === 'P0001' && msgMin.includes('arquive o aluno antes de apagar')) return ERROS.ALUNO.arquivarAntes
+  // lixeira de alunos (migration 20261059) e limite de relatos (20261060)
+  if (code === 'P0001' && msgMin.includes('antes de mandar para a lixeira')) return ERROS.ALUNO.arquivarAntesLixeira
+  if (code === 'P0001' && msgMin.includes('para a lixeira antes de apagar')) return ERROS.ALUNO.lixeiraAntes
+  if (code === 'P0001' && msgMin.includes('restaure o aluno da lixeira')) return ERROS.ALUNO.restaurarAntes
+  if (code === 'P0001' && msgMin.includes('vários relatos')) return 'Você já enviou vários relatos na última hora. Aguarde um pouco ou fale com a gente pelo WhatsApp.'
   // limites da cobrança do aluno (CHECKs de aluno_cobranca): diz QUAL campo estourou em vez do genérico
   if (textoCompleto.includes('aluno_cobranca_dia_ciclo')) return 'Dia do ciclo deve ser entre 1 e 28.'
   if (textoCompleto.includes('aluno_cobranca_dias_vencimento')) return 'Vencimento deve ser de 0 a 30 dias após o fechamento.'
