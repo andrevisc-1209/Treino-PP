@@ -793,3 +793,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Textos atualizados: central de ajuda e FAQ/bloco "sem refém" da landing.
 - Escolha de desenho: o aluno na lixeira continua sendo um aluno **arquivado** com data de lixeira; seus dados (faturas, sessões) não são escondidos das outras telas durante os 30 dias, como já é com qualquer arquivado. Esconder tudo exigiria filtrar ~14 tabelas filhas; fica como evolução, se for necessário.
 - ⚠️ Dono: **rodar a migration e depois o `supabase/cron/lixeira_alunos.sql` no SQL Editor** (sem o cron, a lixeira não esvazia sozinha), e rodar os dois testes SQL. Telas autenticadas não testadas ao vivo. Política de Privacidade não mudou (a lixeira cabe em "enquanto a conta estiver ativa"); revisar se o jurídico quiser citar o prazo.
+
+
+## 58. LCP da landing medido em produção (26/10/2026)
+
+- ✅ Lighthouse mobile (Slow 4G simulado) em `treino.personalperto.com.br/landing.html`, já com analytics e Política 1.6 no ar: **LCP 1,5 s, FCP 1,5 s, TBT 0 ms, CLS 0,051, desempenho 99, acessibilidade 100, boas práticas 100.**
+- Regra combinada (LCP ≤ 2,5 s): **migração para Astro segue adiada**. Reavaliar se o LCP passar de 2,5 s ou quando houver mais blocos para migrar de uma vez.
+- Ponto de atenção: CLS subiu para 0,051 (limite "bom" é 0,1). Se crescer, olhar o aviso de consentimento do rodapé e as imagens sem dimensão.
