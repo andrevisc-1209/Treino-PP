@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
   const hoje = dataSP(new Date())
   const { data, error } = await admin
     .from('faturas')
-    .select('professional_id, vencimento, total, aluno:alunos(name), professional:professionals(name)')
+    .select('professional_id, vencimento, total, aluno:alunos!inner(name, apagado_em), professional:professionals(name)')
+    .is('aluno.apagado_em', null) // aluno na lixeira não gera aviso de cobrança
     .in('status', ['aberta', 'enviada'])
     .in('vencimento', DIAS_DE_AVISO.map((d) => somarDias(hoje, -d)))
   if (error) {

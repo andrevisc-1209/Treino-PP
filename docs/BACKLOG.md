@@ -802,6 +802,15 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - Ponto de atenção: CLS subiu para 0,051 (limite "bom" é 0,1). Se crescer, olhar o aviso de consentimento do rodapé e as imagens sem dimensão.
 
 
+## 60. Aluno na lixeira some das demais telas
+
+- ✅ **Migration `20261061_lixeira_esconde_aluno.sql`** (decisão do dono: "tirar da agenda"). Ao mandar o aluno para a lixeira, o banco: remove as **aulas futuras** dele ainda não realizadas/cobradas (e as aulas que ficarem vazias), desvincula e **desativa os horários fixos** que ficarem sem alunos e **desativa a cobrança**. Nada disso volta ao restaurar: ele volta como arquivado e, ao reativar, horário e cobrança precisam ser cadastrados de novo.
+- ✅ **Esconde na leitura** (policy `RESTRICTIVE`, nome `lixeira_esconde`) as linhas do aluno na lixeira em `faturas`, `aluno_cobranca`, `aula_participantes`, `notificacoes_professor`, `execucoes_assincrono` e `sessoes`: Financeiro, Agenda/Hoje, métricas, notificações e feed deixam de incluí-lo. Os dados seguem no banco até a limpeza dos 30 dias e **voltam a aparecer se ele for tirado da lixeira**. Atenção: a dívida em aberto dele deixa de aparecer no Financeiro enquanto estiver na lixeira.
+- ✅ RPC `resumo_apagar_aluno()` (SECURITY DEFINER, só do próprio personal): a confirmação de "Apagar agora" continua mostrando o que será perdido (a leitura direta passou a ver zero). App atualizado para usá-la.
+- ✅ Edge Function `avisos-financeiros`: não avisa cobrança vencida de aluno na lixeira. **Precisa de deploy** da função.
+- Sem mudança: briefing, resumo semanal e avisos diários já filtram por aluno ativo ou dependem das aulas futuras (que saem no passo acima).
+- ⚠️ Dono: rodar a migration e `supabase/tests/lixeira_esconde_aluno.sql` (esperado `(a) OK` … `(e) OK`), e fazer o deploy de `avisos-financeiros`. Telas autenticadas não testadas ao vivo.
+
 ## 59. Reportar problema (central de ajuda)
 
 - ✅ Botão **"Reportar um problema"** na central de ajuda (`/ajuda`): o personal escolhe Problema/Dúvida/Sugestão e escreve (10 a 1500 caracteres). Aviso no formulário: não escrever nome, telefone nem dados de saúde de alunos. O banco guarda só tipo, texto, aparelho/navegador (user agent, até 200) e o personal; **nenhum dado de aluno** e nada de saúde.
