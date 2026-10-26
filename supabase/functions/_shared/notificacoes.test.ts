@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  alunosInativos, ehModalidadeRotulo, montarFaturasVencidas, montarTreinosConcluidos, brl, dataBR, dataSP, decidirEnvio, diaSemanaCurto, horaSP, inicioDaSemana, limitesDoDiaSP, montarAlunosInativos, montarBriefing,
+  alunosInativos, ehModalidadeRotulo, montarFaturasVencidas, montarRelatoNovo, montarTreinosConcluidos, brl, dataBR, dataSP, decidirEnvio, diaSemanaCurto, horaSP, inicioDaSemana, limitesDoDiaSP, montarAlunosInativos, montarBriefing,
   montarPagamentoPlano, montarPlanoExpirando, montarResumoSemanal, segredoCronValido, somarDias,
 } from './notificacoes.ts'
 
@@ -165,5 +165,16 @@ describe('treino à distância concluído', () => {
     expect(ehModalidadeRotulo('natacao')).toBe('natação')
     expect(ehModalidadeRotulo('xyz')).toBeNull()
     expect(ehModalidadeRotulo(null)).toBeNull()
+  })
+})
+
+describe('montarRelatoNovo', () => {
+  it('diz o tipo e quem enviou, sem o texto do relato', () => {
+    const t = montarRelatoNovo('problema', 'Carlos Silva')
+    expect(t).toContain('Novo problema de Carlos')
+    expect(t).toContain('/admin')
+  })
+  it('tipo desconhecido e nome ausente não quebram', () => {
+    expect(montarRelatoNovo('x', null)).toContain('Novo relato de Um personal')
   })
 })
