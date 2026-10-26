@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import { ExerciciosEditor } from '@/components/ExerciciosEditor'
@@ -47,7 +48,7 @@ export function ModeloEditorPage() {
   }, [])
 
   if (!modeloId) return <Navigate to="/meus-treinos/planejados" replace />
-  if (modeloLoading) return <p className="p-4 text-slate-500">Carregando…</p>
+  if (modeloLoading) return <PaginaSkeleton />
   if (!modelo) return <p className="p-4 text-slate-500">Treino planejado não encontrado.</p>
 
   const abrirEditarNome = () => {

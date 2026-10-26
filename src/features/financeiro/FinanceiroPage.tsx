@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
@@ -106,7 +107,7 @@ export function FinanceiroPage() {
         <LinkConfiguracoes />
       </header>
 
-      {(alunosLoading || faturasLoading) && <p className="text-slate-500">Carregando…</p>}
+      {(alunosLoading || faturasLoading) && <ListaSkeleton />}
 
       {!alunosLoading && !faturasLoading && (
         <>

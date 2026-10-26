@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PaginaSkeleton } from '@/components/Skeleton'
 import { Navigate, useParams } from 'react-router-dom'
 import { useSessao } from './api'
 import { PosTreino } from './PosTreino'
@@ -12,7 +13,7 @@ export function FinalizarSessaoPage() {
   const [concluindo, setConcluindo] = useState(false)
 
   if (!id || !sessionId) return <Navigate to="/" replace />
-  if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
+  if (isLoading) return <PaginaSkeleton />
   if (sessao && sessao.status !== 'em_andamento' && !concluindo) return <Navigate to={`/alunos/${id}/sessoes/${sessionId}`} replace />
 
   return (

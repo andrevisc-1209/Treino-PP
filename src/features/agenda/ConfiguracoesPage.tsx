@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, LifeBuoy, Lock, LogOut, ShieldCheck } from 'lucide-react'
 import { Acordeao } from '@/components/Acordeao'
@@ -162,7 +163,7 @@ export function ConfiguracoesPage() {
       </header>
 
       {isLoading ? (
-        <p className="text-slate-500">Carregando…</p>
+        <ListaSkeleton />
       ) : (
         <div className="space-y-3">
           <Acordeao titulo="Dados pessoais" aberto={estaAberta('dados', false)} onAlternar={() => alternar('dados', false)} alterado={dadosSujos}>

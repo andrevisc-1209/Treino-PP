@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Fab } from '@/components/ui'
@@ -30,7 +31,7 @@ function VisaoDia({ dataISO, onAbrirAula }: { dataISO: string; onAbrirAula: (a: 
 
   return (
     <div className="space-y-2">
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
+      {isLoading && <ListaSkeleton />}
       {aulas?.length === 0 && <p className="text-sm text-slate-500">Nenhuma aula neste dia.</p>}
       {aulas?.map((a) => (
         <AulaCard key={a.id} aula={a} onClick={() => onAbrirAula(a)} />
@@ -55,7 +56,7 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
     return map
   }, [aulas, dias])
 
-  if (isLoading) return <p className="text-slate-500">Carregando…</p>
+  if (isLoading) return <ListaSkeleton />
 
   return (
     <>

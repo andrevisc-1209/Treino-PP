@@ -53,7 +53,7 @@ function HistoricoSheet({ linha, onClose }: { linha: LinhaConsentimento | null; 
             {linha.respondido_at && <span className="text-slate-500">em {dataHoraSP(linha.respondido_at)}</span>}
           </div>
 
-          {isLoading && <p className="text-sm text-slate-500">Carregando…</p>}
+          {isLoading && <ListaSkeleton />}
           {error && <p className="text-sm text-red-600">{mapearErroSupabase(error)}</p>}
           {data && data.envios.length === 0 && (
             <p className="text-sm text-slate-500">Nenhum envio registrado neste histórico (solicitações anteriores à criação do histórico não aparecem).</p>

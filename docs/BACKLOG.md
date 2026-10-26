@@ -772,3 +772,10 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Link "Precisa de ajuda?" no card de primeiros passos (Hoje).
 - ⏳ **Fora por enquanto (decisão do dono):** formulário "Reportar problema" (exige backend/tabela e tratamento LGPD). Os textos descrevem o app de hoje: revisar quando a interface mudar.
 - ⚠️ Telas autenticadas não foram testadas ao vivo (o captcha do login bloqueia a automação): validar no celular `/ajuda`, a busca e o botão do WhatsApp.
+
+
+## 55. Esqueleto no lugar de "Carregando…"
+
+- ✅ Telas de lista, aba e ficha (Alunos, Aluno, Planos, Modelos, Sessão, Finalizar sessão, Fatura, Financeiro, Fechar ciclo, Agenda, Evolução, Histórico, Exercícios, Consentimentos, Configurações, Assinatura, Cobrança) agora mostram esqueleto (`ListaSkeleton`/novo `PaginaSkeleton`, com `role="status"` e `aria-label="Carregando"`) em vez do texto solto. Reduz o salto de layout.
+- Mantido como texto, de propósito: telas de autenticação/admin, seletores dentro de sheets e o consentimento público do aluno.
+- ⚠️ Telas autenticadas não testadas ao vivo (captcha do login): conferir no celular com a rede lenta.

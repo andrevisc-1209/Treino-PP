@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { Link } from 'react-router-dom'
 import { formatarDataBR, formatarNumero } from '@/lib/format'
 import { dataSP } from '@/lib/datas'
@@ -38,7 +39,7 @@ export function HistoricoTab({ alunoId }: { alunoId: string }) {
     return [...dasSessoes, ...dasExecucoes].sort((a, b) => b.quando.localeCompare(a.quando))
   }, [sessoes, execucoes])
 
-  if (isLoading || carregandoExec) return <p className="text-slate-500">Carregando…</p>
+  if (isLoading || carregandoExec) return <ListaSkeleton />
   if (error) return <p className="text-red-600">{mapearErroSupabase(error)}</p>
   if (itens.length === 0) return <p className="text-sm text-slate-500">Nenhum treino registrado ainda.</p>
 
