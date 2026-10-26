@@ -16,6 +16,8 @@ import { entrarComCpf } from './loginCpf'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
+import { mascararCPF, validarCPF } from '@/lib/cpf'
+import { ERROS } from '@/lib/mensagens'
 import { PasswordInput } from '@/components/PasswordInput'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
@@ -38,6 +40,7 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
             .regex(/[^A-Za-z0-9]/, 'Precisa de 1 símbolo')
         : z.string().min(6, 'Mínimo 6 caracteres'),
     confirmPassword: z.string().optional(),
+    cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
     whatsappOptIn: z.boolean().optional(),
     termosAceitos:
       mode === 'signup'
@@ -70,7 +73,7 @@ export function LoginPage() {
   const [esperaReenvio, setEsperaReenvio] = useState(0)
   const [captchaDemorou, setCaptchaDemorou] = useState(false)
 
-  const { register, handleSubmit, formState, setValue, watch } = useForm<Form>({
+  const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
     defaultValues: { termosAceitos: false, whatsappOptIn: true },
   })
@@ -78,6 +81,7 @@ export function LoginPage() {
   const termosAceitos = watch('termosAceitos')
   const whatsappOptIn = watch('whatsappOptIn')
   const senhaValor = watch('password')
+  const cpfValor = watch('cpf')
 
   // sem token depois de 12 s (rede lenta, bloqueador de anúncios): em vez de ficar travado em "Verificando…", oferece tentar de novo
   useEffect(() => {
@@ -138,7 +142,9 @@ export function LoginPage() {
               : `Enviamos um link de confirmação para ${emailPendente}. Abra o e-mail e clique no link pra ativar sua conta.`}
           </p>
           {emailPendenteOrigem !== 'login' && (
-            <p className="text-xs text-slate-500">Já tem conta? Volte ao login e entre com e-mail e senha ou com o Google. Se esqueceu a senha, use “Esqueci minha senha”.</p>
+            <p className="text-xs text-slate-600">
+              Se este e-mail já tinha conta, nenhum e-mail novo chega: entre com e-mail e senha ou com o Google, ou recupere a senha.
+            </p>
           )}
           {msg && <p className="text-sm text-red-600">{msg}</p>}
           <div className="flex justify-center">
@@ -151,17 +157,30 @@ export function LoginPage() {
                 ? 'Reenviando…'
                 : 'Reenviar e-mail de confirmação'}
           </Button>
-          <button
-            type="button"
-            className="min-h-11 w-full text-sm text-slate-500"
+          <Button
+            variant="outline"
+            className="w-full"
             onClick={() => {
               setEmailPendente(null)
               setMode('login')
               setMsg(null)
             }}
           >
-            Voltar para o login
-          </button>
+            Já tenho conta: entrar
+          </Button>
+          {emailPendenteOrigem !== 'login' && (
+            <button
+              type="button"
+              className="min-h-11 w-full text-sm text-slate-600 underline"
+              onClick={() => {
+                setEmailPendente(null)
+                setMode('recuperar')
+                setMsg(null)
+              }}
+            >
+              Esqueci minha senha
+            </button>
+          )}
         </div>
       </div>
     )
@@ -203,6 +222,7 @@ export function LoginPage() {
       options: {
         data: {
           name: f.name ?? '',
+          cpf: (f.cpf ?? '').replace(/\D/g, ''),
           whatsapp_opt_in: f.whatsappOptIn ?? false,
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
@@ -294,6 +314,16 @@ export function LoginPage() {
             <Field label="Nome" error={formState.errors.name?.message}>
               <Input {...register('name')} autoComplete="name" autoFocus />
             </Field>
+            <Field label="CPF" error={formState.errors.cpf?.message}>
+              <Input
+                value={cpfValor ?? ''}
+                onChange={(e) => setValue('cpf', mascararCPF(e.target.value), { shouldValidate: true })}
+                onBlur={() => trigger('cpf')}
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+                className={formState.errors.cpf ? 'border-red-600 focus:border-red-600' : undefined}
+              />
+            </Field>
           </>
         )}
         <Field label={mode === 'login' ? 'CPF ou e-mail' : 'E-mail'} error={formState.errors.email?.message}>
@@ -367,6 +397,7 @@ export function LoginPage() {
         {(() => {
           // o que impede de continuar, em palavras (o botão cinza sem explicação era um beco sem saída)
           const faltas: string[] = []
+          if (mode === 'signup' && formState.errors.cpf) faltas.push('um CPF válido')
           if (mode === 'signup' && !senhaAtendeTodasRegras(senhaValor ?? '')) faltas.push('uma senha que atenda todos os requisitos')
           const verificando = CAPTCHA_ATIVO && !captchaToken
           return (
