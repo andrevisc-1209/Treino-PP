@@ -1,6 +1,6 @@
 -- Teste para o SQL Editor do Supabase. NÃO grava nada: termina de propósito com um erro que desfaz tudo; o RESULTADO aparece
 -- na mensagem desse erro. Rode DEPOIS das migrations 20261059 e 20261061. Cria um aluno de teste e, como personal logado
--- (o primeiro da tabela, com assinatura/trial ATIVO), prova:
+-- (escolhido entre os que têm assinatura/trial ATIVO), prova:
 --   (a) antes da lixeira o personal enxerga a fatura, a participação em aula futura e o vínculo do horário do aluno;
 --   (b) ao mandar para a lixeira, a aula futura que ficou vazia some, o horário fixo vazio é desativado e a cobrança é desativada;
 --   (c) depois disso o personal NÃO enxerga mais a fatura do aluno (policy lixeira_esconde);
@@ -20,8 +20,14 @@ DECLARE
   v_fat BIGINT;
   v_log TEXT[] := ARRAY[]::TEXT[];
 BEGIN
-  SELECT id INTO v_prof FROM treino.professionals WHERE is_admin = FALSE ORDER BY id LIMIT 1;
-  IF v_prof IS NULL THEN RAISE EXCEPTION 'RESULTADO: AVISO - precisa de um personal cadastrado; teste não executado'; END IF;
+  -- personal com assinatura ativa (mesma regra de treino.assinatura_ativa()), senão a regra de modo leitura barra os UPDATE do teste
+  SELECT p.id INTO v_prof
+  FROM treino.professionals p
+  JOIN treino.assinaturas a ON a.professional_id = p.id
+  WHERE p.is_admin = FALSE
+    AND ((a.status = 'trial' AND a.trial_fim > now()) OR (a.status = 'ativa' AND (a.assinatura_fim IS NULL OR a.assinatura_fim > now())))
+  ORDER BY p.id LIMIT 1;
+  IF v_prof IS NULL THEN RAISE EXCEPTION 'RESULTADO: AVISO - nenhum personal com trial/assinatura ativa; teste não executado'; END IF;
 
   INSERT INTO treino.alunos (id, professional_id, name, active) VALUES (v_aluno, v_prof, '[TESTE] aluno lixeira', FALSE);
   INSERT INTO treino.aluno_cobranca (aluno_id, professional_id, modelo, valor_mensal, dia_ciclo, ativo) VALUES (v_aluno, v_prof, 'mensal', 100, 1, TRUE);
