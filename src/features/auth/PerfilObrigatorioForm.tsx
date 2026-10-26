@@ -8,6 +8,7 @@ import { cepCompleto } from '@/lib/cep'
 import { ERROS } from '@/lib/mensagens'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import { registrarAceiteTermos, salvarPerfilProfissional } from './api'
+import { useCadastroExistente } from './verificarCadastro'
 
 /**
  * Nome + CPF + telefone + preferência de WhatsApp — pedidos uma vez, quando
@@ -45,10 +46,13 @@ export function PerfilObrigatorioForm({
   const [salvando, setSalvando] = useState(false)
 
   const cpfInvalido = !!cpf && !validarCPF(cpf)
+  // CPF digitado completo que já é de OUTRA conta (a função ignora a própria): avisa antes de salvar
+  const cpfDeOutraConta = useCadastroExistente('cpf', cpf, !cpfInicial && validarCPF(cpf)) === true
 
   const salvar = async () => {
     if (!nome.trim()) return setErro('Informe seu nome')
     if (!validarCPF(cpf)) return setErro(ERROS.CPF.invalido)
+    if (cpfDeOutraConta) return setErro(ERROS.CPF.duplicado)
     if (!validarTelefone(telefone)) return setErro('Telefone inválido')
     if (pedirAceite && !aceitouTermos) return setErro('Aceite os Termos de Uso e a Política de Privacidade para continuar')
     if (!cepCompleto(local.cep) || !local.uf || !local.cidade) return setErro('Informe um CEP válido para preencher cidade e estado')
@@ -89,6 +93,12 @@ export function PerfilObrigatorioForm({
           className={cpfInicial ? 'bg-slate-50 text-slate-600' : cpfTocado && cpfInvalido ? 'border-red-600 focus:border-red-600' : undefined}
         />
       </Field>
+      {cpfDeOutraConta && (
+        <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          Este CPF já está cadastrado em outra conta. Se for você, saia e entre com o e-mail e a senha dessa conta (ou use "Esqueci minha senha"). Se não
+          reconhece, fale com o suporte.
+        </p>
+      )}
       <Field label="Telefone">
         <Input value={telefone} onChange={(e) => setTelefone(mascararTelefone(e.target.value))} inputMode="tel" placeholder="(00) 00000-0000" />
       </Field>
@@ -114,7 +124,7 @@ export function PerfilObrigatorioForm({
         </label>
       )}
       {erro && <p className="text-sm text-red-600">{erro}</p>}
-      <Button onClick={salvar} className="w-full" disabled={salvando || cpfInvalido || (pedirAceite && !aceitouTermos)}>
+      <Button onClick={salvar} className="w-full" disabled={salvando || cpfInvalido || cpfDeOutraConta || (pedirAceite && !aceitouTermos)}>
         Concluir
       </Button>
     </div>

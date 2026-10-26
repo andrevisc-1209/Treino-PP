@@ -904,3 +904,12 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - **Como o banco trata mais de uma conta com o mesmo CPF:** índice único (`idx_professionals_cpf`). No cadastro, um CPF já usado faz o gatilho de criação do perfil falhar e o app mostra a mensagem genérica "Não foi possível concluir o cadastro. Se o CPF ou e-mail já estiverem cadastrados, tente entrar ou recuperar a senha" (de propósito, para não revelar quem é cliente). A mesma regra vale no perfil pós-Google (`atualizar_cpf`, 5 tentativas/dia).
 - **E-mail já cadastrado:** o Supabase **não cria uma segunda conta**; devolve um usuário "fantasma" e o app mostra a mesma tela de "Confirme seu e-mail" (decisão de segurança contra enumeração, SECURITY-AUDIT). Melhorias desta PR: a tela agora diz que, se o e-mail já tinha conta, nenhum e-mail novo chega, e traz os botões **"Já tenho conta: entrar"** e **"Esqueci minha senha"** (antes só um texto pequeno e um link).
 - ⚠️ Dono: testar no celular cadastro com e-mail novo e com um e-mail e um CPF já usados (cada um deve cair na mensagem certa).
+
+
+## 70. Cadastro: avisa ao digitar se o CPF/e-mail já tem conta
+
+- ✅ Ao terminar de digitar o **CPF** (válido) ou o **e-mail** (válido), com pequena espera, o cadastro consulta a nova Edge Function **`verificar-cadastro`** e, se já existe conta, mostra "Já existe uma conta com este CPF/e-mail" com os botões **Entrar** (leva ao login com o CPF/e-mail já preenchido) e **Esqueci minha senha**. O botão "Criar conta" fica bloqueado e explica o motivo. **Nada da conta aparece** (o aviso não mostra o e-mail do CPF nem o CPF do e-mail).
+- ✅ No **"Complete seu perfil"** o CPF digitado que é de outra conta também avisa na hora (a função ignora a própria conta) e bloqueia o "Concluir".
+- ✅ Função com limite de 40 consultas/IP/hora, falha fechada; se a consulta falhar, o cadastro segue sem o aviso. Testes das regras puras (`verificarCadastro.test.ts`). **Risco aceito (enumeração) registrado em `docs/SECURITY-AUDIT.md`.**
+- ⏳ Recuperar a senha **pelo CPF** (hoje precisa do e-mail): exigiria uma função que envia o reset ao e-mail do cadastro sem revelá-lo. Não feito.
+- ⚠️ Dono: **deploy da função `verificar-cadastro`** (`--no-verify-jwt` já vem do `config.toml`) e testar no celular com CPF e e-mail já usados e com novos.

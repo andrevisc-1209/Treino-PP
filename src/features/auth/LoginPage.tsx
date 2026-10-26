@@ -17,6 +17,7 @@ import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
+import { emailParecido, useCadastroExistente } from './verificarCadastro'
 import { ERROS } from '@/lib/mensagens'
 import { PasswordInput } from '@/components/PasswordInput'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
@@ -57,6 +58,23 @@ type Form = z.infer<ReturnType<typeof buildSchema>>
 const schemaRecuperar = z.object({ email: z.string().email('E-mail inválido') })
 type FormRecuperar = z.infer<typeof schemaRecuperar>
 
+/** Aviso de que o CPF/e-mail digitado já tem conta: só diz que existe (nada da conta aparece) e leva para entrar ou recuperar a senha. */
+function AvisoJaCadastrado({ oque, onEntrar, onRecuperar }: { oque: 'CPF' | 'e-mail'; onEntrar: () => void; onRecuperar: () => void }) {
+  return (
+    <div role="alert" className="space-y-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+      <p>Já existe uma conta com este {oque}. Entre ou recupere a senha em vez de criar outra.</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={onEntrar} className="min-h-11 rounded-lg border border-amber-300 bg-white px-3 font-medium">
+          Entrar
+        </button>
+        <button type="button" onClick={onRecuperar} className="min-h-11 rounded-lg border border-amber-300 bg-white px-3 font-medium">
+          Esqueci minha senha
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function LoginPage() {
   const { session } = useAuth()
   const [searchParams] = useSearchParams()
@@ -82,6 +100,10 @@ export function LoginPage() {
   const whatsappOptIn = watch('whatsappOptIn')
   const senhaValor = watch('password')
   const cpfValor = watch('cpf')
+  const emailCadastro = watch('email')
+  // avisa já ao digitar (CPF completo / e-mail válido) se existe conta; só no cadastro
+  const cpfJaExiste = useCadastroExistente('cpf', cpfValor ?? '', mode === 'signup' && validarCPF(cpfValor ?? '')) === true
+  const emailJaExiste = useCadastroExistente('email', emailCadastro ?? '', mode === 'signup' && emailParecido(emailCadastro ?? '')) === true
 
   // sem token depois de 12 s (rede lenta, bloqueador de anúncios): em vez de ficar travado em "Verificando…", oferece tentar de novo
   useEffect(() => {
@@ -111,6 +133,17 @@ export function LoginPage() {
     if (!CAPTCHA_ATIVO || captchaToken) return false
     setMsg('Aguarde a verificação de segurança terminar (alguns segundos) e tente de novo.')
     return true
+  }
+
+  const irParaEntrar = (identificador: string) => {
+    setMode('login')
+    setValue('email', identificador)
+    setMsg(null)
+  }
+  const irParaRecuperar = (email: string) => {
+    setMode('recuperar')
+    recuperarForm.setValue('email', email)
+    setMsg(null)
   }
 
   if (emailPendente) {
@@ -324,6 +357,9 @@ export function LoginPage() {
                 className={formState.errors.cpf ? 'border-red-600 focus:border-red-600' : undefined}
               />
             </Field>
+            {cpfJaExiste && (
+              <AvisoJaCadastrado oque="CPF" onEntrar={() => irParaEntrar(cpfValor ?? '')} onRecuperar={() => irParaRecuperar('')} />
+            )}
           </>
         )}
         <Field label={mode === 'login' ? 'CPF ou e-mail' : 'E-mail'} error={formState.errors.email?.message}>
@@ -340,6 +376,9 @@ export function LoginPage() {
             <Input type="email" {...register('email')} autoComplete="email" />
           )}
         </Field>
+        {mode === 'signup' && emailJaExiste && (
+          <AvisoJaCadastrado oque="e-mail" onEntrar={() => irParaEntrar(emailCadastro ?? '')} onRecuperar={() => irParaRecuperar(emailCadastro ?? '')} />
+        )}
         <Field label="Senha" error={mode === 'login' ? formState.errors.password?.message : undefined}>
           <PasswordInput {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
         </Field>
@@ -398,6 +437,7 @@ export function LoginPage() {
           // o que impede de continuar, em palavras (o botão cinza sem explicação era um beco sem saída)
           const faltas: string[] = []
           if (mode === 'signup' && formState.errors.cpf) faltas.push('um CPF válido')
+          if (mode === 'signup' && (cpfJaExiste || emailJaExiste)) faltas.push('outro CPF/e-mail, ou entre na conta que já existe')
           if (mode === 'signup' && !senhaAtendeTodasRegras(senhaValor ?? '')) faltas.push('uma senha que atenda todos os requisitos')
           const verificando = CAPTCHA_ATIVO && !captchaToken
           return (
