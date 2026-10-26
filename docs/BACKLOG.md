@@ -871,3 +871,9 @@ Origem: análise de UX do /admin por três ferramentas de IA. Conferi cada ponto
 - Limites: pagamentos e receita só existem desde o registro de pagamentos (#64); períodos antes disso aparecem zerados. "Ativo" = fez algo no app no período. Cadastros por dia usam o fuso de São Paulo.
 - ⚠️ Dono: rodar a migration e o teste SQL. **Não conferi a aba visualmente** (MFA do admin impede a automação): olhar no celular e no desktop, e me mandar print se algo estiver estranho.
 - Ideias para depois: filtro por intervalo livre de datas, funil cadastro → telefone verificado → 1º aluno → 1º treino → pagamento, cohort de retenção por mês de cadastro, exportar CSV.
+
+
+## 66. Painel /admin: logo completa do Personal Perto no cabeçalho
+
+- ✅ O cabeçalho do /admin troca o símbolo pequeno por **a logo completa** (`logo-personal-perto-sm.png`, 320×121) sobre **fundo branco** (a logo tem texto azul-escuro e não aparece no azul do cabeçalho antigo); botões Segurança e Sair em cinza-escuro (contraste AA). Só visual, sem migration.
+- ⚠️ Não conferi visualmente (o /admin exige MFA): olhar no celular e no desktop.
