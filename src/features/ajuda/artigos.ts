@@ -57,13 +57,14 @@ export const ARTIGOS: Artigo[] = [
   {
     id: 'arquivar-apagar-aluno',
     categoria: 'alunos',
-    titulo: 'Arquivar ou apagar um aluno',
+    titulo: 'Arquivar, apagar e restaurar um aluno',
     passos: [
       'Para parar de atender um aluno sem perder nada, use "Arquivar". O histórico dele fica guardado.',
-      'Só é possível apagar um aluno que já está arquivado. Antes de apagar, o app mostra o que será removido e pede confirmação.',
-      'Apagar é definitivo. Se tiver dúvida, deixe arquivado.',
+      'Para apagar, primeiro arquive o aluno. Depois, na aba Arquivados, escolha "Mover para a lixeira".',
+      'Na aba Lixeira ele fica por 30 dias e você pode restaurar. Depois desse prazo, ou se você escolher "Apagar agora", ele e todo o histórico são apagados de vez, sem volta.',
+      'Se tiver dúvida, deixe arquivado: nada se perde.',
     ],
-    sinonimos: ['excluir', 'remover', 'inativar', 'deletar'],
+    sinonimos: ['excluir', 'remover', 'inativar', 'deletar', 'lixeira', 'recuperar'],
   },
   {
     id: 'iniciar-treino',

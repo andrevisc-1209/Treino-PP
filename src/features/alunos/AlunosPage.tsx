@@ -16,17 +16,28 @@ import { ListaSkeleton } from '@/components/Skeleton'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarDesfazer } from '@/components/UndoToast'
 import { useAlunosComCobranca } from '@/features/financeiro/api'
-import { buscarResumoApagar, mensagemApagarAluno } from './apagarAluno'
-import { useAlunos, useAlunosArquivados, useApagarAluno, useArquivarAluno, useDesarquivarAluno, type Aluno } from './api'
+import { buscarResumoApagar, mensagemApagarAluno, mensagemMoverParaLixeira, rotuloLixeira } from './apagarAluno'
+import {
+  useAlunos,
+  useAlunosArquivados,
+  useAlunosNaLixeira,
+  useApagarAluno,
+  useArquivarAluno,
+  useDesarquivarAluno,
+  useMoverParaLixeira,
+  useRestaurarDaLixeira,
+  type Aluno,
+} from './api'
 import { useAlunosSemTreinoRecente, useTreinosEstaSemana } from './useMetricas'
 import { useUltimaExecucaoPorAluno } from '@/features/execucoes/api'
 import { rotuloDias } from '@/features/execucoes/metricas'
 import { MODALIDADES_CONFIG } from '@/types/modalidades'
 
 export function AlunosPage() {
-  const [aba, setAba] = useState<'ativos' | 'arquivados'>('ativos')
+  const [aba, setAba] = useState<'ativos' | 'arquivados' | 'lixeira'>('ativos')
   const { data: alunosAtivos, isLoading, error } = useAlunos()
   const { data: alunosArquivados, isLoading: carregandoArquivados } = useAlunosArquivados()
+  const { data: alunosNaLixeira, isLoading: carregandoLixeira } = useAlunosNaLixeira()
   const { data: alunosComCobranca } = useAlunosComCobranca()
   const { data: treinosEstaSemana } = useTreinosEstaSemana()
   const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
@@ -40,8 +51,10 @@ export function AlunosPage() {
   const arquivar = useArquivarAluno()
   const desarquivar = useDesarquivarAluno()
   const apagar = useApagarAluno()
+  const moverParaLixeira = useMoverParaLixeira()
+  const restaurarDaLixeira = useRestaurarDaLixeira()
 
-  const alunos = aba === 'ativos' ? alunosAtivos : alunosArquivados
+  const alunos = aba === 'ativos' ? alunosAtivos : aba === 'arquivados' ? alunosArquivados : alunosNaLixeira
   const idsComCobranca = new Set((alunosComCobranca ?? []).map((c) => c.aluno_id))
 
   const filtrados = alunos?.filter((a) => a.name.toLowerCase().includes(busca.trim().toLowerCase()))
@@ -59,11 +72,30 @@ export function AlunosPage() {
     desarquivar.mutate(a.id)
   }
 
+  const enviarParaLixeira = async (a: Aluno) => {
+    setMenuAberto(null)
+    const ok = await confirmarAcao({
+      titulo: 'Mover para a lixeira',
+      mensagem: mensagemMoverParaLixeira(a.name),
+      textoConfirmar: 'Mover para a lixeira',
+      destrutivo: true,
+    })
+    if (!ok) return
+    moverParaLixeira.mutate(a.id, {
+      onSuccess: () => mostrarDesfazer(`${a.name} foi para a lixeira.`, () => restaurarDaLixeira.mutate(a.id)),
+    })
+  }
+
+  const tirarDaLixeira = (a: Aluno) => {
+    setMenuAberto(null)
+    restaurarDaLixeira.mutate(a.id, { onSuccess: () => mostrarDesfazer(`${a.name} voltou para os arquivados.`, () => moverParaLixeira.mutate(a.id)) })
+  }
+
   const apagarAluno = async (a: Aluno) => {
     setMenuAberto(null)
     const resumo = await buscarResumoApagar(a.id)
     const ok = await confirmarAcao({
-      titulo: 'Apagar aluno',
+      titulo: 'Apagar agora',
       mensagem: mensagemApagarAluno(a.name, resumo),
       textoConfirmar: 'Apagar para sempre',
       destrutivo: true,
@@ -78,7 +110,9 @@ export function AlunosPage() {
           { label: 'Treino', icone: <Play size={20} />, classe: 'bg-brand', onClick: () => navigate(`/alunos/${a.id}/sessoes/nova`) },
           { label: 'Arquivar', icone: <Archive size={20} />, classe: 'bg-slate-600', onClick: () => arquivarAluno(a) },
         ]
-      : [{ label: 'Restaurar', icone: <ArchiveRestore size={20} />, classe: 'bg-brand', onClick: () => restaurarAluno(a) }]
+      : aba === 'arquivados'
+        ? [{ label: 'Restaurar', icone: <ArchiveRestore size={20} />, classe: 'bg-brand', onClick: () => restaurarAluno(a) }]
+        : [{ label: 'Restaurar', icone: <ArchiveRestore size={20} />, classe: 'bg-brand', onClick: () => tirarDaLixeira(a) }]
 
   return (
     <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
@@ -109,6 +143,12 @@ export function AlunosPage() {
         >
           Arquivados
         </button>
+        <button type="button"
+          onClick={() => setAba('lixeira')}
+          className={cn('min-h-11 flex-1 rounded-lg text-sm font-medium', aba === 'lixeira' ? 'bg-white shadow-sm' : 'text-slate-500')}
+        >
+          Lixeira
+        </button>
       </div>
 
       {/* fixa no scroll: em listas longas a busca não some */}
@@ -124,10 +164,16 @@ export function AlunosPage() {
         </div>
       </div>
 
-      {(aba === 'ativos' ? isLoading : carregandoArquivados) && <ListaSkeleton />}
+      {(aba === 'ativos' ? isLoading : aba === 'arquivados' ? carregandoArquivados : carregandoLixeira) && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {alunos?.length === 0 && aba === 'ativos' && <p className="text-slate-500">Nenhum aluno ainda. Toque no + para cadastrar o primeiro.</p>}
       {alunos?.length === 0 && aba === 'arquivados' && <p className="text-slate-500">Nenhum aluno arquivado.</p>}
+      {aba === 'lixeira' && (
+        <p className="mb-2 text-sm text-slate-600">
+          Alunos na lixeira são apagados de vez, com todo o histórico, depois de 30 dias. Até lá você pode restaurar.
+        </p>
+      )}
+      {alunos?.length === 0 && aba === 'lixeira' && <p className="text-slate-500">A lixeira está vazia.</p>}
       {alunos && alunos.length > 0 && filtrados?.length === 0 && (
         <p className="text-slate-500">Nenhum aluno encontrado para "{busca}".</p>
       )}
@@ -151,6 +197,7 @@ export function AlunosPage() {
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Sem valor definido</span>
                   )}
                 </p>
+                {aba === 'lixeira' && a.apagado_em && <p className="text-xs font-medium text-red-700">{rotuloLixeira(a.apagado_em)}</p>}
                 {a.objetivos[0] && <p className="truncate text-xs text-slate-500">{a.objetivos[0]}</p>}
                 {aba === 'ativos' && ultimasExecucoes?.get(a.id) && (
                   <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
@@ -176,33 +223,53 @@ export function AlunosPage() {
 
       <BottomSheet open={!!menuAberto} onClose={() => setMenuAberto(null)} title={menuAberto?.name}>
         <div className="space-y-1">
-          {aba === 'ativos' ? (
-            <button type="button"
-              onClick={() => menuAberto && arquivarAluno(menuAberto)}
-              disabled={arquivar.isPending}
-              className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
-            >
-              Arquivar
-            </button>
-          ) : (
-            <button type="button"
-              onClick={() => menuAberto && restaurarAluno(menuAberto)}
-              disabled={desarquivar.isPending}
-              className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
-            >
-              Restaurar
-            </button>
+          {aba === 'ativos' && (
+            <>
+              <button type="button"
+                onClick={() => menuAberto && arquivarAluno(menuAberto)}
+                disabled={arquivar.isPending}
+                className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
+              >
+                Arquivar
+              </button>
+              <p className="px-3 py-2 text-xs text-slate-500">Para apagar um aluno, arquive primeiro e depois mande para a lixeira.</p>
+            </>
           )}
-          {aba === 'arquivados' ? (
-            <button type="button"
-              onClick={() => menuAberto && apagarAluno(menuAberto)}
-              disabled={apagar.isPending}
-              className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"
-            >
-              Apagar de vez
-            </button>
-          ) : (
-            <p className="px-3 py-2 text-xs text-slate-500">Para apagar um aluno de vez, arquive primeiro.</p>
+          {aba === 'arquivados' && (
+            <>
+              <button type="button"
+                onClick={() => menuAberto && restaurarAluno(menuAberto)}
+                disabled={desarquivar.isPending}
+                className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
+              >
+                Restaurar
+              </button>
+              <button type="button"
+                onClick={() => menuAberto && enviarParaLixeira(menuAberto)}
+                disabled={moverParaLixeira.isPending}
+                className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"
+              >
+                Mover para a lixeira
+              </button>
+            </>
+          )}
+          {aba === 'lixeira' && (
+            <>
+              <button type="button"
+                onClick={() => menuAberto && tirarDaLixeira(menuAberto)}
+                disabled={restaurarDaLixeira.isPending}
+                className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
+              >
+                Restaurar
+              </button>
+              <button type="button"
+                onClick={() => menuAberto && apagarAluno(menuAberto)}
+                disabled={apagar.isPending}
+                className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"
+              >
+                Apagar agora
+              </button>
+            </>
           )}
         </div>
       </BottomSheet>
