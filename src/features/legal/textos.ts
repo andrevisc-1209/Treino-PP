@@ -1,5 +1,5 @@
 export const TERMOS_USO_VERSAO = '1.2'
-export const PRIVACIDADE_VERSAO = '1.5'
+export const PRIVACIDADE_VERSAO = '1.6'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
 
@@ -78,7 +78,8 @@ O operador responde solidariamente apenas quando descumpre a lei ou as instruç�
 • Menores de 18 anos: o consentimento deve ser dado pelo responsável legal (art. 14). O Personal Trainer é responsável por garantir isso antes de inserir os dados.
 
 3. Análise de uso da página inicial (PostHog)
-Na página inicial pública (landing page) usamos o PostHog para entender como a página é usada: visitas, cliques, rolagem e gravação de sessão. Só coletamos esses dados depois do seu consentimento explícito, dado no aviso de cookies da página; até lá, a ferramenta fica inativa. A gravação de sessão é anônima e os campos de formulário são mascarados. Você pode recusar no próprio aviso ou revogar o consentimento limpando os dados do site (localStorage) no seu navegador.
+Na página inicial pública (landing page) usamos o PostHog para entender como a página é usada e melhorá-la. Medimos: as visitas, os cliques nos botões, quais seções da página foram vistas, o que levou você até ela (o endereço de origem e parâmetros de campanha, como utm_source), o tipo de aparelho e de navegador e a localização aproximada, estimada a partir do endereço IP. Para reconhecer o mesmo navegador em visitas seguintes, o PostHog guarda um identificador no armazenamento local (localStorage) do seu navegador, sem uso de cookies. Não gravamos a sua sessão, não registramos o que você digita nem os movimentos do mouse, e não ligamos esses dados ao seu nome nem ao seu cadastro.
+Base legal: consentimento (art. 7º, I). Só coletamos depois do seu consentimento explícito, dado no aviso da página; até lá, a ferramenta nem é carregada. Se o seu navegador envia o sinal de privacidade Global Privacy Control, tratamos como recusa. Você pode recusar no próprio aviso e mudar de ideia a qualquer momento em "Preferências de cookies", no rodapé da página; ao revogar, o identificador do PostHog é apagado deste navegador e nada novo é coletado.
 Transferência internacional: o PostHog tem servidores nos Estados Unidos (veja a seção 4.1). Mais informações: https://posthog.com/privacy
 
 4. Compartilhamento com terceiros
@@ -87,7 +88,7 @@ Não vendemos, alugamos nem compartilhamos dados pessoais para fins de marketing
 • Hospedagem e banco de dados (Supabase): provedor de nuvem com servidores nos Estados Unidos, criptografia em trânsito e em repouso e acesso restrito por autenticação. Veja a seção 4.1 sobre a transferência internacional.
 • Comunicação: envio de e-mails (por exemplo, o pedido de consentimento do aluno) e abertura de mensagens de WhatsApp, sempre a pedido do Personal Trainer. As mensagens não contêm dados de saúde.
 • Serviços de apoio: consulta de endereço pelo CEP (ViaCEP, que recebe apenas o CEP digitado) e previsão do tempo (Open-Meteo, que recebe apenas a localização da cidade, sem identificar você).
-• Análise de uso (PostHog): apenas dados anônimos de navegação da página inicial, conforme a seção 3.
+• Análise de uso (PostHog): dados de navegação da página inicial, só com o seu consentimento, conforme a seção 3.
 
 4.1. Transferência internacional de dados (art. 33): os dados da plataforma, inclusive os dados de saúde dos alunos, são armazenados em servidores nos Estados Unidos (Supabase), e os dados de navegação da página inicial são tratados pelo PostHog, também nos Estados Unidos. A transferência é feita com base em cláusulas contratuais dos fornecedores que asseguram grau de proteção compatível com a LGPD (art. 33, II). Para os dados de saúde, o consentimento do aluno informa expressamente essa transferência (art. 33, VIII). Você pode pedir informações sobre ela pelo contato do Encarregado.
 
