@@ -13,7 +13,7 @@ import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import { mapearErroAuth } from '@/lib/errosAuth'
 import { formatarIdentificador, identificadorValido, tipoIdentificador } from './identificador'
 import { entrarComCpf } from './loginCpf'
-import { ErroAmigavel } from '@/lib/erroAmigavel'
+import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
@@ -54,7 +54,7 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
 }
 type Form = z.infer<ReturnType<typeof buildSchema>>
 
-const schemaRecuperar = z.object({ email: z.string().email('E-mail inválido') })
+const schemaRecuperar = z.object({ email: z.string().refine(identificadorValido, 'Informe um e-mail ou CPF válido') })
 type FormRecuperar = z.infer<typeof schemaRecuperar>
 
 /** Aviso de que o CPF/e-mail digitado já tem conta: só diz que existe (nada da conta aparece) e leva para entrar ou recuperar a senha. */
@@ -287,7 +287,15 @@ export function LoginPage() {
   const onSubmitRecuperar = async (f: FormRecuperar) => {
     setMsg(null)
     if (faltaCaptcha()) return
-    const { error } = await supabase.auth.resetPasswordForEmail(f.email, {
+    if (tipoIdentificador(f.email) === 'cpf') {
+      // CPF: a função resolve o e-mail no servidor e responde sempre igual (não revela se o CPF tem conta nem o e-mail).
+      const { data, error } = await supabase.functions.invoke('recuperar-senha-cpf', { body: { cpf: f.email.replace(/\D/g, ''), captchaToken: captchaToken || undefined } })
+      gastarCaptcha()
+      if (error) setMsg(await mensagemDaFuncao(error, 'Não foi possível enviar agora. Tente de novo.'))
+      else setMsg((data as { mensagem?: string } | null)?.mensagem ?? 'Se houver uma conta com esse CPF, enviamos o link para o e-mail do cadastro.')
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(f.email.trim(), {
       redirectTo: APP_URL + 'definir-senha',
       captchaToken: captchaToken || undefined,
     })
@@ -302,10 +310,16 @@ export function LoginPage() {
         <form onSubmit={recuperarForm.handleSubmit(onSubmitRecuperar)} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
           <div>
             <h1 className="text-2xl font-bold">Recuperar senha</h1>
-            <p className="text-sm text-slate-500">Informe seu e-mail para receber o link de redefinição.</p>
+            <p className="text-sm text-slate-500">Informe seu CPF ou e-mail para receber o link de redefinição no e-mail do cadastro.</p>
           </div>
-          <Field label="E-mail" error={recuperarForm.formState.errors.email?.message}>
-            <Input type="email" {...recuperarForm.register('email')} autoComplete="email" autoFocus />
+          <Field label="CPF ou e-mail" error={recuperarForm.formState.errors.email?.message}>
+            <Input
+              type="text"
+              inputMode="email"
+              {...recuperarForm.register('email', { onChange: (e) => recuperarForm.setValue('email', formatarIdentificador(e.target.value)) })}
+              autoComplete="username"
+              autoFocus
+            />
           </Field>
           <div className="flex justify-center">
             <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
