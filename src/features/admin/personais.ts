@@ -42,9 +42,10 @@ export const ROTULO_ACAO_ADMIN: Record<string, string> = {
   alterar_cpf: 'Correção de CPF',
 }
 
-export type AbaAdmin = 'geral' | 'personais' | 'financeiro' | 'suporte' | 'privacidade'
+export type AbaAdmin = 'geral' | 'indicadores' | 'personais' | 'financeiro' | 'suporte' | 'privacidade'
 export const ABAS_ADMIN: { id: AbaAdmin; rotulo: string }[] = [
   { id: 'geral', rotulo: 'Visão geral' },
+  { id: 'indicadores', rotulo: 'Indicadores' },
   { id: 'personais', rotulo: 'Personais' },
   { id: 'financeiro', rotulo: 'Financeiro' },
   { id: 'suporte', rotulo: 'Suporte' },

@@ -36,6 +36,7 @@ import { RelatosSection } from './RelatosSection'
 import { ABAS_ADMIN, abaDaUrl, descreverTreinos, linkMapsCidade, rotuloCidade, type AbaAdmin, type MetricasPersonal } from './personais'
 import { HistoricoSection } from './HistoricoSection'
 import { FinanceiroSection } from './FinanceiroSection'
+import { IndicadoresSection } from './IndicadoresSection'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import {
   useAdminAlterarCpf,
@@ -349,6 +350,8 @@ function AdminDashboard() {
 
           </>
         )}
+
+        {aba === 'indicadores' && <IndicadoresSection />}
 
         {aba === 'financeiro' && <FinanceiroSection />}
 

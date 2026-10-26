@@ -5,6 +5,7 @@ import type { StatusAssinatura, Plano } from '@/features/assinatura/useAssinatur
 import type { StatusRelato, TipoRelato } from '@/features/ajuda/relatos'
 import type { MetricasPersonal } from './personais'
 import { normalizarFinanceiro } from './financeiro'
+import { normalizarBI, type PeriodoBI } from './bi'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
 
@@ -220,6 +221,17 @@ export function useAdminFinanceiro() {
       const { data, error } = await supabase.rpc('admin_financeiro').single()
       if (error) throw error
       return normalizarFinanceiro(data as Record<string, unknown>)
+    },
+  })
+}
+
+export function useAdminBI(dias: PeriodoBI) {
+  return useQuery({
+    queryKey: ['admin', 'bi', dias],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_bi', { p_dias: dias })
+      if (error) throw error
+      return normalizarBI(data)
     },
   })
 }
