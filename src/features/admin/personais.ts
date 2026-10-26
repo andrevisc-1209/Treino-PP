@@ -34,3 +34,23 @@ export function descreverTreinos(m: MetricasPersonal | undefined): { montados: s
     ultimos30: String(m.exec_30d),
   }
 }
+
+export const ROTULO_ACAO_ADMIN: Record<string, string> = {
+  reset_senha: 'Reset de senha',
+  alterar_trial: 'Ajuste de trial',
+  alterar_plano: 'Ajuste de plano',
+  alterar_cpf: 'Correção de CPF',
+}
+
+export type AbaAdmin = 'geral' | 'personais' | 'suporte' | 'privacidade'
+export const ABAS_ADMIN: { id: AbaAdmin; rotulo: string }[] = [
+  { id: 'geral', rotulo: 'Visão geral' },
+  { id: 'personais', rotulo: 'Personais' },
+  { id: 'suporte', rotulo: 'Suporte' },
+  { id: 'privacidade', rotulo: 'Privacidade' },
+]
+
+/** Aba vinda da URL (?aba=); qualquer valor desconhecido cai em "Visão geral". */
+export function abaDaUrl(valor: string | null): AbaAdmin {
+  return ABAS_ADMIN.some((a) => a.id === valor) ? (valor as AbaAdmin) : 'geral'
+}

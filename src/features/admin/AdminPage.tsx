@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
   CalendarClock,
@@ -11,6 +11,7 @@ import {
   Hourglass,
   KeyRound,
   LogOut,
+  MoreVertical,
   Pencil,
   Search,
   ShieldCheck,
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/features/auth/AuthProvider'
-import { Button, Field, Input } from '@/components/ui'
+import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { montarDataHoraSP, hojeSP } from '@/lib/datas'
 import { validarCPF, mascararCPF } from '@/lib/cpf'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -32,7 +33,8 @@ import { useMfa } from './mfa'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import { ConsentimentosSection } from './ConsentimentosSection'
 import { RelatosSection } from './RelatosSection'
-import { descreverTreinos, linkMapsCidade, rotuloCidade, type MetricasPersonal } from './personais'
+import { ABAS_ADMIN, abaDaUrl, descreverTreinos, linkMapsCidade, rotuloCidade, type AbaAdmin, type MetricasPersonal } from './personais'
+import { HistoricoSection } from './HistoricoSection'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import {
   useAdminAlterarCpf,
@@ -41,6 +43,7 @@ import {
   useAdminPersonais,
   useAdminRegioes,
   useAdminPersonaisMetricas,
+  useAdminRelatos,
   useAdminResetSenha,
   useAdminResumo,
   type PersonalAdmin,
@@ -121,7 +124,21 @@ function AdminDashboard() {
   const regioes = useAdminRegioes()
   const metricas = useAdminPersonaisMetricas()
   const { inadimplentes } = useInadimplentes()
-  const [busca, setBusca] = useState('')
+  const [params, setParams] = useSearchParams()
+  const aba = abaDaUrl(params.get('aba'))
+  const irParaAba = (id: AbaAdmin) => setParams({ aba: id }, { replace: true })
+  const relatos = useAdminRelatos()
+  const relatosEmAberto = (relatos.data ?? []).filter((r) => r.status !== 'resolvido').length
+  // a busca vive na URL (?busca=), para o "Ver cadastro" dos relatos abrir a lista já filtrada
+  const busca = params.get('busca') ?? ''
+  const setBusca = (v: string) =>
+    setParams((atual) => {
+      const novo = new URLSearchParams(atual)
+      if (v) novo.set('busca', v)
+      else novo.delete('busca')
+      return novo
+    }, { replace: true })
+  const [menuPersonal, setMenuPersonal] = useState<PersonalAdmin | null>(null)
   const [filtroStatus, setFiltroStatus] = useState<'' | StatusAssinatura>('')
   const [acao, setAcao] = useState<{ tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin } | null>(null)
 
@@ -151,6 +168,23 @@ function AdminDashboard() {
       <AdminHeader />
 
       <div className="mx-auto max-w-5xl space-y-6 p-4">
+        <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Seções do painel">
+          {ABAS_ADMIN.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => irParaAba(t.id)}
+              aria-current={aba === t.id ? 'page' : undefined}
+              className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium ${aba === t.id ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+            >
+              {t.rotulo}
+              {t.id === 'suporte' && relatosEmAberto > 0 && ` (${relatosEmAberto})`}
+            </button>
+          ))}
+        </nav>
+
+        {aba === 'geral' && (
+          <>
         <div>
           <h2 className="mb-3 font-heading font-semibold text-accent">Visão geral</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -169,6 +203,41 @@ function AdminDashboard() {
 
         <InadimplentesSection inadimplentes={inadimplentes} onAjustarTrial={(p) => setAcao({ tipo: 'trial', personal: p })} />
 
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por cadastro) — {resumo.data?.regioes_ativas ?? '—'}</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[280px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500">
+                  <th className="py-2 pr-3">Cidade</th>
+                  <th className="py-2 pr-3">Personais</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(regioes.data ?? []).map((r, i) => (
+                  <tr key={r.cidade} className={`border-b border-slate-100 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
+                    <td className="py-2 pr-3 text-slate-700">
+                      <CidadeComMaps cidade={r.cidade} />
+                    </td>
+                    <td className="py-2 pr-3 text-slate-600">{r.qtd}</td>
+                  </tr>
+                ))}
+                {(regioes.data ?? []).length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="py-6 text-center text-slate-500">
+                      Nenhum personal com cidade cadastrada ainda.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+          </>
+        )}
+
+        {aba === 'personais' && (
+          <>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="mb-3 font-heading font-semibold text-accent">Personais</h2>
           <div className="mb-4 flex flex-col gap-2 sm:flex-row">
@@ -221,7 +290,7 @@ function AdminDashboard() {
                       <TreinosDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
                     </td>
                     <td className="py-2.5 pr-3">
-                      <AcoesPersonal personal={p} onEscolher={(tipo) => setAcao({ tipo, personal: p })} />
+                      <BotaoMenuPersonal personal={p} onAbrir={() => setMenuPersonal(p)} />
                     </td>
                   </tr>
                 ))}
@@ -269,7 +338,7 @@ function AdminDashboard() {
                   </div>
                 </dl>
                 <div className="mt-3">
-                  <AcoesPersonal personal={p} onEscolher={(tipo) => setAcao({ tipo, personal: p })} />
+                  <BotaoMenuPersonal personal={p} onAbrir={() => setMenuPersonal(p)} rotulo />
                 </div>
               </div>
             ))}
@@ -277,41 +346,36 @@ function AdminDashboard() {
           </div>
         </div>
 
+          </>
+        )}
+
+        {aba === 'suporte' && (
+          <>
         <RelatosSection />
 
+          </>
+        )}
+
+        {aba === 'privacidade' && (
+          <>
         <ConsentimentosSection />
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por cadastro) — {resumo.data?.regioes_ativas ?? '—'}</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[280px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500">
-                  <th className="py-2 pr-3">Cidade</th>
-                  <th className="py-2 pr-3">Personais</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(regioes.data ?? []).map((r, i) => (
-                  <tr key={r.cidade} className={`border-b border-slate-100 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
-                    <td className="py-2 pr-3 text-slate-700">
-                      <CidadeComMaps cidade={r.cidade} />
-                    </td>
-                    <td className="py-2 pr-3 text-slate-600">{r.qtd}</td>
-                  </tr>
-                ))}
-                {(regioes.data ?? []).length === 0 && (
-                  <tr>
-                    <td colSpan={2} className="py-6 text-center text-slate-500">
-                      Nenhum personal com cidade cadastrada ainda.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            <HistoricoSection />
+          </>
+        )}
       </div>
+
+      <BottomSheet open={!!menuPersonal} onClose={() => setMenuPersonal(null)} title={menuPersonal ? menuPersonal.name || menuPersonal.email || 'Personal' : ''}>
+        {menuPersonal && (
+          <AcoesPersonal
+            personal={menuPersonal}
+            onEscolher={(tipo) => {
+              setAcao({ tipo, personal: menuPersonal })
+              setMenuPersonal(null)
+            }}
+          />
+        )}
+      </BottomSheet>
 
       {acao && <ModalAcao tipo={acao.tipo} personal={acao.personal} onFechar={() => setAcao(null)} />}
     </div>
@@ -471,14 +535,26 @@ const COR_DIAS_VENCIDO: Record<Inadimplente['cor'], string> = {
   vermelho: 'bg-red-50 text-red-700',
 }
 
+function BotaoMenuPersonal({ personal, onAbrir, rotulo }: { personal: PersonalAdmin; onAbrir: () => void; rotulo?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      aria-label={`Ações de ${personal.name || personal.email}`}
+      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 text-sm font-medium text-slate-700 active:bg-slate-100"
+    >
+      <MoreVertical size={16} aria-hidden /> {rotulo && 'Ações'}
+    </button>
+  )
+}
+
 function AcoesPersonal({ personal, onEscolher }: { personal: PersonalAdmin; onEscolher: (tipo: 'reset' | 'trial' | 'plano' | 'cpf') => void }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
-      <BotaoAcao icone={<KeyRound size={13} />} label="Reset senha" onClick={() => onEscolher('reset')} />
-      <BotaoAcao icone={<CalendarClock size={13} />} label="Ajustar trial" onClick={() => onEscolher('trial')} />
-      <BotaoAcao icone={<CreditCard size={13} />} label="Ajustar plano" onClick={() => onEscolher('plano')} />
-      <BotaoAcao icone={<Pencil size={13} />} label="Corrigir CPF" onClick={() => onEscolher('cpf')} />
-      <span className="sr-only">{personal.name}</span>
+    <div className="space-y-1" aria-label={`Ações para ${personal.name}`}>
+      <BotaoAcao icone={<KeyRound size={16} />} label="Reset de senha" onClick={() => onEscolher('reset')} />
+      <BotaoAcao icone={<CalendarClock size={16} />} label="Ajustar trial" onClick={() => onEscolher('trial')} />
+      <BotaoAcao icone={<CreditCard size={16} />} label="Ajustar plano" onClick={() => onEscolher('plano')} />
+      <BotaoAcao icone={<Pencil size={16} />} label="Corrigir CPF" onClick={() => onEscolher('cpf')} />
     </div>
   )
 }
@@ -488,7 +564,7 @@ function BotaoAcao({ icone, label, onClick }: { icone: ReactNode; label: string;
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition-colors active:bg-slate-100"
+      className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base text-slate-800 active:bg-slate-100"
     >
       {icone} {label}
     </button>

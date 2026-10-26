@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { descreverTreinos, linkMapsCidade, NAO_INFORMADO, rotuloCidade } from './personais'
+import { abaDaUrl, descreverTreinos, linkMapsCidade, NAO_INFORMADO, ROTULO_ACAO_ADMIN, rotuloCidade } from './personais'
 
 describe('cidade do personal', () => {
   it('vazio vira "Não informado" e não gera link', () => {
@@ -23,5 +23,16 @@ describe('descreverTreinos', () => {
     expect(d.montados).toBe('5 (3 presencial · 2 à distância)')
     expect(d.realizados).toBe('9 (9 presencial · 0 à distância)')
     expect(d.ultimos30).toBe('4')
+  })
+})
+
+describe('abas do admin', () => {
+  it('aba da URL: válida passa, desconhecida ou ausente vira "geral"', () => {
+    expect(abaDaUrl('suporte')).toBe('suporte')
+    expect(abaDaUrl('xyz')).toBe('geral')
+    expect(abaDaUrl(null)).toBe('geral')
+  })
+  it('toda ação registrada no banco tem rótulo', () => {
+    for (const a of ['reset_senha', 'alterar_trial', 'alterar_plano', 'alterar_cpf']) expect(ROTULO_ACAO_ADMIN[a]).toBeTruthy()
   })
 })

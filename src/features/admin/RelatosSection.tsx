@@ -4,6 +4,7 @@ import { linkWhatsApp } from '@/lib/whatsapp'
 import { cn } from '@/lib/utils'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ROTULO_STATUS_RELATO, rotuloDispositivo, TIPOS_RELATO, type StatusRelato } from '@/features/ajuda/relatos'
 import { useAdminRelatos, useAdminRelatoStatus } from './api'
 
@@ -84,10 +85,23 @@ export function RelatosSection() {
                   </button>
                 ))}
                 {wa && (
-                  <a href={wa} target="_blank" rel="noopener noreferrer" className="min-h-11 content-center px-2 text-sm font-medium text-brand-hover">
+                  <a
+                    href={wa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    // ao abrir a conversa, um relato "novo" passa para "em andamento" (a resolução continua manual)
+                    onClick={() => r.status === 'novo' && mudar.mutate({ id: r.id, status: 'em_andamento' })}
+                    className="min-h-11 content-center px-2 text-sm font-medium text-brand-hover"
+                  >
                     Responder no WhatsApp
                   </a>
                 )}
+                <Link
+                  to={`/admin?${new URLSearchParams({ aba: 'personais', busca: r.email ?? r.nome }).toString()}`}
+                  className="min-h-11 content-center px-2 text-sm font-medium text-brand-hover"
+                >
+                  Ver cadastro
+                </Link>
               </div>
             </li>
           )
