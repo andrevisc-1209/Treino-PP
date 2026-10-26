@@ -135,3 +135,11 @@ Hospedada no Railway (domínio público `*.up.railway.app`, não registrado aqui
 - **Fechado**: `/instance/fetchInstances` sem chave → `401 Unauthorized`; `/docs`, `/swagger` e `/api/docs` → `404`; HTTP puro (porta 80) → `301` para HTTPS; porta direta `:8080` → não conecta (timeout).
 - **Público (aceito)**: `/` devolve a versão (`2.3.7`) e o nome do cliente; `/manager/` serve a tela de login do gerenciador (sem chave não mostra instância, conversa nem número). Não há como restringir por IP no Railway, então a **força da chave global (`AUTHENTICATION_API_KEY`) é a defesa real** contra tentativa de adivinhação.
 - **Pendente (dono, no Railway → Variables)**: confirmar que `AUTHENTICATION_API_KEY` é aleatória e longa (32+ caracteres, nada de exemplo da documentação; se houver dúvida, gerar outra com `openssl rand -hex 32 | pbcopy`, trocar no Railway e atualizar o secret `EVOLUTION_API_KEY` no Supabase e no Personal Perto) e confirmar que **não existe TCP Proxy** configurado. Manter a Evolution atualizada.
+
+
+## Verificação "já tem conta?" no cadastro (decisão de produto, risco aceito)
+
+- **O que é:** assim que o CPF (completo e válido) ou o e-mail (válido) é digitado no cadastro, e o CPF no "Complete seu perfil", o app chama a Edge Function `verificar-cadastro` e avisa "Já existe uma conta com este CPF/e-mail", levando a pessoa a entrar ou recuperar a senha. Pedido do dono (descobrir só no fim do cadastro era ruim).
+- **O que se abre:** quem digitar valores pode **testar se um CPF ou e-mail é cliente** (enumeração). Isto contraria a decisão anterior de respostas genéricas; fica registrado como risco aceito, no mesmo espírito da mensagem "CPF já cadastrado" do perfil.
+- **Mitigações:** a resposta é só `{ existe: boolean }` (nunca o e-mail do CPF nem o CPF do e-mail); só dispara com CPF de dígitos verificadores válidos ou e-mail bem formado; **limite de 40 consultas por IP por hora** (falha fechada: 503 e o app segue sem o aviso); valor nunca vai para log; a função ignora a própria conta de quem está logado. O banco continua sendo a barreira final (índice único de CPF e e-mail único no Auth).
+- **Não mudou:** o login (CPF ou e-mail) segue com resposta genérica e atraso; a tela "Confirme seu e-mail" de e-mail repetido segue igual para quem chegar a enviar.
