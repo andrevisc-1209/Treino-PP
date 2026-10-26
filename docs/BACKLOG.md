@@ -888,3 +888,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Botão desabilitado explica o motivo** ("Para continuar, informe uma senha que atenda todos os requisitos"); rótulos "Entrando…" e "Criando conta…".
 - ✅ Aceite dos termos com alvo de toque ≥ 44 px (linha inteira); "Bairro (opcional)"; "Criar minha conta" vira botão com borda no login.
 - Decisões do dono: **manter o WhatsApp ligado por padrão** no cadastro (o envio já exige telefone verificado) e **dividir o cadastro em duas etapas** (PR seguinte).
+
+
+## 68. Cadastro em duas etapas
+
+- ✅ **Etapa 1 (cadastro):** só Nome, E-mail, Senha (com confirmação e checklist), aceite dos Termos e o seletor de WhatsApp (continua **ligado por padrão**, decisão do dono). Antes eram 10 campos (CPF, telefone, CEP, bairro, cidade e UF também).
+- ✅ **Etapa 2 (logo depois de confirmar o e-mail):** nova trava `CompletarPerfilGate` no app autenticado: enquanto faltar **nome, CPF ou telefone**, aparece "Complete seu perfil" (CPF, telefone, CEP) no lugar do app, reaproveitando `PerfilObrigatorioForm` (a mesma tela do login com Google). O WhatsApp começa como o personal deixou no cadastro e o aceite dos Termos **não é pedido de novo** (já registrado na criação da conta). Se a consulta falhar, a trava deixa passar. Critério em `perfilCompleto()` (testado); cidade/UF não entram no critério para não barrar contas antigas sem localização.
+- Segurança/antiabuso: o CPF continua único (RPC `atualizar_cpf`, com limite de tentativas) e é exigido **antes de usar o app**, só não mais antes de criar a conta; e-mail confirmado + captcha seguem iguais. O gatilho `handle_new_user` já aceitava CPF e telefone vazios: **sem migration**.
+- ⚠️ Dono: testar no celular criar conta com e-mail novo (e-mail de confirmação → "Complete seu perfil" → app) e entrar com uma conta antiga e com Google (não devem ver a trava). Medir o abandono do cadastro continua fora do app (só a landing tem analytics).

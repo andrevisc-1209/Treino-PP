@@ -7,6 +7,7 @@ import { TrialBanner } from '@/components/TrialBanner'
 import { useIsAdmin } from '@/features/admin/useIsAdmin'
 import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
 import { useAuth } from './AuthProvider'
+import { CompletarPerfilGate } from './CompletarPerfilGate'
 
 // Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
 // execução, pós-treino) escondem a navegação global — ver docs/ux-audit e a
@@ -44,6 +45,7 @@ export function RequireAuth() {
   const modoFoco = ROTAS_MODO_FOCO.some((r) => r.test(location.pathname))
 
   return (
+    <CompletarPerfilGate userId={session.user.id}>
     <ExigirAssinaturaProvider>
       <div className={modoFoco ? '' : 'pb-16'}>
         <NotificacoesRealtime professionalId={session.user.id} />
@@ -57,5 +59,6 @@ export function RequireAuth() {
         {!modoFoco && <BottomNav />}
       </div>
     </ExigirAssinaturaProvider>
+    </CompletarPerfilGate>
   )
 }

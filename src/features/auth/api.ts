@@ -106,3 +106,10 @@ export function useSalvarDadosPessoais(userId: string) {
     },
   })
 }
+
+/** O personal já tem aceite de Termos/Política registrado? (cadastro por e-mail grava na criação da conta; Google/convite não) */
+export async function buscarJaAceitouTermos(userId: string): Promise<boolean> {
+  const { data, error } = await supabase.from('aceites_termos').select('professional_id').eq('professional_id', userId).limit(1)
+  if (error) throw error
+  return (data?.length ?? 0) > 0
+}
