@@ -51,6 +51,8 @@ export function mapearErroSupabase(erro: unknown): string {
   if (msgMin.includes('_tamanho_chk')) {
     return 'Texto longo demais para este campo. Encurte e tente de novo.'
   }
+  // trava do banco (migration 20261057): aluno só é apagado depois de arquivado
+  if (code === 'P0001' && msgMin.includes('arquive o aluno antes de apagar')) return ERROS.ALUNO.arquivarAntes
   // limites da cobrança do aluno (CHECKs de aluno_cobranca): diz QUAL campo estourou em vez do genérico
   if (textoCompleto.includes('aluno_cobranca_dia_ciclo')) return 'Dia do ciclo deve ser entre 1 e 28.'
   if (textoCompleto.includes('aluno_cobranca_dias_vencimento')) return 'Vencimento deve ser de 0 a 30 dias após o fechamento.'

@@ -31,6 +31,7 @@ import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { mapearErroSupabase } from '@/lib/erros'
 import { hojeSP } from '@/lib/datas'
 import { badgeProva, rotuloFoco, rotuloProva } from './provaAlvo'
+import { buscarResumoApagar, mensagemApagarAluno } from './apagarAluno'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Performance', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -206,10 +207,11 @@ export function AlunoFichaPage() {
   }
 
   const handleApagar = async () => {
+    const resumo = await buscarResumoApagar(aluno.id)
     const ok = await confirmarAcao({
       titulo: 'Apagar aluno',
-      mensagem: `Tem certeza? Isso apaga ${aluno.name} e todo o histórico (treinos, sessões, avaliações). Esta ação não pode ser desfeita.`,
-      textoConfirmar: 'Apagar',
+      mensagem: mensagemApagarAluno(aluno.name, resumo),
+      textoConfirmar: 'Apagar para sempre',
       destrutivo: true,
     })
     if (!ok) return
@@ -386,14 +388,23 @@ export function AlunoFichaPage() {
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button variant="ghost" className="flex-1 text-slate-600" onClick={handleArquivar} disabled={arquivar.isPending}>
-              Arquivar aluno
-            </Button>
-            <Button variant="ghost" className="flex-1 text-red-600" onClick={handleApagar} disabled={apagar.isPending}>
-              Apagar aluno
-            </Button>
-          </div>
+          {aluno.active ? (
+            <div className="space-y-1">
+              <Button variant="ghost" className="w-full text-slate-600" onClick={handleArquivar} disabled={arquivar.isPending}>
+                Arquivar aluno
+              </Button>
+              <p className="text-center text-xs text-slate-500">Arquivar guarda todo o histórico. Para apagar de vez, arquive primeiro.</p>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" className="flex-1 text-slate-600" onClick={() => desarquivar.mutate(aluno.id)} disabled={desarquivar.isPending}>
+                Restaurar aluno
+              </Button>
+              <Button variant="ghost" className="flex-1 text-red-600" onClick={handleApagar} disabled={apagar.isPending}>
+                Apagar de vez
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

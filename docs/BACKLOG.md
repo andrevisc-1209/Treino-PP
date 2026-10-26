@@ -731,3 +731,11 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - Medição local depois destas mudanças: LCP 0,9–1,0 s, desempenho 100, acessibilidade 100, boas práticas 100 (arquivo 116 KB). Re-medir em produção.
 
 - 📌 **Regra (26/10/2026): analytics da landing e Política de Privacidade andam juntos.** A landing nova não tem analytics (PostHog, banner de consentimento, UTM e eventos de rolagem/CTA saíram), mas a Política de Privacidade ainda descreve o PostHog na página inicial. Decisão do dono: **manter o texto como está** (ele diz mais do que o app faz, o lado seguro) e **só alterá-lo na mesma PR que religar o analytics**, para não gerar duas versões seguidas do documento. Quando religar: banner de consentimento antes de qualquer cookie ou gravação, eventos (`scroll_depth`, `cta_click`), UTM, texto da política conferido com o que realmente coleta, **versão nova da política + migration em `documentos_versoes`** (o guard do CI exige) e aprovação do jurídico. Manter o LCP em ≤ 2,5 s (medir com Lighthouse mobile, Slow 4G).
+
+
+## 51. Arquivar antes de apagar (PR A da reformulação da landing)
+
+- ✅ **Só se apaga aluno já ARQUIVADO.** No app: o menu da lista mostra "Apagar de vez" apenas na aba Arquivados (na aba Ativos aparece a dica "para apagar um aluno de vez, arquive primeiro") e a ficha do aluno ativo só oferece "Arquivar aluno"; o aluno arquivado ganha "Restaurar aluno" e "Apagar de vez". A confirmação mostra **o que será perdido** ("12 sessões de treino, 3 treinos montados e 5 faturas…"), diz que não dá para desfazer e sugere deixar arquivado (`apagarAluno.ts`, com testes).
+- ✅ **Trava no banco** (migration `20261057000000_apagar_aluno_exige_arquivado.sql`): `BEFORE DELETE` em `alunos` recusa, para `authenticated`/`anon`, apagar aluno com `active = TRUE` ("Arquive o aluno antes de apagar."). Vale também para uma versão antiga do app ainda instalada. Não afeta o SQL Editor/service_role nem a cascata ao apagar um personal. `supabase/tests/apagar_aluno_exige_arquivado.sql` prova os 3 casos numa transação desfeita.
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge** (e depois o teste SQL). Scripts de teste que apagavam aluno ativo pelo cliente agora precisam arquivar antes.
+- Pré-requisito do bloco "histórico completo" da landing. A lixeira de 30 dias (P3) foi adiada por decisão do dono.

@@ -384,13 +384,17 @@ export function useAlunosArquivados() {
   })
 }
 
-/** Hard delete — plano/sessões/séries/pesos/consentimentos somem em cascata (ON DELETE CASCADE). Irreversível. */
+/**
+ * Hard delete — plano/sessões/séries/pesos/consentimentos somem em cascata (ON DELETE CASCADE). Irreversível.
+ * SÓ de aluno ARQUIVADO (active = false): o banco também recusa (migration 20261057), para que nem uma versão antiga do app apague por engano.
+ */
 export function useApagarAluno() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('alunos').delete().eq('id', id)
+      const { data, error } = await supabase.from('alunos').delete().eq('id', id).eq('active', false).select('id')
       if (error) throw error
+      if (!data || data.length === 0) throw new ErroAmigavel('Arquive o aluno antes de apagar.')
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['alunos'] })

@@ -4,6 +4,9 @@
 // chegar ao personal — e o texto de cada categoria fica num só lugar.
 
 export const ERROS = {
+  ALUNO: {
+    arquivarAntes: 'Arquive o aluno antes de apagar.',
+  },
   ASSINATURA: {
     // modo leitura (trial/assinatura vencidos): o banco barra as gravações (policies assinatura_ativa_*, migration 20261052)
     modoLeitura: 'Assine o plano para fazer esta alteração. Suas informações continuam disponíveis para consulta.',
