@@ -16,12 +16,7 @@ import { entrarComCpf } from './loginCpf'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
-import { mascararCPF, validarCPF } from '@/lib/cpf'
-import { ERROS } from '@/lib/mensagens'
-import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { PasswordInput } from '@/components/PasswordInput'
-import { LocalizacaoCep } from '@/components/LocalizacaoCep'
-import { cepCompleto } from '@/lib/cep'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
 
@@ -43,12 +38,6 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
             .regex(/[^A-Za-z0-9]/, 'Precisa de 1 símbolo')
         : z.string().min(6, 'Mínimo 6 caracteres'),
     confirmPassword: z.string().optional(),
-    cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
-    phone: mode === 'signup' ? z.string().refine(validarTelefone, 'Telefone inválido') : z.string().optional(),
-    cep: mode === 'signup' ? z.string().refine(cepCompleto, 'Informe o CEP com 8 números') : z.string().optional(),
-    bairro: z.string().optional(),
-    uf: mode === 'signup' ? z.string().min(1, 'Informe um CEP válido para preencher o estado') : z.string().optional(),
-    cidade: mode === 'signup' ? z.string().min(1, 'Informe um CEP válido para preencher a cidade') : z.string().optional(),
     whatsappOptIn: z.boolean().optional(),
     termosAceitos:
       mode === 'signup'
@@ -81,19 +70,13 @@ export function LoginPage() {
   const [esperaReenvio, setEsperaReenvio] = useState(0)
   const [captchaDemorou, setCaptchaDemorou] = useState(false)
 
-  const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
+  const { register, handleSubmit, formState, setValue, watch } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
-    defaultValues: { termosAceitos: false, whatsappOptIn: true, cep: '', bairro: '', uf: '', cidade: '' },
+    defaultValues: { termosAceitos: false, whatsappOptIn: true },
   })
   const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
   const termosAceitos = watch('termosAceitos')
   const whatsappOptIn = watch('whatsappOptIn')
-  const cpfValor = watch('cpf')
-  const phoneValor = watch('phone')
-  const cepValor = watch('cep')
-  const bairroValor = watch('bairro')
-  const ufValor = watch('uf')
-  const cidadeValor = watch('cidade')
   const senhaValor = watch('password')
 
   // sem token depois de 12 s (rede lenta, bloqueador de anúncios): em vez de ficar travado em "Verificando…", oferece tentar de novo
@@ -220,11 +203,6 @@ export function LoginPage() {
       options: {
         data: {
           name: f.name ?? '',
-          cpf: (f.cpf ?? '').replace(/\D/g, ''),
-          phone: (f.phone ?? '').replace(/\D/g, ''),
-          uf: f.uf ?? '',
-          cidade: f.cidade ?? '',
-          bairro: (f.bairro ?? '').trim(),
           whatsapp_opt_in: f.whatsappOptIn ?? false,
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
@@ -316,32 +294,6 @@ export function LoginPage() {
             <Field label="Nome" error={formState.errors.name?.message}>
               <Input {...register('name')} autoComplete="name" autoFocus />
             </Field>
-            <Field label="CPF" error={formState.errors.cpf?.message}>
-              <Input
-                value={cpfValor ?? ''}
-                onChange={(e) => setValue('cpf', mascararCPF(e.target.value), { shouldValidate: true })}
-                onBlur={() => trigger('cpf')}
-                inputMode="numeric"
-                placeholder="000.000.000-00"
-                className={formState.errors.cpf ? 'border-red-600 focus:border-red-600' : undefined}
-              />
-            </Field>
-            <Field label="Telefone" error={formState.errors.phone?.message}>
-              <Input
-                value={phoneValor ?? ''}
-                onChange={(e) => setValue('phone', mascararTelefone(e.target.value), { shouldValidate: true })}
-                inputMode="tel"
-                placeholder="(00) 00000-0000"
-              />
-            </Field>
-            <LocalizacaoCep
-              valor={{ cep: cepValor ?? '', bairro: bairroValor ?? '', cidade: cidadeValor ?? '', uf: ufValor ?? '' }}
-              onChange={(patch) => {
-                for (const [campo, v] of Object.entries(patch) as ['cep' | 'bairro' | 'cidade' | 'uf', string][]) setValue(campo, v, { shouldValidate: campo !== 'bairro' })
-              }}
-              erroCep={formState.errors.cep?.message}
-              erroLocal={formState.errors.cidade?.message ?? formState.errors.uf?.message}
-            />
           </>
         )}
         <Field label={mode === 'login' ? 'CPF ou e-mail' : 'E-mail'} error={formState.errors.email?.message}>
@@ -416,7 +368,6 @@ export function LoginPage() {
           // o que impede de continuar, em palavras (o botão cinza sem explicação era um beco sem saída)
           const faltas: string[] = []
           if (mode === 'signup' && !senhaAtendeTodasRegras(senhaValor ?? '')) faltas.push('uma senha que atenda todos os requisitos')
-          if (mode === 'signup' && formState.errors.cpf) faltas.push('um CPF válido')
           const verificando = CAPTCHA_ATIVO && !captchaToken
           return (
             <>
