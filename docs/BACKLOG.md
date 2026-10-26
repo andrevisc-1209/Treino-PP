@@ -860,3 +860,14 @@ Origem: análise de UX do /admin por três ferramentas de IA. Conferi cada ponto
 - ✅ **Edge Function `mp-webhook`** grava o pagamento no livro depois de creditar (idempotente por `payment_id`) e **remove a linha em estorno/chargeback**; falha no livro nunca derruba o webhook. **Precisa de deploy.**
 - Fora do escopo: o financeiro dos personais com seus alunos (já existe no app do personal); nenhuma conciliação com o extrato do Mercado Pago.
 - ⚠️ Dono: rodar a migration e o teste, **deploy do `mp-webhook`**, e conferir o primeiro pagamento real aparecendo na aba. Telas autenticadas/MFA não testadas ao vivo.
+
+
+## 65. Painel /admin: Indicadores (BI) com filtro de período
+
+- ✅ **Aba "Indicadores"** com filtro de período (24 h, 15 dias, Mês, Trimestre, Semestre, Ano; **janelas móveis** terminando agora, guardadas na URL `?periodo=`). Cada número vem comparado com o **período anterior de mesmo tamanho** (seta + sinal + %; "novo" quando não havia base).
+- Indicadores (todos agregados, sem dados de alunos): **Crescimento** (novos cadastros, personais ativos, novos pagantes), **Receita** (receita registrada, pagamentos aprovados), **Uso** (alunos cadastrados, treinos montados, treinos realizados presencial x à distância, aulas realizadas, faturas geradas pelos personais), **Retenção** (trials encerrados, trials sem conversão, planos vencidos sem renovar) e **Suporte** (relatos). Para "trials sem conversão" e "planos vencidos", subir é ruim (vermelho).
+- Gráfico de evolução (barras: por dia até 31 dias, por semana até 190, por mês no ano) para cadastros, alunos, treinos, pagamentos e receita, com leitura ao passar/focar a barra e **"Ver como tabela"**.
+- ✅ **Migration `20261067_admin_bi.sql`**: `admin_bi(p_dias)` (só 1/15/30/90/180/365; exige `is_admin()`/MFA) e a função interna `admin_bi_janela()` (fechada ao cliente). Teste `supabase/tests/admin_bi.sql`; helpers puros testados (`bi.ts`).
+- Limites: pagamentos e receita só existem desde o registro de pagamentos (#64); períodos antes disso aparecem zerados. "Ativo" = fez algo no app no período. Cadastros por dia usam o fuso de São Paulo.
+- ⚠️ Dono: rodar a migration e o teste SQL. **Não conferi a aba visualmente** (MFA do admin impede a automação): olhar no celular e no desktop, e me mandar print se algo estiver estranho.
+- Ideias para depois: filtro por intervalo livre de datas, funil cadastro → telefone verificado → 1º aluno → 1º treino → pagamento, cohort de retenção por mês de cadastro, exportar CSV.
