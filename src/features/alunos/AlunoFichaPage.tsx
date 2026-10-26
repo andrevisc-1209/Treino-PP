@@ -14,6 +14,8 @@ import { useSessaoEmAndamento } from '@/features/sessoes/api'
 import {
   useAluno,
   useApagarAluno,
+  useMoverParaLixeira,
+  useRestaurarDaLixeira,
   useArquivarAluno,
   useConsentimentoDetalhado,
   useDesarquivarAluno,
@@ -31,7 +33,7 @@ import { formatarDataBR, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { mapearErroSupabase } from '@/lib/erros'
 import { hojeSP } from '@/lib/datas'
 import { badgeProva, rotuloFoco, rotuloProva } from './provaAlvo'
-import { buscarResumoApagar, mensagemApagarAluno } from './apagarAluno'
+import { buscarResumoApagar, mensagemApagarAluno, mensagemMoverParaLixeira, rotuloLixeira } from './apagarAluno'
 
 const TABS = ['Resumo', 'Treinos', 'Histórico', 'Performance', 'Evolução'] as const
 type Tab = (typeof TABS)[number]
@@ -186,6 +188,8 @@ export function AlunoFichaPage() {
   const arquivar = useArquivarAluno()
   const desarquivar = useDesarquivarAluno()
   const apagar = useApagarAluno()
+  const moverParaLixeira = useMoverParaLixeira()
+  const restaurarDaLixeira = useRestaurarDaLixeira()
   const tabDaUrl = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
@@ -206,10 +210,26 @@ export function AlunoFichaPage() {
     })
   }
 
+  const handleLixeira = async () => {
+    const ok = await confirmarAcao({
+      titulo: 'Mover para a lixeira',
+      mensagem: mensagemMoverParaLixeira(aluno.name),
+      textoConfirmar: 'Mover para a lixeira',
+      destrutivo: true,
+    })
+    if (!ok) return
+    moverParaLixeira.mutate(aluno.id, {
+      onSuccess: () => {
+        navigate('/alunos')
+        mostrarDesfazer(`${aluno.name} foi para a lixeira.`, () => restaurarDaLixeira.mutate(aluno.id))
+      },
+    })
+  }
+
   const handleApagar = async () => {
     const resumo = await buscarResumoApagar(aluno.id)
     const ok = await confirmarAcao({
-      titulo: 'Apagar aluno',
+      titulo: 'Apagar agora',
       mensagem: mensagemApagarAluno(aluno.name, resumo),
       textoConfirmar: 'Apagar para sempre',
       destrutivo: true,
@@ -393,15 +413,29 @@ export function AlunoFichaPage() {
               <Button variant="ghost" className="w-full text-slate-600" onClick={handleArquivar} disabled={arquivar.isPending}>
                 Arquivar aluno
               </Button>
-              <p className="text-center text-xs text-slate-500">Arquivar guarda todo o histórico. Para apagar de vez, arquive primeiro.</p>
+              <p className="text-center text-xs text-slate-500">Arquivar guarda todo o histórico. Para apagar, arquive primeiro e mande para a lixeira.</p>
+            </div>
+          ) : aluno.apagado_em ? (
+            <div className="space-y-2">
+              <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+                Este aluno está na lixeira. {rotuloLixeira(aluno.apagado_em)}: depois disso, ele e todo o histórico são apagados para sempre.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="ghost" className="flex-1 text-slate-600" onClick={() => restaurarDaLixeira.mutate(aluno.id)} disabled={restaurarDaLixeira.isPending}>
+                  Tirar da lixeira
+                </Button>
+                <Button variant="ghost" className="flex-1 text-red-600" onClick={handleApagar} disabled={apagar.isPending}>
+                  Apagar agora
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="flex gap-2">
               <Button variant="ghost" className="flex-1 text-slate-600" onClick={() => desarquivar.mutate(aluno.id)} disabled={desarquivar.isPending}>
                 Restaurar aluno
               </Button>
-              <Button variant="ghost" className="flex-1 text-red-600" onClick={handleApagar} disabled={apagar.isPending}>
-                Apagar de vez
+              <Button variant="ghost" className="flex-1 text-red-600" onClick={handleLixeira} disabled={moverParaLixeira.isPending}>
+                Mover para a lixeira
               </Button>
             </div>
           )}

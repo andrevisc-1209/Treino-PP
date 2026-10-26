@@ -772,3 +772,13 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Link "Precisa de ajuda?" no card de primeiros passos (Hoje).
 - ⏳ **Fora por enquanto (decisão do dono):** formulário "Reportar problema" (exige backend/tabela e tratamento LGPD). Os textos descrevem o app de hoje: revisar quando a interface mudar.
 - ⚠️ Telas autenticadas não foram testadas ao vivo (o captcha do login bloqueia a automação): validar no celular `/ajuda`, a busca e o botão do WhatsApp.
+
+
+## 57. Lixeira de 30 dias para alunos
+
+- ✅ Fluxo novo: **Ativo → Arquivado → Lixeira (30 dias) → apagado de vez**. Em Alunos há a aba **Lixeira** (mostra "Some em N dias", restaurar ou "Apagar agora"); em Arquivados, "Mover para a lixeira" (com confirmação, toast "Desfazer"); na ficha, banner e botões equivalentes. Restaurar da lixeira devolve o aluno para **Arquivados** (de lá, "Restaurar" o reativa).
+- ✅ **Migration `20261059_lixeira_alunos.sql`**: coluna `apagado_em`, CHECK (só aluno arquivado), trigger (o banco grava a data com `now()`, impede reativar sem restaurar) e a trava de DELETE do cliente passa a exigir aluno **na lixeira** (substitui a regra "só arquivado" da 20261057). Teste: `supabase/tests/lixeira_aluno.sql` (e o `apagar_aluno_exige_arquivado.sql` foi ajustado).
+- ✅ **Limpeza automática:** `supabase/cron/lixeira_alunos.sql` (pg_cron diário 06:30 UTC, apaga `apagado_em` > 30 dias, em cascata).
+- ✅ Textos atualizados: central de ajuda e FAQ/bloco "sem refém" da landing.
+- Escolha de desenho: o aluno na lixeira continua sendo um aluno **arquivado** com data de lixeira; seus dados (faturas, sessões) não são escondidos das outras telas durante os 30 dias, como já é com qualquer arquivado. Esconder tudo exigiria filtrar ~14 tabelas filhas; fica como evolução, se for necessário.
+- ⚠️ Dono: **rodar a migration e depois o `supabase/cron/lixeira_alunos.sql` no SQL Editor** (sem o cron, a lixeira não esvazia sozinha), e rodar os dois testes SQL. Telas autenticadas não testadas ao vivo. Política de Privacidade não mudou (a lixeira cabe em "enquanto a conta estiver ativa"); revisar se o jurídico quiser citar o prazo.
