@@ -16,7 +16,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
-import { aplicarPagamento } from '../_shared/pagamento.ts'
+import { aplicarPagamento, linhaLivroPagamento } from '../_shared/pagamento.ts'
 import { ipDoCliente } from '../_shared/consentimento.ts'
 import { dataSP, montarPagamentoPlano } from '../_shared/notificacoes.ts'
 import { enviarAoPersonal } from '../_shared/whatsappPersonal.ts'
@@ -107,6 +107,21 @@ Deno.serve(async (req) => {
       if (resultado.tipo === 'ja_processado') {
         console.log('mp-webhook: pagamento já processado (reentrega ignorada)', String(pagamento.id))
         return ok('pagamento já processado')
+      }
+      // Estorno/chargeback: o pagamento sai do livro da receita (a assinatura já foi cancelada acima). Nunca derruba o webhook.
+      if (resultado.tipo === 'cancelado') {
+        await supabase.from('pagamentos_assinatura').delete().eq('payment_id', String(pagamento.id)).then(({ error }) => {
+          if (error) console.error('mp-webhook: estorno processado, mas o livro de pagamentos não foi atualizado', error.message)
+        })
+        return ok()
+      }
+      // Livro da receita (painel /admin → Financeiro): só o que foi creditado. Idempotente por payment_id; nunca derruba o webhook.
+      if (resultado.tipo === 'creditado' && resultado.linhas > 0) {
+        const linha = linhaLivroPagamento(pagamento, resultado.professionalId)
+        if (linha) {
+          const { error } = await supabase.from('pagamentos_assinatura').upsert(linha, { onConflict: 'payment_id', ignoreDuplicates: true })
+          if (error) console.error('mp-webhook: pagamento creditado, mas o livro de pagamentos falhou', error.message)
+        }
       }
       if (resultado.linhas === 0) console.warn('mp-webhook: nenhuma assinatura para', resultado.professionalId)
       // Aviso por WhatsApp ao personal (opt-in): só pagamento aprovado que ativou/renovou o plano. Nunca derruba o webhook.
