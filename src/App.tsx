@@ -26,6 +26,7 @@ import { ConfiguracoesPage } from '@/features/agenda/ConfiguracoesPage'
 import { FinanceiroPage } from '@/features/financeiro/FinanceiroPage'
 import { FecharCicloPage } from '@/features/financeiro/FecharCicloPage'
 import { FaturaPage } from '@/features/financeiro/FaturaPage'
+import { AjudaPage } from '@/features/ajuda/AjudaPage'
 import { PwaUpdatePrompt } from '@/components/PwaUpdatePrompt'
 import { AdminPage } from '@/features/admin/AdminPage'
 import { AdminSegurancaPage } from '@/features/admin/AdminSegurancaPage'
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/" element={<HojePage />} />
           <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/ajuda" element={<AjudaPage />} />
           <Route path="/consentimentos" element={<ConsentimentosPage />} />
           <Route path="/alunos" element={<AlunosPage />} />
           <Route path="/alunos/novo" element={<AlunoFormPage mode="create" />} />

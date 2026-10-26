@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, ChevronRight, Lock, LogOut, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ChevronRight, LifeBuoy, Lock, LogOut, ShieldCheck } from 'lucide-react'
 import { Acordeao } from '@/components/Acordeao'
 import { LocalizacaoCep, type Localizacao } from '@/components/LocalizacaoCep'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
@@ -337,6 +337,14 @@ export function ConfiguracoesPage() {
             <span className="flex items-center gap-2">
               <ShieldCheck size={20} className="text-slate-500" aria-hidden />
               Consentimentos LGPD
+            </span>
+            <ChevronRight size={20} className="text-slate-400" aria-hidden />
+          </Link>
+
+          <Link to="/ajuda" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
+            <span className="flex items-center gap-2">
+              <LifeBuoy size={20} className="text-slate-500" aria-hidden />
+              Central de ajuda
             </span>
             <ChevronRight size={20} className="text-slate-400" aria-hidden />
           </Link>
