@@ -29,11 +29,12 @@ export function CompletarPerfilGate({ userId, children }: { userId: string; chil
       <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
         <div>
           <h1 className="text-2xl font-bold">Complete seu perfil</h1>
-          <p className="text-sm text-slate-500">Só mais um passo antes de começar: CPF, telefone e CEP.</p>
+          <p className="text-sm text-slate-500">Só mais um passo antes de começar: telefone e CEP.</p>
         </div>
         <PerfilObrigatorioForm
           userId={userId}
           nomeInicial={data.perfil.name}
+          cpfInicial={data.perfil.cpf ?? ''}
           whatsappInicial={data.perfil.whatsappOptIn}
           pedirAceite={!data.aceitou}
           onConcluido={() => qc.invalidateQueries({ queryKey: ['perfil-obrigatorio', userId] })}

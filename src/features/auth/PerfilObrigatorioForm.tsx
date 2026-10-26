@@ -18,12 +18,15 @@ import { registrarAceiteTermos, salvarPerfilProfissional } from './api'
 export function PerfilObrigatorioForm({
   userId,
   nomeInicial = '',
+  cpfInicial = '',
   whatsappInicial = false,
   pedirAceite = true,
   onConcluido,
 }: {
   userId: string
   nomeInicial?: string
+  /** CPF já informado no cadastro: aparece só para conferência (não dá para trocar) */
+  cpfInicial?: string
   /** quem criou a conta por e-mail já escolheu no cadastro: o seletor começa como ele deixou */
   whatsappInicial?: boolean
   /** false quando o aceite dos Termos já foi registrado no cadastro (não pede de novo nem grava outro) */
@@ -31,7 +34,7 @@ export function PerfilObrigatorioForm({
   onConcluido: () => void
 }) {
   const [nome, setNome] = useState(nomeInicial)
-  const [cpf, setCpf] = useState('')
+  const [cpf, setCpf] = useState(cpfInicial ? mascararCPF(cpfInicial) : '')
   const [cpfTocado, setCpfTocado] = useState(false)
   const [telefone, setTelefone] = useState('')
   const [whatsappOptIn, setWhatsappOptIn] = useState(whatsappInicial)
@@ -82,7 +85,8 @@ export function PerfilObrigatorioForm({
           onBlur={() => setCpfTocado(true)}
           inputMode="numeric"
           placeholder="000.000.000-00"
-          className={cpfTocado && cpfInvalido ? 'border-red-600 focus:border-red-600' : undefined}
+          readOnly={!!cpfInicial}
+          className={cpfInicial ? 'bg-slate-50 text-slate-600' : cpfTocado && cpfInvalido ? 'border-red-600 focus:border-red-600' : undefined}
         />
       </Field>
       <Field label="Telefone">
