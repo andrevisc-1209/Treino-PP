@@ -189,3 +189,25 @@ export function useAdminRelatoStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'relatos'] }),
   })
 }
+
+export type AcaoAdmin = 'reset_senha' | 'alterar_trial' | 'alterar_plano' | 'alterar_cpf'
+
+export type HistoricoAdmin = {
+  id: string
+  criado_em: string
+  acao: AcaoAdmin
+  admin_nome: string | null
+  personal_nome: string | null
+  personal_email: string | null
+}
+
+export function useAdminHistorico() {
+  return useQuery({
+    queryKey: ['admin', 'historico'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_historico_acoes')
+      if (error) throw error
+      return (data ?? []) as HistoricoAdmin[]
+    },
+  })
+}

@@ -840,3 +840,13 @@ Origem: análise de UX do /admin por três ferramentas de IA. Conferi cada ponto
 - ✅ **Contraste:** a pílula "Cancelada" (slate-500 sobre slate-100, ~4,3:1) passou para slate-600; teste novo cobre todas as pílulas do /admin.
 - ⏳ **Próximas (PR B):** menu "⋮" por personal no lugar dos 4 botões, abas do painel (Visão geral, Personais, Suporte, Privacidade) e tela de histórico de ações (`admin_logs` já existe no banco). **PR C:** painel financeiro do negócio (receita, conversão de trial, cancelamentos) — propor antes.
 - ⚠️ Dono: rodar a migration e o teste SQL. Telas autenticadas não testadas ao vivo.
+
+
+## 63. Painel /admin: menu "⋮", abas e histórico de ações (PR B)
+
+- ✅ **Menu "⋮" por personal** (folha com Reset de senha, Ajustar trial, Ajustar plano e Corrigir CPF) no lugar dos 4 botões por linha, na tabela e nos cards do celular (alvos ≥ 44 px).
+- ✅ **Abas** (na URL, `?aba=`): Visão geral (KPIs, inadimplentes, cidades), Personais, Suporte (com a contagem de relatos em aberto) e Privacidade (consentimentos LGPD e histórico de ações). A busca da lista de personais passou para a URL (`?busca=`).
+- ✅ **Histórico de ações do admin** (aba Privacidade): reset de senha, trial, plano e CPF, com quem fez, em quem e quando. **Migration `20261065_admin_historico_acoes.sql`** (função `admin_historico_acoes()`, exige `is_admin()`/MFA; **não devolve `detalhes`**, que guarda e-mail e CPF) e teste `supabase/tests/admin_historico_acoes.sql`.
+- ✅ **Relatos:** "Ver cadastro" abre a aba Personais já filtrada pelo e-mail do personal; "Responder no WhatsApp" passa um relato "Novo" para "Em andamento" (resolver continua manual).
+- ⏳ **PR C:** painel financeiro do negócio (receita, conversão de trial, cancelamentos), a propor antes de fazer.
+- ⚠️ Dono: rodar a migration e o teste SQL. Telas autenticadas (e o MFA do admin) não testadas ao vivo.
