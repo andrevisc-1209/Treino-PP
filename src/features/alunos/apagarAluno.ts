@@ -47,22 +47,16 @@ export function mensagemApagarAluno(nome: string, resumo: ResumoApagar | null): 
   return `Isso apaga ${nome} agora, para sempre, e não dá para desfazer.${o_que} Se você só quer parar de atender, deixe arquivado: nada se perde.`
 }
 
-const contar = async (tabela: 'sessoes' | 'planos' | 'pesos' | 'faturas', alunoId: string): Promise<number> => {
-  const { count, error } = await supabase.from(tabela).select('id', { count: 'exact', head: true }).eq('aluno_id', alunoId)
-  if (error) throw error
-  return count ?? 0
-}
-
-/** Conta o que seria perdido. Se falhar (rede), devolve null e a confirmação usa o texto sem números. */
+/**
+ * Conta o que seria perdido. Usa a RPC `resumo_apagar_aluno` (a leitura direta das tabelas esconde o aluno na lixeira, migration 20261061).
+ * Se falhar (rede), devolve null e a confirmação usa o texto sem números.
+ */
 export async function buscarResumoApagar(alunoId: string): Promise<ResumoApagar | null> {
   try {
-    const [sessoes, treinos, avaliacoes, faturas] = await Promise.all([
-      contar('sessoes', alunoId),
-      contar('planos', alunoId),
-      contar('pesos', alunoId),
-      contar('faturas', alunoId),
-    ])
-    return { sessoes, treinos, avaliacoes, faturas }
+    const { data, error } = await supabase.rpc('resumo_apagar_aluno', { p_aluno_id: alunoId }).maybeSingle()
+    if (error || !data) return null
+    const r = data as Record<string, unknown>
+    return { sessoes: Number(r.sessoes), treinos: Number(r.treinos), avaliacoes: Number(r.avaliacoes), faturas: Number(r.faturas) }
   } catch {
     return null
   }
