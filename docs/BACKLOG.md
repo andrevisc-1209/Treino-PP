@@ -769,5 +769,6 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ **Rota `/ajuda`** (Configurações → "Central de ajuda"): 16 artigos em 7 categorias (Começando, Alunos, Treinos, Agenda, Financeiro, Conta e plano, Privacidade), busca sem acento/maiúsculas (todas as palavras precisam aparecer) e artigos em `<details>` (acessível, alvos ≥ 44 px). Os passos usam os rótulos reais do app (conferidos no código).
 - ✅ **Contato:** botão "Falar no WhatsApp" com mensagem pronta, sem dados pessoais; o texto pede para não enviar dados de saúde de alunos na conversa.
 - ✅ Testes (`artigos.test.ts`): ids únicos, categorias válidas, vocabulário (sem "professor"/"assíncrono") e busca.
-- ⏳ **Não feito de propósito:** formulário "Reportar problema" (exige backend/tabela e tratamento LGPD, decidir depois) e link no card de primeiros passos. Os textos descrevem o app de hoje: revisar quando a interface mudar.
+- ✅ Link "Precisa de ajuda?" no card de primeiros passos (Hoje).
+- ⏳ **Fora por enquanto (decisão do dono):** formulário "Reportar problema" (exige backend/tabela e tratamento LGPD). Os textos descrevem o app de hoje: revisar quando a interface mudar.
 - ⚠️ Telas autenticadas não foram testadas ao vivo (o captcha do login bloqueia a automação): validar no celular `/ajuda`, a busca e o botão do WhatsApp.
