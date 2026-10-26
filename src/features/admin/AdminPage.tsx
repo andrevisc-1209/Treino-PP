@@ -32,12 +32,15 @@ import { useMfa } from './mfa'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import { ConsentimentosSection } from './ConsentimentosSection'
 import { RelatosSection } from './RelatosSection'
+import { descreverTreinos, linkMapsCidade, rotuloCidade, type MetricasPersonal } from './personais'
+import { confirmarAcao } from '@/components/ConfirmSheet'
 import {
   useAdminAlterarCpf,
   useAdminAlterarPlano,
   useAdminAlterarTrial,
   useAdminPersonais,
   useAdminRegioes,
+  useAdminPersonaisMetricas,
   useAdminResetSenha,
   useAdminResumo,
   type PersonalAdmin,
@@ -60,7 +63,7 @@ const BADGE_STATUS: Record<StatusAssinatura, string> = {
   trial: 'bg-amber-50 text-amber-700',
   ativa: 'bg-brand-soft text-brand-hover',
   expirada: 'bg-red-50 text-red-700',
-  cancelada: 'bg-slate-100 text-slate-500',
+  cancelada: 'bg-slate-100 text-slate-600',
 }
 
 export function AdminPage() {
@@ -116,6 +119,7 @@ function AdminDashboard() {
   const resumo = useAdminResumo()
   const personais = useAdminPersonais()
   const regioes = useAdminRegioes()
+  const metricas = useAdminPersonaisMetricas()
   const { inadimplentes } = useInadimplentes()
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'' | StatusAssinatura>('')
@@ -187,7 +191,7 @@ function AdminDashboard() {
 
           {/* Desktop/tablet: tabela com zebra + hover. Mobile: cards empilhados (abaixo). */}
           <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[980px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500">
                   <th className="py-2 pr-3">Nome</th>
@@ -196,6 +200,7 @@ function AdminDashboard() {
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Trial/plano até</th>
                   <th className="py-2 pr-3">Alunos</th>
+                  <th className="py-2 pr-3">Treinos</th>
                   <th className="py-2 pr-3">Ações</th>
                 </tr>
               </thead>
@@ -204,12 +209,17 @@ function AdminDashboard() {
                   <tr key={p.id} className={`border-b border-slate-100 transition-colors hover:bg-slate-50 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
                     <td className="py-2.5 pr-3 font-medium text-slate-800">{p.name || '—'}</td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.email ?? '—'}</td>
-                    <td className="py-2.5 pr-3 text-slate-600">{p.cidade ?? '—'}</td>
+                    <td className="py-2.5 pr-3 text-slate-600">
+                      <CidadeComMaps cidade={p.cidade} />
+                    </td>
                     <td className="py-2.5 pr-3">
                       <StatusBadge status={p.status} />
                     </td>
                     <td className="py-2.5 pr-3 text-slate-600">{formatarDataHoraBR(p.status === 'ativa' ? p.assinatura_fim : p.trial_fim)}</td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.qtd_alunos}</td>
+                    <td className="py-2.5 pr-3 text-xs text-slate-600">
+                      <TreinosDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
+                    </td>
                     <td className="py-2.5 pr-3">
                       <AcoesPersonal personal={p} onEscolher={(tipo) => setAcao({ tipo, personal: p })} />
                     </td>
@@ -217,7 +227,7 @@ function AdminDashboard() {
                 ))}
                 {listaFiltrada.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-slate-500">
+                    <td colSpan={8} className="py-6 text-center text-slate-500">
                       Nenhum personal encontrado.
                     </td>
                   </tr>
@@ -239,11 +249,19 @@ function AdminDashboard() {
                 <dl className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-500">
                   <div>
                     <dt className="inline">Cidade: </dt>
-                    <dd className="inline text-slate-700">{p.cidade ?? '—'}</dd>
+                    <dd className="inline text-slate-700">
+                      <CidadeComMaps cidade={p.cidade} />
+                    </dd>
                   </div>
                   <div>
                     <dt className="inline">Alunos: </dt>
                     <dd className="inline text-slate-700">{p.qtd_alunos}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="mb-0.5">Treinos</dt>
+                    <dd className="text-slate-700">
+                      <TreinosDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
+                    </dd>
                   </div>
                   <div className="col-span-2">
                     <dt className="inline">Trial/plano até: </dt>
@@ -276,7 +294,9 @@ function AdminDashboard() {
               <tbody>
                 {(regioes.data ?? []).map((r, i) => (
                   <tr key={r.cidade} className={`border-b border-slate-100 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
-                    <td className="py-2 pr-3 text-slate-700">{r.cidade}</td>
+                    <td className="py-2 pr-3 text-slate-700">
+                      <CidadeComMaps cidade={r.cidade} />
+                    </td>
                     <td className="py-2 pr-3 text-slate-600">{r.qtd}</td>
                   </tr>
                 ))}
@@ -295,6 +315,30 @@ function AdminDashboard() {
 
       {acao && <ModalAcao tipo={acao.tipo} personal={acao.personal} onFechar={() => setAcao(null)} />}
     </div>
+  )
+}
+
+/** Cidade/UF do cadastro do personal, com link para o Google Maps; vazio = "Não informado". */
+function CidadeComMaps({ cidade }: { cidade: string | null }) {
+  const link = linkMapsCidade(cidade)
+  if (!link) return <span className="text-slate-500">{rotuloCidade(cidade)}</span>
+  return (
+    <a href={link} target="_blank" rel="noopener noreferrer" className="text-brand-hover underline" aria-label={`${rotuloCidade(cidade)} no Google Maps`}>
+      {rotuloCidade(cidade)}
+    </a>
+  )
+}
+
+/** Quantidades de treinos do personal (só números; nada de dados de alunos). */
+function TreinosDoPersonal({ metricas, carregando }: { metricas: MetricasPersonal | undefined; carregando: boolean }) {
+  if (carregando) return <span className="text-slate-500">…</span>
+  const d = descreverTreinos(metricas)
+  return (
+    <span className="block space-y-0.5">
+      <span className="block">Montados: {d.montados}</span>
+      <span className="block">Realizados: {d.realizados}</span>
+      <span className="block">Últimos 30 dias: {d.ultimos30}</span>
+    </span>
   )
 }
 
@@ -341,7 +385,23 @@ function InadimplentesSection({ inadimplentes, onAjustarTrial }: { inadimplentes
   const [aberto, setAberto] = useState(inadimplentes.length > 0)
   const estenderTrial = useAdminAlterarTrial()
 
+  // sem pendência: uma linha discreta em vez de um card inteiro
+  if (inadimplentes.length === 0) {
+    return (
+      <p className="flex items-center gap-2 px-1 text-sm text-slate-500">
+        <CircleCheck size={16} className="text-brand-hover" aria-hidden /> Nenhum profissional inadimplente no momento.
+      </p>
+    )
+  }
+
   const estenderRapido = async (item: Inadimplente) => {
+    const nome = item.personal.name || item.personal.email
+    const ok = await confirmarAcao({
+      titulo: 'Estender trial em 7 dias?',
+      mensagem: `O trial de ${nome} passa a terminar daqui a 7 dias e o acesso dele é liberado de novo. Você pode ajustar depois em "Ajustar trial".`,
+      textoConfirmar: 'Estender 7 dias',
+    })
+    if (!ok) return
     try {
       const novoFim = new Date(Date.now() + 7 * 86_400_000).toISOString()
       await estenderTrial.mutateAsync({ professionalId: item.personal.id, novoFim })

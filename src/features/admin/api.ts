@@ -3,6 +3,7 @@ import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
 import { supabase } from '@/lib/supabase'
 import type { StatusAssinatura, Plano } from '@/features/assinatura/useAssinatura'
 import type { StatusRelato, TipoRelato } from '@/features/ajuda/relatos'
+import type { MetricasPersonal } from './personais'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
 
@@ -38,6 +39,28 @@ export function useAdminPersonais() {
       const { data, error } = await supabase.rpc('admin_listar_personais')
       if (error) throw error
       return (data ?? []) as PersonalAdmin[]
+    },
+  })
+}
+
+export function useAdminPersonaisMetricas() {
+  return useQuery({
+    queryKey: ['admin', 'personais-metricas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_personais_metricas')
+      if (error) throw error
+      // BIGINT chega como número (ou string em contagens enormes): normaliza
+      const mapa = new Map<string, MetricasPersonal>()
+      for (const l of (data ?? []) as Record<string, unknown>[]) {
+        mapa.set(String(l.professional_id), {
+          treinos_presencial: Number(l.treinos_presencial),
+          treinos_distancia: Number(l.treinos_distancia),
+          exec_presencial: Number(l.exec_presencial),
+          exec_distancia: Number(l.exec_distancia),
+          exec_30d: Number(l.exec_30d),
+        })
+      }
+      return mapa
     },
   })
 }

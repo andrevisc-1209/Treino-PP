@@ -68,3 +68,20 @@ describe('text-slate-400 só em ícone decorativo', () => {
   varre(raiz)
   it('nenhum texto em slate-400', () => expect(achados).toEqual([]))
 })
+
+// Pílulas do painel /admin (src/features/admin): fundo claro + texto escuro da mesma família (Tailwind v4 / paleta padrão).
+describe('contraste das pílulas do /admin (WCAG AA)', () => {
+  const pares: [string, string, string][] = [
+    ['trial: amber-50 / amber-700', '#fffbeb', '#b45309'],
+    ['vencido há dias (laranja): orange-50 / orange-700', '#fff7ed', '#c2410c'],
+    ['expirada e vermelho: red-50 / red-700', '#fef2f2', '#b91c1c'],
+    ['cancelada: slate-100 / slate-600', '#f1f5f9', '#475569'],
+    ['LGPD confirmados: emerald-100 / emerald-800', '#d1fae5', '#065f46'],
+    ['LGPD pendentes: amber-100 / amber-900', '#fef3c7', '#78350f'],
+    ['LGPD negados: red-100 / red-800', '#fee2e2', '#991b1b'],
+    ['LGPD não solicitados: slate-100 / slate-700', '#f1f5f9', '#334155'],
+  ]
+  for (const [nome, fundo, texto] of pares) {
+    it(nome, () => expect(contrasteWCAG(texto, fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL))
+  }
+})

@@ -25,3 +25,13 @@ export function dispositivoDoNavegador(ua: string | undefined): string | null {
   const t = (ua ?? '').trim().slice(0, 200)
   return t || null
 }
+
+/** "iPhone · Safari" a partir do user agent; o texto completo fica só em tooltip. Desconhecido = "Aparelho não identificado". */
+export function rotuloDispositivo(ua: string | null | undefined): string {
+  const t = ua ?? ''
+  if (!t.trim()) return 'Aparelho não informado'
+  const sistema = /iPhone/i.test(t) ? 'iPhone' : /iPad/i.test(t) ? 'iPad' : /Android/i.test(t) ? 'Android' : /Windows/i.test(t) ? 'Windows' : /Macintosh|Mac OS X/i.test(t) ? 'Mac' : /Linux/i.test(t) ? 'Linux' : null
+  const navegador = /Edg\//.test(t) ? 'Edge' : /OPR\/|Opera/.test(t) ? 'Opera' : /SamsungBrowser/.test(t) ? 'Samsung Internet' : /CriOS|Chrome\//.test(t) ? 'Chrome' : /FxiOS|Firefox\//.test(t) ? 'Firefox' : /Safari\//.test(t) ? 'Safari' : null
+  if (!sistema && !navegador) return 'Aparelho não identificado'
+  return [sistema, navegador].filter(Boolean).join(' · ')
+}
