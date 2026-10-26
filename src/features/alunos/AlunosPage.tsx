@@ -16,6 +16,7 @@ import { ListaSkeleton } from '@/components/Skeleton'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarDesfazer } from '@/components/UndoToast'
 import { useAlunosComCobranca } from '@/features/financeiro/api'
+import { buscarResumoApagar, mensagemApagarAluno } from './apagarAluno'
 import { useAlunos, useAlunosArquivados, useApagarAluno, useArquivarAluno, useDesarquivarAluno, type Aluno } from './api'
 import { useAlunosSemTreinoRecente, useTreinosEstaSemana } from './useMetricas'
 import { useUltimaExecucaoPorAluno } from '@/features/execucoes/api'
@@ -60,10 +61,11 @@ export function AlunosPage() {
 
   const apagarAluno = async (a: Aluno) => {
     setMenuAberto(null)
+    const resumo = await buscarResumoApagar(a.id)
     const ok = await confirmarAcao({
       titulo: 'Apagar aluno',
-      mensagem: `Tem certeza? Isso apaga ${a.name} e todo o histórico (treinos, sessões, avaliações). Esta ação não pode ser desfeita.`,
-      textoConfirmar: 'Apagar',
+      mensagem: mensagemApagarAluno(a.name, resumo),
+      textoConfirmar: 'Apagar para sempre',
       destrutivo: true,
     })
     if (!ok) return
@@ -191,13 +193,17 @@ export function AlunosPage() {
               Restaurar
             </button>
           )}
-          <button type="button"
-            onClick={() => menuAberto && apagarAluno(menuAberto)}
-            disabled={apagar.isPending}
-            className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"
-          >
-            Apagar
-          </button>
+          {aba === 'arquivados' ? (
+            <button type="button"
+              onClick={() => menuAberto && apagarAluno(menuAberto)}
+              disabled={apagar.isPending}
+              className="w-full rounded-xl px-3 py-3 text-left text-red-600 active:bg-slate-100"
+            >
+              Apagar de vez
+            </button>
+          ) : (
+            <p className="px-3 py-2 text-xs text-slate-500">Para apagar um aluno de vez, arquive primeiro.</p>
+          )}
         </div>
       </BottomSheet>
     </div>

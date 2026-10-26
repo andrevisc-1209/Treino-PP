@@ -18,6 +18,9 @@ describe('mapearErroSupabase', () => {
     expect(msg).toBe(ERROS.ASSINATURA.modoLeitura)
     expect(msg).not.toMatch(/policy|row-level/i)
   })
+  it('apagar aluno ainda ativo: a trava do banco vira texto amigável', () => {
+    expect(mapearErroSupabase({ code: 'P0001', message: 'Arquive o aluno antes de apagar.' })).toBe(ERROS.ALUNO.arquivarAntes)
+  })
   it('mapeia duplicidade (unique constraint)', () => {
     expect(mapearErroSupabase({ code: '23505', message: 'duplicate key value violates unique constraint' })).toMatch(/já existe/i)
   })
