@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { PlanoModal } from '@/components/PlanoModal'
@@ -18,7 +19,7 @@ export function AssinaturaSecao() {
   const { data: assinatura, isLoading, error } = useAssinatura()
   const [escolhendoPlano, setEscolhendoPlano] = useState(false)
 
-  if (isLoading) return <p className="text-sm text-slate-500">Carregando…</p>
+  if (isLoading) return <ListaSkeleton />
   if (error || !assinatura) return <p className="text-sm text-red-600">{error ? mapearErroSupabase(error) : 'Não foi possível carregar sua assinatura.'}</p>
 
   const r = resumirAssinatura(assinatura)

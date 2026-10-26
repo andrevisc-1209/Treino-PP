@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import {
   Bar,
@@ -169,7 +170,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
   const pse = pseMedia(sessoes)
   const deltaPeso = variacaoPeso(pesos)
 
-  if (isLoading) return <p className="text-slate-500">Carregando…</p>
+  if (isLoading) return <ListaSkeleton />
 
   if ((sessoesTodas?.length ?? 0) === 0 && (pesosTodos?.length ?? 0) === 0) {
     return <EmptyMsg>Registre 2 treinos para ver a evolução.</EmptyMsg>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { Pencil } from 'lucide-react'
 import { Button, BottomSheet } from '@/components/ui'
 import { formatarBRL } from '@/lib/moeda'
@@ -68,7 +69,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
         </Button>
       </div>
 
-      {isLoading && <p className="text-sm text-slate-500">Carregando…</p>}
+      {isLoading && <ListaSkeleton />}
 
       {!isLoading && (!cobranca || !cobranca.ativo) && (
         <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">Sem valor definido</span>

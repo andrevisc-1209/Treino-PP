@@ -779,6 +779,12 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ No cadastro de aluno novo (etapa Horários), a checagem de conflito agora considera também os horários que o personal já adicionou naquele cadastro e ainda não foram salvos (antes só via os já gravados). Função pura `pendentesComoExistentes` + testes. O aviso nomeia o aluno ("este aluno" se o nome ainda não foi digitado).
 - ⚠️ Tela autenticada não testada ao vivo: no celular, adicionar dois horários sobrepostos no cadastro e ver o aviso/confirmação.
 
+## 55. Esqueleto no lugar de "Carregando…"
+
+- ✅ Telas de lista, aba e ficha (Alunos, Aluno, Planos, Modelos, Sessão, Finalizar sessão, Fatura, Financeiro, Fechar ciclo, Agenda, Evolução, Histórico, Exercícios, Consentimentos, Configurações, Assinatura, Cobrança) agora mostram esqueleto (`ListaSkeleton`/novo `PaginaSkeleton`, com `role="status"` e `aria-label="Carregando"`) em vez do texto solto. Reduz o salto de layout.
+- Mantido como texto, de propósito: telas de autenticação/admin, seletores dentro de sheets e o consentimento público do aluno.
+- ⚠️ Telas autenticadas não testadas ao vivo (captcha do login): conferir no celular com a rede lenta.
+
 ## 57. Lixeira de 30 dias para alunos
 
 - ✅ Fluxo novo: **Ativo → Arquivado → Lixeira (30 dias) → apagado de vez**. Em Alunos há a aba **Lixeira** (mostra "Some em N dias", restaurar ou "Apagar agora"); em Arquivados, "Mover para a lixeira" (com confirmação, toast "Desfazer"); na ficha, banner e botões equivalentes. Restaurar da lixeira devolve o aluno para **Arquivados** (de lá, "Restaurar" o reativa).

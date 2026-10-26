@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ListaSkeleton, PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Clock, Pause, Play, Plus, RotateCcw, SkipForward, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
@@ -418,7 +419,7 @@ function Execucao({ sessionId, alunoId }: { sessionId: string; alunoId: string }
         </div>
       )}
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
+      {isLoading && <ListaSkeleton />}
 
       {itens?.map((item) => (
         <div key={item.id} ref={(el) => { refsPorItem.current[item.id] = el }}>
@@ -691,7 +692,7 @@ export function SessaoPage() {
   }, [sessao])
 
   if (!id || !sessionId) return <Navigate to="/" replace />
-  if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
+  if (isLoading) return <PaginaSkeleton />
   if (error) return <p className="p-4 text-red-600">{mapearErroSupabase(error)}</p>
   if (!sessao) return <p className="p-4 text-slate-500">Sessão não encontrada.</p>
 

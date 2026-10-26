@@ -1,4 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { PaginaSkeleton } from '@/components/Skeleton'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
 import { avisoSaude } from '@/features/alunos/format'
@@ -18,7 +19,7 @@ export function PlanoEditorPage() {
   const reordenar = useReordenarItem(planoId!)
 
   if (!id || !planoId) return <Navigate to="/" replace />
-  if (planoLoading) return <p className="p-4 text-slate-500">Carregando…</p>
+  if (planoLoading) return <PaginaSkeleton />
   if (!plano) return <p className="p-4 text-slate-500">Treino não encontrado.</p>
 
   return (

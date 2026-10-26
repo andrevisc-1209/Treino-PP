@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Pencil, Play, Scale, TriangleAlert } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
@@ -195,7 +196,7 @@ export function AlunoFichaPage() {
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
 
   if (!id) return <Navigate to="/alunos" replace />
-  if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
+  if (isLoading) return <PaginaSkeleton />
   if (error) return <p className="p-4 text-red-600">{mapearErroSupabase(error)}</p>
   if (!aluno) return <p className="p-4 text-slate-500">Aluno não encontrado.</p>
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, TriangleAlert } from 'lucide-react'
 import { useAluno } from '@/features/alunos/api'
@@ -137,7 +138,7 @@ export function FecharCicloPage() {
         </div>
       </header>
 
-      {(cobrancaLoading || participacoesLoading) && <p className="text-slate-500">Carregando…</p>}
+      {(cobrancaLoading || participacoesLoading) && <ListaSkeleton />}
 
       {!cobrancaLoading && !cobranca?.ativo && <p className="text-slate-500">Este aluno não tem cobrança configurada.</p>}
 

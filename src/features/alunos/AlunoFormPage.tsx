@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { PaginaSkeleton } from '@/components/Skeleton'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -427,7 +428,7 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
   }
 
   if (mode === 'edit' && (alunoLoading || consentLoading)) {
-    return <p className="p-4 text-slate-500">Carregando…</p>
+    return <PaginaSkeleton />
   }
 
   return (
