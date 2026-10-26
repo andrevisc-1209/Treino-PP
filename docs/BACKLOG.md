@@ -772,3 +772,9 @@ Relatório completo em [docs/SECURITY-AUDIT.md](SECURITY-AUDIT.md).
 - ✅ Link "Precisa de ajuda?" no card de primeiros passos (Hoje).
 - ⏳ **Fora por enquanto (decisão do dono):** formulário "Reportar problema" (exige backend/tabela e tratamento LGPD). Os textos descrevem o app de hoje: revisar quando a interface mudar.
 - ⚠️ Telas autenticadas não foram testadas ao vivo (o captcha do login bloqueia a automação): validar no celular `/ajuda`, a busca e o botão do WhatsApp.
+
+
+## 56. Conflito de horário também com horários ainda não salvos
+
+- ✅ No cadastro de aluno novo (etapa Horários), a checagem de conflito agora considera também os horários que o personal já adicionou naquele cadastro e ainda não foram salvos (antes só via os já gravados). Função pura `pendentesComoExistentes` + testes. O aviso nomeia o aluno ("este aluno" se o nome ainda não foi digitado).
+- ⚠️ Tela autenticada não testada ao vivo: no celular, adicionar dois horários sobrepostos no cadastro e ver o aviso/confirmação.

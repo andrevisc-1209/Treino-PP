@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { conflitosDoHorario, descreverConflitos, horariosFixosSobrepoe } from './conflitos'
+import { conflitosDoHorario, pendentesComoExistentes, descreverConflitos, horariosFixosSobrepoe } from './conflitos'
 
 const h = (id: string, weekday: number, start_time: string, duration_min: number, aluno_nomes: string[]) => ({ id, weekday, start_time, duration_min, aluno_nomes })
 
@@ -38,4 +38,19 @@ describe('descreverConflitos', () => {
     expect(texto).toContain('; ')
   })
   it('horário sem alunos', () => expect(descreverConflitos([h('a', 1, '07:00', 60, [])])).toContain('(sem alunos)'))
+})
+
+describe('pendentesComoExistentes', () => {
+  const pend = [{ weekdays: [1, 3], start_time: '07:00', duration_min: 60, local: ' ', coParticipantesIds: ['x'] }]
+  it('gera uma linha por dia, com o nome do aluno e dos co-participantes', () => {
+    const linhas = pendentesComoExistentes(pend, 'Carla', (id) => (id === 'x' ? 'Duda' : undefined))
+    expect(linhas).toHaveLength(2)
+    expect(linhas[0]).toMatchObject({ weekday: 1, start_time: '07:00', local: null, aluno_nomes: ['Carla', 'Duda'] })
+  })
+  it('um segundo horário que cruza com o pendente é detectado', () => {
+    const linhas = pendentesComoExistentes(pend, '', () => undefined)
+    const c = conflitosDoHorario({ weekdays: [3], start_time: '07:30', duration_min: 60 }, linhas)
+    expect(c).toHaveLength(1)
+    expect(descreverConflitos(c)).toContain('este aluno')
+  })
 })
