@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Check, Copy, FileText, MessageCircle } from 'lucide-react'
 import QRCode from 'qrcode'
@@ -127,7 +128,7 @@ export function FaturaPage() {
   }, [fatura?.id, aluno?.id, pixPayload])
 
   if (!faturaId) return <Navigate to="/financeiro" replace />
-  if (isLoading) return <p className="p-4 text-slate-500">Carregando…</p>
+  if (isLoading) return <PaginaSkeleton />
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ListaSkeleton } from '@/components/Skeleton'
 import { Pencil, Search, Trash2 } from 'lucide-react'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { cn } from '@/lib/utils'
@@ -266,7 +267,7 @@ export function ExerciciosPage() {
         </RolagemHorizontal>
       )}
 
-      {isLoading && <p className="text-slate-500">Carregando…</p>}
+      {isLoading && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {!isLoading && filtrados.length === 0 &&
         (origem === 'meus' && meus.length === 0 ? (

@@ -17,3 +17,16 @@ export function ListaSkeleton({ linhas = 3 }: { linhas?: number }) {
     </div>
   )
 }
+
+/** Esqueleto de página inteira (cabeçalho + cards), para telas que só abrem depois de carregar. */
+export function PaginaSkeleton() {
+  return (
+    <div className="mx-auto max-w-2xl space-y-4 p-4" role="status" aria-label="Carregando">
+      <div className="flex items-center gap-3">
+        <Skeleton className="size-12" />
+        <Skeleton className="h-6 w-2/5" />
+      </div>
+      <ListaSkeleton linhas={3} />
+    </div>
+  )
+}
