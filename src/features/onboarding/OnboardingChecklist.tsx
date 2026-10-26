@@ -63,6 +63,9 @@ export function OnboardingChecklist() {
           </li>
         ))}
       </ul>
+      <Link to="/ajuda" className="flex min-h-11 items-center text-sm font-medium text-brand-hover">
+        Precisa de ajuda? Veja a central de ajuda
+      </Link>
     </div>
   )
 }
