@@ -20,7 +20,7 @@ export function PerfilObrigatorioForm({
   userId,
   nomeInicial = '',
   cpfInicial = '',
-  whatsappInicial = false,
+  whatsappInicial = true,
   pedirAceite = true,
   onConcluido,
 }: {
@@ -28,7 +28,7 @@ export function PerfilObrigatorioForm({
   nomeInicial?: string
   /** CPF já informado no cadastro: aparece só para conferência (não dá para trocar) */
   cpfInicial?: string
-  /** quem criou a conta por e-mail já escolheu no cadastro: o seletor começa como ele deixou */
+  /** o seletor do WhatsApp mora aqui, junto do telefone; começa ligado (decisão do dono) e a pessoa desliga se quiser */
   whatsappInicial?: boolean
   /** false quando o aceite dos Termos já foi registrado no cadastro (não pede de novo nem grava outro) */
   pedirAceite?: boolean
@@ -102,11 +102,11 @@ export function PerfilObrigatorioForm({
       <Field label="Telefone">
         <Input value={telefone} onChange={(e) => setTelefone(mascararTelefone(e.target.value))} inputMode="tel" placeholder="(00) 00000-0000" />
       </Field>
-      <LocalizacaoCep valor={local} onChange={(patch) => setLocal((l) => ({ ...l, ...patch }))} />
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
-        <Switch checked={whatsappOptIn} onChange={setWhatsappOptIn} label="Aceito receber notificações pelo WhatsApp" />
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-slate-600">Receber no WhatsApp a agenda do dia e os avisos do app (você desliga quando quiser)</span>
+        <Switch checked={whatsappOptIn} onChange={setWhatsappOptIn} label="Receber agenda do dia e avisos pelo WhatsApp" />
       </div>
+      <LocalizacaoCep valor={local} onChange={(patch) => setLocal((l) => ({ ...l, ...patch }))} />
       {pedirAceite && (
         <label className="flex items-start gap-3 text-sm text-slate-600">
           <input type="checkbox" checked={aceitouTermos} onChange={(e) => setAceitouTermos(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-brand" />

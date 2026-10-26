@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthProvider'
-import { Button, Field, Input, Switch } from '@/components/ui'
+import { Button, Field, Input } from '@/components/ui'
 import { APP_NAME, APP_URL } from '@/config/app'
 import { Turnstile } from '@/components/Turnstile'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
@@ -42,7 +42,6 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
         : z.string().min(6, 'Mínimo 6 caracteres'),
     confirmPassword: z.string().optional(),
     cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
-    whatsappOptIn: z.boolean().optional(),
     termosAceitos:
       mode === 'signup'
         ? z.boolean().refine((v) => v === true, { message: 'Você precisa aceitar os Termos de Uso e a Política de Privacidade' })
@@ -93,11 +92,10 @@ export function LoginPage() {
 
   const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
     resolver: zodResolver(buildSchema(mode)),
-    defaultValues: { termosAceitos: false, whatsappOptIn: true },
+    defaultValues: { termosAceitos: false },
   })
   const recuperarForm = useForm<FormRecuperar>({ resolver: zodResolver(schemaRecuperar) })
   const termosAceitos = watch('termosAceitos')
-  const whatsappOptIn = watch('whatsappOptIn')
   const senhaValor = watch('password')
   const cpfValor = watch('cpf')
   const emailCadastro = watch('email')
@@ -199,7 +197,7 @@ export function LoginPage() {
               setMsg(null)
             }}
           >
-            Já tenho conta: entrar
+            Ir para o login
           </Button>
           {emailPendenteOrigem !== 'login' && (
             <button
@@ -256,7 +254,6 @@ export function LoginPage() {
         data: {
           name: f.name ?? '',
           cpf: (f.cpf ?? '').replace(/\D/g, ''),
-          whatsapp_opt_in: f.whatsappOptIn ?? false,
           termos_versao: TERMOS_USO_VERSAO,
           privacidade_versao: PRIVACIDADE_VERSAO,
         },
@@ -411,15 +408,6 @@ export function LoginPage() {
             </label>
             {formState.errors.termosAceitos && <p className="text-xs text-red-600">{formState.errors.termosAceitos.message}</p>}
 
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm text-slate-600">Aceito receber notificações pelo WhatsApp</span>
-              <Switch
-                checked={!!whatsappOptIn}
-                onChange={(v) => setValue('whatsappOptIn', v)}
-                label="Aceito receber notificações pelo WhatsApp"
-              />
-            </div>
-
             <div className="flex justify-center">
               <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
             </div>
@@ -486,7 +474,7 @@ export function LoginPage() {
               setMsg(null)
             }}
           >
-            {mode === 'login' ? 'Criar minha conta' : 'Já tenho conta'}
+            {mode === 'login' ? 'Criar minha conta' : 'Fazer login'}
           </button>
         )}
       </form>
