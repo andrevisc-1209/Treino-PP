@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react'
+import { Check, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const REGRAS = [
@@ -19,9 +19,10 @@ export function PasswordChecklist({ senha }: { senha: string }) {
       {REGRAS.map((r) => {
         const ok = r.testa(senha)
         return (
-          <li key={r.label} className={cn('flex items-center gap-2', ok ? 'text-brand-hover' : 'text-red-600')}>
-            {ok ? <Check size={14} className="shrink-0" /> : <X size={14} className="shrink-0" />}
+          <li key={r.label} className={cn('flex items-center gap-2', ok ? 'text-brand-hover' : 'text-slate-600')}>
+            {ok ? <Check size={14} className="shrink-0" aria-hidden /> : <Circle size={10} className="shrink-0" aria-hidden />}
             {r.label}
+            <span className="sr-only">{ok ? ' (ok)' : ' (falta)'}</span>
           </li>
         )
       })}
