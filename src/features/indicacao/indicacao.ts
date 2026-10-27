@@ -36,20 +36,33 @@ const armazenamento = (): Storage | null => {
   }
 }
 
-/** Guarda o código vindo do link (?ref=) até a pessoa entrar. Código inválido é ignorado. */
-export function guardarCodigoDoLink(search: string): void {
+/**
+ * Guarda o código vindo do link (?ref=) E o momento em que o link foi aberto, até a pessoa entrar. Só guarda quem NÃO está logado:
+ * quem já tem sessão abrindo o link é conta existente e não conta como indicação. Código inválido é ignorado.
+ * O servidor exige que a conta tenha sido criada DEPOIS deste momento (migration 20261073).
+ */
+export function guardarCodigoDoLink(search: string, haSessao: boolean, agora: number = Date.now()): void {
+  if (haSessao) return
   const codigo = normalizarCodigo(new URLSearchParams(search).get('ref'))
   if (!codigo) return
   try {
-    armazenamento()?.setItem(CHAVE_CODIGO_INDICACAO, codigo)
+    armazenamento()?.setItem(CHAVE_CODIGO_INDICACAO, JSON.stringify({ c: codigo, t: agora }))
   } catch {
     /* sem armazenamento: o código se perde, e a indicação não conta */
   }
 }
 
-export const lerCodigoGuardado = (): string | null => {
+export type CodigoGuardado = { codigo: string; segundosDesdeAbertura: number }
+
+/** Código guardado e há quantos segundos o link foi aberto (diferença só do relógio do aparelho). Formato antigo ou quebrado = nada. */
+export function lerCodigoGuardado(agora: number = Date.now()): CodigoGuardado | null {
   try {
-    return normalizarCodigo(armazenamento()?.getItem(CHAVE_CODIGO_INDICACAO))
+    const bruto = armazenamento()?.getItem(CHAVE_CODIGO_INDICACAO)
+    if (!bruto) return null
+    const { c, t } = JSON.parse(bruto) as { c?: unknown; t?: unknown }
+    const codigo = normalizarCodigo(typeof c === 'string' ? c : null)
+    if (!codigo || typeof t !== 'number' || !Number.isFinite(t)) return null
+    return { codigo, segundosDesdeAbertura: Math.max(0, Math.floor((agora - t) / 1000)) }
   } catch {
     return null
   }
@@ -69,6 +82,7 @@ export type ResultadoRegistro = 'registrado' | 'invalido' | 'proprio' | 'ja_regi
 export function avisoDoRegistro(r: ResultadoRegistro): string | null {
   if (r === 'registrado') return 'Indicação registrada! Quando você cadastrar 3 alunos, você e quem indicou ganham 1 mês grátis.'
   if (r === 'proprio') return 'Esse é o seu próprio código de indicação.'
+  if (r === 'nao_novo') return 'A indicação vale só para contas criadas depois de abrir o link de indicação.'
   return null
 }
 

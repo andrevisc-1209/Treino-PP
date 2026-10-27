@@ -124,8 +124,8 @@ export function LoginPage() {
 
   // link de indicação (?ref=): guarda o código até a pessoa entrar (o servidor valida depois)
   useEffect(() => {
-    guardarCodigoDoLink(window.location.search)
-  }, [])
+    guardarCodigoDoLink(window.location.search, !!session)
+  }, [session])
 
   // funil: a pessoa abriu o formulário de cadastro (1 evento por abertura da tela)
   useEffect(() => {
