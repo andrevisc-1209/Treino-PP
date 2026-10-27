@@ -14,7 +14,8 @@ Supabase, não no código do app. Estes arquivos são o HTML pronto pra colar l�
    quando a confirmação de e-mail está ativa no projeto.
 5. Em **Reset password**, cole o conteúdo de `redefinir-senha.html` da mesma forma,
    com o assunto sugerido no topo do arquivo.
-6. Salve cada template.
+6. **Preencha também o campo "Subject" de cada template** com o assunto sugerido no topo do arquivo. O Supabase não pega o assunto do HTML: se ficar em branco, sai o padrão em inglês (ex.: "Confirm your email address").
+7. Salve cada template.
 
 > Este agente não tem acesso ao Supabase Dashboard nem à Management API — não é
 > possível aplicar os templates automaticamente nem conferir o texto "antes"
@@ -29,6 +30,7 @@ Supabase, não no código do app. Estes arquivos são o HTML pronto pra colar l�
   junto com o resto do app — só existe depois do primeiro deploy do site). Não
   existe (e não deve ser criado) um `public/logo.png` — o caminho correto e já
   em uso pelos três templates é esse, dentro de `brand/`.
+- Cabeçalho **branco** com a logo colorida (a logo tem fundo transparente e some em fundo escuro) e filete verde embaixo. O e-mail de consentimento de saúde (`_shared/consentimento.ts`) usa o mesmo cabeçalho.
 - Cor do botão (`#367c39`) é a mesma de `--color-brand` em `src/index.css` — se o
   token mudar lá, atualize aqui também (são arquivos estáticos, não leem CSS).
 - `{{ .ConfirmationURL }}` é a variável que o Supabase substitui automaticamente
