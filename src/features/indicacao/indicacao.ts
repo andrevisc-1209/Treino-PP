@@ -63,7 +63,7 @@ export function limparCodigoGuardado(): void {
   }
 }
 
-export type ResultadoRegistro = 'registrado' | 'invalido' | 'proprio' | 'ja_registrado' | 'expirado'
+export type ResultadoRegistro = 'registrado' | 'invalido' | 'proprio' | 'ja_registrado' | 'expirado' | 'nao_novo'
 
 /** Resposta curta para a pessoa; null = não mostra nada (o caso comum). */
 export function avisoDoRegistro(r: ResultadoRegistro): string | null {

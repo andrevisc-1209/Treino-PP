@@ -72,6 +72,7 @@ describe('textos', () => {
     expect(avisoDoRegistro('proprio')).toContain('seu próprio')
     expect(avisoDoRegistro('invalido')).toBeNull()
     expect(avisoDoRegistro('expirado')).toBeNull()
+    expect(avisoDoRegistro('nao_novo')).toBeNull()
     expect(avisoDoRegistro('ja_registrado')).toBeNull()
   })
   it('situação de quem foi indicado', () => {
