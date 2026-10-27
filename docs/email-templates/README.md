@@ -25,11 +25,12 @@ Supabase, não no código do app. Estes arquivos são o HTML pronto pra colar l�
 
 - Layout em tabela (largura 600px, CSS inline) — compatível com clientes de e-mail
   que não suportam CSS moderno (Outlook, Gmail app, etc.).
-- Logo servida por `https://treino.personalperto.com.br/brand/logo-email.png`
-  (arquivo em `public/brand/logo-email.png` no repo, publicado pelo GitHub Pages
+- Logo servida por `https://treino.personalperto.com.br/brand/logo-email-branco.png`
+  (arquivo em `public/brand/logo-email-branco.png` no repo, publicado pelo GitHub Pages
   junto com o resto do app — só existe depois do primeiro deploy do site). Não
   existe (e não deve ser criado) um `public/logo.png` — o caminho correto e já
   em uso pelos três templates é esse, dentro de `brand/`.
+- A logo dos e-mails é `logo-email-branco.png`: **fundo branco embutido na imagem** (PNG opaco). A versão transparente ficava ilegível quando o Gmail/Outlook escurece o e-mail no modo escuro. Os templates também pedem `color-scheme: light only`.
 - Cabeçalho **branco** com a logo colorida (a logo tem fundo transparente e some em fundo escuro) e filete verde embaixo. O e-mail de consentimento de saúde (`_shared/consentimento.ts`) usa o mesmo cabeçalho.
 - Cor do botão (`#367c39`) é a mesma de `--color-brand` em `src/index.css` — se o
   token mudar lá, atualize aqui também (são arquivos estáticos, não leem CSS).

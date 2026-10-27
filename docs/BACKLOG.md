@@ -931,3 +931,8 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 
 - ✅ Os três templates do Supabase (`confirmacao-cadastro`, `convite`, `redefinir-senha`) e o e-mail de consentimento de saúde passaram a ter cabeçalho **branco** com a logo colorida (antes ficava sobre azul-escuro e a logo, transparente, perdia contraste) e filete verde.
 - ⚠️ Dono: o título "Confirm your email address" é o **assunto**, que fica num campo do painel (não no HTML). Em Supabase → Authentication → Email Templates, **colar o HTML novo e preencher "Subject"** em português em cada template (assuntos no topo de cada arquivo). Rever também, se ativos, os templates "Magic link", "Change email address" e "Reauthentication": ficam em inglês por padrão.
+
+## 75. E-mails: logo com fundo branco embutido (modo escuro)
+
+- ✅ No modo escuro do Gmail/Outlook o cabeçalho branco era escurecido e a logo transparente ficava ilegível. Nova imagem `public/brand/logo-email-branco.png` (PNG opaco, fundo branco) em todos os e-mails, e `color-scheme: light only` nos templates e no e-mail de consentimento.
+- ⚠️ Dono: **colar de novo os 3 templates** no Supabase (Email Templates) e **redeploy** de `enviar-consentimento-saude`. A imagem só passa a existir no ar depois do deploy do site (merge desta PR).
