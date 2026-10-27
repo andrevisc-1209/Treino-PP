@@ -1,10 +1,12 @@
 import { Droplets, Sun, Wind } from 'lucide-react'
 import { useClima } from '@/features/clima/useClima'
+import { rotuloChuvaMm } from '@/features/clima/chuva'
 
 /** Clima de hoje na cidade do personal, com uma dica para treino ao ar livre. Some se não há cidade ou se a previsão falhar. */
 export function ClimaCard() {
   const { data } = useClima()
   if (!data || data.semCidade) return null
+  const mm = rotuloChuvaMm(data.hoje.chuvaMm)
 
   return (
     <section className="mb-4 rounded-2xl bg-white p-4 shadow-sm" aria-label="Clima de hoje">
@@ -23,7 +25,7 @@ export function ClimaCard() {
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
         <span className="inline-flex items-center gap-1">
-          <Droplets size={14} aria-hidden /> chuva {data.hoje.chuvaProb}%
+          <Droplets size={14} aria-hidden /> chuva {data.hoje.chuvaProb}%{mm ? ` · ${mm}` : ''}
         </span>
         <span className="inline-flex items-center gap-1">
           <Wind size={14} aria-hidden /> vento {data.atual.vento} km/h

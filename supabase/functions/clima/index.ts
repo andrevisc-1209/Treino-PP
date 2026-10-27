@@ -2,7 +2,7 @@
 //
 // GET/POST → previsão de hoje para a cidade do cadastro do personal (professionals.cidade / uf), via Open-Meteo
 // (gratuito, sem chave). Só a cidade vai para o serviço externo — nenhum dado de aluno. Resposta:
-// { cidade, uf, atual: { temp, sensacao, vento, texto, emoji }, hoje: { min, max, chuvaProb, uv }, dica }.
+// { cidade, uf, atual: { temp, sensacao, vento, texto, emoji }, hoje: { min, max, chuvaProb, chuvaMm, uv }, dica }.
 // Sem cidade cadastrada: { semCidade: true }.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${local.latitude}&longitude=${local.longitude}` +
       `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m` +
-      `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max&forecast_days=1&timezone=America%2FSao_Paulo`
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,uv_index_max&forecast_days=1&timezone=America%2FSao_Paulo`
     const f = await fetch(url)
     if (!f.ok) throw new Error(`forecast ${f.status}`)
     const d = await f.json()
@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       min: Math.round(d.daily.temperature_2m_min[0]),
       max: Math.round(d.daily.temperature_2m_max[0]),
       chuvaProb: Math.round(d.daily.precipitation_probability_max[0] ?? 0),
+      chuvaMm: Math.round((d.daily.precipitation_sum?.[0] ?? 0) * 10) / 10,
       uv: Math.round((d.daily.uv_index_max[0] ?? 0) * 10) / 10,
     }
     const c = condicao(d.current.weather_code)

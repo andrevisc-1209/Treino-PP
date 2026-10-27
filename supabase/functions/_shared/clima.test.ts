@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { condicao, dicaTreino, escolherLocal } from './clima.ts'
+import { condicao, dicaTreino, escolherLocal, rotuloChuvaMm } from './clima.ts'
 
 describe('escolherLocal', () => {
   const r = [
@@ -55,5 +55,15 @@ describe('condição e dica', () => {
       { temp: 24, sensacao: 25, vento: 40, chuvaProb: 0, uv: 5 },
     ].map(dicaTreino)
     for (const f of todas) expect(f).not.toMatch(/evite|\d{1,2}h\s*(e|às|-)\s*\d{1,2}h/i)
+  })
+})
+
+describe('rotuloChuvaMm', () => {
+  it('só aparece com chuva relevante, em português', () => {
+    expect(rotuloChuvaMm(undefined)).toBeNull()
+    expect(rotuloChuvaMm(0)).toBeNull()
+    expect(rotuloChuvaMm(0.4)).toBe('menos de 1 mm')
+    expect(rotuloChuvaMm(3.6)).toBe('cerca de 3,6 mm')
+    expect(rotuloChuvaMm(12.4)).toBe('cerca de 12 mm')
   })
 })

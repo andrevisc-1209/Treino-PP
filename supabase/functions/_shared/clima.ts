@@ -47,3 +47,11 @@ export function dicaTreino(p: Previsao): string {
   if (p.chuvaProb < 20 && p.temp >= 18 && p.temp <= 29 && p.uv < 6 && p.vento < 20) return 'Dia perfeito pra treino ao ar livre!'
   return 'Condições ok pra treinar hoje'
 }
+
+/** Volume de chuva previsto para o dia, em texto curto ("cerca de 8 mm"); null quando é irrelevante (< 0,1 mm) ou não veio. */
+export function rotuloChuvaMm(mm: number | null | undefined): string | null {
+  if (mm == null || !Number.isFinite(mm) || mm < 0.1) return null
+  if (mm < 1) return 'menos de 1 mm'
+  const n = mm >= 10 ? Math.round(mm) : Math.round(mm * 10) / 10
+  return `cerca de ${String(n).replace('.', ',')} mm`
+}

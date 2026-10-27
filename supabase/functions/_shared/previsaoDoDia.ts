@@ -15,7 +15,7 @@ export async function previsaoDoDia(cidade: string | null | undefined, uf: strin
     if (!local) return null
     const f = await fetchFn(
       `https://api.open-meteo.com/v1/forecast?latitude=${local.latitude}&longitude=${local.longitude}` +
-        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=1&timezone=America%2FSao_Paulo`,
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&forecast_days=1&timezone=America%2FSao_Paulo`,
     )
     if (!f.ok) return null
     const d = await f.json()
@@ -26,6 +26,7 @@ export async function previsaoDoDia(cidade: string | null | undefined, uf: strin
       min: Math.round(d.daily.temperature_2m_min[0]),
       max: Math.round(d.daily.temperature_2m_max[0]),
       chuvaProb: Math.round(d.daily.precipitation_probability_max[0] ?? 0),
+      chuvaMm: Math.round((d.daily.precipitation_sum?.[0] ?? 0) * 10) / 10,
     }
   } catch {
     return null
