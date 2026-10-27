@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, LifeBuoy, Lock, LogOut, ShieldCheck } from 'lucide-react'
+import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
 import { Acordeao } from '@/components/Acordeao'
 import { LocalizacaoCep, type Localizacao } from '@/components/LocalizacaoCep'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
@@ -34,6 +35,7 @@ type SecaoId = 'dados' | 'assinatura' | 'localizacao' | 'aulas' | 'pix' | 'notif
 const PADRAO = { cobrarFalta: true, cobrarCancel: false, duracao: '60', pixTipo: 'cpf' as PixTipo, pixChave: '', pixNome: '' }
 
 export function ConfiguracoesPage() {
+  const [reabrirAviso, setReabrirAviso] = useState(0)
   const { session } = useAuth()
   const { data: config, isLoading } = useProfessionalConfig()
   const salvarConfig = useSalvarProfessionalConfig()
@@ -349,6 +351,15 @@ export function ConfiguracoesPage() {
             </span>
             <ChevronRight size={20} className="text-slate-400" aria-hidden />
           </Link>
+
+          <button
+            type="button"
+            className="flex min-h-11 w-full items-center justify-center text-sm text-slate-600 underline"
+            onClick={() => setReabrirAviso((n) => n + 1)}
+          >
+            Preferências de cookies
+          </button>
+          <AvisoAnalytics reabrir={reabrirAviso} />
 
           <Button variant="ghost" className="w-full text-red-600" onClick={() => supabase.auth.signOut()}>
             <LogOut size={18} /> Sair

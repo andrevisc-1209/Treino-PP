@@ -22,6 +22,8 @@ import { ERROS } from '@/lib/mensagens'
 import { PasswordInput } from '@/components/PasswordInput'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
 import iconMark from '@/assets/brand/icon-mark.png'
+import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
+import { evento } from '@/features/analytics/analytics'
 
 const CAPTCHA_ATIVO = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
@@ -118,6 +120,11 @@ export function LoginPage() {
     const t = setTimeout(() => setEsperaReenvio((s) => s - 1), 1000)
     return () => clearTimeout(t)
   }, [esperaReenvio])
+
+  // funil: a pessoa abriu o formulário de cadastro (1 evento por abertura da tela)
+  useEffect(() => {
+    if (mode === 'signup') evento('cadastro_aberto')
+  }, [mode])
 
   if (session) return <Navigate to="/" replace />
 
@@ -266,6 +273,7 @@ export function LoginPage() {
       setMsg(mapearErroAuth(error))
       return
     }
+    evento('cadastro_enviado')
     // E-mail que já tem conta (ex.: criada antes via Google): com "Confirm email" ativo o Supabase não devolve erro, só um user
     // "fake" com identities: [] e sem sessão — de propósito, para não revelar quem já é cliente. Antes o app desfazia isso na tela
     // ("Este e-mail já está cadastrado"); agora mostra a MESMA tela de confirmação de um cadastro novo (que já orienta quem tem conta).
@@ -492,6 +500,7 @@ export function LoginPage() {
           </button>
         )}
       </form>
+      <AvisoAnalytics />
     </div>
   )
 }
