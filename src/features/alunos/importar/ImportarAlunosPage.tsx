@@ -120,7 +120,7 @@ export function ImportarAlunosPage() {
   const resumo = linhas ? resumoLeitura(linhas) : null
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-4 pb-32">
+    <div className="mx-auto max-w-2xl space-y-4 p-4 pb-44">
       <header className="flex items-center gap-2">
         <Link to="/alunos" aria-label="Voltar para os alunos" className="flex size-11 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100">
           <ArrowLeft size={22} />
@@ -214,7 +214,7 @@ export function ImportarAlunosPage() {
             })}
           </ul>
 
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="fixed inset-x-0 bottom-[calc(3.5rem+1px+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white p-3">
             <div className="mx-auto max-w-2xl">
               <Button className="w-full" onClick={confirmar} disabled={marcadas.size === 0 || importar.isPending}>
                 {importar.isPending ? 'Importando…' : `Importar ${marcadas.size} ${marcadas.size === 1 ? 'aluno' : 'alunos'}`}
