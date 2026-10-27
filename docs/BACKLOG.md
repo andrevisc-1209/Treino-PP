@@ -1032,3 +1032,10 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - **Limite conhecido:** como o aparelho informa os segundos, quem forja isso burla a regra, mas já estaria criando conta nova mesmo assim (custo: 30 dias, teto de 6 por indicador; o admin vê os sinais e pode revogar). O bloqueio forte contra conta existente continua no servidor (`created_at`).
 - ⚠️ **Rodar a migration no SQL Editor ANTES do merge**, e depois os dois testes. A cláusula 2.7 dos Termos já fala em "cria a conta com o código": a regra nova é mais estreita que "até 7 dias" e não muda o texto.
 - ⚠️ **Depois do deploy do app:** quem abriu um link ANTES deste deploy tem o código guardado no formato antigo e será ignorado (precisa abrir o link de novo).
+
+## 86. Marketing: pacote da semana 1
+
+- ✅ `docs/marketing/semana-1/CHECKLIST.md` (27 a 31/10/2026, dia a dia, com os marcos da semana), `reels.md` (3 roteiros cronometrados: "Aluno sumiu", "Esqueci de falar", "Agenda às 5h30", com falas, texto na tela e legendas) e `leads.csv` (planilha de acompanhamento).
+- 📌 **Antes de divulgar:** o primeiro pagamento real no Mercado Pago ainda não foi confirmado (ver `docs/mp-producao-checklist.md`); é o item 1 do checklist.
+- ⏳ Do dono: capturar duas telas com dados fictícios (fatura com mensagem pronta; evolução do aluno), gravar os Reels, falar com os 2 personais que testaram e montar o funil no PostHog.
+- ⏳ Depois da semana: me mandar os números e as objeções para ajustar a mensagem e o calendário da semana 2.
