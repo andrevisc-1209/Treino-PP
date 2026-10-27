@@ -24,8 +24,8 @@ export function useMinhasIndicacoes() {
 export function useAplicarIndicacaoGuardada(userId: string) {
   const qc = useQueryClient()
   const aplicar = useMutation({
-    mutationFn: async (codigo: string) => {
-      const { data, error } = await supabase.rpc('registrar_indicacao', { p_codigo: codigo })
+    mutationFn: async ({ codigo, segundosDesdeAbertura }: { codigo: string; segundosDesdeAbertura: number }) => {
+      const { data, error } = await supabase.rpc('registrar_indicacao', { p_codigo: codigo, p_segundos_desde_abertura: segundosDesdeAbertura })
       if (error) throw error
       return data as ResultadoRegistro
     },
@@ -38,7 +38,7 @@ export function useAplicarIndicacaoGuardada(userId: string) {
   })
   const { mutate } = aplicar
   useEffect(() => {
-    const codigo = lerCodigoGuardado()
-    if (codigo) mutate(codigo)
+    const guardado = lerCodigoGuardado()
+    if (guardado) mutate(guardado)
   }, [userId, mutate])
 }

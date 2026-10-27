@@ -7,7 +7,7 @@
 --   (d) ao cadastrar o 3º aluno (nome diferente) a indicação vira CONCEDIDA e A e B ganham ~30 dias de bonus_ate;
 --   (e) assinatura_ativa() fica verdadeira com o bonus (mesmo sem trial/assinatura vigentes);
 --   (f) com o teto em 0, o indicado ainda ganha, mas o indicador NÃO (indicador_ganhou = false, bonus de A não muda);
---   (g) conta com mais de 7 dias não consegue registrar código ('expirado');
+--   (g) conta que já existia antes do link ser aberto (criada há 10 dias) não registra ('nao_novo');
 --   (h) [migration 20261070] cada concessão cria o aviso no sino: 1 para o indicado e 1 para o indicador, o do indicador com ganhou=false quando o
 --       teto está cheio (f), sem aluno_id e sem dado pessoal no payload.
 -- Esperado: "(a) OK" … "(h) OK", sem "FALHA".
@@ -59,7 +59,7 @@ BEGIN
   -- (b) B logado registra
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_b, 'role', 'authenticated')::TEXT, TRUE);
   SET LOCAL ROLE authenticated;
-  v_r := treino.registrar_indicacao('ZZZZZZZZ') || '/' || treino.registrar_indicacao(v_cod_b) || '/' || treino.registrar_indicacao(lower(v_cod_a)) || '/' || treino.registrar_indicacao(v_cod_a);
+  v_r := treino.registrar_indicacao('ZZZZZZZZ', 60) || '/' || treino.registrar_indicacao(v_cod_b, 60) || '/' || treino.registrar_indicacao(lower(v_cod_a), 60) || '/' || treino.registrar_indicacao(v_cod_a, 60);
   RESET ROLE;
   v_log := array_append(v_log, CASE WHEN v_r = 'invalido/proprio/registrado/ja_registrado' THEN '(b) OK: ' || v_r ELSE '(b) FALHA: ' || v_r END);
 
@@ -117,9 +117,9 @@ BEGIN
   UPDATE treino.professionals SET created_at = now() - INTERVAL '10 days' WHERE id = v_b;
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_b, 'role', 'authenticated')::TEXT, TRUE);
   SET LOCAL ROLE authenticated;
-  v_r := treino.registrar_indicacao(v_cod_a);
+  v_r := treino.registrar_indicacao(v_cod_a, 60);
   RESET ROLE;
-  v_log := array_append(v_log, CASE WHEN v_r = 'expirado' THEN '(g) OK: conta com mais de 7 dias não registra' ELSE '(g) FALHA: ' || v_r END);
+  v_log := array_append(v_log, CASE WHEN v_r = 'nao_novo' THEN '(g) OK: conta criada há 10 dias (antes do link) não registra' ELSE '(g) FALHA: ' || v_r END);
 
   RAISE EXCEPTION 'RESULTADO: % | (nada foi gravado)', array_to_string(v_log, ' | ');
 END

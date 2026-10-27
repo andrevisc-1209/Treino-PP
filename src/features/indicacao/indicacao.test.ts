@@ -51,18 +51,37 @@ describe('link e mensagem', () => {
 })
 
 describe('guarda do código até entrar', () => {
-  it('guarda o ?ref= válido, lê e limpa', () => {
-    guardarCodigoDoLink('?ref=abcd2345&utm_source=indicacao')
-    expect(store[CHAVE_CODIGO_INDICACAO]).toBe('ABCD2345')
-    expect(lerCodigoGuardado()).toBe('ABCD2345')
+  it('guarda o ?ref= válido com o momento da abertura e lê os segundos desde então', () => {
+    guardarCodigoDoLink('?ref=abcd2345&utm_source=indicacao', false, 1_000_000)
+    expect(JSON.parse(store[CHAVE_CODIGO_INDICACAO])).toEqual({ c: 'ABCD2345', t: 1_000_000 })
+    expect(lerCodigoGuardado(1_000_000 + 90_500)).toEqual({ codigo: 'ABCD2345', segundosDesdeAbertura: 90 })
     limparCodigoGuardado()
     expect(lerCodigoGuardado()).toBeNull()
   })
+  it('quem já está logado (conta existente) não guarda nada', () => {
+    guardarCodigoDoLink('?ref=ABCD2345', true, 1_000_000)
+    expect(lerCodigoGuardado()).toBeNull()
+  })
+  it('abrir o link de novo renova o momento (vale o mais recente)', () => {
+    guardarCodigoDoLink('?ref=ABCD2345', false, 1_000)
+    guardarCodigoDoLink('?ref=ABCD2345', false, 5_000)
+    expect(JSON.parse(store[CHAVE_CODIGO_INDICACAO]).t).toBe(5_000)
+  })
   it('ignora código inválido ou ausente e não apaga o que já estava guardado', () => {
-    guardarCodigoDoLink('?ref=ABCD2345')
-    guardarCodigoDoLink('?ref=lixo')
-    guardarCodigoDoLink('')
-    expect(lerCodigoGuardado()).toBe('ABCD2345')
+    guardarCodigoDoLink('?ref=ABCD2345', false, 1_000)
+    guardarCodigoDoLink('?ref=lixo', false, 2_000)
+    guardarCodigoDoLink('', false, 3_000)
+    expect(JSON.parse(store[CHAVE_CODIGO_INDICACAO])).toEqual({ c: 'ABCD2345', t: 1_000 })
+  })
+  it('formato antigo (só o código) ou quebrado não vale', () => {
+    store[CHAVE_CODIGO_INDICACAO] = 'ABCD2345'
+    expect(lerCodigoGuardado()).toBeNull()
+    store[CHAVE_CODIGO_INDICACAO] = '{"c":"ABCD2345"}'
+    expect(lerCodigoGuardado()).toBeNull()
+  })
+  it('relógio do aparelho voltando atrás nunca dá segundos negativos', () => {
+    guardarCodigoDoLink('?ref=ABCD2345', false, 10_000)
+    expect(lerCodigoGuardado(5_000)?.segundosDesdeAbertura).toBe(0)
   })
 })
 
@@ -72,6 +91,7 @@ describe('textos', () => {
     expect(avisoDoRegistro('proprio')).toContain('seu próprio')
     expect(avisoDoRegistro('invalido')).toBeNull()
     expect(avisoDoRegistro('expirado')).toBeNull()
+    expect(avisoDoRegistro('nao_novo')).toContain('depois de abrir o link')
     expect(avisoDoRegistro('ja_registrado')).toBeNull()
   })
   it('situação de quem foi indicado', () => {
