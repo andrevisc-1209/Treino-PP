@@ -32,6 +32,8 @@ import { MfaDesafio } from './MfaDesafio'
 import { useMfa } from './mfa'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import { ConsentimentosSection } from './ConsentimentosSection'
+import { IndicacoesSection } from './IndicacoesSection'
+import { fimDoAcesso } from './indicacoes'
 import { RelatosSection } from './RelatosSection'
 import { ABAS_ADMIN, abaDaUrl, descreverTreinos, linkMapsCidade, rotuloCidade, type AbaAdmin, type MetricasPersonal } from './personais'
 import { HistoricoSection } from './HistoricoSection'
@@ -44,6 +46,7 @@ import {
   useAdminAlterarTrial,
   useAdminPersonais,
   useAdminRegioes,
+  useAdminBonus,
   useAdminPersonaisMetricas,
   useAdminRelatos,
   useAdminResetSenha,
@@ -120,11 +123,23 @@ function AdminHeader() {
   )
 }
 
+/** Fim do acesso do personal; com mês grátis (indicação) mostra a data do bônus e uma etiqueta. */
+function FimDoAcesso({ p, bonusAte }: { p: PersonalAdmin; bonusAte: string | undefined }) {
+  const { data, comBonus } = fimDoAcesso(p, bonusAte)
+  return (
+    <>
+      {formatarDataHoraBR(data)}
+      {comBonus && <span className="ml-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">mês grátis</span>}
+    </>
+  )
+}
+
 function AdminDashboard() {
   const resumo = useAdminResumo()
   const personais = useAdminPersonais()
   const regioes = useAdminRegioes()
   const metricas = useAdminPersonaisMetricas()
+  const bonus = useAdminBonus()
   const { inadimplentes } = useInadimplentes()
   const [params, setParams] = useSearchParams()
   const aba = abaDaUrl(params.get('aba'))
@@ -160,10 +175,10 @@ function AdminDashboard() {
     return {
       ativos: lista.filter((p) => p.status === 'trial' || p.status === 'ativa').length,
       emTrial: lista.filter((p) => p.status === 'trial').length,
-      trialExpirando3Dias: lista.filter((p) => p.status === 'trial' && p.trial_fim && new Date(p.trial_fim).getTime() <= emTresDias).length,
-      inadimplentes: lista.filter((p) => p.status === 'expirada').length,
+      trialExpirando3Dias: lista.filter((p) => p.status === 'trial' && p.trial_fim && new Date(p.trial_fim).getTime() <= emTresDias && !bonus.data?.has(p.id)).length,
+      inadimplentes: lista.filter((p) => p.status === 'expirada' && !bonus.data?.has(p.id)).length,
     }
-  }, [personais.data])
+  }, [personais.data, bonus.data])
 
   return (
     <div className="min-h-full bg-slate-50 pb-10">
@@ -286,7 +301,9 @@ function AdminDashboard() {
                     <td className="py-2.5 pr-3">
                       <StatusBadge status={p.status} />
                     </td>
-                    <td className="py-2.5 pr-3 text-slate-600">{formatarDataHoraBR(p.status === 'ativa' ? p.assinatura_fim : p.trial_fim)}</td>
+                    <td className="py-2.5 pr-3 text-slate-600">
+                      <FimDoAcesso p={p} bonusAte={bonus.data?.get(p.id)} />
+                    </td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.qtd_alunos}</td>
                     <td className="py-2.5 pr-3 text-xs text-slate-600">
                       <TreinosDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
@@ -336,7 +353,9 @@ function AdminDashboard() {
                   </div>
                   <div className="col-span-2">
                     <dt className="inline">Trial/plano até: </dt>
-                    <dd className="inline text-slate-700">{formatarDataHoraBR(p.status === 'ativa' ? p.assinatura_fim : p.trial_fim)}</dd>
+                    <dd className="inline text-slate-700">
+                      <FimDoAcesso p={p} bonusAte={bonus.data?.get(p.id)} />
+                    </dd>
                   </div>
                 </dl>
                 <div className="mt-3">
@@ -354,6 +373,8 @@ function AdminDashboard() {
         {aba === 'indicadores' && <IndicadoresSection />}
 
         {aba === 'financeiro' && <FinanceiroSection />}
+
+        {aba === 'indicacoes' && <IndicacoesSection />}
 
         {aba === 'suporte' && (
           <>

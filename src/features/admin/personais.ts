@@ -40,14 +40,16 @@ export const ROTULO_ACAO_ADMIN: Record<string, string> = {
   alterar_trial: 'Ajuste de trial',
   alterar_plano: 'Ajuste de plano',
   alterar_cpf: 'Correção de CPF',
+  revogar_indicacao: 'Indicação revogada',
 }
 
-export type AbaAdmin = 'geral' | 'indicadores' | 'personais' | 'financeiro' | 'suporte' | 'privacidade'
+export type AbaAdmin = 'geral' | 'indicadores' | 'personais' | 'financeiro' | 'indicacoes' | 'suporte' | 'privacidade'
 export const ABAS_ADMIN: { id: AbaAdmin; rotulo: string }[] = [
   { id: 'geral', rotulo: 'Visão geral' },
   { id: 'indicadores', rotulo: 'Indicadores' },
   { id: 'personais', rotulo: 'Personais' },
   { id: 'financeiro', rotulo: 'Financeiro' },
+  { id: 'indicacoes', rotulo: 'Indicações' },
   { id: 'suporte', rotulo: 'Suporte' },
   { id: 'privacidade', rotulo: 'Privacidade' },
 ]

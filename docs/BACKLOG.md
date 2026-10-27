@@ -994,3 +994,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - Limites conhecidos: se a pessoa abrir o e-mail de confirmação em **outro aparelho**, o código guardado se perde e a indicação não conta (o link da indicação precisa ser aberto no mesmo aparelho do cadastro). No painel admin, quem tem mês grátis aparece pela data de fim do trial/assinatura (não pelo bônus).
 - ⏳ Aviso ao indicador quando o mês é concedido (notificação/WhatsApp), painel de indicações no admin e a documentação para a landing ("Indique e ganhe").
 - Não testado ao vivo por mim (login com captcha): validar no celular com duas contas (a minha indicando uma nova).
+
+## 82. Admin: painel de indicações, mês grátis visível e revogação
+
+- ✅ **Mês grátis visível:** na lista de Personais (tabela e cartões) a data de fim do acesso passa a ser a do bônus quando ele é o que sustenta o acesso, com a etiqueta "mês grátis". Quem tem mês grátis vigente **deixa de aparecer como inadimplente** e não entra nos contadores "trial expirando" e "inadimplentes" da Visão geral.
+- ✅ **Aba "Indicações"**: totais (indicações, em andamento, concedidas, revogadas, meses grátis dados, com sinal de abuso), ranking de quem mais indica e as 50 mais recentes. **Sinais de abuso:** mesmo telefone nas duas contas, concedida em menos de 1 hora depois de criar a conta, 3+ concedidas em 24 horas por indicador. Só nomes de personais e números (nada de aluno, e-mail ou CPF).
+- ✅ **Revogar indicação** (botão com confirmação): tira 30 dias de bônus do indicado e do indicador (se ele ganhou), marca como "revogada" (continua contando no teto) e grava no histórico de ações (aparece como "Indicação revogada"). Base: Termos 2.7 (fraude/abuso).
+- ✅ Banco (migration `20261071000000_admin_indicacoes.sql`): `admin_bonus_personais()`, `admin_indicacoes()`, `admin_revogar_indicacao()` (todas exigem admin + MFA), status `revogada`. Teste: `supabase/tests/admin_indicacoes.sql` (a)–(e), que simula o token do MFA.
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge**, e depois o teste (esperado "(a) OK" … "(e) OK"). Não testado ao vivo por mim: /admin exige MFA.
