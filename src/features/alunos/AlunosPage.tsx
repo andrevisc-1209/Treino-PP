@@ -43,7 +43,7 @@ export function AlunosPage() {
   const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
   const { data: ultimasExecucoes } = useUltimaExecucaoPorAluno()
   const navigate = useNavigate()
-  const { exigir } = useExigirAssinatura()
+  const { exigir, somenteLeitura, abrirPlanos } = useExigirAssinatura()
   const qc = useQueryClient()
   const [busca, setBusca] = useState('')
   const [menuAberto, setMenuAberto] = useState<Aluno | null>(null)
@@ -167,6 +167,11 @@ export function AlunosPage() {
       {(aba === 'ativos' ? isLoading : aba === 'arquivados' ? carregandoArquivados : carregandoLixeira) && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {alunos?.length === 0 && aba === 'ativos' && <p className="text-slate-500">Nenhum aluno ainda. Toque no + para cadastrar o primeiro.</p>}
+      {aba === 'ativos' && (
+        <Link to="/alunos/importar" onClick={(e) => { if (somenteLeitura) { e.preventDefault(); abrirPlanos() } }} className="mb-2 block min-h-11 py-2 text-sm font-medium text-brand-hover underline">
+          Importar alunos de uma planilha
+        </Link>
+      )}
       {alunos?.length === 0 && aba === 'arquivados' && <p className="text-slate-500">Nenhum aluno arquivado.</p>}
       {aba === 'lixeira' && (
         <p className="mb-2 text-sm text-slate-600">
