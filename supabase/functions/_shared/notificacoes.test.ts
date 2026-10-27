@@ -72,6 +72,8 @@ describe('briefing diário', () => {
     expect(m).not.toContain('chuva')
     expect(m).toContain('• Ana — 07:00\n')
     expect(montarBriefing({ nome: 'A', aulas: base, clima: { ...chuva, chuvaProb: 40 } })).toContain('40% de chance de chuva')
+    expect(montarBriefing({ nome: 'A', aulas: base, clima: { ...chuva, chuvaMm: 8.3 } })).toContain('88% de chance de chuva hoje, cerca de 8,3 mm (23–27°C)')
+    expect(montarBriefing({ nome: 'A', aulas: base, clima: chuva })).toContain('88% de chance de chuva hoje (23–27°C)')
   })
 })
 

@@ -926,3 +926,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Proteções: captcha (Turnstile, conferido pelo Auth), limite de **3 pedidos/CPF/hora** (ninguém enche a caixa de e-mail de outra pessoa sabendo o CPF) e 30/IP/hora, falha fechada; tempo mínimo de resposta de 1,5 s para não revelar quem tem conta; CPF e e-mail nunca vão para log. Regras puras em `_shared/recuperarSenha.ts` com testes.
 - ⚠️ Dono: **deploy da função** (sem migration): `npx supabase functions deploy recuperar-senha-cpf --project-ref avgrnvpvjhymsrnapfgu` (o `--no-verify-jwt` vem do `config.toml`). Testar no celular: Esqueci minha senha → digitar o CPF → o e-mail de redefinição chega no e-mail do cadastro.
 - Não testado ao vivo por mim: o envio real do e-mail (exige o captcha do navegador e conta de verdade).
+
+## 74. Clima: volume de chuva esperado para o dia
+
+- ✅ O card de clima da tela inicial passa a mostrar, junto da probabilidade, **quanto deve chover no dia** ("chuva 96% · ~8 mm"; garoa fraca vira "< 1 mm"; abaixo de 0,1 mm não aparece). O dado vem do Open-Meteo (`precipitation_sum` do dia) na função `clima`; respostas antigas em cache (sem o campo) simplesmente não mostram o volume.
+- ✅ O aviso diário do WhatsApp com a agenda também cita o volume quando o aviso de chuva (≥ 40%) aparece: "88% de chance de chuva hoje, cerca de 8,3 mm (23–27°C)".
+- ⚠️ Dono: **deploy das funções `clima` e `daily-briefing`** (sem migration). Não testado ao vivo por mim: o card exige login.
