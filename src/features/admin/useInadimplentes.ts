@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useAdminPersonais, type PersonalAdmin } from './api'
+import { useAdminBonus, useAdminPersonais, type PersonalAdmin } from './api'
 
 export type Inadimplente = {
   personal: PersonalAdmin
@@ -22,11 +22,13 @@ function corPorDiasVencido(dias: number): Inadimplente['cor'] {
  */
 export function useInadimplentes() {
   const personais = useAdminPersonais()
+  const bonus = useAdminBonus()
 
   const inadimplentes = useMemo<Inadimplente[]>(() => {
     const agora = Date.now()
     return (personais.data ?? [])
-      .filter((p) => p.status === 'expirada')
+      // quem tem mês grátis vigente (indicação) ainda tem acesso: não é inadimplente
+      .filter((p) => p.status === 'expirada' && !bonus.data?.has(p.id))
       .map((p) => {
         // Quem chegou a assinar um plano pago expira pela data do plano;
         // quem nunca assinou, pelo fim do trial.
@@ -35,7 +37,7 @@ export function useInadimplentes() {
         return { personal: p, dataExpiracao: dataExpiracao ?? '', diasVencido, cor: corPorDiasVencido(diasVencido) }
       })
       .sort((a, b) => b.diasVencido - a.diasVencido)
-  }, [personais.data])
+  }, [personais.data, bonus.data])
 
   return { inadimplentes, isLoading: personais.isLoading, error: personais.error }
 }
