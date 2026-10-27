@@ -931,3 +931,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 
 - ✅ Os três templates do Supabase (`confirmacao-cadastro`, `convite`, `redefinir-senha`) e o e-mail de consentimento de saúde passaram a ter cabeçalho **branco** com a logo colorida (antes ficava sobre azul-escuro e a logo, transparente, perdia contraste) e filete verde.
 - ⚠️ Dono: o título "Confirm your email address" é o **assunto**, que fica num campo do painel (não no HTML). Em Supabase → Authentication → Email Templates, **colar o HTML novo e preencher "Subject"** em português em cada template (assuntos no topo de cada arquivo). Rever também, se ativos, os templates "Magic link", "Change email address" e "Reauthentication": ficam em inglês por padrão.
+
+## 74. Clima: volume de chuva esperado para o dia
+
+- ✅ O card de clima da tela inicial passa a mostrar, junto da probabilidade, **quanto deve chover no dia** ("chuva 96% · ~8 mm"; garoa fraca vira "< 1 mm"; abaixo de 0,1 mm não aparece). O dado vem do Open-Meteo (`precipitation_sum` do dia) na função `clima`; respostas antigas em cache (sem o campo) simplesmente não mostram o volume.
+- ✅ O aviso diário do WhatsApp com a agenda também cita o volume quando o aviso de chuva (≥ 40%) aparece: "88% de chance de chuva hoje, cerca de 8,3 mm (23–27°C)".
+- ⚠️ Dono: **deploy das funções `clima` e `daily-briefing`** (sem migration). Não testado ao vivo por mim: o card exige login.

@@ -8,7 +8,7 @@ export type Clima =
       cidade: string
       uf: string
       atual: { temp: number; sensacao: number; vento: number; texto: string; emoji: string }
-      hoje: { min: number; max: number; chuvaProb: number; uv: number }
+      hoje: { min: number; max: number; chuvaProb: number; chuvaMm?: number; uv: number }
       dica: string
     }
 

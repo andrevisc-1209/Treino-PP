@@ -3,6 +3,7 @@
 // prontidão/bem-estar) — só nomes, horários, locais, valores e contagens.
 
 import { numeroWhatsApp } from './whatsapp.ts'
+import { rotuloChuvaMm } from './clima.ts'
 
 export const TIPOS_NOTIFICACAO = ['briefing_diario', 'pagamento_plano', 'plano_expirando', 'resumo_semanal', 'aluno_inativo', 'plano_vencido', 'treino_concluido', 'relato_novo'] as const
 export type TipoNotificacao = (typeof TIPOS_NOTIFICACAO)[number]
@@ -82,7 +83,7 @@ export function segredoCronValido(recebido: string | null | undefined, esperado:
 
 // ---------- 1. briefing diário ----------
 export type AulaDoDia = { horario: string; aluno: string; local: string | null }
-export type ClimaDoDia = { emoji: string; texto: string; min: number; max: number; chuvaProb: number }
+export type ClimaDoDia = { emoji: string; texto: string; min: number; max: number; chuvaProb: number; chuvaMm?: number }
 
 const LIMITE_AVISO_CHUVA = 40
 
@@ -100,7 +101,8 @@ export function montarBriefing(args: { nome: string | null; aulas: AulaDoDia[]; 
     partes.push(`Você tem ${aulas.length} treinos hoje:`, ...aulas.map((a) => `• ${primeiroDoAluno(a)} — ${a.horario}${a.local?.trim() ? ` @ ${a.local.trim()}` : ''}`))
   }
   if (args.clima && args.clima.chuvaProb >= LIMITE_AVISO_CHUVA) {
-    partes.push('', `⚠️ ${args.clima.chuvaProb}% de chance de chuva hoje (${args.clima.min}–${args.clima.max}°C) — vale avisar quem treina ao ar livre.`)
+    const mm = rotuloChuvaMm(args.clima.chuvaMm)
+    partes.push('', `⚠️ ${args.clima.chuvaProb}% de chance de chuva hoje${mm ? `, ${mm}` : ''} (${args.clima.min}–${args.clima.max}°C) — vale avisar quem treina ao ar livre.`)
   }
   partes.push('', 'Boa sessão! 💪')
   return partes.join('\n')
