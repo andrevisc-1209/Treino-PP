@@ -927,6 +927,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ⚠️ Dono: **deploy da função** (sem migration): `npx supabase functions deploy recuperar-senha-cpf --project-ref avgrnvpvjhymsrnapfgu` (o `--no-verify-jwt` vem do `config.toml`). Testar no celular: Esqueci minha senha → digitar o CPF → o e-mail de redefinição chega no e-mail do cadastro.
 - Não testado ao vivo por mim: o envio real do e-mail (exige o captcha do navegador e conta de verdade).
 
+## 73. E-mails automáticos: título em português e logo em fundo branco
+
+- ✅ Os três templates do Supabase (`confirmacao-cadastro`, `convite`, `redefinir-senha`) e o e-mail de consentimento de saúde passaram a ter cabeçalho **branco** com a logo colorida (antes ficava sobre azul-escuro e a logo, transparente, perdia contraste) e filete verde.
+- ⚠️ Dono: o título "Confirm your email address" é o **assunto**, que fica num campo do painel (não no HTML). Em Supabase → Authentication → Email Templates, **colar o HTML novo e preencher "Subject"** em português em cada template (assuntos no topo de cada arquivo). Rever também, se ativos, os templates "Magic link", "Change email address" e "Reauthentication": ficam em inglês por padrão.
+
 ## 74. Clima: volume de chuva esperado para o dia
 
 - ✅ O card de clima da tela inicial passa a mostrar, junto da probabilidade, **quanto deve chover no dia** ("chuva 96% · ~8 mm"; garoa fraca vira "< 1 mm"; abaixo de 0,1 mm não aparece). O dado vem do Open-Meteo (`precipitation_sum` do dia) na função `clima`; respostas antigas em cache (sem o campo) simplesmente não mostram o volume.
