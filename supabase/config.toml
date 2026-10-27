@@ -22,6 +22,10 @@ verify_jwt = false
 [functions.verificar-cadastro]
 verify_jwt = false
 
+# Recuperar senha pelo CPF: pública (quem esqueceu a senha não tem sessão). Captcha, limites e resposta uniforme dentro da função.
+[functions.recuperar-senha-cpf]
+verify_jwt = false
+
 # Chamadas pelo pg_cron (sem JWT do Supabase); cada uma confere o segredo CRON_SECRET no header x-cron-secret.
 [functions.daily-briefing]
 verify_jwt = false
