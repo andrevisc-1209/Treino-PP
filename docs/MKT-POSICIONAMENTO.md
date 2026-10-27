@@ -1,12 +1,12 @@
 # Marketing · posicionamento e plano inicial
 
-Documento de trabalho (v1, 26/10/2026). Base para landing, Instagram, WhatsApp e anúncios. Tudo que é **número de funil** abaixo é
+Documento de trabalho (v2, 26/10/2026; v2 incorpora as respostas do dono). Base para landing, Instagram, WhatsApp e anúncios. Tudo que é **número de funil** abaixo é
 **hipótese** para validar com o PostHog (eventos `cta_click` → `cadastro_aberto` → `cadastro_enviado` → `perfil_concluido` →
 `aluno_cadastrado`), não dado medido. As frases comparativas e de LGPD ainda precisam de revisão do jurídico antes de ir ao ar.
 
 ## 1. Meta e conta honesta
 
-- **Meta:** pelo menos **100 personais pagantes**. Prazo: **a definir** (os cenários abaixo valem para qualquer prazo).
+- **Meta:** pelo menos **100 personais pagantes em 3 meses** (até ~26/01/2027). **Ponto de partida:** 2 personais em teste que ainda não usam no dia a dia; na prática, base zero. **Equipe:** só o dono.
 - **Receita da meta:** o plano é R$ 15/mês (trimestral R$ 39 = R$ 13/mês; semestral R$ 60 = R$ 10/mês). Com mistura de planos,
   100 pagantes ≈ **R$ 1.300 a R$ 1.500 de receita mensal**.
 - **Verba:** R$ 300/mês, só Instagram.
@@ -25,6 +25,22 @@ Ou seja, **~670 cadastros** (15% de cadastro para pagante).
 pagantes por mês** (custo por pagante de R$ 150–300, contra uma receita de R$ 15/mês por pessoa). Conclusão: os R$ 300 servem para
 **testar e impulsionar o conteúdo que já funcionou de graça**, não para comprar a base. Os 100 pagantes vêm de: conteúdo orgânico,
 **prospecção direta no WhatsApp**, **indicação** e parcerias (seção 6).
+
+### O que 3 meses e uma pessoa só significam
+
+- Com 15 dias de teste, o cadastro precisa acontecer até ~dia 75 para virar pagante dentro dos 90. Isso pede **~670 cadastros em ~75 dias (~9 por dia)**.
+- Capacidade realista de uma pessoa (hipótese): 20 mensagens por dia útil no WhatsApp ≈ 1.000 contatos em 3 meses; com ~30% de resposta e ~25% de
+  cadastro entre quem responde, dá **~75 cadastros**. O Instagram e a indicação precisam trazer o resto.
+- **Leitura honesta:** 100 pagantes em 3 meses, sozinho e partindo do zero, é uma meta **esticada**. Proponho tratá-la assim:
+
+| Cenário | Pagantes em 90 dias | O que precisa acontecer |
+|---|---|---|
+| Piso | 25 | Prospecção constante + Reels toda semana. |
+| Provável | 50 | O de cima + indicação funcionando + 1 Reels que "pegue". |
+| Esticado (sua meta) | 100 | O de cima + parceria com influenciador/grupo que traga dezenas de cadastros de uma vez. |
+
+- **Marcos de cadastros acumulados (para a meta de 100):** ~100 em 30 dias, ~350 em 60, ~670 em 75. **Se no dia 30 estiver abaixo de 60,
+  o cenário provável passa a ser o 50** e a gente ajusta o plano, sem drama.
 
 ## 2. Para quem
 
@@ -83,8 +99,11 @@ Você citou três motivos de troca, e eles viram os três pilares da mensagem:
    pagante mais rápido. *Cada resposta e cada cadastro tem que ser anotado (planilha simples)*.
 2. **Instagram orgânico (principal canal de marca).** 3–4 Reels por semana, mostrando o app em uso real (agenda, cobrança, treino,
    evolução), com dados fictícios. Meta de partida: **2 conteúdos de "dor" para 1 de "produto"**.
-3. **Indicação.** Personal indica personal. Ideia a decidir com você: **1 mês grátis** para quem indica e para quem entra. Exige
-   um cupom/código e uma PR minha; só vale a pena depois dos primeiros 20–30 pagantes.
+3. **Indicação (decidido).** Personal indica personal: **1 mês grátis para quem indicou e para quem entrou**, liberado **quando o indicado
+   se cadastra e cadastra mais de 2 alunos** (3 ou mais; é o sinal de uso de verdade, e evita ganhar mês por cadastro vazio). Exige um código de
+   indicação no cadastro e a regra no banco: é uma PR minha (migration), a fazer **já na semana 3**, porque a indicação vale mais no começo.
+   Pontos a decidir antes: teto de meses grátis por indicador (sugestão: 6) e o que acontece se o indicado nunca pagar (sugestão: o mês grátis
+   é só do indicado e do indicador, não vira dinheiro).
 4. **Parcerias.** Influenciadores fitness pequenos (2–20 mil seguidores) trocando conta grátis por um Reels honesto; grupos e
    comunidades de personais (com regra do grupo respeitada, sem spam).
 5. **Anúncios (R$ 300/mês).** Só impulsionar o Reels que já bateu a mediana do perfil, com público de personal trainers da cidade. Sem
@@ -106,11 +125,17 @@ Você citou três motivos de troca, e eles viram os três pilares da mensagem:
 | 3 | Atender cada cadastro: perguntar se travou e ajudar a cadastrar o primeiro aluno; registrar as objeções reais. |
 | 4 | Ler os números; impulsionar o melhor Reels com R$ 300; ajustar a mensagem pelas objeções que apareceram. |
 
-## 9. O que depende de você
+## 9. Respostas do dono e o que ainda falta
 
-1. **Prazo da meta** (100 pagantes em quantos meses?).
-2. **Quantos personais já usam hoje** e de onde vieram (muda a estratégia da semana 1).
-3. **Prints com dados fictícios** da ficha do aluno e do histórico, para os Reels.
-4. **Decidir a indicação** (1 mês grátis para os dois lados?).
-5. **Jurídico:** frases comparativas e a seção 3 da Política.
-6. **Rosto e voz:** os Reels funcionam muito melhor com você (ou um personal real) falando. Quem vai gravar?
+Respondido: prazo (3 meses), ponto de partida (2 testes parados), prints (3, em `docs/marketing/prints/`, dados fictícios), indicação (regra acima),
+gravação (só o dono), jurídico (ok).
+
+Ainda falta:
+1. **Teto da indicação** (sugestão: 6 meses grátis por indicador).
+2. **Reativar os 2 testes:** falar com os dois personais esta semana. Perguntar o que os impediu de usar; é a melhor pesquisa que existe e, se
+   usarem, viram o primeiro depoimento (com autorização por escrito).
+3. **Mais capturas de tela com dados fictícios**, para os Reels: agenda do dia, fatura/cobrança com a mensagem pronta, briefing no WhatsApp,
+   evolução do aluno. As três atuais cobrem a lista de alunos e o cadastro.
+4. **Link da bio:** `https://treino.personalperto.com.br/landing.html?utm_source=instagram&utm_medium=bio` (sem barra no fim, como está no ar).
+
+Próximos documentos (já escritos): `docs/MKT-CALENDARIO-30-DIAS.md` e `docs/MKT-WHATSAPP-PROSPECCAO.md`.
