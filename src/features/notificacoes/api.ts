@@ -4,13 +4,16 @@ import { supabase } from '@/lib/supabase'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { MODALIDADES_CONFIG, ehModalidade, type ModalidadeTipo } from '@/types/modalidades'
 import type { PayloadCiclo } from './ciclo'
+import { textoAvisoIndicacao, type PayloadIndicacao } from '@/features/indicacao/indicacao'
 
 export type Notificacao = {
   id: string
-  aluno_id: string
-  tipo: 'treino_concluido' | 'ciclo_encerrado'
+  /** null só em avisos que não são de aluno (indicacao_concedida) */
+  aluno_id: string | null
+  tipo: 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida'
   lida: boolean
-  payload: { execucao_id?: string; plano_nome?: string; modalidade?: ModalidadeTipo; tem_notas?: boolean } & PayloadCiclo
+  payload: { execucao_id?: string; plano_nome?: string; modalidade?: ModalidadeTipo; tem_notas?: boolean } & PayloadCiclo &
+    PayloadIndicacao
   criada_em: string
   aluno: { name: string } | null
 }
@@ -103,8 +106,14 @@ export function useNotificacoesRealtime(professionalId: string | undefined) {
           qc.invalidateQueries({ queryKey: ['notificacoes-nao-lidas'] })
           qc.invalidateQueries({ queryKey: ['atividade-recente'] })
           qc.invalidateQueries({ queryKey: ['ultima-execucao-por-aluno'] })
-          const nova = evento.new as { aluno_id: string; tipo?: Notificacao['tipo']; payload?: Notificacao['payload'] }
-          const { data } = await supabase.from('alunos').select('name').eq('id', nova.aluno_id).maybeSingle()
+          const nova = evento.new as { aluno_id: string | null; tipo?: Notificacao['tipo']; payload?: Notificacao['payload'] }
+          if (nova.tipo === 'indicacao_concedida') {
+            mostrarInfoGlobal(textoAvisoIndicacao(nova.payload).titulo)
+            qc.invalidateQueries({ queryKey: ['indicacoes'] })
+            qc.invalidateQueries({ queryKey: ['assinatura'] })
+            return
+          }
+          const { data } = await supabase.from('alunos').select('name').eq('id', nova.aluno_id!).maybeSingle()
           if (nova.tipo === 'ciclo_encerrado') {
             mostrarInfoGlobal(`Ciclo encerrado — ${data?.name ?? 'aluno'}`)
             return

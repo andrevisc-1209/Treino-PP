@@ -9,6 +9,7 @@ import {
   linkWhatsappIndicacao,
   mensagemDeIndicacao,
   normalizarCodigo,
+  textoAvisoIndicacao,
   textoSituacaoIndicado,
 } from './indicacao'
 
@@ -78,4 +79,17 @@ describe('textos', () => {
     expect(textoSituacaoIndicado({ fui_indicado: true, minha_situacao: 'pendente' })).toContain('cadastre 3 alunos')
     expect(textoSituacaoIndicado({ fui_indicado: true, minha_situacao: 'concedida' })).toContain('já ganhou')
   })
+})
+
+describe('textoAvisoIndicacao', () => {
+  it('indicado e indicador que ganhou: parabéns, sem nome de ninguém', () => {
+    expect(textoAvisoIndicacao({ papel: 'indicado', ganhou: true }).titulo).toBe('Você ganhou 1 mês grátis')
+    expect(textoAvisoIndicacao({ papel: 'indicador', ganhou: true }).texto).toContain('Obrigado por indicar')
+  })
+  it('indicador no limite: explica o teto, sem prometer o mês', () => {
+    const r = textoAvisoIndicacao({ papel: 'indicador', ganhou: false })
+    expect(r.titulo).toBe('Indicação concluída')
+    expect(r.texto).toContain('limite de 6 meses')
+  })
+  it('payload ausente cai no texto do indicador que ganhou', () => expect(textoAvisoIndicacao(undefined).titulo).toBe('Você ganhou 1 mês grátis'))
 })
