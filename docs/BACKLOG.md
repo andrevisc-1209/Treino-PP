@@ -926,3 +926,8 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Proteções: captcha (Turnstile, conferido pelo Auth), limite de **3 pedidos/CPF/hora** (ninguém enche a caixa de e-mail de outra pessoa sabendo o CPF) e 30/IP/hora, falha fechada; tempo mínimo de resposta de 1,5 s para não revelar quem tem conta; CPF e e-mail nunca vão para log. Regras puras em `_shared/recuperarSenha.ts` com testes.
 - ⚠️ Dono: **deploy da função** (sem migration): `npx supabase functions deploy recuperar-senha-cpf --project-ref avgrnvpvjhymsrnapfgu` (o `--no-verify-jwt` vem do `config.toml`). Testar no celular: Esqueci minha senha → digitar o CPF → o e-mail de redefinição chega no e-mail do cadastro.
 - Não testado ao vivo por mim: o envio real do e-mail (exige o captcha do navegador e conta de verdade).
+
+## 73. E-mails automáticos: título em português e logo em fundo branco
+
+- ✅ Os três templates do Supabase (`confirmacao-cadastro`, `convite`, `redefinir-senha`) e o e-mail de consentimento de saúde passaram a ter cabeçalho **branco** com a logo colorida (antes ficava sobre azul-escuro e a logo, transparente, perdia contraste) e filete verde.
+- ⚠️ Dono: o título "Confirm your email address" é o **assunto**, que fica num campo do painel (não no HTML). Em Supabase → Authentication → Email Templates, **colar o HTML novo e preencher "Subject"** em português em cada template (assuntos no topo de cada arquivo). Rever também, se ativos, os templates "Magic link", "Change email address" e "Reauthentication": ficam em inglês por padrão.
