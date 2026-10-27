@@ -11,6 +11,8 @@ export type Assinatura = {
   trialFim: Date | null
   plano: Plano | null
   assinaturaFim: Date | null
+  /** fim do mês grátis ganho por indicação (acréscimo depois do trial/assinatura); null = não tem */
+  bonusAte: Date | null
   estaAtivo: boolean
 }
 
@@ -19,6 +21,7 @@ export type LinhaAssinatura = {
   plano: Plano | null
   trial_fim: string
   assinatura_fim: string | null
+  bonus_ate?: string | null
 }
 
 /** O que a query guarda: a linha da assinatura + o veredito do SERVIDOR (null = a função não respondeu). */
@@ -36,13 +39,15 @@ function diasRestantes(ate: string, agora: number): number {
 export function calcularAssinatura({ linha, ativoNoServidor }: DadosAssinatura, agora: number = Date.now()): Assinatura {
   const trialValido = linha.status === 'trial' && diasRestantes(linha.trial_fim, agora) > 0
   const assinaturaValida = linha.status === 'ativa' && (!linha.assinatura_fim || diasRestantes(linha.assinatura_fim, agora) > 0)
+  const bonusValido = !!linha.bonus_ate && diasRestantes(linha.bonus_ate, agora) > 0
   return {
     status: linha.status,
     diasRestantesTrial: linha.status === 'trial' ? diasRestantes(linha.trial_fim, agora) : null,
     trialFim: linha.trial_fim ? new Date(linha.trial_fim) : null,
     plano: linha.plano,
     assinaturaFim: linha.assinatura_fim ? new Date(linha.assinatura_fim) : null,
-    estaAtivo: ativoNoServidor ?? (trialValido || assinaturaValida),
+    bonusAte: linha.bonus_ate ? new Date(linha.bonus_ate) : null,
+    estaAtivo: ativoNoServidor ?? (trialValido || assinaturaValida || bonusValido),
   }
 }
 
@@ -51,7 +56,7 @@ export function useAssinatura() {
     queryKey: ['assinatura'],
     queryFn: async (): Promise<DadosAssinatura> => {
       const [{ data, error }, { data: ativo, error: erroAtivo }] = await Promise.all([
-        supabase.from('assinaturas').select('status, plano, trial_fim, assinatura_fim').single(),
+        supabase.from('assinaturas').select('status, plano, trial_fim, assinatura_fim, bonus_ate').single(),
         supabase.rpc('assinatura_ativa'),
       ])
       if (error) throw error

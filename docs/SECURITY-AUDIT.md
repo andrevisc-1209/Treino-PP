@@ -143,3 +143,12 @@ Hospedada no Railway (domínio público `*.up.railway.app`, não registrado aqui
 - **O que se abre:** quem digitar valores pode **testar se um CPF ou e-mail é cliente** (enumeração). Isto contraria a decisão anterior de respostas genéricas; fica registrado como risco aceito, no mesmo espírito da mensagem "CPF já cadastrado" do perfil.
 - **Mitigações:** a resposta é só `{ existe: boolean }` (nunca o e-mail do CPF nem o CPF do e-mail); só dispara com CPF de dígitos verificadores válidos ou e-mail bem formado; **limite de 40 consultas por IP por hora** (falha fechada: 503 e o app segue sem o aviso); valor nunca vai para log; a função ignora a própria conta de quem está logado. O banco continua sendo a barreira final (índice único de CPF e e-mail único no Auth).
 - **Não mudou:** o login (CPF ou e-mail) segue com resposta genérica e atraso; a tela "Confirme seu e-mail" de e-mail repetido segue igual para quem chegar a enviar.
+
+
+## Programa de indicação (migration 20261069)
+
+- **Superfície nova:** `treino.indicacoes` (RLS ligada, sem policy e sem grant para o cliente), RPCs `registrar_indicacao`, `minhas_indicacoes` (SECURITY DEFINER, `search_path` vazio, só `authenticated`) e o trigger `tg_conceder_indicacao`. O cliente **não escreve** em `assinaturas`: o bônus (`bonus_ate`) só muda pelas funções do banco.
+- **Código:** 8 símbolos de um alfabeto de 32 (≈10¹², sem I/O/0/1); o código **não é segredo**, só identifica quem indicou. `registrar_indicacao` responde só `invalido/proprio/ja_registrado/expirado/registrado` e **nunca revela o dono do código**; quem indica vê apenas números (nunca nome, e-mail ou CPF do indicado).
+- **Regras no servidor:** indicado = conta criada há no máximo 7 dias, uma indicação por conta (`UNIQUE indicado_id`), nunca o próprio código; concessão só com 3+ alunos de **nomes diferentes** fora da lixeira; teto de 6 meses por indicador (`treino.indicacao_teto()`); o indicado sempre ganha.
+- **Risco aceito (fraude):** dá para criar uma segunda conta e cadastrar 3 alunos falsos para ganhar o mês. Custo para a plataforma: 30 dias de acesso, limitado pelo teto de 6 por indicador e pela regra de 7 dias. Os Termos (2.7) permitem recusar/revogar por fraude. **Monitorar** `treino.indicacoes` (concedidas por indicador) e, se aparecer abuso, endurecer (ex.: exigir 1 treino registrado, ou CPF/telefone verificados).
+- **Não muda:** o webhook do Mercado Pago, `status`, `plano` e `assinatura_fim`. O mês grátis é um acréscimo depois do acesso atual.

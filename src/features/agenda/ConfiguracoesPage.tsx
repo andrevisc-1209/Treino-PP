@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, LifeBuoy, Lock, LogOut, ShieldCheck } from 'lucide-react'
+import { IndicacaoCard } from '@/features/indicacao/IndicacaoCard'
 import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
 import { Acordeao } from '@/components/Acordeao'
 import { LocalizacaoCep, type Localizacao } from '@/components/LocalizacaoCep'
@@ -343,6 +344,8 @@ export function ConfiguracoesPage() {
             </span>
             <ChevronRight size={20} className="text-slate-400" aria-hidden />
           </Link>
+
+          <IndicacaoCard />
 
           <Link to="/ajuda" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
             <span className="flex items-center gap-2">
