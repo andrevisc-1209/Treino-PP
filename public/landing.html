@@ -372,6 +372,7 @@
     </div>
 
     <p class="conta-texto mt-6 text-center text-sm text-mist/70">Sem taxa por aluno · Sem comissão sobre cobrança · 100% do valor é seu</p>
+    <p class="conta-texto mt-3 text-center text-sm text-mist/70">Indique um colega: quando ele cadastrar 3 alunos, <strong class="text-white">vocês dois ganham 1 mês grátis</strong>. <a href="#faq-indicacao" class="text-white underline underline-offset-2">Como funciona</a></p>
   </div>
 </section>
 
@@ -499,6 +500,13 @@
           <svg class="size-5 shrink-0 text-mist transition-transform duration-300 group-open:rotate-180" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </summary>
         <p class="pb-5 leading-relaxed text-mist">Dados de saúde só são registrados com o consentimento do aluno, pelo link do app ou registrado por você. Cada personal vê apenas os próprios alunos. Os detalhes estão na <a href="/privacidade" class="underline underline-offset-2 hover:text-white">Política de Privacidade</a>.</p>
+      </details>
+      <details id="faq-indicacao" class="group rev border-b border-white/10">
+        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 text-left text-lg font-semibold">
+          <span>Tem programa de indicação?</span>
+          <svg class="size-5 shrink-0 text-mist transition-transform duration-300 group-open:rotate-180" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <p class="pb-5 leading-relaxed text-mist">Tem. Cada personal tem um link de indicação em Configurações. Quando o colega que você indicou cria a conta pelo link e cadastra 3 alunos, vocês dois ganham 1 mês grátis (quem indica pode ganhar até 6 meses). As regras completas estão nos <a href="/termos" class="text-white underline underline-offset-2">Termos de Uso</a>.</p>
       </details>
     </div>
   </div>
@@ -791,6 +799,14 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
   else iniciar();
 })();
+</script>
+<script>
+// O link "Como funciona" (indicação) abre a pergunta do FAQ, que começa fechada.
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a[href="#faq-indicacao"]');
+  var d = document.getElementById('faq-indicacao');
+  if (a && d) d.open = true;
+});
 </script>
 </body>
 </html>

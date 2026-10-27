@@ -1009,3 +1009,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Revogar indicação** (botão com confirmação): tira 30 dias de bônus do indicado e do indicador (se ele ganhou), marca como "revogada" (continua contando no teto) e grava no histórico de ações (aparece como "Indicação revogada"). Base: Termos 2.7 (fraude/abuso).
 - ✅ Banco (migration `20261071000000_admin_indicacoes.sql`): `admin_bonus_personais()`, `admin_indicacoes()`, `admin_revogar_indicacao()` (todas exigem admin + MFA), status `revogada`. Teste: `supabase/tests/admin_indicacoes.sql` (a)–(e), que simula o token do MFA.
 - ⚠️ **Rodar a migration no SQL Editor ANTES do merge**, e depois o teste (esperado "(a) OK" … "(e) OK"). Não testado ao vivo por mim: /admin exige MFA.
+
+## 83. Landing: "Indique e ganhe"
+
+- ✅ Sob os preços, uma linha discreta: "Indique um colega: quando ele cadastrar 3 alunos, vocês dois ganham 1 mês grátis. Como funciona" (o link abre a pergunta do FAQ, que começa fechada), e a pergunta nova **"Tem programa de indicação?"** no FAQ, com a regra e o link para os Termos de Uso.
+- ✅ `src/features/legal/landingIndicacao.test.ts` falha se a landing e a cláusula 2.7 dos Termos divergirem (3 alunos, 1 mês, até 6 meses) ou se a landing prometer dinheiro/comissão.
+- ⚠️ **Antes do merge: o jurídico deve rever a cláusula 2.7 dos Termos (já no ar desde a #192) e este texto da landing**, porque a landing é pública. Validado a 390px: o link abre o FAQ e não há rolagem horizontal. Sem migration e sem deploy do banco.
