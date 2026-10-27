@@ -911,7 +911,7 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Ao terminar de digitar o **CPF** (válido) ou o **e-mail** (válido), com pequena espera, o cadastro consulta a nova Edge Function **`verificar-cadastro`** e, se já existe conta, mostra "Já existe uma conta com este CPF/e-mail" com os botões **Entrar** (leva ao login com o CPF/e-mail já preenchido) e **Esqueci minha senha**. O botão "Criar conta" fica bloqueado e explica o motivo. **Nada da conta aparece** (o aviso não mostra o e-mail do CPF nem o CPF do e-mail).
 - ✅ No **"Complete seu perfil"** o CPF digitado que é de outra conta também avisa na hora (a função ignora a própria conta) e bloqueia o "Concluir".
 - ✅ Função com limite de 40 consultas/IP/hora, falha fechada; se a consulta falhar, o cadastro segue sem o aviso. Testes das regras puras (`verificarCadastro.test.ts`). **Risco aceito (enumeração) registrado em `docs/SECURITY-AUDIT.md`.**
-- ⏳ Recuperar a senha **pelo CPF** (hoje precisa do e-mail): exigiria uma função que envia o reset ao e-mail do cadastro sem revelá-lo. Não feito.
+- ✅ Recuperar a senha **pelo CPF**: feito no #72.
 - ⚠️ Dono: **deploy da função `verificar-cadastro`** (`--no-verify-jwt` já vem do `config.toml`) e testar no celular com CPF e e-mail já usados e com novos.
 
 
@@ -919,6 +919,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 
 - ✅ O seletor de **WhatsApp saiu do cadastro** (passo 1) e ficou **só no "Complete seu perfil"**, logo abaixo do telefone (é o telefone que o WhatsApp usa), com texto explicando o que chega ("agenda do dia e avisos do app; você desliga quando quiser"). **Segue ligado por padrão** (decisão do dono); vale para todo mundo que passa por essa tela (e-mail, Google e convite). Antes aparecia nas duas telas.
 - ✅ Os botões "Já tenho conta" viraram **"Ir para o login"** (tela de confirmar e-mail) e **"Fazer login"** (rodapé do cadastro).
+
+## 72. Recuperar senha pelo CPF
+
+- ✅ A tela "Recuperar senha" agora aceita **CPF ou e-mail** (mesmo campo do login, com máscara de CPF). Com e-mail, segue o fluxo de antes. Com CPF, chama a nova Edge Function **`recuperar-senha-cpf`**, que acha o e-mail do cadastro no servidor e pede ao Auth o link de redefinição. **O e-mail não volta ao navegador** e a resposta é sempre a mesma ("Se houver uma conta com esse CPF, enviamos o link ao e-mail do cadastro"), exista a conta ou não; falha de captcha e limite continuam com mensagem própria.
+- ✅ Proteções: captcha (Turnstile, conferido pelo Auth), limite de **3 pedidos/CPF/hora** (ninguém enche a caixa de e-mail de outra pessoa sabendo o CPF) e 30/IP/hora, falha fechada; tempo mínimo de resposta de 1,5 s para não revelar quem tem conta; CPF e e-mail nunca vão para log. Regras puras em `_shared/recuperarSenha.ts` com testes.
+- ⚠️ Dono: **deploy da função** (sem migration): `npx supabase functions deploy recuperar-senha-cpf --project-ref avgrnvpvjhymsrnapfgu` (o `--no-verify-jwt` vem do `config.toml`). Testar no celular: Esqueci minha senha → digitar o CPF → o e-mail de redefinição chega no e-mail do cadastro.
+- Não testado ao vivo por mim: o envio real do e-mail (exige o captcha do navegador e conta de verdade).
 
 ## 73. E-mails automáticos: título em português e logo em fundo branco
 
