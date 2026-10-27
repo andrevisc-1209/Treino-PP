@@ -53,11 +53,15 @@ describe('normalizações', () => {
     expect(normalizarSexo('Outro')).toBe('outro')
     expect(normalizarSexo('xyz')).toBeNull()
   })
-  it('objetivos: reconhece a lista do app sem acento, mantém "/" do nome e manda o resto para "Outros"', () => {
-    expect(normalizarObjetivos('hipertrofia|saude e qualidade de vida')).toEqual({ objetivos: ['Hipertrofia', 'Saúde e qualidade de vida'], notas: null })
-    expect(normalizarObjetivos('Corrida/maratona')).toEqual({ objetivos: ['Corrida/maratona'], notas: null })
-    expect(normalizarObjetivos('Emagrecer; Hipertrofia')).toEqual({ objetivos: ['Hipertrofia', 'Outros'], notas: 'Emagrecer' })
-    expect(normalizarObjetivos('')).toEqual({ objetivos: [], notas: null })
+  it('objetivos: só a lista do app (sem acento/caixa, "/" do nome mantido); o resto fica de fora e nada livre vai para a base', () => {
+    expect(normalizarObjetivos('hipertrofia|saude e qualidade de vida')).toEqual({ objetivos: ['Hipertrofia', 'Saúde e qualidade de vida'], ignorados: [] })
+    expect(normalizarObjetivos('Corrida/maratona')).toEqual({ objetivos: ['Corrida/maratona'], ignorados: [] })
+    expect(normalizarObjetivos('Emagrecer; Hipertrofia')).toEqual({ objetivos: ['Hipertrofia'], ignorados: ['Emagrecer'] })
+    expect(normalizarObjetivos('Outros')).toEqual({ objetivos: [], ignorados: ['Outros'] })
+    expect(normalizarObjetivos('')).toEqual({ objetivos: [], ignorados: [] })
+  })
+  it('texto livre enorme não vai inteiro nem para o aviso', () => {
+    expect(normalizarObjetivos('x'.repeat(500)).ignorados[0]).toHaveLength(40)
   })
   it('cabeçalho: sinônimos e sem acento; sobra vira "ignorada"', () => {
     const r = mapearCabecalho(['Nome do Aluno', 'WhatsApp', 'E-mail', 'Data de Nascimento', 'Gênero', 'Plano'])
@@ -118,16 +122,16 @@ describe('planilha com título antes do cabeçalho (Google Planilhas)', () => {
     if (!r.ok) throw new Error(r.erro)
     expect(r.linhas.map((l) => l.linha)).toEqual([3, 4])
     expect(r.linhas.map((l) => l.status)).toEqual(['ok', 'ok'])
-    expect(r.linhas[1].aluno).toMatchObject({ name: 'Paulo trinta', phone: '(11) 45024-6200', birth_date: '1978-05-17', sex: 'M', objetivos: ['Saúde e qualidade de vida'], objetivo_notes: null })
+    expect(r.linhas[1].aluno).toMatchObject({ name: 'Paulo trinta', phone: '(11) 45024-6200', birth_date: '1978-05-17', sex: 'M', objetivos: ['Saúde e qualidade de vida'] })
   })
   it('linha em branco antes do cabeçalho também funciona; sem "nome" nas 5 primeiras linhas, recusa', () => {
     expect(lerPlanilha('\n\nnome\nAna', [], HOJE).ok).toBe(true)
     expect(lerPlanilha('a\nb\nc\nd\ne\nnome\nAna', [], HOJE)).toMatchObject({ ok: false })
   })
   it('objetivo por início único ("Saúde"), mas não por início ambíguo', () => {
-    expect(normalizarObjetivos('Saúde')).toEqual({ objetivos: ['Saúde e qualidade de vida'], notas: null })
-    expect(normalizarObjetivos('Cond')).toEqual({ objetivos: ['Condicionamento físico'], notas: null })
-    expect(normalizarObjetivos('Per')).toEqual({ objetivos: ['Outros'], notas: 'Per' }) // curto demais
-    expect(normalizarObjetivos('Perf')).toEqual({ objetivos: ['Performance esportiva'], notas: null })
+    expect(normalizarObjetivos('Saúde')).toEqual({ objetivos: ['Saúde e qualidade de vida'], ignorados: [] })
+    expect(normalizarObjetivos('Cond')).toEqual({ objetivos: ['Condicionamento físico'], ignorados: [] })
+    expect(normalizarObjetivos('Per')).toEqual({ objetivos: [], ignorados: ['Per'] }) // curto demais
+    expect(normalizarObjetivos('Perf')).toEqual({ objetivos: ['Performance esportiva'], ignorados: [] })
   })
 })

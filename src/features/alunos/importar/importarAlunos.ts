@@ -92,26 +92,25 @@ function acharObjetivo(texto: string): (typeof OBJETIVOS)[number] | undefined {
   return porInicio.length === 1 ? porInicio[0] : undefined
 }
 
-/** Objetivos separados por "|" (ou ";" se o arquivo não usa ";" como separador). O que não está na lista do app vira "Outros" + observação. */
-export function normalizarObjetivos(valor: string): { objetivos: string[]; notas: string | null } {
+/**
+ * Objetivos separados por "|" (ou ";" se o arquivo não usa ";" como separador). **Só entra o que está na lista do app**: o que não casa
+ * (e o "Outros", que pede uma descrição) fica de fora e volta em `ignorados` para avisar. Nada digitado livremente vai para a base.
+ */
+export function normalizarObjetivos(valor: string): { objetivos: string[]; ignorados: string[] } {
   const itens = valor
     .split(/[|\n]/)
     .flatMap((p) => (acharObjetivo(p) ? [p] : p.split(';')))
     .map((p) => p.trim())
     .filter(Boolean)
   const objetivos: string[] = []
-  const desconhecidos: string[] = []
+  const ignorados: string[] = []
   for (const item of itens) {
     const achado = acharObjetivo(item)
     if (achado && achado !== 'Outros') {
       if (!objetivos.includes(achado)) objetivos.push(achado)
-    } else if (!achado) desconhecidos.push(item)
+    } else ignorados.push(item.slice(0, 40))
   }
-  if (desconhecidos.length > 0 || itens.some((i) => acharObjetivo(i) === 'Outros')) {
-    objetivos.push('Outros')
-    return { objetivos, notas: desconhecidos.length > 0 ? desconhecidos.join(', ').slice(0, 200) : null }
-  }
-  return { objetivos, notas: null }
+  return { objetivos, ignorados }
 }
 
 export type AlunoImportavel = {
@@ -120,8 +119,8 @@ export type AlunoImportavel = {
   email: string | null
   birth_date: string | null
   sex: 'M' | 'F' | 'outro' | null
+  /** só valores da lista do app (OBJETIVOS), nunca texto livre */
   objetivos: string[]
-  objetivo_notes: string | null
 }
 
 export type StatusLinha = 'ok' | 'aviso' | 'duplicado' | 'erro'
@@ -206,10 +205,10 @@ export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[],
       if (!sex) avisos.push(`Sexo "${sx}" não reconhecido (use M, F ou Outro): o aluno entra sem essa informação.`)
     }
 
-    const { objetivos, notas } = normalizarObjetivos(celula(cols, 'objetivos'))
-    if (notas) avisos.push(`Objetivo "${notas}" não está na lista do app: entra como "Outros" com essa observação.`)
+    const { objetivos, ignorados } = normalizarObjetivos(celula(cols, 'objetivos'))
+    if (ignorados.length > 0) avisos.push(`Objetivo "${ignorados.join('", "')}" não está na lista do app: ficou de fora (escolha na ficha do aluno).`)
 
-    const aluno: AlunoImportavel = { name: nome, phone, email, birth_date, sex, objetivos, objetivo_notes: notas }
+    const aluno: AlunoImportavel = { name: nome, phone, email, birth_date, sex, objetivos }
     const chave = chaveDuplicado(nome, phone)
     let status: StatusLinha = avisos.length > 0 ? 'aviso' : 'ok'
     if (existentesChaves.has(chave)) {

@@ -18,7 +18,6 @@ export function useImportarAlunos() {
         birth_date: a.birth_date,
         sex: a.sex,
         objetivos: a.objetivos,
-        objetivo_notes: a.objetivo_notes,
       }))
       const { data, error } = await supabase.from('alunos').insert(linhas).select('id')
       if (error) throw error
