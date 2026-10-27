@@ -1,3 +1,4 @@
+import { evento } from '@/features/analytics/analytics'
 import { useState } from 'react'
 import { Button, Field, Input, Switch } from '@/components/ui'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
@@ -69,6 +70,7 @@ export function PerfilObrigatorioForm({
         bairro: local.bairro,
       })
       if (pedirAceite) await registrarAceiteTermos(TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO)
+      evento('perfil_concluido')
       onConcluido()
     } catch (e) {
       setErro(mapearErroSupabase(e))

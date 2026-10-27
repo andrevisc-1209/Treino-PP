@@ -11,7 +11,10 @@ import { OfflineBanner, marcarFalhaDeRede } from '@/components/OfflineBanner'
 import App from './App'
 import { ajustarTecladoVirtual } from '@/lib/teclado'
 import { erroPorModoLeitura, MSG_MODO_LEITURA, type DadosAssinatura } from '@/features/assinatura/useAssinatura'
+import { iniciarSeAceito } from '@/features/analytics/analytics'
 import './index.css'
+
+iniciarSeAceito() // só liga a análise de uso se a pessoa já aceitou (na página inicial ou aqui)
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },

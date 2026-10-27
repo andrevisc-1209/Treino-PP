@@ -1,3 +1,4 @@
+import { evento } from '@/features/analytics/analytics'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { camposClinicos, camposGerais, semDadoClinico } from './payloadAluno'
@@ -320,7 +321,8 @@ export function useSalvarAluno() {
 
       return alunoId as string
     },
-    onSuccess: (alunoId) => {
+    onSuccess: (alunoId, input) => {
+      if (!input.id) evento('aluno_cadastrado') // funil de ativação: só o nome do evento, nunca dado do aluno
       qc.invalidateQueries({ queryKey: ['alunos'] })
       qc.invalidateQueries({ queryKey: ['aluno', alunoId] })
       qc.invalidateQueries({ queryKey: ['consentimento-ativo', alunoId] })
