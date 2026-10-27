@@ -140,11 +140,13 @@ export function ImportarAlunosPage() {
             <Button variant="outline" className="w-full" onClick={baixarModelo}>
               <Download size={18} /> Baixar modelo (CSV)
             </Button>
-            <p className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+            <div className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
               <Info size={16} className="mt-0.5 shrink-0" aria-hidden />
-              Vão só nome, telefone, e-mail, nascimento, sexo e objetivos. Lesão, cirurgia, medicamentos e altura <strong>não</strong> entram por planilha: só com o
-              consentimento do aluno, depois, na ficha. Cobrança e horários também ficam para a ficha.
-            </p>
+              <p>
+                Entram só <strong>nome, telefone, e-mail, nascimento, sexo e objetivos</strong>. Dados de saúde (lesão, cirurgia, medicamentos e altura) <strong>não</strong> vão pela
+                planilha: só entram com o consentimento do aluno, depois, na ficha. Cobrança e horários também ficam para a ficha.
+              </p>
+            </div>
           </section>
 
           <input ref={entrada} type="file" accept=".csv,.txt,text/csv" className="sr-only" onChange={(e) => escolher(e.target.files?.[0])} aria-label="Escolher arquivo CSV" />

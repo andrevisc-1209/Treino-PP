@@ -982,6 +982,7 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Correção (26/10):** planilha exportada do Google Planilhas com **título na 1ª linha** ("modelo-alunos") dava "Não achei a coluna nome". Agora o cabeçalho é procurado nas 5 primeiras linhas, o separador é detectado olhando as primeiras 6 linhas e o número da linha mostrado é o da planilha; objetivo escrito pela metade ("Saúde") casa com o único objetivo que começa assim.
 - ✅ **Correção (26/10, 2):** (1) o botão **"Importar N alunos"** ficava **escondido atrás da barra de navegação** de baixo (Hoje/Agenda/Alunos…); agora fica logo acima dela. (2) **Objetivos só da lista do app**: o que não está na lista (e o "Outros", que pede descrição) **não é gravado**; a revisão avisa "ficou de fora (escolha na ficha)". Antes virava "Outros" com o texto digitado na planilha, o que deixava texto livre entrar na base. Coluna `objetivo_notes` não é mais preenchida pela importação.
 - ✅ **Porta de entrada (26/10):** o card "Primeiros passos" da tela Hoje ganhou o link "Tem uma planilha de alunos? Importe de uma vez" enquanto o primeiro aluno não foi cadastrado (ativação é o gargalo do funil).
+- ✅ **Correção (26/10, 3):** o aviso "Entram só nome, telefone…" da tela de importação quebrava em duas colunas (o parágrafo era `flex` e o negrito virava item separado); agora é um bloco com o ícone ao lado e o texto num parágrafo só.
 - ⏳ Fora desta versão: Excel (.xlsx), corrigir linha dentro do app (hoje: ignorar ou corrigir na planilha e reenviar), importar cobrança e horários.
 
 ## 80. Programa de indicação: 1 mês grátis para quem indica e para quem entra
@@ -1015,6 +1016,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Sob os preços, uma linha discreta: "Indique um colega: quando ele cadastrar 3 alunos, vocês dois ganham 1 mês grátis. Como funciona" (o link abre a pergunta do FAQ, que começa fechada), e a pergunta nova **"Tem programa de indicação?"** no FAQ, com a regra e o link para os Termos de Uso.
 - ✅ `src/features/legal/landingIndicacao.test.ts` falha se a landing e a cláusula 2.7 dos Termos divergirem (3 alunos, 1 mês, até 6 meses) ou se a landing prometer dinheiro/comissão.
 - ⚠️ **Antes do merge: o jurídico deve rever a cláusula 2.7 dos Termos (já no ar desde a #192) e este texto da landing**, porque a landing é pública. Validado a 390px: o link abre o FAQ e não há rolagem horizontal. Sem migration e sem deploy do banco.
+
+## 84. Indicação só para usuário novo (correção)
+
+- 🐞 **Furo encontrado no teste do dono:** uma pessoa que **já tinha conta e alunos** registrou o código e, ao cadastrar mais um aluno, a regra "3 alunos" já estava cumprida: o mês grátis saiu para os dois.
+- ✅ **Correção (migration `20261072000000_indicacao_so_usuario_novo.sql`):** (1) `registrar_indicacao` só aceita conta **sem nenhum aluno** (nem arquivado nem na lixeira) e criada há até 7 dias; senão devolve `nao_novo`; (2) o trigger de concessão só conta alunos **criados depois do registro** da indicação (com nomes diferentes, fora da lixeira). Teste `supabase/tests/indicacao.sql` ganhou (i) e (j).
+- ✅ Para desfazer a concessão indevida do teste: aba **Indicações** do /admin → **Revogar** (tira 30 dias das duas pontas e grava no histórico).
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge** e depois o teste (esperado "(a) OK" … "(j) OK"). A cláusula 2.7 dos Termos segue valendo (a regra nova é mais estreita que "até 7 dias"; o texto já falava em "cadastra 3 alunos").
 
 ## 85. Indicação só para conta criada DEPOIS do link
 
