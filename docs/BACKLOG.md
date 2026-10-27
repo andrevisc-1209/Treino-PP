@@ -958,3 +958,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - 📌 Conclusão principal: **R$ 300/mês de anúncio rende ~1–2 pagantes/mês**; os 100 pagantes dependem de prospecção direta no WhatsApp, Instagram orgânico, indicação e parcerias. A verba serve para impulsionar o conteúdo que já funcionou.
 - ⏳ Do dono: prazo da meta, quantos personais já usam hoje, prints com dados fictícios, decisão sobre indicação (1 mês grátis?), quem grava os Reels, revisão do jurídico (frases comparativas).
 - ⏳ Próximos documentos: calendário de conteúdo de 30 dias (roteiros de Reels) e mensagens de prospecção por WhatsApp.
+
+## 78. Marketing: calendário de conteúdo, prospecção no WhatsApp e meta recalibrada
+
+- ✅ `docs/MKT-POSICIONAMENTO.md` v2 com as respostas do dono: **100 pagantes em 3 meses**, partindo de base zero (2 testes parados) e uma pessoa só. Meta tratada como **esticada**: piso 25, provável 50, esticado 100, com marcos de cadastros (≈100 em 30 dias, ≈350 em 60, ≈670 em 75). Se no dia 30 houver menos de 60 cadastros, o cenário provável passa a 50.
+- ✅ `docs/MKT-CALENDARIO-30-DIAS.md`: 12 Reels em 4 semanas (2 de dor para 1 de produto), regras (dados fictícios, sem concorrente pelo nome, sem prometer resultado, app não cobra o aluno), legendas-modelo, uso dos R$ 300 só a partir da semana 4 no Reels que melhor performar.
+- ✅ `docs/MKT-WHATSAPP-PROSPECCAO.md`: regras anti-spam e LGPD, funil de conversa em 6 etapas com as mensagens, respostas às objeções e planilha de acompanhamento.
+- ✅ Três prints com dados fictícios em `docs/marketing/prints/` (lista de alunos, editar aluno, revisão).
+- ✅ **Indicação decidida:** 1 mês grátis para quem indica e para quem entra, liberado quando o indicado cadastra **mais de 2 alunos**.
+- ⏳ **PR de indicação (migration):** código de indicação no cadastro + regra no banco que concede o mês ao indicado e ao indicador. A fazer na semana 3 do plano. Antes: o dono decide o teto por indicador (sugestão: 6 meses grátis).
+- ⏳ Do dono: falar com os 2 testes parados, capturar telas fictícias de agenda, fatura/mensagem pronta, briefing e evolução, e montar o funil no PostHog.
