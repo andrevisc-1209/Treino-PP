@@ -7,6 +7,8 @@ import { mascararTelefone, validarTelefone } from '@/lib/telefone'
 import { lerCsv } from './csv'
 
 export const LIMITE_IMPORTACAO = 50
+/** Quantas linhas do começo são olhadas atrás do cabeçalho (título solto, linha em branco etc.). */
+const LINHAS_PARA_ACHAR_CABECALHO = 5
 export const TAMANHO_MAXIMO_ARQUIVO = 200 * 1024 // 200 KB: 50 alunos cabem com folga
 
 /** Colunas do modelo, na ordem. Só "nome" é obrigatório. */
@@ -81,22 +83,31 @@ function anos(nascISO: string, hojeISO: string): number {
   return ha - a - (hm < m || (hm === m && hd < d) ? 1 : 0)
 }
 
+/** Objetivo da lista do app pelo nome inteiro ou, se tiver 4+ letras, por um início que só combina com um deles ("Saúde" → "Saúde e qualidade de vida"). */
+function acharObjetivo(texto: string): (typeof OBJETIVOS)[number] | undefined {
+  const t = simplificar(texto)
+  const exato = OBJETIVOS.find((o) => simplificar(o) === t)
+  if (exato || t.length < 4) return exato
+  const porInicio = OBJETIVOS.filter((o) => simplificar(o).startsWith(t))
+  return porInicio.length === 1 ? porInicio[0] : undefined
+}
+
 /** Objetivos separados por "|" (ou ";" se o arquivo não usa ";" como separador). O que não está na lista do app vira "Outros" + observação. */
 export function normalizarObjetivos(valor: string): { objetivos: string[]; notas: string | null } {
   const itens = valor
     .split(/[|\n]/)
-    .flatMap((p) => (OBJETIVOS.some((o) => simplificar(o) === simplificar(p)) ? [p] : p.split(';')))
+    .flatMap((p) => (acharObjetivo(p) ? [p] : p.split(';')))
     .map((p) => p.trim())
     .filter(Boolean)
   const objetivos: string[] = []
   const desconhecidos: string[] = []
   for (const item of itens) {
-    const achado = OBJETIVOS.find((o) => simplificar(o) === simplificar(item))
+    const achado = acharObjetivo(item)
     if (achado && achado !== 'Outros') {
       if (!objetivos.includes(achado)) objetivos.push(achado)
     } else if (!achado) desconhecidos.push(item)
   }
-  if (desconhecidos.length > 0 || itens.some((i) => simplificar(i) === 'outros')) {
+  if (desconhecidos.length > 0 || itens.some((i) => acharObjetivo(i) === 'Outros')) {
     objetivos.push('Outros')
     return { objetivos, notas: desconhecidos.length > 0 ? desconhecidos.join(', ').slice(0, 200) : null }
   }
@@ -144,9 +155,11 @@ export type ResultadoLeitura =
 export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[], hojeISO: string): ResultadoLeitura {
   const tabela = lerCsv(texto)
   if (tabela.length === 0) return { ok: false, erro: 'A planilha está vazia.' }
-  const { colunas, ignoradas } = mapearCabecalho(tabela[0])
-  if (colunas.nome === undefined) return { ok: false, erro: 'Não achei a coluna "nome" na primeira linha. Use o modelo para baixar a planilha certa.' }
-  const dados = tabela.slice(1)
+  // o cabeçalho costuma ser a 1ª linha, mas o Google Planilhas e o Excel às vezes põem um título antes: procura nas primeiras linhas
+  const posCabecalho = tabela.slice(0, LINHAS_PARA_ACHAR_CABECALHO).findIndex((l) => mapearCabecalho(l).colunas.nome !== undefined)
+  if (posCabecalho < 0) return { ok: false, erro: 'Não achei a coluna "nome" nas primeiras linhas. Use o modelo para baixar a planilha certa.' }
+  const { colunas, ignoradas } = mapearCabecalho(tabela[posCabecalho])
+  const dados = tabela.slice(posCabecalho + 1)
   if (dados.length === 0) return { ok: false, erro: 'A planilha só tem o cabeçalho, sem nenhum aluno.' }
   if (dados.length > LIMITE_IMPORTACAO) return { ok: false, erro: `A planilha tem ${dados.length} alunos e o limite é ${LIMITE_IMPORTACAO} por vez. Divida em mais de uma planilha.` }
 
@@ -155,7 +168,7 @@ export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[],
   const celula = (cols: string[], c: Coluna) => (colunas[c] === undefined ? '' : (cols[colunas[c]!] ?? '').trim())
 
   const linhas = dados.map((cols, i): LinhaImportada => {
-    const linha = i + 2
+    const linha = posCabecalho + i + 2 // número da linha na planilha (a do cabeçalho é posCabecalho + 1)
     const erros: string[] = []
     const avisos: string[] = []
     const nome = celula(cols, 'nome').replace(/\s+/g, ' ')

@@ -979,6 +979,7 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - **Medição:** dispara o evento `aluno_cadastrado` (ativação) uma vez por importação; **não criei evento novo** para não mudar a Política de Privacidade (os quatro eventos citados nela continuam os mesmos). Dá para contar importações como evento próprio depois, junto com uma versão 1.8 da Política.
 - **Indicação:** alunos importados contam para o "mais de 2 alunos" (decisão do dono).
 - ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim:** a tela exige login com captcha; testei as regras de leitura/validação (12 testes) e a tipagem, não o fluxo no celular. Validar: baixar o modelo, abrir no Excel/Planilhas, preencher, salvar como CSV, importar, conferir a revisão e testar "Desfazer".
+- ✅ **Correção (26/10):** planilha exportada do Google Planilhas com **título na 1ª linha** ("modelo-alunos") dava "Não achei a coluna nome". Agora o cabeçalho é procurado nas 5 primeiras linhas, o separador é detectado olhando as primeiras 6 linhas e o número da linha mostrado é o da planilha; objetivo escrito pela metade ("Saúde") casa com o único objetivo que começa assim.
 - ⏳ Fora desta versão: Excel (.xlsx), corrigir linha dentro do app (hoje: ignorar ou corrigir na planilha e reenviar), importar cobrança e horários.
 
 ## 80. Programa de indicação: 1 mês grátis para quem indica e para quem entra

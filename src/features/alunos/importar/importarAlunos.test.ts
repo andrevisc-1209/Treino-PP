@@ -110,3 +110,24 @@ describe('lerPlanilha', () => {
     expect(lerPlanilha(exato, [], HOJE).ok).toBe(true)
   })
 })
+
+describe('planilha com título antes do cabeçalho (Google Planilhas)', () => {
+  const arquivo = 'modelo-alunos\nnome;telefone;email;nascimento;sexo;objetivos\nMaria Exemplo;(11) 91234-5678;maria@exemplo.com;15/03/1990;F;Hipertrofia|Saúde e qualidade de vida\nPaulo trinta;1145024-6200;paulo123@p.com;17/05/78;M;Saúde\n'
+  it('acha o cabeçalho na 2ª linha, detecta o ; e numera as linhas como na planilha', () => {
+    const r = lerPlanilha(arquivo, [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.linha)).toEqual([3, 4])
+    expect(r.linhas.map((l) => l.status)).toEqual(['ok', 'ok'])
+    expect(r.linhas[1].aluno).toMatchObject({ name: 'Paulo trinta', phone: '(11) 45024-6200', birth_date: '1978-05-17', sex: 'M', objetivos: ['Saúde e qualidade de vida'], objetivo_notes: null })
+  })
+  it('linha em branco antes do cabeçalho também funciona; sem "nome" nas 5 primeiras linhas, recusa', () => {
+    expect(lerPlanilha('\n\nnome\nAna', [], HOJE).ok).toBe(true)
+    expect(lerPlanilha('a\nb\nc\nd\ne\nnome\nAna', [], HOJE)).toMatchObject({ ok: false })
+  })
+  it('objetivo por início único ("Saúde"), mas não por início ambíguo', () => {
+    expect(normalizarObjetivos('Saúde')).toEqual({ objetivos: ['Saúde e qualidade de vida'], notas: null })
+    expect(normalizarObjetivos('Cond')).toEqual({ objetivos: ['Condicionamento físico'], notas: null })
+    expect(normalizarObjetivos('Per')).toEqual({ objetivos: ['Outros'], notas: 'Per' }) // curto demais
+    expect(normalizarObjetivos('Perf')).toEqual({ objetivos: ['Performance esportiva'], notas: null })
+  })
+})

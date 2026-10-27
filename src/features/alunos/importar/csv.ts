@@ -12,15 +12,17 @@ export function decodificarArquivo(bytes: ArrayBuffer): string {
   }
 }
 
-/** Descobre o separador pela primeira linha (fora de aspas): o que mais aparece vence; empate ou nenhum = vírgula. */
+/** Descobre o separador pelas primeiras linhas (fora de aspas): o que mais aparece vence; empate ou nenhum = vírgula. Olha várias linhas porque a 1ª pode ser só um título. */
 export function detectarDelimitador(texto: string): Delimitador {
-  const primeira = texto.split(/\r\n|\n|\r/)[0] ?? ''
+  const amostra = texto.split(/\r\n|\n|\r/).slice(0, 6)
   const contar = (d: string) => {
     let n = 0
-    let aspas = false
-    for (const c of primeira) {
-      if (c === '"') aspas = !aspas
-      else if (c === d && !aspas) n++
+    for (const linha of amostra) {
+      let aspas = false
+      for (const c of linha) {
+        if (c === '"') aspas = !aspas
+        else if (c === d && !aspas) n++
+      }
     }
     return n
   }
