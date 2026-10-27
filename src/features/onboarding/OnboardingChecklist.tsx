@@ -63,6 +63,11 @@ export function OnboardingChecklist() {
           </li>
         ))}
       </ul>
+      {!passos[1].feito && (
+        <Link to="/alunos/importar" className="flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+          Tem uma planilha de alunos? Importe de uma vez
+        </Link>
+      )}
       <Link to="/ajuda" className="flex min-h-11 items-center text-sm font-medium text-brand-hover">
         Precisa de ajuda? Veja a central de ajuda
       </Link>
