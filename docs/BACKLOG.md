@@ -968,3 +968,15 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Indicação decidida:** 1 mês grátis para quem indica e para quem entra, liberado quando o indicado cadastra **mais de 2 alunos**.
 - ⏳ **PR de indicação (migration):** código de indicação no cadastro + regra no banco que concede o mês ao indicado e ao indicador. A fazer na semana 3 do plano. Antes: o dono decide o teto por indicador (sugestão: 6 meses grátis).
 - ⏳ Do dono: falar com os 2 testes parados, capturar telas fictícias de agenda, fatura/mensagem pronta, briefing e evolução, e montar o funil no PostHog.
+
+## 79. Importar alunos por planilha (CSV)
+
+- ✅ **Alunos → "Importar alunos de uma planilha"** (rota `/alunos/importar`). O personal baixa o **modelo CSV** (nome, telefone, e-mail, nascimento, sexo, objetivos; uma linha de exemplo fictícia), preenche e envia. **Só o nome é obrigatório.** Até **50 alunos por vez** e 200 KB por arquivo.
+- ✅ **Só dados básicos.** Nada de saúde (lesão, cirurgia, medicamentos, altura: só com o consentimento do aluno, depois, na ficha), nem cobrança nem horários. O banco já barra dado clínico sem consentimento; a importação nem tenta gravar esses campos.
+- ✅ **Revisão antes de gravar:** quantas linhas foram lidas, cada uma como **Pronto / Com aviso / Já existe / Com erro**. Erro = sem nome (fica de fora). Telefone, e-mail, nascimento ou sexo inválidos **não travam**: o campo entra vazio e a linha mostra o aviso. Objetivo que não está na lista do app entra como "Outros" com a observação. **Duplicado** = mesmo nome (sem acento/caixa) e mesmo telefone, contra a base **e** dentro da planilha; vem desmarcado, dá para marcar.
+- ✅ **Gravação em uma chamada** (tudo ou nada) e **"Desfazer a importação"** na tela final (arquiva, manda para a lixeira e apaga de vez só os ids criados naquela hora; pede confirmação).
+- ✅ **Leitura tolerante:** separador `;`, `,` ou tab; aspas; BOM; UTF-8 e Windows-1252 (Excel antigo); datas `dd/mm/aaaa`, `d/m/aa` e `aaaa-mm-dd`; cabeçalhos com sinônimos ("celular", "WhatsApp", "data de nascimento"…) e colunas desconhecidas ignoradas. Telefone sai com a máscara do app.
+- **Medição:** dispara o evento `aluno_cadastrado` (ativação) uma vez por importação; **não criei evento novo** para não mudar a Política de Privacidade (os quatro eventos citados nela continuam os mesmos). Dá para contar importações como evento próprio depois, junto com uma versão 1.8 da Política.
+- **Indicação:** alunos importados contam para o "mais de 2 alunos" (decisão do dono).
+- ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim:** a tela exige login com captcha; testei as regras de leitura/validação (12 testes) e a tipagem, não o fluxo no celular. Validar: baixar o modelo, abrir no Excel/Planilhas, preencher, salvar como CSV, importar, conferir a revisão e testar "Desfazer".
+- ⏳ Fora desta versão: Excel (.xlsx), corrigir linha dentro do app (hoje: ignorar ou corrigir na planilha e reenviar), importar cobrança e horários.

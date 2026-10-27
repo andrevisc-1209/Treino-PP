@@ -5,6 +5,7 @@ import { DefinirSenhaPage } from '@/features/auth/DefinirSenhaPage'
 import { AuthCallbackPage } from '@/features/auth/AuthCallbackPage'
 import { AlunosPage } from '@/features/alunos/AlunosPage'
 import { AlunoFormPage } from '@/features/alunos/AlunoFormPage'
+import { ImportarAlunosPage } from '@/features/alunos/importar/ImportarAlunosPage'
 import { AlunoFichaPage } from '@/features/alunos/AlunoFichaPage'
 import { TermoPage } from '@/features/alunos/TermoPage'
 import { TermosPage } from '@/features/legal/TermosPage'
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/consentimentos" element={<ConsentimentosPage />} />
           <Route path="/alunos" element={<AlunosPage />} />
           <Route path="/alunos/novo" element={<AlunoFormPage mode="create" />} />
+          <Route path="/alunos/importar" element={<ImportarAlunosPage />} />
           <Route path="/alunos/:id" element={<AlunoFichaPage />} />
           <Route path="/alunos/:id/editar" element={<AlunoFormPage mode="edit" />} />
           <Route path="/alunos/:id/planos/:planoId" element={<PlanoEditorPage />} />
