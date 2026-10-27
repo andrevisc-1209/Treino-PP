@@ -60,7 +60,7 @@ describe('reenvio com motivo e canal', () => {
     expect(m.html).toContain('Olá, Ana!')
     expect(m.html).toContain('quer cuidar do seu treino')
     expect(m.html).toContain('background-color:#ffffff;padding:28px 24px 20px')
-    expect(m.html).toContain('logo-email.png')
+    expect(m.html).toContain('logo-email-branco.png')
   })
 })
 

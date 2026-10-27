@@ -88,11 +88,11 @@ export function montarEmailConsentimento(args: { nomeAluno: string; nomePersonal
   const personal = escaparHtml(args.nomePersonal)
   const assunto = `Autorização para registro de dados de saúde — ${args.nomePersonal}`
   const html = `<!doctype html>
-<html lang="pt-BR"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${escaparHtml(assunto)}</title></head>
+<html lang="pt-BR"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="color-scheme" content="light only" /><meta name="supported-color-schemes" content="light" /><title>${escaparHtml(assunto)}</title></head>
 <body style="margin:0;padding:0;background-color:#f4f7f6;font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f7f6;padding:24px 0;"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;">
-<tr><td align="center" style="background-color:#ffffff;padding:28px 24px 20px;border-bottom:3px solid #367c39;"><img src="https://treino.personalperto.com.br/brand/logo-email.png" alt="Personal Perto" width="180" style="display:block;width:180px;max-width:100%;height:auto;" /></td></tr>
+<tr><td align="center" style="background-color:#ffffff;padding:28px 24px 20px;border-bottom:3px solid #367c39;"><img src="https://treino.personalperto.com.br/brand/logo-email-branco.png" alt="Personal Perto" width="240" style="display:block;width:240px;max-width:100%;height:auto;" /></td></tr>
 <tr><td style="padding:32px 32px 8px;">
 <h1 style="margin:0 0 16px;font-size:22px;color:#0f2537;">Olá, ${aluno}! 👋</h1>
 <p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:#334155;">Seu personal trainer <strong>${personal}</strong> quer cuidar do seu treino com mais atenção e organização — e, para isso, precisa da sua autorização para registrar no app informações sobre a sua saúde. É rápido: clica no botão abaixo e escolhe se topa ou não.</p>
