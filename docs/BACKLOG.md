@@ -920,7 +920,7 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ O seletor de **WhatsApp saiu do cadastro** (passo 1) e ficou **só no "Complete seu perfil"**, logo abaixo do telefone (é o telefone que o WhatsApp usa), com texto explicando o que chega ("agenda do dia e avisos do app; você desliga quando quiser"). **Segue ligado por padrão** (decisão do dono); vale para todo mundo que passa por essa tela (e-mail, Google e convite). Antes aparecia nas duas telas.
 - ✅ Os botões "Já tenho conta" viraram **"Ir para o login"** (tela de confirmar e-mail) e **"Fazer login"** (rodapé do cadastro).
 
-## 72. E-mails automáticos: título em português e logo em fundo branco
+## 73. E-mails automáticos: título em português e logo em fundo branco
 
 - ✅ Os três templates do Supabase (`confirmacao-cadastro`, `convite`, `redefinir-senha`) e o e-mail de consentimento de saúde passaram a ter cabeçalho **branco** com a logo colorida (antes ficava sobre azul-escuro e a logo, transparente, perdia contraste) e filete verde.
 - ⚠️ Dono: o título "Confirm your email address" é o **assunto**, que fica num campo do painel (não no HTML). Em Supabase → Authentication → Email Templates, **colar o HTML novo e preencher "Subject"** em português em cada template (assuntos no topo de cada arquivo). Rever também, se ativos, os templates "Magic link", "Change email address" e "Reauthentication": ficam em inglês por padrão.

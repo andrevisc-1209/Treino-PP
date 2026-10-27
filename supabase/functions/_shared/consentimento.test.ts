@@ -59,7 +59,7 @@ describe('reenvio com motivo e canal', () => {
     const m = montarEmailConsentimento({ nomeAluno: 'Ana', nomePersonal: 'Bia', linkAutorizar: 'https://x/a', linkNegar: 'https://x/n' })
     expect(m.html).toContain('Olá, Ana!')
     expect(m.html).toContain('quer cuidar do seu treino')
-    expect(m.html).toContain('background:#ffffff;padding:12px;border-radius:6px;display:inline-block')
+    expect(m.html).toContain('background-color:#ffffff;padding:28px 24px 20px')
     expect(m.html).toContain('logo-email.png')
   })
 })
