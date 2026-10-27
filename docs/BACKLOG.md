@@ -1015,3 +1015,10 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Sob os preços, uma linha discreta: "Indique um colega: quando ele cadastrar 3 alunos, vocês dois ganham 1 mês grátis. Como funciona" (o link abre a pergunta do FAQ, que começa fechada), e a pergunta nova **"Tem programa de indicação?"** no FAQ, com a regra e o link para os Termos de Uso.
 - ✅ `src/features/legal/landingIndicacao.test.ts` falha se a landing e a cláusula 2.7 dos Termos divergirem (3 alunos, 1 mês, até 6 meses) ou se a landing prometer dinheiro/comissão.
 - ⚠️ **Antes do merge: o jurídico deve rever a cláusula 2.7 dos Termos (já no ar desde a #192) e este texto da landing**, porque a landing é pública. Validado a 390px: o link abre o FAQ e não há rolagem horizontal. Sem migration e sem deploy do banco.
+
+## 84. Indicação só para usuário novo (correção)
+
+- 🐞 **Furo encontrado no teste do dono:** uma pessoa que **já tinha conta e alunos** registrou o código e, ao cadastrar mais um aluno, a regra "3 alunos" já estava cumprida: o mês grátis saiu para os dois.
+- ✅ **Correção (migration `20261072000000_indicacao_so_usuario_novo.sql`):** (1) `registrar_indicacao` só aceita conta **sem nenhum aluno** (nem arquivado nem na lixeira) e criada há até 7 dias; senão devolve `nao_novo`; (2) o trigger de concessão só conta alunos **criados depois do registro** da indicação (com nomes diferentes, fora da lixeira). Teste `supabase/tests/indicacao.sql` ganhou (i) e (j).
+- ✅ Para desfazer a concessão indevida do teste: aba **Indicações** do /admin → **Revogar** (tira 30 dias das duas pontas e grava no histórico).
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge** e depois o teste (esperado "(a) OK" … "(j) OK"). A cláusula 2.7 dos Termos segue valendo (a regra nova é mais estreita que "até 7 dias"; o texto já falava em "cadastra 3 alunos").

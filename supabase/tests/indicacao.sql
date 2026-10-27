@@ -8,9 +8,11 @@
 --   (e) assinatura_ativa() fica verdadeira com o bonus (mesmo sem trial/assinatura vigentes);
 --   (f) com o teto em 0, o indicado ainda ganha, mas o indicador NÃO (indicador_ganhou = false, bonus de A não muda);
 --   (g) conta com mais de 7 dias não consegue registrar código ('expirado');
+--   (i) [migration 20261072] quem já tem aluno NÃO é usuário novo: registrar devolve 'nao_novo';
+--   (j) alunos criados ANTES do registro não contam: com 3 alunos antigos, só depois de 3 novos a indicação é concedida;
 --   (h) [migration 20261070] cada concessão cria o aviso no sino: 1 para o indicado e 1 para o indicador, o do indicador com ganhou=false quando o
 --       teto está cheio (f), sem aluno_id e sem dado pessoal no payload.
--- Esperado: "(a) OK" … "(h) OK", sem "FALHA".
+-- Esperado: "(a) OK" … "(j) OK", sem "FALHA".
 
 DO $$
 DECLARE
@@ -28,6 +30,7 @@ DECLARE
   v_bonus_b2 TIMESTAMPTZ;
   v_ativo BOOLEAN;
   v_n_a INT;
+  v_st2 TEXT;
   v_n_a_sem INT;
   v_n_b INT;
   v_pessoal INT;
@@ -47,8 +50,8 @@ BEGIN
   DELETE FROM treino.indicacoes WHERE indicador_id IN (v_a, v_b) OR indicado_id IN (v_a, v_b);
   UPDATE treino.assinaturas SET bonus_ate = NULL WHERE professional_id IN (v_a, v_b);
   UPDATE treino.professionals SET created_at = now() WHERE id = v_b;
-  -- alunos que B já tem não podem contar para o 3º (tudo isto é desfeito no fim)
-  UPDATE treino.alunos SET active = FALSE, apagado_em = now() WHERE professional_id = v_b;
+  -- B precisa ser "usuário novo" (sem nenhum aluno): apaga os que tem (tudo isto é desfeito no fim)
+  DELETE FROM treino.alunos WHERE professional_id = v_b;
 
   -- (a)
   SELECT codigo_indicacao INTO v_cod_a FROM treino.professionals WHERE id = v_a;
@@ -120,6 +123,24 @@ BEGIN
   v_r := treino.registrar_indicacao(v_cod_a);
   RESET ROLE;
   v_log := array_append(v_log, CASE WHEN v_r = 'expirado' THEN '(g) OK: conta com mais de 7 dias não registra' ELSE '(g) FALHA: ' || v_r END);
+
+  -- (i) quem já tem aluno não é usuário novo (B ainda tem os alunos de teste dos passos anteriores)
+  DELETE FROM treino.indicacoes WHERE indicado_id = v_b;
+  UPDATE treino.professionals SET created_at = now() WHERE id = v_b;
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', v_b, 'role', 'authenticated')::TEXT, TRUE);
+  SET LOCAL ROLE authenticated;
+  v_r := treino.registrar_indicacao(v_cod_a);
+  RESET ROLE;
+  v_log := array_append(v_log, CASE WHEN v_r = 'nao_novo' THEN '(i) OK: conta com alunos não registra (nao_novo)' ELSE '(i) FALHA: ' || v_r END);
+
+  -- (j) alunos de antes do registro não contam: os 4 alunos de B passam a ter 1 dia; a indicação nasce agora (registro forçado)
+  UPDATE treino.alunos SET created_at = now() - INTERVAL '1 day' WHERE professional_id = v_b;
+  INSERT INTO treino.indicacoes (indicador_id, indicado_id) VALUES (v_a, v_b);
+  INSERT INTO treino.alunos (professional_id, name) VALUES (v_b, '[TESTE] depois 1');
+  SELECT status INTO v_st FROM treino.indicacoes WHERE indicado_id = v_b;
+  INSERT INTO treino.alunos (professional_id, name) VALUES (v_b, '[TESTE] depois 2'), (v_b, '[TESTE] depois 3');
+  SELECT status INTO v_st2 FROM treino.indicacoes WHERE indicado_id = v_b;
+  v_log := array_append(v_log, CASE WHEN v_st = 'pendente' AND v_st2 = 'concedida' THEN '(j) OK: os alunos antigos não contaram; concedida só com 3 novos' ELSE '(j) FALHA: depois_de_1=' || coalesce(v_st, 'NULL') || ' depois_de_3=' || coalesce(v_st2, 'NULL') END);
 
   RAISE EXCEPTION 'RESULTADO: % | (nada foi gravado)', array_to_string(v_log, ' | ');
 END
