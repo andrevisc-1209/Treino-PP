@@ -90,3 +90,14 @@ export function textoSituacaoIndicado(i: Pick<MinhasIndicacoes, 'fui_indicado' |
   if (i.minha_situacao === 'concedida') return 'Você entrou por indicação e já ganhou 1 mês grátis. Obrigado!'
   return `Você entrou por indicação: cadastre ${ALUNOS_PARA_GANHAR} alunos e ganhe 1 mês grátis (quem indicou também ganha).`
 }
+
+export type PayloadIndicacao = { papel?: 'indicador' | 'indicado'; ganhou?: boolean }
+
+/** Texto do aviso no sino quando a indicação é concluída (sem nome de ninguém). */
+export function textoAvisoIndicacao(p: PayloadIndicacao | undefined, teto = 6): { titulo: string; texto: string } {
+  if (p?.papel === 'indicado') return { titulo: 'Você ganhou 1 mês grátis', texto: 'Você cadastrou 3 alunos pela indicação. O mês grátis já está na sua conta.' }
+  if (p?.ganhou === false) {
+    return { titulo: 'Indicação concluída', texto: `Quem você indicou cadastrou 3 alunos, mas você já chegou ao limite de ${teto} meses grátis do programa. Quem entrou ganhou o dele.` }
+  }
+  return { titulo: 'Você ganhou 1 mês grátis', texto: 'Quem você indicou cadastrou 3 alunos. O mês grátis já está na sua conta. Obrigado por indicar!' }
+}

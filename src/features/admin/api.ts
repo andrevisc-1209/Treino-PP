@@ -6,6 +6,7 @@ import type { StatusRelato, TipoRelato } from '@/features/ajuda/relatos'
 import type { MetricasPersonal } from './personais'
 import { normalizarFinanceiro } from './financeiro'
 import { normalizarBI, type PeriodoBI } from './bi'
+import { normalizarIndicacoes } from './indicacoes'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
 
@@ -232,6 +233,45 @@ export function useAdminBI(dias: PeriodoBI) {
       const { data, error } = await supabase.rpc('admin_bi', { p_dias: dias })
       if (error) throw error
       return normalizarBI(data)
+    },
+  })
+}
+
+/** Quem tem mês grátis (indicação) vigente: professional_id → fim do bônus. Só o admin consegue chamar. */
+export function useAdminBonus() {
+  return useQuery({
+    queryKey: ['admin', 'bonus'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_bonus_personais')
+      if (error) throw error
+      return new Map(((data ?? []) as { professional_id: string; bonus_ate: string }[]).map((l) => [l.professional_id, l.bonus_ate]))
+    },
+  })
+}
+
+/** Painel de indicações: totais, ranking de indicadores e as mais recentes, com sinais de abuso. Só nomes de personais e números. */
+export function useAdminIndicacoes() {
+  return useQuery({
+    queryKey: ['admin', 'indicacoes'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_indicacoes')
+      if (error) throw error
+      return normalizarIndicacoes(data)
+    },
+  })
+}
+
+export function useAdminRevogarIndicacao() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc('admin_revogar_indicacao', { p_indicacao_id: id })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'indicacoes'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'bonus'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'historico'] })
     },
   })
 }

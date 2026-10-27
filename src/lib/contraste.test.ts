@@ -80,6 +80,9 @@ describe('contraste das pílulas do /admin (WCAG AA)', () => {
     ['LGPD pendentes: amber-100 / amber-900', '#fef3c7', '#78350f'],
     ['LGPD negados: red-100 / red-800', '#fee2e2', '#991b1b'],
     ['LGPD não solicitados: slate-100 / slate-700', '#f1f5f9', '#334155'],
+    ['sinal de abuso (indicações): white / amber-800', '#ffffff', '#92400e'],
+    ['botão Revogar: white / red-700', '#ffffff', '#b91c1c'],
+    ['etiqueta mês grátis: brand-soft / brand-hover', '#eaf6ea', '#2a602c'],
   ]
   for (const [nome, fundo, texto] of pares) {
     it(nome, () => expect(contrasteWCAG(texto, fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL))

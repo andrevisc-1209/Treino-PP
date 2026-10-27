@@ -981,6 +981,7 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim:** a tela exige login com captcha; testei as regras de leitura/validação (12 testes) e a tipagem, não o fluxo no celular. Validar: baixar o modelo, abrir no Excel/Planilhas, preencher, salvar como CSV, importar, conferir a revisão e testar "Desfazer".
 - ✅ **Correção (26/10):** planilha exportada do Google Planilhas com **título na 1ª linha** ("modelo-alunos") dava "Não achei a coluna nome". Agora o cabeçalho é procurado nas 5 primeiras linhas, o separador é detectado olhando as primeiras 6 linhas e o número da linha mostrado é o da planilha; objetivo escrito pela metade ("Saúde") casa com o único objetivo que começa assim.
 - ✅ **Correção (26/10, 2):** (1) o botão **"Importar N alunos"** ficava **escondido atrás da barra de navegação** de baixo (Hoje/Agenda/Alunos…); agora fica logo acima dela. (2) **Objetivos só da lista do app**: o que não está na lista (e o "Outros", que pede descrição) **não é gravado**; a revisão avisa "ficou de fora (escolha na ficha)". Antes virava "Outros" com o texto digitado na planilha, o que deixava texto livre entrar na base. Coluna `objetivo_notes` não é mais preenchida pela importação.
+- ✅ **Porta de entrada (26/10):** o card "Primeiros passos" da tela Hoje ganhou o link "Tem uma planilha de alunos? Importe de uma vez" enquanto o primeiro aluno não foi cadastrado (ativação é o gargalo do funil).
 - ⏳ Fora desta versão: Excel (.xlsx), corrigir linha dentro do app (hoje: ignorar ou corrigir na planilha e reenviar), importar cobrança e horários.
 
 ## 80. Programa de indicação: 1 mês grátis para quem indica e para quem entra
@@ -994,6 +995,20 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - Limites conhecidos: se a pessoa abrir o e-mail de confirmação em **outro aparelho**, o código guardado se perde e a indicação não conta (o link da indicação precisa ser aberto no mesmo aparelho do cadastro). No painel admin, quem tem mês grátis aparece pela data de fim do trial/assinatura (não pelo bônus).
 - ⏳ Aviso ao indicador quando o mês é concedido (notificação/WhatsApp), painel de indicações no admin e a documentação para a landing ("Indique e ganhe").
 - Não testado ao vivo por mim (login com captcha): validar no celular com duas contas (a minha indicando uma nova).
+
+## 81. Aviso no sino quando o mês grátis da indicação é concedido
+
+- ✅ Quem foi **indicado** e quem **indicou** recebem um aviso no sino (e um toast em tempo real): "Você ganhou 1 mês grátis". Se o indicador já chegou ao teto de meses, o aviso diz isso com clareza ("Indicação concluída… você já chegou ao limite de 6 meses; quem entrou ganhou o dele"). O botão "Ver indicações" leva às Configurações. Nenhum aviso traz nome, e-mail ou CPF de ninguém.
+- ✅ Banco (migration `20261070000000_aviso_indicacao_concedida.sql`): `notificacoes_professor.aluno_id` passa a ser opcional **só** para o tipo novo `indicacao_concedida` (os outros tipos continuam exigindo aluno); um aviso por pessoa por indicação; o trigger de concessão cria os avisos na mesma transação. Teste: `supabase/tests/indicacao.sql` ganhou o item (h).
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge** (e o teste atualizado: esperado "(a) OK" … "(h) OK").
+
+## 82. Admin: painel de indicações, mês grátis visível e revogação
+
+- ✅ **Mês grátis visível:** na lista de Personais (tabela e cartões) a data de fim do acesso passa a ser a do bônus quando ele é o que sustenta o acesso, com a etiqueta "mês grátis". Quem tem mês grátis vigente **deixa de aparecer como inadimplente** e não entra nos contadores "trial expirando" e "inadimplentes" da Visão geral.
+- ✅ **Aba "Indicações"**: totais (indicações, em andamento, concedidas, revogadas, meses grátis dados, com sinal de abuso), ranking de quem mais indica e as 50 mais recentes. **Sinais de abuso:** mesmo telefone nas duas contas, concedida em menos de 1 hora depois de criar a conta, 3+ concedidas em 24 horas por indicador. Só nomes de personais e números (nada de aluno, e-mail ou CPF).
+- ✅ **Revogar indicação** (botão com confirmação): tira 30 dias de bônus do indicado e do indicador (se ele ganhou), marca como "revogada" (continua contando no teto) e grava no histórico de ações (aparece como "Indicação revogada"). Base: Termos 2.7 (fraude/abuso).
+- ✅ Banco (migration `20261071000000_admin_indicacoes.sql`): `admin_bonus_personais()`, `admin_indicacoes()`, `admin_revogar_indicacao()` (todas exigem admin + MFA), status `revogada`. Teste: `supabase/tests/admin_indicacoes.sql` (a)–(e), que simula o token do MFA.
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge**, e depois o teste (esperado "(a) OK" … "(e) OK"). Não testado ao vivo por mim: /admin exige MFA.
 
 ## 83. Landing: "Indique e ganhe"
 
