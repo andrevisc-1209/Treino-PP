@@ -994,3 +994,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - Limites conhecidos: se a pessoa abrir o e-mail de confirmação em **outro aparelho**, o código guardado se perde e a indicação não conta (o link da indicação precisa ser aberto no mesmo aparelho do cadastro). No painel admin, quem tem mês grátis aparece pela data de fim do trial/assinatura (não pelo bônus).
 - ⏳ Aviso ao indicador quando o mês é concedido (notificação/WhatsApp), painel de indicações no admin e a documentação para a landing ("Indique e ganhe").
 - Não testado ao vivo por mim (login com captcha): validar no celular com duas contas (a minha indicando uma nova).
+
+## 81. Aviso no sino quando o mês grátis da indicação é concedido
+
+- ✅ Quem foi **indicado** e quem **indicou** recebem um aviso no sino (e um toast em tempo real): "Você ganhou 1 mês grátis". Se o indicador já chegou ao teto de meses, o aviso diz isso com clareza ("Indicação concluída… você já chegou ao limite de 6 meses; quem entrou ganhou o dele"). O botão "Ver indicações" leva às Configurações. Nenhum aviso traz nome, e-mail ou CPF de ninguém.
+- ✅ Banco (migration `20261070000000_aviso_indicacao_concedida.sql`): `notificacoes_professor.aluno_id` passa a ser opcional **só** para o tipo novo `indicacao_concedida` (os outros tipos continuam exigindo aluno); um aviso por pessoa por indicação; o trigger de concessão cria os avisos na mesma transação. Teste: `supabase/tests/indicacao.sql` ganhou o item (h).
+- ⚠️ **Rodar a migration no SQL Editor ANTES do merge** (e o teste atualizado: esperado "(a) OK" … "(h) OK").
