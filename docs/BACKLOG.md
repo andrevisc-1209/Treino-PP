@@ -951,3 +951,10 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Política de Privacidade 1.7** (seção 3 e item de PostHog na seção 4) descreve exatamente isso. `landingAnalytics.test.ts` agora também confere o app: falha se a política e o código divergirem (inclusive se um quinto evento aparecer sem a política citá-lo). **Migration `20261068000000_politica_privacidade_1_7.sql`** registra a versão (sem ela o cadastro novo é recusado).
 - ⚠️ **Rodar a migration no SQL Editor ANTES do merge.** No painel do PostHog (dono): montar o funil (Product analytics → Funnels) com `cta_click` → `cadastro_aberto` → `cadastro_enviado` → `perfil_concluido` → `aluno_cadastrado`; conferir que Session replay está desligado; revisão do jurídico da seção 3 nova.
 - Não testado ao vivo por mim: eventos chegando ao PostHog (evitei enviar dados de teste ao projeto de produção); testei o aviso a 390px, a recusa e a persistência, e que nada do PostHog é requisitado antes do aceite.
+
+## 77. Marketing: posicionamento e plano inicial
+
+- ✅ `docs/MKT-POSICIONAMENTO.md` (v1): meta de 100 pagantes com a conta do funil (hipóteses a validar no PostHog), público (autônomo primeiro; assessoria de corrida/natação/triathlon depois), dores, promessa e três pilares (preço, funcionalidade, confiança), objeções e respostas, canais por ordem de retorno e plano dos primeiros 30 dias.
+- 📌 Conclusão principal: **R$ 300/mês de anúncio rende ~1–2 pagantes/mês**; os 100 pagantes dependem de prospecção direta no WhatsApp, Instagram orgânico, indicação e parcerias. A verba serve para impulsionar o conteúdo que já funcionou.
+- ⏳ Do dono: prazo da meta, quantos personais já usam hoje, prints com dados fictícios, decisão sobre indicação (1 mês grátis?), quem grava os Reels, revisão do jurídico (frases comparativas).
+- ⏳ Próximos documentos: calendário de conteúdo de 30 dias (roteiros de Reels) e mensagens de prospecção por WhatsApp.
