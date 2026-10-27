@@ -994,3 +994,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - Limites conhecidos: se a pessoa abrir o e-mail de confirmação em **outro aparelho**, o código guardado se perde e a indicação não conta (o link da indicação precisa ser aberto no mesmo aparelho do cadastro). No painel admin, quem tem mês grátis aparece pela data de fim do trial/assinatura (não pelo bônus).
 - ⏳ Aviso ao indicador quando o mês é concedido (notificação/WhatsApp), painel de indicações no admin e a documentação para a landing ("Indique e ganhe").
 - Não testado ao vivo por mim (login com captcha): validar no celular com duas contas (a minha indicando uma nova).
+
+## 83. Landing: "Indique e ganhe"
+
+- ✅ Sob os preços, uma linha discreta: "Indique um colega: quando ele cadastrar 3 alunos, vocês dois ganham 1 mês grátis. Como funciona" (o link abre a pergunta do FAQ, que começa fechada), e a pergunta nova **"Tem programa de indicação?"** no FAQ, com a regra e o link para os Termos de Uso.
+- ✅ `src/features/legal/landingIndicacao.test.ts` falha se a landing e a cláusula 2.7 dos Termos divergirem (3 alunos, 1 mês, até 6 meses) ou se a landing prometer dinheiro/comissão.
+- ⚠️ **Antes do merge: o jurídico deve rever a cláusula 2.7 dos Termos (já no ar desde a #192) e este texto da landing**, porque a landing é pública. Validado a 390px: o link abre o FAQ e não há rolagem horizontal. Sem migration e sem deploy do banco.
