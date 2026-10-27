@@ -107,10 +107,10 @@ BEGIN
   v_log := array_append(v_log, CASE WHEN v_st = 'concedida' AND NOT v_ganhou AND v_bonus_a = v_bonus_a2 AND v_bonus_b > v_bonus_b2
     THEN '(f) OK: teto cheio, só o indicado ganhou' ELSE '(f) FALHA: status=' || coalesce(v_st, 'NULL') || ' ganhou=' || coalesce(v_ganhou::TEXT, 'NULL') END);
 
-  -- (h) avisos no sino (as duas concessões: (d) e (f))
-  SELECT count(*) INTO v_n_a FROM treino.notificacoes_professor WHERE professional_id = v_a AND tipo = 'indicacao_concedida';
-  SELECT count(*) INTO v_n_a_sem FROM treino.notificacoes_professor WHERE professional_id = v_a AND tipo = 'indicacao_concedida' AND (payload->>'ganhou')::BOOLEAN = FALSE;
-  SELECT count(*) INTO v_n_b FROM treino.notificacoes_professor WHERE professional_id = v_b AND tipo = 'indicacao_concedida' AND aluno_id IS NULL;
+  -- (h) avisos no sino (as duas concessões: (d) e (f)); só os criados nesta transação (criada_em >= now()), para não somar avisos reais já existentes
+  SELECT count(*) INTO v_n_a FROM treino.notificacoes_professor WHERE professional_id = v_a AND tipo = 'indicacao_concedida' AND criada_em >= now();
+  SELECT count(*) INTO v_n_a_sem FROM treino.notificacoes_professor WHERE professional_id = v_a AND tipo = 'indicacao_concedida' AND criada_em >= now() AND (payload->>'ganhou')::BOOLEAN = FALSE;
+  SELECT count(*) INTO v_n_b FROM treino.notificacoes_professor WHERE professional_id = v_b AND tipo = 'indicacao_concedida' AND criada_em >= now() AND aluno_id IS NULL;
   SELECT count(*) INTO v_pessoal FROM treino.notificacoes_professor WHERE tipo = 'indicacao_concedida' AND professional_id IN (v_a, v_b) AND (payload ? 'nome' OR payload ? 'email' OR payload ? 'cpf');
   v_log := array_append(v_log, CASE WHEN v_n_a = 2 AND v_n_a_sem = 1 AND v_n_b = 2 AND v_pessoal = 0
     THEN '(h) OK: avisos no sino para os dois, o do teto cheio com ganhou=false' ELSE '(h) FALHA: a=' || v_n_a || ' a_sem=' || v_n_a_sem || ' b=' || v_n_b || ' pessoal=' || v_pessoal END);
