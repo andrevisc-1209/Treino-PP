@@ -1,5 +1,5 @@
-export const TERMOS_USO_VERSAO = '1.2'
-export const PRIVACIDADE_VERSAO = '1.7'
+export const TERMOS_USO_VERSAO = '1.3'
+export const PRIVACIDADE_VERSAO = '1.8'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
 
@@ -17,6 +17,7 @@ Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (a
 2.4. Planos e pagamento: depois do período de teste, a continuidade depende da contratação de um plano (mensal, trimestral ou semestral), pago via Mercado Pago (Pix, cartão ou boleto). O pagamento é avulso, por período, e não há renovação automática.
 2.5. Fim do período: ao término do período pago, o acesso é suspenso até nova contratação. Como não há renovação automática, não há assinatura recorrente a cancelar.
 2.6. Direito de arrependimento: o Usuário pode desistir da contratação em até 7 (sete) dias corridos contados do pagamento (CDC, art. 49), sem precisar justificar, e receber o reembolso integral do valor pago, pelo mesmo meio de pagamento. Para exercer o direito, basta pedir por contato@personalperto.com.br dentro do prazo. Com o reembolso, o acesso pago é encerrado.
+2.7. Programa de indicação: o Usuário pode convidar outro profissional com o seu código de indicação. Quando o convidado cria a conta com o código (até 7 dias depois de se cadastrar) e cadastra 3 (três) ou mais alunos com nomes diferentes, o convidante e o convidado ganham, cada um, 1 (um) mês de acesso gratuito, somado ao fim do acesso que já tinham. O convidante pode ganhar até 6 (seis) meses por esse programa; o convidado ganha sempre. O benefício não é pago em dinheiro, não é transferível e não vale para a própria conta nem para contas criadas só para obter o benefício (por exemplo, com alunos fictícios). A plataforma pode recusar ou revogar o benefício em caso de fraude ou abuso, e pode alterar ou encerrar o programa a qualquer momento, sem afetar benefícios já concedidos.
 
 3. Dados dos alunos e LGPD
 O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, VI). A plataforma atua como OPERADORA (art. 5º, VII), tratando esses dados somente em nome do Personal Trainer e conforme as instruções dele. Estas cláusulas constituem o contrato de tratamento de dados entre Controlador e Operadora (art. 39).
@@ -71,6 +72,7 @@ O operador responde solidariamente apenas quando descumpre a lei ou as instruç�
 • Dados de cobrança processados pelo Mercado Pago (Pix, cartão, boleto): assinatura e cobranças (execução de contrato — art. 7º, V).
 • Chave Pix informada para receber dos alunos: gerar o QR Code de cobrança (execução de contrato).
 • Dados de uso e acesso: suporte técnico, melhorias e detecção de falhas (legítimo interesse — art. 7º, IX).
+• Código de indicação: guardamos o seu código e a ligação entre a conta de quem indicou e a de quem foi indicado, apenas para conceder o benefício do programa de indicação (execução de contrato — art. 7º, V). Quem indica vê só quantas indicações teve e quantas geraram benefício, nunca o nome, o e-mail ou qualquer dado de quem foi indicado.
 2.2. Dados dos alunos
 • Nome, contato, objetivos, horários e dados de treino: gestão da agenda e do acompanhamento pelo Personal Trainer.
 • Dados de saúde (sensíveis, art. 11): medidas corporais (altura, peso, percentual de gordura e circunferências), lesões, cirurgias, medicamentos e respostas de bem-estar e de esforço percebido. Só são registrados com o consentimento específico e destacado do aluno (art. 11, I), dado preferencialmente por link enviado pelo Personal Trainer ou, em alternativa, por termo escrito colhido e guardado pelo próprio Personal Trainer.

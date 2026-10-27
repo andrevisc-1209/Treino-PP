@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { resumirAssinatura } from './resumo'
 import type { Assinatura } from './useAssinatura'
 
-const base: Assinatura = { status: 'trial', diasRestantesTrial: null, trialFim: null, plano: null, assinaturaFim: null, estaAtivo: true }
+const base: Assinatura = { status: 'trial', diasRestantesTrial: null, trialFim: null, plano: null, assinaturaFim: null, bonusAte: null, estaAtivo: true }
 const norm = (s: string) => s.replace(/\s/g, ' ')
 
 describe('resumirAssinatura', () => {

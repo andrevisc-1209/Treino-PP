@@ -8,6 +8,7 @@ import { useIsAdmin } from '@/features/admin/useIsAdmin'
 import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
 import { useAuth } from './AuthProvider'
 import { CompletarPerfilGate } from './CompletarPerfilGate'
+import { useAplicarIndicacaoGuardada } from '@/features/indicacao/api'
 
 // Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
 // execução, pós-treino) escondem a navegação global — ver docs/ux-audit e a
@@ -21,6 +22,12 @@ function IrParaLandingOuLogin() {
     if (!standalone) window.location.replace('/landing.html')
   }, [standalone])
   return standalone ? <Navigate to="/login" replace /> : null
+}
+
+/** Registra o código de indicação guardado (link ?ref=) logo depois de entrar. */
+function AplicarIndicacao({ userId }: { userId: string }) {
+  useAplicarIndicacaoGuardada(userId)
+  return null
 }
 
 /** Assina as notificações do personal (Realtime) enquanto o app autenticado está aberto. */
@@ -49,6 +56,7 @@ export function RequireAuth() {
     <ExigirAssinaturaProvider>
       <div className={modoFoco ? '' : 'pb-16'}>
         <NotificacoesRealtime professionalId={session.user.id} />
+        <AplicarIndicacao userId={session.user.id} />
         {!modoFoco && (
           <div className="mx-auto max-w-2xl px-4 pt-4">
             <TrialBanner />
