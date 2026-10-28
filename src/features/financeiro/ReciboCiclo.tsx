@@ -10,6 +10,7 @@ import { usePerfilProfissional } from '@/features/auth/api'
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
 import { useItensDoCiclo } from './useItensDoCiclo'
+import { avaliacaoDaFatura } from './avaliacao'
 import type { Fatura } from './api'
 import { baixarRelatorioCompleto, dadosRelatorioDeFatura, extrasDaFatura, statusDoCiclo } from './relatorio'
 import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoPorModalidade, resumoRecibo, textoCompartilharRecibo, textoResumoModalidade } from './recibo'
@@ -77,6 +78,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
   const pse = useMemo(() => pseMedioPorSemana(itens), [itens])
   const notas = useMemo(() => notasPorTreino(itens), [itens])
   const modalidades = useMemo(() => resumoPorModalidade(itens), [itens])
+  const avaliacao = avaliacaoDaFatura(fatura)
 
   const personalNome = perfil?.name?.trim() || 'Personal'
   const periodo = `${formatarDataCurta(fatura.periodo_inicio)} a ${formatarDataCurta(fatura.periodo_fim)}`
@@ -172,6 +174,25 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
                 Inclui ajuste de {formatarBRL(fatura.ajuste)}
                 {fatura.ajuste_descricao ? ` (${fatura.ajuste_descricao})` : ''}.
               </p>
+            )}
+
+            {avaliacao && (
+              <section className="recibo-bloco space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+                <h2 className="text-sm font-semibold" style={{ color: NAVY }}>
+                  Avaliação do personal
+                </h2>
+                {([['Conquistas', avaliacao.conquistas], ['Pontos de atenção', avaliacao.atencao], ['Próximos objetivos', avaliacao.proximos]] as const).map(
+                  ([rotulo, texto]) =>
+                    texto && (
+                      <div key={rotulo}>
+                        <p className="text-xs font-semibold" style={{ color: VERDE }}>
+                          {rotulo}
+                        </p>
+                        <p className="whitespace-pre-line text-sm text-slate-700">{texto}</p>
+                      </div>
+                    ),
+                )}
+              </section>
             )}
 
             {modalidades.length > 0 && (

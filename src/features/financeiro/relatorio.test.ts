@@ -4,6 +4,7 @@ import {
   dadosRelatorioDeFatura,
   formatarDuracao,
   cabecalhoDaTabela,
+  extrasDaFatura,
   fechamentoDaFatura,
   gerarRelatorioCompleto,
   localCurto,
@@ -148,6 +149,14 @@ describe('relatório completo do ciclo', () => {
     const d: DadosRelatorio = { ...dados, itens: [...dados.itens, item({ id: 'x', starts_at: '2026-10-09T15:30:00Z', a_distancia: true, fora_da_cobranca: true, modalidade: 'corrida' })] }
     expect(tilesResumo(d).find((t) => t.rotulo === 'Treino à distância')?.valor).toBe('1')
     expect(norm(resumoTotalRelatorio(d))).toBe('3 aulas · Total: R$ 280,00')
+  })
+  it('avaliação do personal: vem da fatura e o PDF sai com ela (inclusive texto longo)', async () => {
+    const extras = extrasDaFatura({ modelo: 'por_aula', qtd_aulas: 3, status: 'aberta', paga_em: null, vencimento: null, avaliacao_conquistas: 'Ótima constância', avaliacao_atencao: null, avaliacao_proximos: '  ' })
+    expect(extras.avaliacao).toEqual({ conquistas: 'Ótima constância', atencao: null, proximos: null })
+    expect(extrasDaFatura({ modelo: 'por_aula', qtd_aulas: 3, status: 'aberta', paga_em: null, vencimento: null }).avaliacao).toBeNull()
+    const longa = 'Evolução constante em todas as modalidades. '.repeat(11)
+    const doc = await gerarRelatorioCompleto({ ...dados, avaliacao: { conquistas: longa, atencao: longa, proximos: 'Correr 10 km' } })
+    expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
   })
 })
 

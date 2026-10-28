@@ -4,6 +4,7 @@
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
 import type { ModeloFatura } from './api'
+import { avaliacaoDaFatura, type AvaliacaoPersonal } from './avaliacao'
 import { ehModalidade, MODALIDADES_CONFIG } from '@/types/modalidades'
 import { frequenciaMedia, frequenciaSemanal, metricasDeTreino, notasPorTreino, ordenarItens, resumoPorModalidade, resumoRecibo, textoResumoModalidade, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
 
@@ -46,6 +47,8 @@ export type DadosRelatorio = {
   geradoEm?: string
   /** pacote de aulas: quantas aulas foram vendidas ("4 de 10 aulas") */
   aulasContratadas?: number
+  /** avaliação escrita pelo personal (conquistas, pontos de atenção, próximos objetivos); sem texto, a seção não aparece */
+  avaliacao?: AvaliacaoPersonal | null
   /** como o ciclo fecha: já pago, ou em aberto (com o Pix só se o personal pedir) */
   fechamento?: FechamentoRelatorio
 }
@@ -84,7 +87,7 @@ export function dadosRelatorioDeFatura(
   itens: ItemRecibo[],
   alunoNome: string,
   personalNome: string,
-  extras: Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento' | 'geradoEm'> = {},
+  extras: Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento' | 'geradoEm' | 'avaliacao'> = {},
 ): DadosRelatorio {
   return {
     ...extras,
@@ -388,6 +391,28 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
     y += 3
   }
 
+  // --- Avaliação do personal (só se ele escreveu) ---
+  if (d.avaliacao) {
+    titulo('Avaliação do personal')
+    const blocos: [string, string | null][] = [['Conquistas', d.avaliacao.conquistas], ['Pontos de atenção', d.avaliacao.atencao], ['Próximos objetivos', d.avaliacao.proximos]]
+    for (const [rotulo, texto] of blocos) {
+      if (!texto) continue
+      const linhasTexto = doc.splitTextToSize(texto, largBloco - 6) as string[]
+      garantirEspaco(8 + linhasTexto.length * 5)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(...VERDE_ESCURO)
+      doc.text(rotulo, margem + 2, y)
+      y += 5
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10.5)
+      doc.setTextColor(...TEXTO)
+      doc.text(linhasTexto, margem + 2, y)
+      y += linhasTexto.length * 5 + 3
+    }
+    y += 3
+  }
+
   // --- Tabela de aulas ---
   titulo(d.modelo === 'pacote' ? 'Aulas do pacote' : 'Aulas do ciclo')
   autoTable(doc, {
@@ -524,8 +549,8 @@ export function fechamentoDaFatura(
 
 /** Extras do relatório de uma fatura: aulas vendidas (pacote) e o fechamento. */
 export function extrasDaFatura(
-  f: { modelo: ModeloFatura; qtd_aulas: number; status: string; paga_em: string | null; vencimento: string | null },
+  f: { modelo: ModeloFatura; qtd_aulas: number; status: string; paga_em: string | null; vencimento: string | null; avaliacao_conquistas?: string | null; avaliacao_atencao?: string | null; avaliacao_proximos?: string | null },
   pixQrDataUrl?: string | null,
-): Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento'> {
-  return { aulasContratadas: f.modelo === 'pacote' ? f.qtd_aulas : undefined, fechamento: fechamentoDaFatura(f, pixQrDataUrl) }
+): Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento' | 'avaliacao'> {
+  return { aulasContratadas: f.modelo === 'pacote' ? f.qtd_aulas : undefined, fechamento: fechamentoDaFatura(f, pixQrDataUrl), avaliacao: avaliacaoDaFatura(f) }
 }

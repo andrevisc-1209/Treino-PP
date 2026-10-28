@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { dataSP, limitesDoDiaSP } from '@/lib/datas'
 import type { ItemRecibo } from './recibo'
+import type { colunasDaAvaliacao } from './avaliacao'
 import { volumeDaExecucao } from '@/features/execucoes/volume'
 import { ehModalidade, type DetalhesExecucao } from '@/types/modalidades'
 
@@ -194,6 +195,10 @@ export type Fatura = {
   enviada_em: string | null
   paga_em: string | null
   forma_pagamento: FormaPagamento | null
+  /** avaliação escrita pelo personal para o relatório (até 500 caracteres cada) */
+  avaliacao_conquistas?: string | null
+  avaliacao_atencao?: string | null
+  avaliacao_proximos?: string | null
   aluno?: { name: string; phone: string | null } | null
 }
 
@@ -534,4 +539,19 @@ export function itemDeExecucaoADistancia(e: ExecucaoADistancia): ItemRecibo {
     sessao: null,
   })
   return { ...(base as ItemRecibo), fora_da_cobranca: true }
+}
+
+/** Salva a avaliação do personal na fatura (aparece no PDF e no recibo). */
+export function useSalvarAvaliacaoFatura() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ faturaId, colunas }: { faturaId: string; colunas: ReturnType<typeof colunasDaAvaliacao> }) => {
+      const { error } = await supabase.from('faturas').update(colunas).eq('id', faturaId)
+      if (error) throw error
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['fatura', vars.faturaId] })
+      qc.invalidateQueries({ queryKey: ['faturas'] })
+    },
+  })
 }

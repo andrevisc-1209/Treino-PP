@@ -18,6 +18,7 @@ import { confirmarAcao } from '@/components/ConfirmSheet'
 import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
+import { AvaliacaoPersonalCard } from './AvaliacaoPersonalCard'
 import { BotaoRelatorioFatura } from './BotaoRelatorio'
 import { dadosRelatorioDeFatura, extrasDaFatura, type DadosRelatorio } from './relatorio'
 import {
@@ -252,6 +253,8 @@ export function FaturaPage() {
           )}
           {fatura.status !== 'cancelada' && <BotaoRelatorioFatura dados={dadosRelatorio} />}
         </div>
+
+        {fatura.status !== 'cancelada' && <AvaliacaoPersonalCard fatura={fatura} />}
 
         {fatura.status !== 'cancelada' && (
           <div className="flex flex-wrap gap-2">
