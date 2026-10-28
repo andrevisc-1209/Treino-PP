@@ -1,5 +1,7 @@
 # Termos de Uso · sugestões de ajuste (para o jurídico)
 
+> **Status (28/10/2026): A a F aprovadas pelo jurídico e aplicadas nos Termos 1.6 (BACKLOG item 90).**
+
 Feito em 28/10/2026 lendo os Termos 1.4 contra o que o app faz hoje. **Não é parecer jurídico**: são pontos em que o texto e o produto
 divergem ou ficam em branco, com texto proposto. O que já entrou na versão **1.5** (PR do BACKLOG item 89) está marcado como feito.
 

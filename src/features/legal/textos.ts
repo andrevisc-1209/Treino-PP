@@ -1,4 +1,4 @@
-export const TERMOS_USO_VERSAO = '1.5'
+export const TERMOS_USO_VERSAO = '1.6'
 export const PRIVACIDADE_VERSAO = '1.9'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
@@ -9,6 +9,7 @@ Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (a
 1.1. O Treino · Personal Perto é uma ferramenta de apoio para o Personal Trainer organizar o cadastro de alunos, treinos, agenda, evolução física e cobranças.
 1.2. A plataforma é apenas um meio tecnológico. Ela NÃO substitui avaliação médica, anamnese presencial nem prescrição profissional. A responsabilidade técnica, ética e legal pelo plano de treino, pela adequação dos exercícios e pelo acompanhamento do aluno é do Personal Trainer que a utiliza, nos termos do Código de Ética do Sistema CONFEF/CREFs.
 1.3. A plataforma está em fase Beta: o Usuário aceita receber correções, melhorias e atualizações periódicas, que podem alterar funcionalidades existentes.
+1.4. Pagamentos entre Personal Trainer e aluno: a plataforma não recebe, não intermedeia e não repassa valores pagos pelos alunos ao Personal Trainer. Ela apenas organiza os ciclos, gera as faturas e prepara a mensagem de cobrança. A cobrança, o recebimento e as obrigações fiscais decorrentes da relação com o aluno são exclusivamente do Personal Trainer.
 
 2. Cadastro, assinatura e período de teste
 2.1. Elegibilidade: o serviço é destinado a profissionais de Educação Física. Ao se cadastrar, o Usuário declara estar habilitado para o exercício da profissão (Lei nº 9.696/1998) e é responsável por manter sua situação profissional regular.
@@ -19,6 +20,7 @@ Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (a
 2.6. Direito de arrependimento: o Usuário pode desistir da contratação em até 7 (sete) dias corridos contados do pagamento (CDC, art. 49), sem precisar justificar, e receber o reembolso integral do valor pago, pelo mesmo meio de pagamento. Para exercer o direito, basta pedir por contato@personalperto.com.br dentro do prazo. Com o reembolso, o acesso pago é encerrado.
 2.7. Programa de indicação: o Usuário pode convidar outro profissional com o seu código de indicação. Quando o convidado cria a conta com o código (até 7 dias depois de se cadastrar) e cadastra 3 (três) ou mais alunos com nomes diferentes, o convidante e o convidado ganham, cada um, 1 (um) mês de acesso gratuito, somado ao fim do acesso que já tinham. O convidante pode ganhar até 6 (seis) meses por esse programa; o convidado ganha sempre. O benefício não é pago em dinheiro, não é transferível e não vale para a própria conta nem para contas criadas só para obter o benefício (por exemplo, com alunos fictícios). A plataforma pode recusar ou revogar o benefício em caso de fraude ou abuso, e pode alterar ou encerrar o programa a qualquer momento, sem afetar benefícios já concedidos.
 2.8. Exclusão da conta: o Usuário pode excluir a própria conta a qualquer momento, em Configurações → Excluir minha conta. O acesso é bloqueado na hora e os dados são eliminados de vez em até 30 (trinta) dias, período em que o pedido pode ser cancelado. A exclusão elimina também os dados dos alunos do Usuário, que deve guardar antes o que precisar, e não gera reembolso do plano em vigor (o direito de arrependimento da cláusula 2.6 continua valendo). Ficam guardados por 5 (cinco) anos, por obrigação legal, apenas os registros dos pagamentos do plano, sem identificação do Usuário (Política de Privacidade, seção 5).
+2.9. Uso aceitável e suspensão: é proibido criar contas falsas, burlar limites ou regras do serviço, usar a plataforma para enviar mensagens indesejadas ou ilícitas ou acessar dados que não sejam do próprio Usuário. Em caso de violação, a plataforma pode suspender ou encerrar a conta, avisando o Usuário, salvo se houver risco à segurança. Sempre que possível, o Usuário poderá baixar os seus alunos (cláusula 3.6) antes do encerramento.
 
 3. Dados dos alunos e LGPD
 O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, VI). A plataforma atua como OPERADORA (art. 5º, VII), tratando esses dados somente em nome do Personal Trainer e conforme as instruções dele. Estas cláusulas constituem o contrato de tratamento de dados entre Controlador e Operadora (art. 39).
@@ -38,6 +40,9 @@ O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, V
 • os dados estão corretos e, para menores de 18 anos, ele tem o consentimento do responsável legal (art. 14).
 A plataforma lê o arquivo no aparelho do Personal Trainer, mostra uma revisão antes de gravar e grava só os campos básicos. Ela não guarda o arquivo enviado, não verifica a origem nem a exatidão dos dados e pode recusar arquivos fora do formato ou acima do limite. O Personal Trainer pode desfazer a importação logo depois de concluída. Os alunos importados seguem as mesmas regras dos demais (lixeira, exclusão e consentimento de saúde).
 3.6. Exportação de alunos: o Personal Trainer pode baixar os seus alunos em arquivo CSV (nome, telefone, e-mail, data de nascimento, sexo e objetivos, sem dados de saúde). O arquivo baixado fica no aparelho do Personal Trainer, fora da proteção da plataforma: ele é responsável por guardá-lo com segurança, não compartilhá-lo sem base legal e apagá-lo quando não precisar mais (LGPD, art. 46).
+3.7. Mensagens aos alunos: a plataforma prepara textos (por exemplo, de cobrança, agenda e treino) e o e-mail de consentimento de saúde, mas quem decide enviar, e para quem, é o Personal Trainer, que responde por ter relação e autorização do aluno para o contato. As mensagens da plataforma não levam dados de saúde, e o Personal Trainer não deve incluí-los ao editar o texto ou ao conversar com o aluno.
+3.8. Link do treino à distância: quem tem o link vê o treino e registra a execução sem precisar de senha. O link vale por um prazo (de 24 horas a 30 dias, escolhido pelo Personal Trainer). O Personal Trainer deve enviá-lo somente ao próprio aluno e responde por quem o recebe.
+3.9. Lixeira: o aluno apagado pelo Personal Trainer fica 30 (trinta) dias na lixeira, quando ainda pode ser restaurado, e depois é eliminado de vez.
 
 4. Disponibilidade
 4.1. O serviço é oferecido "como está", sem garantia de disponibilidade ininterrupta ou de ausência de erros, compatível com a fase Beta.
@@ -60,7 +65,7 @@ Os Termos podem ser alterados. Mudanças relevantes serão comunicadas no aplica
 Estes Termos são regidos pela legislação brasileira. As partes elegem o foro da comarca do Rio de Janeiro/RJ para resolver eventuais disputas, com renúncia a qualquer outro, ressalvado o direito de o consumidor, quando a lei assim determinar, litigar no foro do seu domicílio.
 
 9. Contato
-Suporte técnico: canais oficiais de atendimento do Personal Perto.
+Suporte técnico: Central de ajuda e botão "Reportar um problema", dentro do app, e contato@personalperto.com.br.
 Privacidade e direitos de titular: contato@personalperto.com.br`
 
 export const PRIVACIDADE_TEXTO = `Política de Privacidade e Proteção de Dados (v${PRIVACIDADE_VERSAO})
