@@ -11,6 +11,7 @@ import {
   Hourglass,
   KeyRound,
   LogOut,
+  MapPin,
   MoreVertical,
   Pencil,
   Search,
@@ -35,7 +36,7 @@ import { ConsentimentosSection } from './ConsentimentosSection'
 import { IndicacoesSection } from './IndicacoesSection'
 import { fimDoAcesso } from './indicacoes'
 import { RelatosSection } from './RelatosSection'
-import { ABAS_ADMIN, abaDaUrl, descreverTreinos, linkMapsCidade, rotuloCidade, type AbaAdmin, type MetricasPersonal } from './personais'
+import { ABAS_ADMIN, abaDaUrl, cidadeDaUrl, descreverTreinos, filtrarPorCidade, linkMapsCidade, rotuloCidade, type AbaAdmin, type MetricasPersonal } from './personais'
 import { HistoricoSection } from './HistoricoSection'
 import { FinanceiroSection } from './FinanceiroSection'
 import { IndicadoresSection } from './IndicadoresSection'
@@ -144,6 +145,10 @@ function AdminDashboard() {
   const [params, setParams] = useSearchParams()
   const aba = abaDaUrl(params.get('aba'))
   const irParaAba = (id: AbaAdmin) => setParams({ aba: id }, { replace: true })
+  // a cidade filtra a lista de personais (?cidade=): vem do clique na cidade da Visão geral ou da própria lista
+  const cidade = cidadeDaUrl(params.get('cidade'))
+  const verPersonaisDaCidade = (c: string) => setParams({ aba: 'personais', cidade: c }, { replace: true })
+  const limparCidade = () => setParams({ aba: 'personais' }, { replace: true })
   const relatos = useAdminRelatos()
   const relatosEmAberto = (relatos.data ?? []).filter((r) => r.status !== 'resolvido').length
   // a busca vive na URL (?busca=), para o "Ver cadastro" dos relatos abrir a lista já filtrada
@@ -161,12 +166,12 @@ function AdminDashboard() {
 
   const listaFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase()
-    return (personais.data ?? []).filter((p) => {
+    return filtrarPorCidade(personais.data ?? [], cidade).filter((p) => {
       const bateBusca = !termo || p.name.toLowerCase().includes(termo) || (p.email ?? '').toLowerCase().includes(termo)
       const bateStatus = !filtroStatus || p.status === filtroStatus
       return bateBusca && bateStatus
     })
-  }, [personais.data, busca, filtroStatus])
+  }, [personais.data, busca, filtroStatus, cidade])
 
   const visaoGeral = useMemo(() => {
     const lista = personais.data ?? []
@@ -234,7 +239,7 @@ function AdminDashboard() {
                 {(regioes.data ?? []).map((r, i) => (
                   <tr key={r.cidade} className={`border-b border-slate-100 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
                     <td className="py-2 pr-3 text-slate-700">
-                      <CidadeComMaps cidade={r.cidade} />
+                      <CidadeComMaps cidade={r.cidade} onFiltrar={verPersonaisDaCidade} />
                     </td>
                     <td className="py-2 pr-3 text-slate-600">{r.qtd}</td>
                   </tr>
@@ -257,6 +262,16 @@ function AdminDashboard() {
           <>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="mb-3 font-heading font-semibold text-accent">Personais</h2>
+          {cidade && (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-sm font-medium text-brand-hover">
+                Cidade: {cidade} · {listaFiltrada.length} {listaFiltrada.length === 1 ? 'personal' : 'personais'}
+              </span>
+              <button type="button" onClick={limparCidade} className="min-h-11 rounded-xl px-3 text-sm font-medium text-slate-700 active:bg-slate-100">
+                Limpar filtro ✕
+              </button>
+            </div>
+          )}
           <div className="mb-4 flex flex-col gap-2 sm:flex-row">
             <div className="relative sm:max-w-xs sm:flex-1">
               <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -296,7 +311,7 @@ function AdminDashboard() {
                     <td className="py-2.5 pr-3 font-medium text-slate-800">{p.name || '—'}</td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.email ?? '—'}</td>
                     <td className="py-2.5 pr-3 text-slate-600">
-                      <CidadeComMaps cidade={p.cidade} />
+                      <CidadeComMaps cidade={p.cidade} onFiltrar={verPersonaisDaCidade} />
                     </td>
                     <td className="py-2.5 pr-3">
                       <StatusBadge status={p.status} />
@@ -338,7 +353,7 @@ function AdminDashboard() {
                   <div>
                     <dt className="inline">Cidade: </dt>
                     <dd className="inline text-slate-700">
-                      <CidadeComMaps cidade={p.cidade} />
+                      <CidadeComMaps cidade={p.cidade} onFiltrar={verPersonaisDaCidade} />
                     </dd>
                   </div>
                   <div>
@@ -409,14 +424,24 @@ function AdminDashboard() {
   )
 }
 
-/** Cidade/UF do cadastro do personal, com link para o Google Maps; vazio = "Não informado". */
-function CidadeComMaps({ cidade }: { cidade: string | null }) {
+/**
+ * Cidade/UF do cadastro do personal: tocar nela abre a lista de personais daquela cidade; o ícone ao lado abre o Google Maps.
+ * Vazio = "Não informado" (sem link).
+ */
+function CidadeComMaps({ cidade, onFiltrar }: { cidade: string | null; onFiltrar: (cidade: string) => void }) {
   const link = linkMapsCidade(cidade)
-  if (!link) return <span className="text-slate-500">{rotuloCidade(cidade)}</span>
+  const rotulo = rotuloCidade(cidade)
   return (
-    <a href={link} target="_blank" rel="noopener noreferrer" className="text-brand-hover underline" aria-label={`${rotuloCidade(cidade)} no Google Maps`}>
-      {rotuloCidade(cidade)}
-    </a>
+    <span className="inline-flex items-center gap-1">
+      <button type="button" onClick={() => onFiltrar(rotulo)} className="min-h-8 text-left text-brand-hover underline" aria-label={`Ver personais de ${rotulo}`}>
+        {rotulo}
+      </button>
+      {link && (
+        <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex size-8 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100" aria-label={`${rotulo} no Google Maps`}>
+          <MapPin size={14} aria-hidden />
+        </a>
+      )}
+    </span>
   )
 }
 

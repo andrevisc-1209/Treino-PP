@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { abaDaUrl, descreverTreinos, linkMapsCidade, NAO_INFORMADO, ROTULO_ACAO_ADMIN, rotuloCidade } from './personais'
+import { abaDaUrl, cidadeDaUrl, descreverTreinos, filtrarPorCidade, linkMapsCidade, NAO_INFORMADO, ROTULO_ACAO_ADMIN, rotuloCidade } from './personais'
 
 describe('cidade do personal', () => {
   it('vazio vira "Não informado" e não gera link', () => {
@@ -36,3 +36,29 @@ describe('abas do admin', () => {
     for (const a of ['reset_senha', 'alterar_trial', 'alterar_plano', 'alterar_cpf']) expect(ROTULO_ACAO_ADMIN[a]).toBeTruthy()
   })
 })
+
+describe('cidade como filtro da lista de personais', () => {
+  const lista = [
+    { id: 'a', cidade: 'Curitiba/PR' },
+    { id: 'b', cidade: 'Rio de Janeiro/RJ' },
+    { id: 'c', cidade: 'Curitiba/PR' },
+    { id: 'd', cidade: null },
+    { id: 'e', cidade: '  ' },
+  ]
+  it('sem cidade devolve todos', () => {
+    expect(filtrarPorCidade(lista, '')).toHaveLength(5)
+    expect(filtrarPorCidade(lista, '   ')).toHaveLength(5)
+  })
+  it('filtra pela cidade exata', () => {
+    expect(filtrarPorCidade(lista, 'Curitiba/PR').map((p) => p.id)).toEqual(['a', 'c'])
+    expect(filtrarPorCidade(lista, 'Salvador/BA')).toEqual([])
+  })
+  it('"Não informado" pega quem não cadastrou cidade', () => {
+    expect(filtrarPorCidade(lista, NAO_INFORMADO).map((p) => p.id)).toEqual(['d', 'e'])
+  })
+  it('cidadeDaUrl limpa espaços e aceita ausência', () => {
+    expect(cidadeDaUrl(' Curitiba/PR ')).toBe('Curitiba/PR')
+    expect(cidadeDaUrl(null)).toBe('')
+  })
+})
+
