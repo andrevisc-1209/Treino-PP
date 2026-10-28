@@ -11,6 +11,7 @@ import { formatarNumero } from '@/lib/format'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 import { tempoRestante } from './prazo'
 import { CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
+import { confirmarDuracaoSeAtipica } from '@/features/sessoes/duracaoAtipica'
 import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -127,6 +128,7 @@ export function TreinoPublicoPage() {
 
   const concluir = async () => {
     if (!treino) return
+    if (!(await confirmarDuracaoSeAtipica(duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin)))) return
     setErro(null)
     setEnviando(true)
     try {

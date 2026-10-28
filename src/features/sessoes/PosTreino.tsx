@@ -1,3 +1,4 @@
+import { confirmarDuracaoSeAtipica } from './duracaoAtipica'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -375,7 +376,7 @@ export function PosTreino({
 
   const cargaInterna = pse != null && duracao.trim() ? pse * Number(duracao) : null
 
-  const concluir = () => {
+  const concluir = async () => {
     if (pse == null) {
       setErro('Informe o PSE')
       return
@@ -384,6 +385,7 @@ export function PosTreino({
       setErro('Informe a duração')
       return
     }
+    if (!(await confirmarDuracaoSeAtipica(Number(duracao)))) return
     setErro(null)
     onConcluirInicio?.()
     const duracaoMin = Number(duracao)

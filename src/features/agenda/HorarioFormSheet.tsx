@@ -5,6 +5,7 @@ import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
 import { cn, desambiguarPorNome } from '@/lib/utils'
 import { ORDEM_SEMANA_SEG_DOM, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { confirmarAcao } from '@/components/ConfirmSheet'
+import { confirmarDuracaoSeAtipica } from '@/features/sessoes/duracaoAtipica'
 import { conflitosDoHorario, descreverConflitos } from './conflitos'
 import type { HorarioFixoLinha } from './horarioGrupo'
 
@@ -76,6 +77,7 @@ export function HorarioFormSheet({
       setErro('Informe a hora de início')
       return
     }
+    if (!(await confirmarDuracaoSeAtipica(valor.duration_min, 'aula'))) return
     setErro(null)
     // horário já ocupado: o aviso amarelo é fácil de não ver; ao salvar, o personal precisa confirmar que quer mesmo usar essa agenda
     if (conflitos.length > 0) {
