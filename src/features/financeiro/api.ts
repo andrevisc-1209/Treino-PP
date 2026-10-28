@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { dataSP, limitesDoDiaSP } from '@/lib/datas'
 import type { ItemRecibo } from './recibo'
 import type { colunasDaAvaliacao } from './avaliacao'
+import { paceEmSegundos } from './evolucaoDoCiclo'
 import { volumeDaExecucao } from '@/features/execucoes/volume'
 import { ehModalidade, type DetalhesExecucao } from '@/types/modalidades'
 
@@ -99,7 +100,7 @@ export function useRemoverAlunoCobranca() {
 // ============================================================
 
 /** Sessão ligada à aula, com o que o relatório do ciclo usa: nota, duração, modalidade e séries concluídas (nenhum dado de prontidão). */
-const SELECT_SESSAO_DETALHE = 'sessao:sessoes(session_date, post_pse, prof_rating, duration_minutes, plano:planos(modalidade, name), sessao_exercicios(sessao_series(completed)))'
+const SELECT_SESSAO_DETALHE = 'sessao:sessoes(session_date, post_pse, prof_rating, duration_minutes, plano:planos(modalidade, name), sessao_exercicios(exercicio_id, exercicio:exercicios(name), sessao_series(completed, load_kg)))'
 
 type SessaoDetalhe = {
   session_date: string
@@ -107,7 +108,7 @@ type SessaoDetalhe = {
   prof_rating: number | null
   duration_minutes?: number | null
   plano?: { modalidade: string | null; name?: string | null } | null
-  sessao_exercicios?: { sessao_series: { completed: boolean }[] | null }[] | null
+  sessao_exercicios?: { exercicio_id?: string; exercicio?: { name: string } | null; sessao_series: { completed: boolean; load_kg?: number | null }[] | null }[] | null
 }
 
 export type ParticipacaoAberta = {
@@ -435,6 +436,12 @@ export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
   // só números do resultado (distância, tempo, séries, PSE): prontidão e demais respostas do aluno nunca entram no relatório
   const positivo = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null)
   const doLink = !l.sessao && det?.exercicios ? det.exercicios : []
+  // maior carga feita em cada exercício (só séries concluídas); serve para mostrar a evolução do ciclo
+  const cargasSessao = (l.sessao?.sessao_exercicios ?? []).flatMap((e) => {
+    const carga = Math.max(0, ...(e.sessao_series ?? []).filter((x) => x.completed).map((x) => x.load_kg ?? 0))
+    return e.exercicio_id && carga > 0 ? [{ exercicio_id: e.exercicio_id, nome: e.exercicio?.name ?? 'Exercício', carga_kg: carga }] : []
+  })
+  const cargasLink = doLink.flatMap((e) => (e.carga_kg && e.carga_kg > 0 ? [{ exercicio_id: e.exercicio_id, nome: e.nome, carga_kg: e.carga_kg }] : []))
   const exerciciosLink = doLink.filter((e) => e.series_feitas > 0)
   return {
     id: l.id,
@@ -448,6 +455,8 @@ export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
     data_sessao: l.sessao?.session_date ?? null,
     modalidade,
     execucao_id: l.execucao_id ?? null,
+    cargas: l.sessao ? cargasSessao : cargasLink,
+    pace_seg_km: paceEmSegundos(det?.resultado?.pace_medio ?? det?.resultado?.run_pace_medio),
     plano_nome: l.sessao?.plano?.name?.trim() || null,
     volume: ehModalidade(modalidade) && det ? volumeDaExecucao(modalidade, det) : undefined,
     duracao_execucao_min: positivo(det?.duracao_min) ?? positivo(det?.resultado?.tempo_min) ?? positivo(det?.resultado?.duracao_min),
