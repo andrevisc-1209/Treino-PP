@@ -9,6 +9,9 @@ const ok: CobrancaFormValor = {
   diasVencimentoTexto: '5',
   cobrarDistancia: false,
   valorDistanciaTexto: '',
+  qtdPacoteTexto: '',
+  validadePacoteTexto: '60',
+  feitasPacoteTexto: '',
 }
 
 describe('validarCobranca (limites do banco: dia 1–28, vencimento 0–30)', () => {
@@ -31,5 +34,21 @@ describe('validarCobranca (limites do banco: dia 1–28, vencimento 0–30)', ()
   it('treino à distância ligado exige valor', () => {
     expect(validarCobranca({ ...ok, cobrarDistancia: true, valorDistanciaTexto: '' })).toMatch(/à distância/i)
     expect(validarCobranca({ ...ok, cobrarDistancia: true, valorDistanciaTexto: '80' })).toBeNull()
+  })
+})
+
+describe('validarCobranca — pacote de aulas', () => {
+  const pacote: CobrancaFormValor = { ...ok, modelo: 'pacote', valorTexto: '800', qtdPacoteTexto: '10', diaCicloTexto: '', diasVencimentoTexto: '' }
+  it('não exige ciclo nem vencimento', () => {
+    expect(validarCobranca(pacote)).toBeNull()
+  })
+  it('exige valor, quantidade e prazo válidos', () => {
+    expect(validarCobranca({ ...pacote, valorTexto: '' })).toMatch(/valor/i)
+    expect(validarCobranca({ ...pacote, qtdPacoteTexto: '' })).toMatch(/Quantidade/)
+    expect(validarCobranca({ ...pacote, validadePacoteTexto: '0' })).toMatch(/Prazo/)
+  })
+  it('na edição, não aceita menos aulas feitas do que o app já registrou', () => {
+    expect(validarCobranca({ ...pacote, feitasPacoteTexto: '1' }, 3)).toMatch(/já registrou/)
+    expect(validarCobranca({ ...pacote, feitasPacoteTexto: '3' }, 3)).toBeNull()
   })
 })

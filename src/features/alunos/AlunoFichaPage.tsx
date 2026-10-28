@@ -6,6 +6,9 @@ import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
 import { PlanosTab } from '@/features/planos/PlanosTab'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
+import { usePacotesAtivos } from '@/features/pacotes/api'
+import { PacoteChip } from '@/features/pacotes/PacoteChip'
+import { situacaoDoPacote } from '@/features/pacotes/pacote'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
@@ -184,6 +187,8 @@ export function AlunoFichaPage() {
   const { data: aluno, isLoading, error } = useAluno(id)
   const { data: pesos } = usePesos(id)
   const { data: sessaoEmAndamento } = useSessaoEmAndamento(id)
+  const { data: pacotes } = usePacotesAtivos()
+  const pacote = id ? pacotes?.get(id) : undefined
   const { data: consentimento } = useConsentimentoDetalhado(id)
   const revogar = useRevogarConsentimento(id ?? '')
   const [todasAvaliacoes, setTodasAvaliacoes] = useState(false)
@@ -291,6 +296,8 @@ export function AlunoFichaPage() {
         return (
           <div className="mb-4 space-y-2">
             {demograficos.length > 0 && <p className="text-sm text-slate-500">{demograficos.join(' · ')}</p>}
+
+            {pacote && <PacoteChip situacao={situacaoDoPacote(pacote.pacote, pacote.presencas, hojeSP())} className="mr-2" />}
 
             {badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP(), aluno.nome_prova) && (
               <p className="inline-block rounded-full bg-brand-soft px-3 py-1 text-sm font-semibold text-brand-hover">{badgeProva(aluno.prova_alvo, aluno.data_prova, hojeSP(), aluno.nome_prova)}</p>

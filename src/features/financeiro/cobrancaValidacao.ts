@@ -1,5 +1,6 @@
 import type { CobrancaFormValor } from './CobrancaForm'
 import { validarDistancia } from './distancia'
+import { validarPacote } from '@/features/pacotes/pacote'
 
 /**
  * Valida o formulário de cobrança com os MESMOS limites do banco (aluno_cobranca): valor > 0, dia do ciclo de 1 a 28 e
@@ -7,9 +8,12 @@ import { validarDistancia } from './distancia'
  * (o aluno era salvo, mas o erro ficava escondido na etapa 2, enquanto o usuário já estava na etapa 3).
  * Devolve a mensagem do primeiro problema, ou null se está tudo certo.
  */
-export function validarCobranca(v: CobrancaFormValor): string | null {
+export function validarCobranca(v: CobrancaFormValor, minimoFeitasPacote = 0): string | null {
   const valor = Number(v.valorTexto.replace(',', '.'))
   if (!v.valorTexto.trim() || Number.isNaN(valor) || valor <= 0) return 'Informe um valor maior que zero'
+
+  // pacote não tem ciclo nem vencimento: vale o que o banco exige em aluno_pacotes
+  if (v.modelo === 'pacote') return validarPacote({ qtdTexto: v.qtdPacoteTexto, validadeTexto: v.validadePacoteTexto, feitasTexto: v.feitasPacoteTexto }, minimoFeitasPacote)
 
   const dia = Number(v.diaCicloTexto)
   if (!v.diaCicloTexto.trim() || !Number.isInteger(dia) || dia < 1 || dia > 28) return 'Dia do ciclo deve ser entre 1 e 28'

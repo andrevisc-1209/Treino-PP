@@ -29,6 +29,9 @@ import { ListaSkeleton } from "@/components/Skeleton";
 import { confirmarAcao } from "@/components/ConfirmSheet";
 import { mostrarDesfazer } from "@/components/UndoToast";
 import { useAlunosComCobranca } from "@/features/financeiro/api";
+import { usePacotesAtivos } from "@/features/pacotes/api";
+import { PacoteChip } from "@/features/pacotes/PacoteChip";
+import { situacaoDoPacote } from "@/features/pacotes/pacote";
 import {
   buscarResumoApagar,
   mensagemApagarAluno,
@@ -72,6 +75,7 @@ export function AlunosPage() {
   const { data: alunosNaLixeira, isLoading: carregandoLixeira } =
     useAlunosNaLixeira();
   const { data: alunosComCobranca } = useAlunosComCobranca();
+  const { data: pacotes } = usePacotesAtivos();
   const { data: treinosEstaSemana } = useTreinosEstaSemana();
   const { data: ultimasSessoes } = useUltimaSessaoPorAluno();
   const comCobrancaPendente = useAlunosComCobrancaPendente();
@@ -97,9 +101,11 @@ export function AlunosPage() {
       : aba === "arquivados"
         ? alunosArquivados
         : alunosNaLixeira;
-  const idsComCobranca = new Set(
-    (alunosComCobranca ?? []).map((c) => c.aluno_id),
-  );
+  // aluno de pacote também tem valor definido (o pacote), mesmo sem cobrança por aula/mensal
+  const idsComCobranca = new Set([
+    ...(alunosComCobranca ?? []).map((c) => c.aluno_id),
+    ...(pacotes?.keys() ?? []),
+  ]);
 
   // dias sem treino só fazem sentido para alunos ativos, e só depois de carregar as sessões (senão todos pareceriam "nunca treinou")
   const hoje = hojeSP();
@@ -502,6 +508,17 @@ export function AlunosPage() {
                         {a.objetivos[0] && (
                           <p className="truncate text-xs text-slate-500">
                             {a.objetivos[0]}
+                          </p>
+                        )}
+                        {aba === "ativos" && pacotes?.get(a.id) && (
+                          <p className="mt-1">
+                            <PacoteChip
+                              situacao={situacaoDoPacote(
+                                pacotes.get(a.id)!.pacote,
+                                pacotes.get(a.id)!.presencas,
+                                hoje,
+                              )}
+                            />
                           </p>
                         )}
                         {aba === "ativos" && ultimasExecucoes?.get(a.id) && (

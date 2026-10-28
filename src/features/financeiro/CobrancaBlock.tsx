@@ -1,4 +1,11 @@
 import { useEffect, useState } from 'react'
+import { confirmarAcao } from '@/components/ConfirmSheet'
+import { hojeSP } from '@/lib/datas'
+import { formatarDataBR } from '@/lib/format'
+import { PacoteChip } from '@/features/pacotes/PacoteChip'
+import { useEncerrarPacote, usePacotesAtivos, useSalvarPacote } from '@/features/pacotes/api'
+import { formularioDoPacote, payloadPacote } from '@/features/pacotes/formulario'
+import { situacaoDoPacote } from '@/features/pacotes/pacote'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { Pencil } from 'lucide-react'
 import { Button, BottomSheet } from '@/components/ui'
@@ -17,12 +24,20 @@ function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
     diasVencimentoTexto: String(c.dias_vencimento),
     cobrarDistancia: !!c.cobrar_distancia,
     valorDistanciaTexto: c.valor_distancia != null ? String(c.valor_distancia) : '',
+    qtdPacoteTexto: '',
+    validadePacoteTexto: '60',
+    feitasPacoteTexto: '',
   }
 }
 
 export function CobrancaBlock({ alunoId }: { alunoId: string }) {
   const { data: cobranca, isLoading } = useAlunoCobranca(alunoId)
   const salvar = useSalvarAlunoCobranca()
+  const { data: pacotes, isLoading: carregandoPacote } = usePacotesAtivos()
+  const salvarPacote = useSalvarPacote()
+  const encerrarPacote = useEncerrarPacote()
+  const atual = pacotes?.get(alunoId)
+  const situacao = atual ? situacaoDoPacote(atual.pacote, atual.presencas, hojeSP()) : null
 
   const [editando, setEditando] = useState(false)
   const [valor, setValor] = useState<CobrancaFormValor>(valorInicialCobranca())
@@ -30,17 +45,38 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
 
   useEffect(() => {
     if (editando) {
-      setValor(cobranca ? paraFormulario(cobranca) : valorInicialCobranca())
+      setValor(atual ? formularioDoPacote(atual.pacote, situacao!.usadas, valorInicialCobranca()) : cobranca ? paraFormulario(cobranca) : valorInicialCobranca())
       setErro(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editando])
 
-  const confirmarSalvar = () => {
-    const erroValidacao = validarCobranca(valor)
+  const confirmarSalvar = async () => {
+    const erroValidacao = validarCobranca(valor, valor.modelo === 'pacote' ? (atual?.presencas ?? 0) : 0)
     if (erroValidacao) {
       setErro(erroValidacao)
       return
+    }
+    if (valor.modelo === 'pacote') {
+      setErro(null)
+      salvarPacote.mutate(payloadPacote(valor, alunoId, atual?.presencas ?? 0), { onSuccess: () => setEditando(false), onError: (e) => setErro(mapearErroSupabase(e)) })
+      return
+    }
+    // trocar o pacote por cobrança por aula/mensal encerra o pacote ativo: confirma antes (o histórico dele fica guardado)
+    if (atual) {
+      const ok = await confirmarAcao({
+        titulo: 'Encerrar o pacote?',
+        mensagem: `O pacote de ${atual.pacote.qtd_aulas} aulas (${situacao!.contador}) será encerrado e a cobrança passa a ser ${valor.modelo === 'mensal' ? 'mensal' : 'por aula'}.`,
+        textoConfirmar: 'Encerrar e trocar',
+        textoCancelar: 'Voltar',
+      })
+      if (!ok) return
+      try {
+        await encerrarPacote.mutateAsync(alunoId)
+      } catch (e) {
+        setErro(mapearErroSupabase(e))
+        return
+      }
     }
     const valorNum = Number(valor.valorTexto.replace(',', '.'))
     const diaCiclo = Number(valor.diaCicloTexto)
@@ -69,16 +105,34 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
         </Button>
       </div>
 
-      {isLoading && <ListaSkeleton />}
+      {(isLoading || carregandoPacote) && <ListaSkeleton />}
 
-      {!isLoading && (!cobranca || !cobranca.ativo) && (
+      {!isLoading && !carregandoPacote && atual && situacao && (
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="font-medium">
+              Pacote de {atual.pacote.qtd_aulas} aulas · {formatarBRL(atual.pacote.valor)}
+            </p>
+            <p className="text-lg font-bold tabular-nums" aria-label={`${situacao.usadas} de ${situacao.total} aulas feitas`}>
+              {situacao.contador}
+            </p>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100" aria-hidden>
+            <div className="h-full rounded-full bg-brand" style={{ width: `${Math.min(100, Math.round((situacao.usadas / situacao.total) * 100))}%` }} />
+          </div>
+          <p className="text-sm text-slate-600">Vale até {formatarDataBR(situacao.fim)}</p>
+          {situacao.aviso && <PacoteChip situacao={situacao} />}
+        </div>
+      )}
+
+      {!isLoading && !carregandoPacote && !atual && (!cobranca || !cobranca.ativo) && (
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-slate-600">Sem valor definido</p>
           <Button onClick={() => setEditando(true)}>Definir valor</Button>
         </div>
       )}
 
-      {!isLoading && cobranca?.ativo && (
+      {!isLoading && !carregandoPacote && !atual && cobranca?.ativo && (
         <div className="space-y-0.5">
           <p className="font-medium">
             {cobranca.modelo === 'por_aula' ? <>{formatarBRL(cobranca.valor_aula ?? 0)} por aula</> : <>{formatarBRL(cobranca.valor_mensal ?? 0)} por mês</>}
@@ -96,7 +150,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
         <div className="space-y-4">
           <CobrancaForm value={valor} onChange={setValor} />
           {erro && <p className="text-sm text-red-600">{erro}</p>}
-          <Button onClick={confirmarSalvar} className="w-full" disabled={salvar.isPending}>
+          <Button onClick={confirmarSalvar} className="w-full" disabled={salvar.isPending || salvarPacote.isPending}>
             Salvar
           </Button>
         </div>

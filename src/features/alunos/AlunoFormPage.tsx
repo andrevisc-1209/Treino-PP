@@ -27,6 +27,8 @@ import { criarHorariosFixos, useHorariosFixos } from '@/features/agenda/api'
 import { pendentesComoExistentes } from '@/features/agenda/conflitos'
 import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
 import { hojeSP, nomeDiaCurtoPorWeekday } from '@/lib/datas'
+import { useSalvarPacote } from '@/features/pacotes/api'
+import { payloadPacote } from '@/features/pacotes/formulario'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
 import { payloadDistancia } from '@/features/financeiro/distancia'
@@ -198,6 +200,7 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
   const { data: consentimentoSaude } = useConsentimentoSaude(mode === 'edit' ? id : undefined)
   const salvar = useSalvarAluno()
   const salvarCobranca = useSalvarAlunoCobranca()
+  const salvarPacote = useSalvarPacote()
   const { data: outrosAlunosRaw } = useAlunos()
   const { data: horariosDoPersonal } = useHorariosFixos()
 
@@ -313,15 +316,19 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
       const valorNum = Number(cobrancaValor.valorTexto.replace(',', '.'))
       if (cobrancaValor.valorTexto.trim() && !Number.isNaN(valorNum) && valorNum > 0) {
         try {
-          await salvarCobranca.mutateAsync({
-            aluno_id: alunoId,
-            modelo: cobrancaValor.modelo,
-            valor_aula: cobrancaValor.modelo === 'por_aula' ? valorNum : null,
-            valor_mensal: cobrancaValor.modelo === 'mensal' ? valorNum : null,
-            dia_ciclo: Number(cobrancaValor.diaCicloTexto) || 1,
-            dias_vencimento: Number(cobrancaValor.diasVencimentoTexto) || 0,
-            ...payloadDistancia(cobrancaValor),
-          })
+          if (cobrancaValor.modelo === 'pacote') {
+            await salvarPacote.mutateAsync(payloadPacote(cobrancaValor, alunoId))
+          } else {
+            await salvarCobranca.mutateAsync({
+              aluno_id: alunoId,
+              modelo: cobrancaValor.modelo,
+              valor_aula: cobrancaValor.modelo === 'por_aula' ? valorNum : null,
+              valor_mensal: cobrancaValor.modelo === 'mensal' ? valorNum : null,
+              dia_ciclo: Number(cobrancaValor.diaCicloTexto) || 1,
+              dias_vencimento: Number(cobrancaValor.diasVencimentoTexto) || 0,
+              ...payloadDistancia(cobrancaValor),
+            })
+          }
         } catch (e) {
           const msg = `Aluno salvo, mas a cobrança não foi salva: ${mapearErroSupabase(e)}. Ajuste em Cobrança na ficha do aluno.`
           setErroCobranca(msg)
