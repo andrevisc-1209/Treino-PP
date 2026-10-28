@@ -162,3 +162,29 @@ describe('lista maior que o limite: importa 50 e guarda o resto', () => {
     expect(r.restantes?.texto).toContain('"Silva; Ana";"disse ""oi"""')
   })
 })
+
+describe('telefone repetido entre alunos diferentes (aviso, nunca erro)', () => {
+  it('avisa as duas linhas, com o nome e a linha do outro', () => {
+    const r = lerPlanilha('nome;telefone\nAna;(11) 96666-0006\nFernanda;11966660006\nBia;(11) 90000-0000', [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.status)).toEqual(['aviso', 'aviso', 'ok'])
+    expect(r.linhas[0].avisos[0]).toContain('Mesmo telefone de Fernanda (linha 3)')
+    expect(r.linhas[1].avisos[0]).toContain('Mesmo telefone de Ana (linha 2)')
+  })
+  it('mesmo nome e mesmo telefone continua sendo duplicado, não aviso de telefone', () => {
+    const r = lerPlanilha('nome;telefone\nAna;(11) 96666-0006\nana;(11) 96666-0006', [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.status)).toEqual(['ok', 'duplicado'])
+  })
+  it('avisa quando o telefone é de outro aluno que já está cadastrado', () => {
+    const r = lerPlanilha('nome;telefone\nAna;(11) 96666-0006', [{ name: 'Fernanda', phone: '(11) 96666-0006' }], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas[0].status).toBe('aviso')
+    expect(r.linhas[0].avisos[0]).toContain('Já existe o aluno Fernanda com este telefone')
+  })
+  it('telefone vazio nunca conta como repetido', () => {
+    const r = lerPlanilha('nome;telefone\nAna;\nBia;', [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.status)).toEqual(['ok', 'ok'])
+  })
+})

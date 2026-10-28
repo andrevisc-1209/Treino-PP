@@ -205,3 +205,94 @@ describe('4ª resposta real: 52 alunos', () => {
     expect(soNome).toEqual(['Beatriz Souza'])
   })
 })
+
+// 5ª resposta real (outra IA), mesma lista de 60: respeitou o limite (49 linhas), AVISOU dos 10 que ficaram de fora e acertou os nascimentos do Samuel e
+// da Michele (e o sexo dela). Mas copiou o telefone da Fernanda para a Ana, "consertou" o e-mail quebrado da Ana e pôs o "F" da Fernanda na coluna objetivos.
+const RESPOSTA_IA2 = `nome;telefone;email;nascimento;sexo;objetivos
+Carla Menezes;(11) 99999-0001;carlinha.menezes@exemplo.com;;;Perder peso|Hipertrofia
+João Pedro;(21) 98888-0002;;03/07/1995;;Hipertrofia
+Ana Beatriz Lima;(11) 96666-0006;ana.lima@exemplo.com;15/11/89;F;Corrida/maratona
+Paulo;;;;;Saúde e qualidade de vida
+Marcos Vinícius;(31) 97777-0005;marcos@exemplo.com;;;Condicionamento físico
+Fernanda;(11) 96666-0006;;;;Mobilidade/flexibilidade|F
+Lucas Teixeira;;lucas.teixeira@exemplo.com;25/12/2001;;
+Teste;(11) 95555-0007;;;;
+Beatriz Souza;;;;;
+Rafael Costa Neto;(11) 98111-0011;rafael.neto@exemplo.com;08/02/1992;M;Perder peso
+Juliana Prado;(11) 98222-0012;;;;Perder peso|Saúde e qualidade de vida
+Thiago Alves;(21) 98333-0013;;14/09/97;;Hipertrofia
+Marlene;;;;;Mobilidade/flexibilidade
+Gustavo Henrique Lopes;;gustavo.hl@exemplo.com;30/05/1985;M;Corrida/maratona
+Patrícia Nogueira;(31) 98444-0016;;22/01/1990;F;Hipertrofia
+Bruno Carvalho;(11) 98555-0017;;19/04/1988;;Condicionamento físico
+Larissa Mendes;(11) 98666-0018;;;;Perder peso
+Eduardo Silveira;(41) 98777-0019;eduardo@exemplo.com;11/11/1979;;Saúde e qualidade de vida
+Camila Rocha;(11) 98888-0020;;05/06/1996;F;Performance esportiva
+André Luiz Barros;(21) 98999-0021;;;;Hipertrofia
+Renata Figueiredo;;renata.fig@exemplo.com;17/08/1983;F;Mobilidade/flexibilidade
+Diego Martins;(11) 97111-0023;;02/12/2000;;Perder peso
+Aline Souza Prado;(11) 97222-0024;;13/03/1994;;Saúde e qualidade de vida
+Felipe Ramos;(31) 97333-0025;felipe.ramos@exemplo.com;21/07/1991;;Hipertrofia
+Vanessa Teles;(11) 97444-0026;;;;Perder peso
+Roberto Gomes;(11) 97555-0027;;;;Saúde e qualidade de vida
+Isabela Cunha;;isabela.cunha@exemplo.com;30/09/2002;F;Corrida/maratona
+Matheus Oliveira;(41) 97666-0028;;16/01/1999;;Hipertrofia
+Tatiane Brito;(11) 97777-0029;;28/02/1987;;Perder peso
+Leandro Pires;(21) 97888-0030;leandro@exemplo.com;03/10/1982;M;Condicionamento físico
+Priscila Duarte;(11) 97999-0031;;09/07/1993;;Mobilidade/flexibilidade
+Henrique Matos;(11) 96111-0032;;;;
+Sandra Regina Lima;(11) 96222-0033;;;;Saúde e qualidade de vida
+Vinícius Prates;;vinicius.prates@exemplo.com;20/12/1998;M;Performance esportiva
+Natália Ferraz;(31) 96333-0034;;12/04/1990;F;Perder peso|Hipertrofia
+Caio Rezende;(11) 96444-0035;;;;Hipertrofia
+Mônica Azevedo;(21) 96555-0036;monica.az@exemplo.com;25/05/1975;F;Saúde e qualidade de vida
+Otávio Lemos;(11) 96666-0037;;07/11/1996;;Corrida/maratona
+Elisa Barbosa;(11) 96777-0038;;18/09/2004;F;Perder peso
+Samuel Cardoso;(41) 96888-0039;;27/03/1989;;Condicionamento físico
+Débora Moraes;;debora.m@exemplo.com;06/08/1986;F;Mobilidade/flexibilidade
+Igor Fonseca;(11) 96999-0040;;15/06/1993;;Hipertrofia
+Letícia Sampaio;(21) 95111-0041;;31/01/1997;;Perder peso
+Wagner Teixeira;(11) 95222-0042;;;;Saúde e qualidade de vida
+Bianca Aragão;(11) 95333-0043;;10/10/1995;F;Mobilidade/flexibilidade
+Rodrigo Nascimento;(31) 95444-0044;rodrigo.n@exemplo.com;22/02/1984;;Hipertrofia
+Fabiana Torres;(11) 95555-0045;;;;Perder peso|Saúde e qualidade de vida
+Gabriel Pinheiro;(11) 95666-0046;;04/05/2001;M;Corrida/maratona
+Michele Santana;(11) 95777-0047;;29/12/1991;F;Condicionamento físico`
+
+describe('5ª resposta real (outra IA): erros que a revisão do app precisa mostrar', () => {
+  const r = lerPlanilha(RESPOSTA_IA2, [], '2026-10-28')
+  it('lê as 49 linhas, sem erro e sem restantes', () => {
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas).toHaveLength(49)
+    expect(r.restantes).toBeNull()
+    expect(r.linhas.filter((l) => l.status === 'erro')).toHaveLength(0)
+  })
+  it('o telefone copiado (Ana e Fernanda) vira aviso nas duas linhas', () => {
+    if (!r.ok) throw new Error(r.erro)
+    const ana = r.linhas.find((l) => l.aluno?.name === 'Ana Beatriz Lima')!
+    const fernanda = r.linhas.find((l) => l.aluno?.name === 'Fernanda')!
+    expect(ana.status).toBe('aviso')
+    expect(ana.avisos.join(' ')).toContain('Mesmo telefone de Fernanda')
+    expect(fernanda.avisos.join(' ')).toContain('Mesmo telefone de Ana Beatriz Lima')
+  })
+  it('o "F" na coluna objetivos vira aviso (e o sexo da Fernanda fica vazio para o personal completar)', () => {
+    if (!r.ok) throw new Error(r.erro)
+    const fernanda = r.linhas.find((l) => l.aluno?.name === 'Fernanda')!
+    expect(fernanda.aluno).toMatchObject({ sex: null, objetivos: ['Mobilidade/flexibilidade'] })
+    expect(fernanda.avisos.join(' ')).toContain('Objetivo "F" não está na lista do app')
+  })
+  it('Samuel e Michele voltaram com o nascimento (e ela com o sexo)', () => {
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.find((l) => l.aluno?.name === 'Samuel Cardoso')!.aluno!.birth_date).toBe('1989-03-27')
+    expect(r.linhas.find((l) => l.aluno?.name === 'Michele Santana')!.aluno).toMatchObject({ birth_date: '1991-12-29', sex: 'F' })
+  })
+})
+
+describe('prompt: dado de um aluno não vai para outro, não conserta, coluna certa', () => {
+  const prompt = montarPromptIA()
+  it('traz as três regras novas', () => {
+    expect(prompt).toContain('Cada dado pertence SÓ ao aluno da própria entrada')
+    expect(prompt).toContain('NÃO conserte telefone, e-mail ou data com erro')
+    expect(prompt).toContain('nunca coloque M, F ou Outro na coluna objetivos')
+  })
+})

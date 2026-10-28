@@ -229,7 +229,39 @@ export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[],
     vistasNoArquivo.add(chave)
     return { linha, aluno, status, erros, avisos }
   })
+  avisarTelefoneRepetido(linhas, existentes)
   return { ok: true, linhas, colunasIgnoradas: ignoradas, semDados: false, restantes }
+}
+
+/**
+ * Mesmo telefone para alunos DIFERENTES (na lista ou já cadastrados): costuma ser a IA ou a planilha trocando o número de uma pessoa pela de outra
+ * (já aconteceu: a Ana saiu com o telefone da Fernanda). Pode ser legítimo (pai e filho), então é só aviso, nunca erro.
+ */
+function avisarTelefoneRepetido(linhas: LinhaImportada[], existentes: ExistenteParaDuplicado[]) {
+  const grupos = new Map<string, LinhaImportada[]>()
+  for (const l of linhas) {
+    const d = soDigitos(l.aluno?.phone)
+    if (!d || l.status === 'erro' || l.status === 'duplicado') continue
+    grupos.set(d, [...(grupos.get(d) ?? []), l])
+  }
+  const avisar = (l: LinhaImportada, texto: string) => {
+    l.avisos.push(texto)
+    if (l.status === 'ok') l.status = 'aviso'
+  }
+  for (const [digitos, grupo] of grupos) {
+    const nomes = new Set(grupo.map((l) => simplificar(l.aluno!.name)))
+    if (nomes.size > 1) {
+      for (const l of grupo) {
+        const outros = grupo.filter((o) => simplificar(o.aluno!.name) !== simplificar(l.aluno!.name)).map((o) => `${o.aluno!.name} (linha ${o.linha})`)
+        avisar(l, `Mesmo telefone de ${outros.join(', ')}: confira se o número não foi trocado.`)
+      }
+    }
+    const jaCadastrados = existentes.filter((e) => soDigitos(e.phone) === digitos)
+    for (const l of grupo) {
+      const outros = jaCadastrados.filter((e) => simplificar(e.name) !== simplificar(l.aluno!.name))
+      if (outros.length > 0) avisar(l, `Já existe o aluno ${outros.map((e) => e.name).join(', ')} com este telefone: confira se o número não foi trocado.`)
+    }
+  }
 }
 
 /** Linhas que já vêm marcadas para importar: tudo que não é erro nem duplicado. */
