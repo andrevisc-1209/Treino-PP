@@ -37,11 +37,11 @@ describe('modalidades', () => {
       modalidade: 'corrida',
       detalhes: { blocos: [{ id: 'a', nome: 'Aquecimento', descricao: 'trote leve', duracao: '10min' }, { id: 'b', nome: 'Tiros', descricao: '6x400 m', distancia: 2400, intensidade: 'forte' }] },
     })
-    expect(m).toContain('Olá, Ana! 💪')
-    expect(m).toContain('"Longão" de 🏃 Corrida')
+    expect(m).toContain('Olá, Ana! 👋')
+    expect(m).toContain('🏃 *Longão* · Corrida')
     expect(m).toContain('1. Aquecimento — trote leve · 10min')
     expect(m).toContain('2. Tiros — 6x400 m · 2.400 m · forte')
-    expect(m).toContain('— Bia')
+    expect(m.trim().endsWith('Bia')).toBe(true)
     const musc = gerarMensagemTreino({ nomeAluno: 'Ana', nomePersonal: 'Bia', nomeTreino: 'A', modalidade: 'musculacao', detalhes: {}, exercicios: [{ nome: 'Supino', series: 3, repeticoes: '10' }] })
     expect(musc).toContain('1. Supino — 3x10')
     expect(musc).not.toContain('Detalhes')
@@ -126,7 +126,7 @@ describe('mensagem do treino à distância: prazo do link', () => {
   const base = { nomeAluno: 'Ana', nomePersonal: 'Bia', nomeTreino: 'A', modalidade: 'musculacao' as const, detalhes: {}, link: 'https://x/treino/t' }
   it('inclui "Você tem até …" quando o link tem prazo e omite quando é sem prazo', () => {
     const com = gerarMensagemTreino({ ...base, expiraEm: '2026-10-22T15:30:00Z' })
-    expect(com).toContain('⏰ Você tem até 22/10/2026 12:30 para registrar.')
+    expect(com).toContain('⏰ Válido até 22/10/2026 às 12:30')
     expect(gerarMensagemTreino({ ...base, expiraEm: null })).not.toContain('⏰')
     expect(gerarMensagemTreino(base)).not.toContain('⏰')
   })
@@ -144,6 +144,27 @@ describe('descreverExecucao: pré-treino e PSE fora da musculação presencial',
   })
   it('musculação via link também mostra', () => {
     expect(descreverExecucao('musculacao', { exercicios: [], resultado: { pse: 6 } })).toContain('PSE: 6/10')
+  })
+})
+
+describe('mensagem do treino à distância: padrão visual', () => {
+  const base = { nomeAluno: 'Alinei Cardosos', nomePersonal: 'André', nomeTreino: 'teste corrida', modalidade: 'corrida' as const, detalhes: { blocos: [{ id: 'a', nome: 'Long Run', descricao: 'ritmo fácil', duracao: '60min' }] }, link: 'https://x/treino/t', expiraEm: '2026-10-29T17:54:00Z' }
+  const linhas = gerarMensagemTreino(base).split('\n')
+  it('abre com saudação, título em negrito e fecha com o nome do personal', () => {
+    expect(linhas[0]).toBe('Olá, Alinei! 👋')
+    expect(linhas).toContain('🏃 *teste corrida* · Corrida')
+    expect(linhas[linhas.length - 1]).toBe('André')
+  })
+  it('seções em negrito e o link sozinho na linha (para a prévia do WhatsApp)', () => {
+    expect(linhas).toContain('📋 *Treino*')
+    expect(linhas).toContain('✅ *Quando terminar, registre aqui:*')
+    expect(linhas).toContain('https://x/treino/t')
+    expect(linhas).toContain('⏰ Válido até 29/10/2026 às 14:54')
+  })
+  it('sem link não há bloco de registro; blocos separados por linha em branco', () => {
+    const sem = gerarMensagemTreino({ ...base, link: undefined })
+    expect(sem).not.toContain('registre aqui')
+    expect(sem).toContain('\n\n')
   })
 })
 

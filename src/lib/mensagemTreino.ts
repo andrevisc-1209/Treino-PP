@@ -21,26 +21,32 @@ export function gerarMensagemTreino(args: {
 }): string {
   const cfg = MODALIDADES_CONFIG[args.modalidade]
   const primeiroNome = args.nomeAluno.trim().split(/\s+/)[0] || args.nomeAluno
-  const blocos: string[] = [
-    `Olá, ${primeiroNome}! 💪`,
-    `Seu treino "${args.nomeTreino}" de ${cfg.emoji} ${cfg.label} está pronto!`,
-  ]
+  // Padrão único para todas as modalidades: saudação, título, resumo, seções em negrito (*…* do WhatsApp), link sozinho na linha
+  // (o WhatsApp só mostra a prévia do link quando ele está isolado) e assinatura.
+  const blocos: string[] = [`Olá, ${primeiroNome}! 👋`, `Seu treino está pronto:\n${cfg.emoji} *${args.nomeTreino}* · ${cfg.label}`]
+
+  const resumo: string[] = []
   const natacao = args.modalidade === 'natacao' ? dadosNatacaoDe(args.detalhes) : null
-  if (natacao) blocos.push(`🏊 ${rotuloAmbiente(natacao.ambiente)} · ${resumoTotalNatacao(natacao)}`)
+  if (natacao) resumo.push(`🏊 ${rotuloAmbiente(natacao.ambiente)} · ${resumoTotalNatacao(natacao)}`)
   const cab = cabecalhoEstruturado(args.modalidade, args.detalhes)
-  if (cab) blocos.push(`${cfg.emoji} ${cab}`)
+  if (cab) resumo.push(`${cfg.emoji} ${cab}`)
+  if (resumo.length > 0) blocos.push(resumo.join('\n'))
+
   const detalhes = linhasDetalhes(args.modalidade, args.detalhes)
-  if (detalhes.length > 0) blocos.push(`📋 Detalhes:\n${detalhes.join('\n')}`)
+  if (detalhes.length > 0) blocos.push(`📋 *Detalhes*\n${detalhes.join('\n')}`)
   if (args.exercicios && args.exercicios.length > 0) {
-    blocos.push(`📋 Exercícios:\n${args.exercicios.map((e, i) => `${i + 1}. ${e.nome} — ${e.series}x${e.repeticoes}`).join('\n')}`)
+    blocos.push(`📋 *Exercícios*\n${args.exercicios.map((e, i) => `${i + 1}. ${e.nome} — ${e.series}x${e.repeticoes}`).join('\n')}`)
   }
   const blocosTreino = blocosDe(args.modalidade, args.detalhes)
-  if (blocosTreino.length > 0) blocos.push(`📋 Treino:\n${blocosTreino.map((b, i) => `${i + 1}. ${formatarBloco(b)}`).join('\n')}`)
+  if (blocosTreino.length > 0) blocos.push(`📋 *Treino*\n${blocosTreino.map((b, i) => `${i + 1}. ${formatarBloco(b)}`).join('\n')}`)
   const livres = exerciciosLivresDe(args.detalhes)
   if (livres.length > 0) {
-    blocos.push(`📋 Exercícios:\n${livres.map((l, i) => `${i + 1}. ${l.nome}${l.descricao ? ` — ${l.descricao}` : ''}`).join('\n')}`)
+    blocos.push(`📋 *Exercícios*\n${livres.map((l, i) => `${i + 1}. ${l.nome}${l.descricao ? ` — ${l.descricao}` : ''}`).join('\n')}`)
   }
-  if (args.link) blocos.push(`Para registrar sua execução, acesse:\n🔗 ${args.link}${args.expiraEm ? `\n⏰ Você tem até ${dataHoraSP(args.expiraEm)} para registrar.` : ''}`)
-  blocos.push(`Qualquer dúvida, me chame!\n— ${args.nomePersonal}`)
+  if (args.link) {
+    const prazo = args.expiraEm ? `\n⏰ Válido até ${dataHoraSP(args.expiraEm).replace(' ', ' às ')}` : ''
+    blocos.push(`✅ *Quando terminar, registre aqui:*\n${args.link}${prazo}`)
+  }
+  blocos.push(`Qualquer dúvida, é só me chamar!\n${args.nomePersonal}`)
   return blocos.join('\n\n')
 }
