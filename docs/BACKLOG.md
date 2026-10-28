@@ -1165,3 +1165,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ O botão "Começar de um modelo" dentro do formulário de natação continua como antes (não duplica o botão do formulário).
 - ✅ Testes em `atalhoDeModelo.test.ts` (abas incluem natação; conversão modelo → dados do formulário).
 - ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): Treinos planejados vazio → "Usar um modelo pronto" → aba Natação → "Usar este modelo" e conferir ambiente e exercícios.
+
+## 101. Auditoria de UX com conta em uso (ChatGPT + Gemini) · PR 1: Hoje com a próxima aula em foco
+
+- 📋 Segunda rodada de auditoria (conta com 32 alunos). Plano em 6 PRs: **1 Hoje**, 2 Financeiro ("Ação necessária" e R$ 0,00 escondido), 3 Alunos (fila "sem treino" por faixas 8–14/15–30/30+, ordenação, sem "lesão" na lista), 4 Agenda (semana com toque no dia, nomes sem ambiguidade, horário compartilhado), 5 Treinos planejados (busca, filtro por modalidade, rascunho vazio), 6 Sino (agrupar e marcar como lidas).
+- ✅ **PR 1, Hoje:** card **Próxima aula** no topo (horário, alunos, "Lugar · Bairro", Começar). O destaque avança sozinho: aula em andamento fica em foco até terminar; ao ser realizada/cancelada passa para a próxima; aula que passou do horário sem registro aparece como **Atrasada** (texto + ícone, não só cor) e só vira destaque se não sobrar nenhuma por vir. Outras aulas no mesmo horário viram "+ N aulas neste horário" (aviso neutro: pode ser dupla ou grupo, não é conflito).
+- ✅ "Próximas aulas" em lista compacta com o link **Ver agenda**; realizadas e canceladas ao fim, esmaecidas. Sem aula pendente: "Sem mais aulas por fazer hoje".
+- ✅ Clima em formato compacto (temperatura, chuva com mm, UV, vento e dica); Pix (já recolhido), Atividade recente (3 itens + "Ver todas") e Indique um personal ficam abaixo das aulas; o aviso de ciclos para fechar também desce.
+- ✅ Endereço enxuto nos cartões da Hoje; o **endereço completo** aparece ao abrir a aula (menu da aula) e continua inteiro na Agenda.
+- ℹ️ **Fora do escopo (ideia de produto):** estado "Confirmada / A confirmar" da aula. Hoje a aula só tem `agendada/realizada/cancelada`; confirmar exigiria campo novo, migration e fluxo do aluno.
+- ✅ Testes `proximaAula.test.ts` (destaque, atrasada, mesmo horário, ordem, local curto). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): validar a 390px com aulas passadas, em andamento e futuras no mesmo dia.

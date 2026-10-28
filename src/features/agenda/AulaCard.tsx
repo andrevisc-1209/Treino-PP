@@ -1,8 +1,9 @@
-import { Check, MapPin, Play, X } from 'lucide-react'
+import { Check, MapPin, Play, TriangleAlert, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatarHoraInicioFim } from '@/lib/datas'
 import { BotaoWhatsApp } from '@/components/BotaoWhatsApp'
 import type { Aula, ParticipanteStatus } from './api'
+import { localCurto } from './proximaAula'
 
 function SeloStatus({ status }: { status: ParticipanteStatus }) {
   if (status === 'presente') return <Check size={12} className="text-brand" />
@@ -14,11 +15,17 @@ function SeloStatus({ status }: { status: ParticipanteStatus }) {
 export function AulaCard({
   aula,
   destaque,
+  atrasada,
+  localResumido,
   onClick,
   onComecar,
 }: {
   aula: Aula
   destaque?: boolean
+  /** ainda agendada, mas o horário já passou: pede registro (check-in, falta ou cancelamento) */
+  atrasada?: boolean
+  /** só "Lugar · Bairro" em vez do endereço inteiro (Hoje); o endereço completo continua na Agenda */
+  localResumido?: boolean
   onClick: () => void
   /** "▶ Começar" — só aparece pra aula ainda agendada com algum participante previsto. */
   onComecar?: () => void
@@ -44,6 +51,11 @@ export function AulaCard({
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold">{formatarHoraInicioFim(aula.starts_at, aula.duration_min)}</p>
         <div className="flex items-center gap-1">
+          {atrasada && (
+            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+              <TriangleAlert size={12} aria-hidden /> Atrasada
+            </span>
+          )}
           {aula.status === 'realizada' && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">Realizada</span>}
           {aula.status === 'cancelada' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Cancelada</span>}
           {participanteUnico && <BotaoWhatsApp telefone={participanteUnico.aluno?.phone} label={`WhatsApp de ${participanteUnico.aluno?.name}`} size={18} />}
@@ -65,7 +77,7 @@ export function AulaCard({
 
       {aula.local && (
         <p className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
-          <MapPin size={14} /> {aula.local}
+          <MapPin size={14} /> {localResumido ? localCurto(aula.local) : aula.local}
         </p>
       )}
 
