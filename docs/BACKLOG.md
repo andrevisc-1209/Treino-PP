@@ -1214,3 +1214,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Cartão mais compacto: no máximo **2** exemplos de exercício (eram 3).
 - ℹ️ **Não feito:** "arquivar" treino planejado (hoje há Editar, Duplicar e Excluir; arquivar exigiria coluna nova e migration). Fica como ideia caso a biblioteca cresça.
 - ✅ Testes `biblioteca.test.ts` (busca, modalidade, rascunho, contagem). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px com 6 ou mais treinos, busca por exercício e filtro por modalidade.
+
+## 106. Auditoria de UX com conta em uso · PR 6: Sino com notificações agrupadas
+
+- (Última PR do plano descrito no item 101.)
+- ✅ A lista do sino agora tem grupos: **Pedem sua ação** (ciclo encerrado, em destaque), **Novidades** (ex.: mês grátis da indicação), **Treinos concluídos** (3 à vista + "Ver todos") e **Anteriores** (lidas, recolhidas).
+- ✅ **Marcar como lidos** nos treinos concluídos (só esse grupo); o botão "Marcar todas como lidas" continua no topo.
+- ✅ **Selo do sino:** vermelho só quando há notificação que **pede ação**; com apenas treinos concluídos e novidades fica cinza, para o vermelho voltar a significar "faça algo". O número continua sendo o total de não lidas.
+- ✅ Rótulo de acessibilidade do sino informa quantas pedem ação.
+- ✅ Testes `agrupar.test.ts` (grupos, ordem, contagem). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): gerar um treino concluído e um ciclo encerrado e conferir os grupos, o selo e "Marcar como lidos".
+- 🏁 Com esta PR fecha o plano de 6 PRs da auditoria (itens 101 a 106). Ideias de produto que ficaram de fora: confirmação de aula pelo aluno e arquivar treino planejado.
