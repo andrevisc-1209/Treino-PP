@@ -1121,6 +1121,17 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - Sem migration e sem deploy. Não testado ao vivo por mim (login com captcha): abrir Alunos → Importar alunos e conferir a ordem das abas e o padrão.
 
 
+## 96. UX do primeiro uso (1/2): Hoje com foco na ativação, banner de teste e adicionar alunos
+
+- 🎯 **Origem:** auditoria de UX feita por ChatGPT e Gemini sobre 6 telas de conta nova (28/10/2026). Os pontos conferidos no código e aceitos pelo dono; os que contradiziam o produto foram **rejeitados** (renomear Financeiro para "Cobranças", "cobrança automática por WhatsApp", "importar do WhatsApp": o app não cobra o aluno nem integra com o WhatsApp).
+- ✅ **Tela Hoje com foco único** (wireframe do ChatGPT): enquanto o personal tem **menos de 3 alunos**, aparece só o cartão **"Vamos organizar seus alunos?"** com progresso (0 de 3 cadastrados), o botão **"Adicionar meus alunos"**, os três caminhos (**IA primeiro**, planilha, cadastrar um) e **"Sua rotina"** (Agenda e Treinos planejados). Ficam escondidos até lá: checklist de 4 itens, aviso do Pix e os 3 contadores zerados. **"Agora não"** dispensa o cartão (para quem tem 1 ou 2 alunos de verdade).
+- ✅ **Depois dos 3 alunos:** volta o checklist, agora **"Comece por aqui"** e **"N de 4 etapas concluídas"** (antes "4 de 4 pra completar" lia-se como tudo concluído), com **alunos primeiro e Pix por último**; "Ótimo! Agora marque sua primeira aula." quando ainda não há aula; e uma linha **"Indique um personal"** na Hoje.
+- ✅ **Banner de teste:** linha compacta **"Teste grátis: N dias restantes ›"** só na tela Hoje (toca e abre os planos); nas outras telas **não aparece** até os **últimos 5 dias**, quando volta o banner completo com "Assinar agora" em qualquer tela. A condição comercial segue em Configurações → Assinatura.
+- ✅ **Aviso "Instale o app"** só depois do primeiro aluno e com o benefício dito ("abre mais rápido e fica a um toque").
+- ✅ **Tela "Adicionar alunos"** (era "Importar alunos"): abas **"Colar lista com ajuda de IA"** (primeira) e **"Importar planilha"**, mais **"Cadastrar individualmente"** como terceiro caminho. Indicação: **"Indique um personal: vocês dois ganham 1 mês grátis"** (a concordância estava errada).
+- 📊 **Medição sem evento novo:** o tempo até o 3º aluno sai do funil atual (`aluno_cadastrado` repetido). Os eventos novos sugeridos pelo ChatGPT exigiriam nova Política de Privacidade.
+- ⚠️ Sem migration e sem deploy de função. **Não testado ao vivo por mim** (login com captcha): validar com conta sem alunos (cartão, "Agora não", progresso 1 e 2 de 3, banner compacto) e com conta com 3 alunos.
+
 ## 97. UX do primeiro uso (2/2): estados vazios iguais, navegação e acabamentos
 
 - 🎯 Segunda metade da auditoria de UX (ChatGPT e Gemini, 28/10/2026). O dono decidiu **tratar todos os estados vazios do mesmo jeito**.
