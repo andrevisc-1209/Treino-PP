@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { useQueryClient } from '@tanstack/react-query'
@@ -30,7 +30,11 @@ import {
   useRestaurarDaLixeira,
   type Aluno,
 } from './api'
-import { useAlunosSemTreinoRecente, useTreinosEstaSemana } from './useMetricas'
+import { useTreinosEstaSemana, useUltimaSessaoPorAluno } from './useMetricas'
+import { useAlunosComCobrancaPendente } from './useCobrancaPendente'
+import { contarFaixas, diasSemTreino, ordenarAlunos, pertenceAFaixa, ROTULO_FAIXA, ROTULO_ORDEM, type FaixaSemTreino, type OrdemAlunos } from './filaAlunos'
+import { RolagemHorizontal } from '@/components/RolagemHorizontal'
+import { hojeSP } from '@/lib/datas'
 import { useUltimaExecucaoPorAluno } from '@/features/execucoes/api'
 import { rotuloDias } from '@/features/execucoes/metricas'
 import { MODALIDADES_CONFIG } from '@/types/modalidades'
@@ -42,13 +46,16 @@ export function AlunosPage() {
   const { data: alunosNaLixeira, isLoading: carregandoLixeira } = useAlunosNaLixeira()
   const { data: alunosComCobranca } = useAlunosComCobranca()
   const { data: treinosEstaSemana } = useTreinosEstaSemana()
-  const { data: semTreinoRecente } = useAlunosSemTreinoRecente()
+  const { data: ultimasSessoes } = useUltimaSessaoPorAluno()
+  const comCobrancaPendente = useAlunosComCobrancaPendente()
   const { data: ultimasExecucoes } = useUltimaExecucaoPorAluno()
   const navigate = useNavigate()
   const { exigir, somenteLeitura, abrirPlanos } = useExigirAssinatura()
   const qc = useQueryClient()
   const [busca, setBusca] = useState('')
   const [menuAberto, setMenuAberto] = useState<Aluno | null>(null)
+  const [faixa, setFaixa] = useState<FaixaSemTreino>('todos')
+  const [ordem, setOrdem] = useState<OrdemAlunos>('nome')
 
   const arquivar = useArquivarAluno()
   const desarquivar = useDesarquivarAluno()
@@ -59,7 +66,24 @@ export function AlunosPage() {
   const alunos = aba === 'ativos' ? alunosAtivos : aba === 'arquivados' ? alunosArquivados : alunosNaLixeira
   const idsComCobranca = new Set((alunosComCobranca ?? []).map((c) => c.aluno_id))
 
-  const filtrados = alunos?.filter((a) => a.name.toLowerCase().includes(busca.trim().toLowerCase()))
+  // dias sem treino só fazem sentido para alunos ativos, e só depois de carregar as sessões (senão todos pareceriam "nunca treinou")
+  const hoje = hojeSP()
+  const diasDosAtivos = useMemo(() => {
+    if (!alunosAtivos || !ultimasSessoes) return null
+    return new Map(alunosAtivos.map((a) => [a.id, diasSemTreino(ultimasSessoes.get(a.id), hoje)] as const))
+  }, [alunosAtivos, ultimasSessoes, hoje])
+  const contagemFaixas = diasDosAtivos ? contarFaixas([...diasDosAtivos.values()]) : null
+  const semTreinoRecente = contagemFaixas?.alerta
+  const filtrarPorFaixa = aba === 'ativos' && diasDosAtivos !== null && faixa !== 'todos'
+
+  const filtrados = useMemo(() => {
+    const porBusca = alunos?.filter((a) => a.name.toLowerCase().includes(busca.trim().toLowerCase()))
+    if (!porBusca || aba !== 'ativos' || !diasDosAtivos) return porBusca
+    const naFaixa = filtrarPorFaixa ? porBusca.filter((a) => pertenceAFaixa(diasDosAtivos.get(a.id) ?? null, faixa)) : porBusca
+    // ao filtrar por faixa, o mais tempo sem treino vem primeiro, a menos que a pessoa tenha escolhido outra ordem
+    const ordemEfetiva = filtrarPorFaixa && ordem === 'nome' ? 'sem_treino' : ordem
+    return ordenarAlunos(naFaixa, ordemEfetiva, { dias: diasDosAtivos, comCobrancaPendente })
+  }, [alunos, busca, aba, diasDosAtivos, filtrarPorFaixa, faixa, ordem, comCobrancaPendente])
   const desambiguar = desambiguarPorNome(alunos ?? [])
 
   const arquivarAluno = (a: Aluno) => {
@@ -129,7 +153,18 @@ export function AlunosPage() {
       <div className="mb-4 grid grid-cols-3 gap-2">
         <CardMetrica icone={<Users size={16} />} valor={alunosAtivos?.length} label="Alunos ativos" />
         <CardMetrica icone={<CalendarCheck size={16} />} valor={treinosEstaSemana} label="Treinos essa semana" />
-        <CardMetrica icone={<TriangleAlert size={16} />} valor={semTreinoRecente} label="Sem treino há +7 dias" alerta={(semTreinoRecente ?? 0) > 0} />
+        <button
+          type="button"
+          onClick={() => {
+            setAba('ativos')
+            setFaixa((f) => (f === 'alerta' ? 'todos' : 'alerta'))
+          }}
+          aria-pressed={faixa === 'alerta'}
+          aria-label="Mostrar só os alunos sem treino há mais de 7 dias"
+          className={cn('rounded-xl text-left', faixa === 'alerta' && 'ring-2 ring-brand')}
+        >
+          <CardMetrica icone={<TriangleAlert size={16} />} valor={semTreinoRecente} label="Sem treino há +7 dias" alerta={(semTreinoRecente ?? 0) > 0} />
+        </button>
       </div>
 
       <div className="mb-4 flex gap-1 rounded-xl bg-slate-100 p-1">
@@ -165,6 +200,45 @@ export function AlunosPage() {
           />
         </div>
       </div>
+
+      {aba === 'ativos' && contagemFaixas && (alunosAtivos?.length ?? 0) > 0 && (
+        <div className="mb-3 space-y-2">
+          {contagemFaixas.alerta > 0 && (
+            <RolagemHorizontal className="py-1" corFundo="#f8fafc">
+              {(['todos', 'alerta', '8-14', '15-30', '30+', 'nunca'] as FaixaSemTreino[])
+                .filter((f) => f === 'todos' || contagemFaixas[f] > 0)
+                .map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    aria-pressed={faixa === f}
+                    onClick={(e) => {
+                      setFaixa(f)
+                      e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+                    }}
+                    className={cn(
+                      'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm font-medium transition',
+                      faixa === f ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
+                    )}
+                  >
+                    {ROTULO_FAIXA[f]}
+                    {f !== 'todos' && ` (${contagemFaixas[f]})`}
+                  </button>
+                ))}
+            </RolagemHorizontal>
+          )}
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <span className="shrink-0">Ordenar por</span>
+            <select value={ordem} onChange={(e) => setOrdem(e.target.value as OrdemAlunos)} className="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900">
+              {(Object.keys(ROTULO_ORDEM) as OrdemAlunos[]).map((o) => (
+                <option key={o} value={o}>
+                  {ROTULO_ORDEM[o]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
 
       {(aba === 'ativos' ? isLoading : aba === 'arquivados' ? carregandoArquivados : carregandoLixeira) && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
@@ -203,7 +277,7 @@ export function AlunosPage() {
                   {desambiguar(a) && <span className="ml-1 font-normal text-slate-500">· {desambiguar(a)}</span>}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {[idade(a.birth_date) != null && `${idade(a.birth_date)} anos`, a.injury && 'lesão'].filter(Boolean).join(' · ') ||
+                  {[idade(a.birth_date) != null && `${idade(a.birth_date)} anos`].filter(Boolean).join(' · ') ||
                     'Sem data de nascimento'}
                   {aba === 'ativos' && !idsComCobranca.has(a.id) && (
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Sem valor definido</span>

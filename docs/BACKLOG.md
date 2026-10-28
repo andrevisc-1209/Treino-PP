@@ -1184,3 +1184,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Ordem da lista: **em atraso**, depois **ciclos encerrados**, depois o resto. Cada linha mostra nome e **valor em destaque**, com modelo, nº de aulas e data de fechamento na linha de baixo; o status segue em texto (A fechar, Ciclo encerrado, Enviada, Paga, Em atraso), nunca só cor.
 - ✅ Gráfico de 6 meses mais baixo quando há valor em até 2 meses.
 - ✅ Testes `listaFinanceiro.test.ts` (sem valor, prioridade, ação necessária). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px a conta com faturas em atraso, ciclos encerrados e alunos "por aula" sem aula.
+
+## 103. Auditoria de UX com conta em uso · PR 3: Alunos com fila "sem treino", ordenação e lista sem dado de saúde
+
+- (Segue o plano das 6 PRs do item 101.)
+- ✅ **O "28" virou fila:** tocar no card "Sem treino há +7 dias" filtra a lista; abaixo da busca há filtros com contador (**Sem treino +7 dias, 8–14, 15–30, mais de 30 dias e Nunca treinou**; faixa sem aluno não aparece). Ao filtrar, quem está há mais tempo sem treinar vem primeiro. "Nunca treinou" separa quem acabou de entrar (ou foi importado) de quem sumiu: era a maior parte do número em contas com muitos alunos novos.
+- ✅ O corte é "mais de 7 dias" (8 ou mais), igual ao texto do card; o contador do card e a lista saem da mesma conta, então nunca divergem.
+- ✅ **Ordenar por:** Nome (A–Z, padrão), Mais tempo sem treino ou Cobrança pendente primeiro (fatura em atraso ou ciclo encerrado, o mesmo critério do "Ação necessária" do Financeiro).
+- 🔒 **LGPD:** a indicação "lesão" saiu do cartão da lista de alunos; continua só na ficha, onde há consentimento. (Objetivo e idade seguem na lista.)
+- ✅ **Ficha do aluno:** o cartão de consentimento LGPD com o botão **Revogar** desceu para o fim da página, junto de Arquivar, longe das ações de uso diário. A confirmação que explica o que será apagado já existia e foi mantida.
+- ✅ Testes `filaAlunos.test.ts` (dias, limites das faixas, contadores, ordenação). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px a lista com muitos alunos, o toque no card, os filtros e a ordenação.
