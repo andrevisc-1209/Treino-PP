@@ -10,8 +10,24 @@ export const CABECALHO_CSV = COLUNAS.join(';')
 /** Objetivos que a importação aceita (o "Outros" pede descrição e fica de fora). */
 export const OBJETIVOS_DO_PROMPT = OBJETIVOS.filter((o) => o !== 'Outros')
 
+/** Palavras que o personal costuma escrever e o objetivo do app que elas querem dizer (a IA preenche só com estas equivalências, sem adivinhar). */
+export const EQUIVALENCIAS: Record<string, string[]> = {
+  'Perder peso': ['emagrecer', 'perder peso', 'secar', 'queimar gordura'],
+  Hipertrofia: ['ganhar massa', 'ganho de massa', 'massa muscular', 'hipertrofia'],
+  'Saúde e qualidade de vida': ['saúde', 'bem-estar', 'qualidade de vida'],
+  'Condicionamento físico': ['condicionamento', 'fôlego', 'resistência'],
+  'Corrida/maratona': ['corrida', 'maratona', 'meia maratona', '5k', '10k'],
+  'Performance esportiva': ['performance', 'desempenho', 'competição'],
+  Reabilitação: ['reabilitação'],
+  'Mobilidade/flexibilidade': ['mobilidade', 'flexibilidade', 'alongamento'],
+}
+
 /** A linha de exemplo do modelo (sem o cabeçalho): dado fictício. */
 const EXEMPLO = MODELO_CSV.split(/\r?\n/).filter(Boolean)
+
+const EQUIV_TEXTO = Object.entries(EQUIVALENCIAS)
+  .map(([objetivo, palavras]) => `${palavras.join(', ')} = ${objetivo}`)
+  .join('; ')
 
 export function montarPromptIA(): string {
   return `Você vai transformar a lista de alunos que eu colar ou anexar a seguir em uma planilha CSV para importar no app Treino PP. Siga EXATAMENTE estas regras.
@@ -25,9 +41,9 @@ COLUNAS
 - nome: obrigatório. Só o nome da pessoa, com maiúscula no começo de cada nome (João Pedro). Tire apelidos, observações e descrições entre parênteses ou depois do nome, e títulos como Sr. e Sra.
 - telefone: do Brasil, com DDD. Exemplo: (11) 91234-5678. Se estiver sem DDD ou incompleto, deixe vazio.
 - email: só se for um e-mail completo e válido; senão, deixe vazio.
-- nascimento: no formato dd/mm/aaaa. Se só houver a idade ou a data estiver incompleta, deixe vazio.
+- nascimento: dd/mm/aaaa. Se a lista trouxer o ano com 2 dígitos (15/11/89), pode mandar assim: o app completa o ano. Se só houver a idade ou faltar dia ou mês, deixe vazio.
 - sexo: M, F ou Outro. Preencha quando a lista disser de forma explícita (F, feminino, mulher; M, masculino, homem). NÃO deduza pelo nome nem pela foto. Se não estiver explícito, deixe vazio.
-- objetivos: um ou mais, separados por | (barra vertical). Use SOMENTE estes valores, escritos exatamente assim: ${OBJETIVOS_DO_PROMPT.join(' | ')}. Se o objetivo da lista não corresponder a nenhum deles, deixe vazio.
+- objetivos: um ou mais, separados por | (barra vertical). Use SOMENTE estes valores, escritos exatamente assim: ${OBJETIVOS_DO_PROMPT.join(' | ')}. Aceite estas equivalências (e só elas): ${EQUIV_TEXTO}. Se o objetivo da lista não corresponder a nenhum deles, deixe vazio.
 
 REGRAS IMPORTANTES
 - NUNCA invente, complete nem corrija dados. Se não souber, deixe a célula vazia.
