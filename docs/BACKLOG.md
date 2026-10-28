@@ -1326,3 +1326,8 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ O WhatsApp de renovação (3 e 1 dia antes) agora termina com o **link sozinho na última linha** (o WhatsApp mostra a prévia): `https://treino.personalperto.com.br/configuracoes?secao=assinatura`. O botão **"Renovar agora"** do e-mail usa o mesmo link.
 - ✅ O app entende `?secao=assinatura` (também `dados`, `localizacao`, `aulas`, `pix`, `notificacoes`): abre as Configurações **com essa seção já expandida**, em vez de cair no acordeão fechado.
 - 🚀 **Deploy:** função `avisos-diarios` (os textos são montados nela). Sem migration. Testes atualizados em `notificacoes.test.ts` e `renovacao.test.ts`. **Não testado ao vivo por mim:** tocar no link no WhatsApp e no e-mail e conferir que a seção Assinatura abre expandida.
+
+## 120. Hoje: clima de volta logo abaixo da data
+
+- 🐞 Visto no uso real (28/10/2026): depois da reorganização do item 101, o clima ficou perto do fim da Hoje (abaixo das aulas e do Pix) e ninguém via.
+- ✅ O clima (compacto: temperatura, chuva com mm, UV, vento e a dica) volta para **logo abaixo da data**, antes do aviso "Sem mais aulas por fazer hoje" / do card Próxima aula e dos cards de primeiro uso. Pix, Atividade recente e Indique um personal seguem abaixo das aulas. Só muda a ordem na tela; sem migration e sem deploy. **Não testado ao vivo por mim** (captcha): abrir a Hoje a 390 px e conferir o clima sob a data.
