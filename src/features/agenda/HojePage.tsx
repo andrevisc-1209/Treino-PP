@@ -1,10 +1,10 @@
+import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Gift } from 'lucide-react'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { formatarDataCompleta, hojeSP } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
-import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { AulaCard } from './AulaCard'
 import { ProximaAulaCard } from './ProximaAulaCard'
@@ -27,7 +27,7 @@ export function HojePage() {
   const navigate = useNavigate()
   const { emAtivacao, total } = useAtivacao()
   const hoje = hojeSP()
-  const { data: aulas, isLoading, error } = useAulasDoDia(hoje)
+  const { data: aulas, isLoading, error, refetch } = useAulasDoDia(hoje)
   const [aulaAberta, setAulaAberta] = useState<Aula | null>(null)
   const [passoInicial, setPassoInicial] = useState<'menu' | 'iniciar'>('menu')
   const [novaAulaAberta, setNovaAulaAberta] = useState(false)
@@ -72,7 +72,7 @@ export function HojePage() {
       <OnboardingChecklist />
 
       {isLoading && <ListaSkeleton />}
-      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
+      {error && <ErroComRetry erro={error} onTentar={() => refetch()} className="mb-4" />}
 
       {aulas && aulas.length === 0 && !emAtivacao && <ResumoSemAulas onMarcarAula={() => setNovaAulaAberta(true)} />}
 

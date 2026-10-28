@@ -185,7 +185,7 @@ export function SinoNotificacoes() {
         {naoLidas > 0 && (
           <span
             className={cn(
-              "absolute right-1.5 top-1.5 flex min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold leading-5 text-white",
+              "absolute right-1.5 top-1.5 flex min-w-5 items-center justify-center rounded-full px-1 text-xs font-bold leading-5 text-white",
               pedemAcao ? "bg-red-600" : "bg-slate-600",
             )}
             aria-hidden

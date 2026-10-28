@@ -1,3 +1,4 @@
+import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ListaSkeleton } from '@/components/Skeleton'
@@ -34,7 +35,7 @@ import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, type Aula } f
 type Modo = 'dia' | 'semana'
 
 function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: string; onAbrirAula: (a: Aula) => void; onComecar: (a: Aula) => void; onMarcarAula: () => void }) {
-  const { data: aulas, isLoading } = useAulasDoDia(dataISO)
+  const { data: aulas, isLoading, error, refetch } = useAulasDoDia(dataISO)
   const { data: alunos } = useAlunos()
   const semAlunos = alunos?.length === 0
   const gruposDoDia = useMemo(() => agruparPorHorario(aulas ?? []), [aulas])
@@ -43,6 +44,7 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
   return (
     <div className="space-y-2">
       {isLoading && <ListaSkeleton />}
+      {error && <ErroComRetry erro={error} onTentar={() => refetch()} />}
       {aulas?.length === 0 && semAlunos && (
         <EstadoVazio
           icone={<CalendarPlus size={24} />}
@@ -72,7 +74,7 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
 
 function VisaoSemana({ inicioSemana, onAbrirAula, onAbrirDia }: { inicioSemana: string; onAbrirAula: (a: Aula) => void; onAbrirDia: (dataISO: string) => void }) {
   const { inicio, fim } = limitesDaSemanaSP(inicioSemana)
-  const { data: aulas, isLoading } = useAulasNoIntervalo(inicio, fim)
+  const { data: aulas, isLoading, error, refetch } = useAulasNoIntervalo(inicio, fim)
 
   const dias = useMemo(() => Array.from({ length: 7 }, (_, i) => somarDias(inicioSemana, i)), [inicioSemana])
 
@@ -90,6 +92,7 @@ function VisaoSemana({ inicioSemana, onAbrirAula, onAbrirDia }: { inicioSemana: 
   const conflitos = useMemo(() => conflitosDeAluno(aulas ?? []), [aulas])
 
   if (isLoading) return <ListaSkeleton />
+  if (error) return <ErroComRetry erro={error} onTentar={() => refetch()} />
 
   return (
     <>

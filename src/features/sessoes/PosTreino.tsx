@@ -192,7 +192,7 @@ function TreinoConcluidoResumo({
                 {m.icone}
               </span>
               <p className="text-xl font-bold leading-tight">{m.valor}</p>
-              <p className="text-[11px] text-slate-500">{m.label}</p>
+              <p className="text-xs text-slate-500">{m.label}</p>
             </div>
           ))}
         </div>

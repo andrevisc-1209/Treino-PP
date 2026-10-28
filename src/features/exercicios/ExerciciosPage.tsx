@@ -1,3 +1,4 @@
+import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { Pencil, Search, Trash2 } from 'lucide-react'
@@ -42,7 +43,7 @@ const formVazio = (modalidade: ModalidadeTipo, tipo: string): FormState => ({
 export function ExerciciosPage() {
   const { exigir } = useExigirAssinatura()
   const { session } = useAuth()
-  const { data: exercicios, isLoading, error } = useExercicios()
+  const { data: exercicios, isLoading, error, refetch } = useExercicios()
   const { data: natacaoMeus } = useExerciciosNatacaoCustom()
   const criar = useCriarExercicio()
   const atualizar = useAtualizarExercicio()
@@ -268,7 +269,7 @@ export function ExerciciosPage() {
       )}
 
       {isLoading && <ListaSkeleton />}
-      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
+      {error && <ErroComRetry erro={error} onTentar={() => refetch()} className="mb-4" />}
       {!isLoading && filtrados.length === 0 &&
         (origem === 'meus' && meus.length === 0 ? (
           <p className="text-slate-500">Você ainda não criou exercícios de {MODALIDADES_CONFIG[modalidade].label.toLowerCase()}. Toque no + para criar o primeiro.</p>

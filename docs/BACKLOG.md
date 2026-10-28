@@ -1258,3 +1258,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Agenda:** os cartões do dia ganharam **▶ Começar** (mesma regra da Hoje, agora num só lugar: `comecarAula.ts`) e **WhatsApp com texto** (também na Hoje).
 - ✅ **Hoje, Atividade recente:** treino concluído com **observação do aluno ainda não lida** (a mesma do sino) sobe para o topo com o selo "Nova observação"; ao abrir a observação, a notificação é marcada como lida. A observação continua só na tela do personal.
 - ✅ Testes: `comecarAula.test.ts`, `priorizarAtividade.test.ts`, `statusAluno.test.ts`. Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px a lista de Alunos (botões e aviso), uma ficha com fatura em atraso, o Começar na Agenda e o feed da Hoje com uma observação nova.
+
+## 111. Auditoria de UX · sobra 6: textos mínimos e erro com "Tentar de novo"
+
+- (Fecha a sobra 6 da auditoria dos itens 101 a 106.) O contraste de `text-slate-400` já tinha guarda em `contraste.test.ts`, então esse ponto estava resolvido.
+- ✅ **Nenhum texto abaixo de 12 px:** os 4 `text-[11px]` (rótulo do card de métrica, chips da escala, selo do sino, legenda do pós-treino) passaram para `text-xs`. Novo teste `tamanhoTexto.test.ts` impede `text-[10px]`/`text-[11px]` daqui para a frente.
+- ✅ **`ErroComRetry`:** erro de carregamento deixa de ser uma linha vermelha solta e vira uma caixa com a mensagem em português simples e o botão **Tentar de novo** (44 px), aplicada em **Hoje, Agenda (dia e semana, que não tratavam erro), Alunos, Treinos planejados, Exercícios e Financeiro**. No Financeiro, com erro, as telas de "organize suas cobranças" deixam de aparecer por engano.
+- ℹ️ **Offline:** já existe a faixa global "Sem conexão. Algumas ações podem falhar." (`OfflineBanner`); o retry cobre o resto. Telas de admin e o seletor de modelos continuam com a mensagem simples.
+- ✅ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): ligar o modo avião e abrir Alunos/Agenda/Financeiro para ver o erro e tocar em "Tentar de novo" com a rede de volta.

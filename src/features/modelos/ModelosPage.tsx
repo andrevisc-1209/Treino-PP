@@ -1,3 +1,4 @@
+import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ClipboardList, MoreVertical, Search } from 'lucide-react'
@@ -36,7 +37,7 @@ import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 export function ModelosPage() {
   const { exigir } = useExigirAssinatura()
   const navigate = useNavigate()
-  const { data: modelos, isLoading, error } = useModelos()
+  const { data: modelos, isLoading, error, refetch } = useModelos()
   const criar = useCriarModelo()
   const atualizar = useAtualizarModelo()
   const duplicar = useDuplicarModelo()
@@ -210,7 +211,7 @@ export function ModelosPage() {
       <ExerciciosTabs />
 
       {isLoading && <ListaSkeleton />}
-      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
+      {error && <ErroComRetry erro={error} onTentar={() => refetch()} className="mb-4" />}
       {modelos?.length === 0 && (
         <EstadoVazio
           icone={<ClipboardList size={24} />}
