@@ -6,9 +6,20 @@ import { fimDoPacote, type Pacote } from './pacote'
 
 export type PacoteComPresencas = { pacote: Pacote & { fatura_id: string | null }; presencas: number }
 
-const COLUNAS = 'id, aluno_id, qtd_aulas, valor, validade_dias, inicio, aulas_anteriores, status, fatura_id'
+const COLUNAS = 'id, aluno_id, qtd_aulas, valor, validade_dias, inicio, aulas_anteriores, status, fatura_id, conta_distancia'
 
 type PresencaLinha = { aluno_id: string; aula: { starts_at: string } | null }
+type ExecucaoLinha = { aluno_id: string; concluido_em: string }
+
+/** Treinos à distância que gastam aula: só nos pacotes em que o personal ligou essa opção, desde o dia de início. */
+export function contarTreinosADistancia(pacotes: Pacote[], execucoes: ExecucaoLinha[]): Map<string, number> {
+  const porAluno = new Map<string, number>()
+  for (const p of pacotes) {
+    if (!p.conta_distancia) continue
+    porAluno.set(p.aluno_id, execucoes.filter((e) => e.aluno_id === p.aluno_id && dataSP(e.concluido_em) >= p.inicio).length)
+  }
+  return porAluno
+}
 
 /** Presenças que contam no pacote: aula da agenda com o aluno presente, desde o dia de início (aula de treino à distância não conta; natação, corrida e demais modalidades presenciais contam). */
 export function contarPresencas(pacotes: Pacote[], presencas: PresencaLinha[]): Map<string, number> {
@@ -38,7 +49,21 @@ export async function buscarPacotesAtivos(): Promise<Map<string, PacoteComPresen
     .gte('aula.starts_at', `${menorInicio}T00:00:00-03:00`)
   if (errP) throw errP
   const contagens = contarPresencas(lista, (presencas ?? []) as unknown as PresencaLinha[])
-  for (const p of lista) mapa.set(p.aluno_id, { pacote: p, presencas: contagens.get(p.aluno_id) ?? 0 })
+  // treino à distância gasta aula só se o personal ligou a opção no pacote
+  const comDistancia = lista.filter((p) => p.conta_distancia)
+  let aDistancia = new Map<string, number>()
+  if (comDistancia.length > 0) {
+    const { data: execs, error: errE } = await supabase
+      .from('execucoes_assincrono')
+      .select('aluno_id, concluido_em')
+      .in('aluno_id', comDistancia.map((p) => p.aluno_id))
+      .eq('origem', 'link')
+      .eq('status', 'concluido')
+      .gte('concluido_em', `${comDistancia.reduce((m, p) => (p.inicio < m ? p.inicio : m), comDistancia[0].inicio)}T00:00:00-03:00`)
+    if (errE) throw errE
+    aDistancia = contarTreinosADistancia(comDistancia, (execs ?? []) as ExecucaoLinha[])
+  }
+  for (const p of lista) mapa.set(p.aluno_id, { pacote: p, presencas: (contagens.get(p.aluno_id) ?? 0) + (aDistancia.get(p.aluno_id) ?? 0) })
   return mapa
 }
 
@@ -56,6 +81,7 @@ export type SalvarPacoteInput = {
   valor: number
   validade_dias: number
   aulas_anteriores: number
+  conta_distancia: boolean
 }
 
 function invalidar(qc: QueryClient, alunoId: string) {

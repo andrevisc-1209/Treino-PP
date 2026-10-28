@@ -19,6 +19,8 @@ export type CobrancaFormValor = {
   qtdPacoteTexto: string
   validadePacoteTexto: string
   feitasPacoteTexto: string
+  /** pacote: o treino à distância também gasta uma aula (decisão do personal; padrão desligado) */
+  pacoteContaDistancia: boolean
   /** pacote novo: já recebeu (data do recebimento) ou a receber (data do vencimento) */
   pacoteRecebido: boolean
   pagamentoDataTexto: string
@@ -44,6 +46,7 @@ export function valorInicialCobranca(hoje = new Date()): CobrancaFormValor {
     qtdPacoteTexto: '',
     validadePacoteTexto: '60',
     feitasPacoteTexto: '',
+    pacoteContaDistancia: false,
     pacoteRecebido: false,
     pagamentoDataTexto: hojeSP(),
     formaPagamento: 'pix',
@@ -112,6 +115,13 @@ export function CobrancaForm({
           <Field label="Aulas já feitas neste pacote (opcional)">
             <Input type="number" inputMode="numeric" min={0} value={value.feitasPacoteTexto} onChange={(e) => onChange({ ...value, feitasPacoteTexto: e.target.value })} />
           </Field>
+          <div className="space-y-1 rounded-xl bg-slate-50 p-3">
+            <label className="flex min-h-11 items-center justify-between gap-3">
+              <span className="text-sm font-medium">Treino à distância gasta uma aula</span>
+              <input type="checkbox" checked={value.pacoteContaDistancia} onChange={(e) => onChange({ ...value, pacoteContaDistancia: e.target.checked })} className="size-5 accent-brand" />
+            </label>
+            <p className="text-xs text-slate-500">{value.pacoteContaDistancia ? 'Ligado: cada treino que o aluno faz pelo link conta no pacote (ex.: 3/10).' : 'Desligado: o treino que o aluno faz pelo link aparece no histórico e no relatório, mas não gasta aula do pacote.'}</p>
+          </div>
           {valorTravado && <p className="text-xs text-slate-500">Pacote já recebido: o valor não muda aqui. Para alterar, desfaça o recebimento na fatura.</p>}
           {!semPagamento && (
             <div className="space-y-3 rounded-xl bg-slate-50 p-3">

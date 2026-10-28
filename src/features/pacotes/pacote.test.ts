@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { payloadPacote, formularioDoPacote } from './formulario'
+import { contarTreinosADistancia } from './api'
 import { pacoteEsgotado, aulasAnterioresParaContador, aulasRestantes, diasParaVencer, fimDoPacote, situacaoDoPacote, validarPacote, type Pacote } from './pacote'
 
-const base: Pacote = { id: 'p1', aluno_id: 'a1', qtd_aulas: 10, valor: 800, validade_dias: 60, inicio: '2026-10-01', aulas_anteriores: 0, status: 'ativo' }
+const base: Pacote = { id: 'p1', aluno_id: 'a1', qtd_aulas: 10, valor: 800, validade_dias: 60, inicio: '2026-10-01', aulas_anteriores: 0, status: 'ativo', conta_distancia: false }
 
 describe('prazo do pacote', () => {
   it('o dia de início conta como o dia 1', () => {
@@ -103,9 +104,9 @@ describe('aulasAnterioresParaContador', () => {
 })
 
 describe('formulário do pacote', () => {
-  const form = { modelo: 'pacote' as const, valorTexto: '800,50', diaCicloTexto: '', diasVencimentoTexto: '', cobrarDistancia: false, valorDistanciaTexto: '', qtdPacoteTexto: '10', validadePacoteTexto: '60', feitasPacoteTexto: '2', pacoteRecebido: false, pagamentoDataTexto: '2026-10-28', formaPagamento: 'pix' as const }
+  const form = { modelo: 'pacote' as const, valorTexto: '800,50', diaCicloTexto: '', diasVencimentoTexto: '', cobrarDistancia: false, valorDistanciaTexto: '', qtdPacoteTexto: '10', validadePacoteTexto: '60', feitasPacoteTexto: '2', pacoteContaDistancia: false, pacoteRecebido: false, pagamentoDataTexto: '2026-10-28', formaPagamento: 'pix' as const }
   it('monta os dados do pacote novo', () => {
-    expect(payloadPacote(form, 'a1')).toEqual({ aluno_id: 'a1', qtd_aulas: 10, valor: 800.5, validade_dias: 60, aulas_anteriores: 2 })
+    expect(payloadPacote(form, 'a1')).toEqual({ aluno_id: 'a1', qtd_aulas: 10, valor: 800.5, validade_dias: 60, aulas_anteriores: 2, conta_distancia: false })
   })
   it('na edição desconta as presenças já contadas pelo app', () => {
     expect(payloadPacote({ ...form, feitasPacoteTexto: '5' }, 'a1', 3).aulas_anteriores).toBe(2)
@@ -131,5 +132,29 @@ describe('pacoteEsgotado (a trava da próxima aula)', () => {
   })
   it('prazo vencido sozinho não trava (só avisa)', () => {
     expect(pacoteEsgotado(base, 0)).toBe(false)
+  })
+})
+
+describe('treino à distância no pacote (decisão do personal)', () => {
+  it('a opção vai e volta pelo formulário', () => {
+    const f = formularioDoPacote({ ...base, conta_distancia: true }, 0, { modelo: 'pacote', valorTexto: '', diaCicloTexto: '', diasVencimentoTexto: '', cobrarDistancia: false, valorDistanciaTexto: '', qtdPacoteTexto: '', validadePacoteTexto: '', feitasPacoteTexto: '', pacoteContaDistancia: false, pacoteRecebido: false, pagamentoDataTexto: '2026-10-28', formaPagamento: 'pix' })
+    expect(f.pacoteContaDistancia).toBe(true)
+    expect(payloadPacote(f, 'a1').conta_distancia).toBe(true)
+  })
+})
+
+describe('contarTreinosADistancia', () => {
+  const execs = [
+    { aluno_id: 'a1', concluido_em: '2026-09-30T12:00:00Z' }, // antes do início
+    { aluno_id: 'a1', concluido_em: '2026-10-05T12:00:00Z' },
+    { aluno_id: 'a1', concluido_em: '2026-10-09T12:00:00Z' },
+    { aluno_id: 'a2', concluido_em: '2026-10-09T12:00:00Z' },
+  ]
+  it('só conta quando o personal ligou a opção, desde o início do pacote', () => {
+    const ligado = { ...base, aluno_id: 'a1', conta_distancia: true }
+    const desligado = { ...base, aluno_id: 'a2', conta_distancia: false }
+    const mapa = contarTreinosADistancia([ligado, desligado], execs)
+    expect(mapa.get('a1')).toBe(2)
+    expect(mapa.has('a2')).toBe(false)
   })
 })

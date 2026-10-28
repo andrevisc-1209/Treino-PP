@@ -11,6 +11,7 @@ export function payloadPacote(v: CobrancaFormValor, alunoId: string, presencasNo
     valor: Number(v.valorTexto.replace(',', '.')),
     validade_dias: Number(v.validadePacoteTexto),
     aulas_anteriores: aulasAnterioresParaContador(feitas, presencasNoApp),
+    conta_distancia: v.pacoteContaDistancia,
   }
 }
 
@@ -23,6 +24,7 @@ export function formularioDoPacote(p: Pacote, usadas: number, base: CobrancaForm
     qtdPacoteTexto: String(p.qtd_aulas),
     validadePacoteTexto: String(p.validade_dias),
     feitasPacoteTexto: String(usadas),
+    pacoteContaDistancia: p.conta_distancia,
   }
 }
 
