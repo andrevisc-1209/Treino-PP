@@ -1,6 +1,6 @@
 # Política de Privacidade: origem do cadastro (para o jurídico)
 
-**Status:** proposta, **não aplicada**. O BI do admin (BACKLOG item 122) já tem o banco pronto para guardar a origem do cadastro, mas o app **não registra nada** até a Política ser atualizada.
+**Status:** **aprovada pelo jurídico e aplicada** na Política 1.10 (BACKLOG item 123). Registro original da proposta abaixo.
 
 ## O que muda na prática
 Quando alguém cria conta, o app passa a guardar, junto do cadastro, **de qual link a pessoa veio**: `utm_source`, `utm_medium` e `utm_campaign` do primeiro link aberto (por exemplo `instagram / reels / cobranca_01`, `whatsapp / prospeccao`, `indicacao / personal`). Sem link com origem, fica "direto". Isso serve só para saber quais divulgações trazem personais pagantes e investir melhor (o painel mostra cadastros, ativados e pagantes por origem e o custo por pagante).

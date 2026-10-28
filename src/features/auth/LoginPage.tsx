@@ -24,6 +24,7 @@ import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/Password
 import iconMark from '@/assets/brand/icon-mark.png'
 import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
 import { guardarCodigoDoLink } from '@/features/indicacao/indicacao'
+import { guardarOrigemDoLink } from '@/features/analytics/origem'
 import { evento } from '@/features/analytics/analytics'
 
 const CAPTCHA_ATIVO = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
@@ -125,6 +126,7 @@ export function LoginPage() {
   // link de indicação (?ref=): guarda o código até a pessoa entrar (o servidor valida depois)
   useEffect(() => {
     guardarCodigoDoLink(window.location.search, !!session)
+    guardarOrigemDoLink(window.location.search, !!session)
   }, [session])
 
   // funil: a pessoa abriu o formulário de cadastro (1 evento por abertura da tela)

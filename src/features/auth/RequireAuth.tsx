@@ -11,6 +11,7 @@ import { useAuth } from './AuthProvider'
 import { CompletarPerfilGate } from './CompletarPerfilGate'
 import { emModoFoco } from './modoFoco'
 import { useAplicarIndicacaoGuardada } from '@/features/indicacao/api'
+import { useRegistrarOrigemGuardada } from '@/features/analytics/useRegistrarOrigem'
 import { useMinhaExclusao } from '@/features/conta/api'
 import { ExclusaoPendenteTela } from '@/features/conta/ExclusaoPendenteTela'
 
@@ -26,6 +27,12 @@ function IrParaLandingOuLogin() {
 /** Registra o código de indicação guardado (link ?ref=) logo depois de entrar. */
 function AplicarIndicacao({ userId }: { userId: string }) {
   useAplicarIndicacaoGuardada(userId)
+  return null
+}
+
+/** Manda ao servidor, uma vez, a origem (UTM) guardada no cadastro; o servidor só aceita conta nova e depois a pessoa não é mais perguntada. */
+function RegistrarOrigem({ userId }: { userId: string }) {
+  useRegistrarOrigemGuardada(userId)
   return null
 }
 
@@ -60,6 +67,7 @@ export function RequireAuth() {
       <div className={modoFoco ? '' : 'pb-16'}>
         <NotificacoesRealtime professionalId={session.user.id} />
         <AplicarIndicacao userId={session.user.id} />
+        <RegistrarOrigem userId={session.user.id} />
         {!modoFoco && (
           <div className="mx-auto max-w-2xl px-4 pt-4">
             <TrialBanner />
