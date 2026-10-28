@@ -9,7 +9,7 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
-import { useItensDaFatura } from '@/features/pacotes/useItensDaFatura'
+import { useItensDoCiclo } from './useItensDoCiclo'
 import type { Fatura } from './api'
 import { baixarRelatorioCompleto, dadosRelatorioDeFatura, extrasDaFatura, statusDoCiclo } from './relatorio'
 import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoPorModalidade, resumoRecibo, textoCompartilharRecibo, textoResumoModalidade } from './recibo'
@@ -52,7 +52,7 @@ function BlocoGrafico({ titulo, children }: { titulo: string; children: React.Re
 export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; alunoNome: string; onFechar: () => void }) {
   const { session } = useAuth()
   const { data: perfil } = usePerfilProfissional(session?.user.id)
-  const { data: itensBrutos, isLoading, error } = useItensDaFatura(fatura)
+  const { data: itensBrutos, isLoading, error } = useItensDoCiclo(fatura)
   const [raiz, setRaiz] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -215,9 +215,9 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium">
-                            {nomeDiaCurto(dia)}, {formatarDataCurta(dia)} · {formatarHoraInicioFim(i.starts_at, i.duration_min)}
+                            {nomeDiaCurto(dia)}, {formatarDataCurta(dia)} · {i.a_distancia ? 'treino à distância' : formatarHoraInicioFim(i.starts_at, i.duration_min)}
                           </p>
-                          <p className="truncate text-xs text-slate-500">{i.local?.trim() || 'Local não informado'}</p>
+                          <p className="truncate text-xs text-slate-500">{i.a_distancia ? (i.fora_da_cobranca ? 'Não cobrado' : 'Feito pelo aluno') : i.local?.trim() || 'Local não informado'}</p>
                         </div>
                         <span className="shrink-0 font-medium tabular-nums">{i.valor != null ? formatarBRL(i.valor) : '—'}</span>
                       </li>

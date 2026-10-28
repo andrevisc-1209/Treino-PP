@@ -129,7 +129,10 @@ export function linhasDaTabela(d: DadosRelatorio): string[][] {
   })
 }
 
-export const resumoTotalRelatorio = (d: DadosRelatorio): string => `${d.itens.length} ${d.itens.length === 1 ? 'aula' : 'aulas'} · Total: ${formatarBRL(d.total)}`
+export const resumoTotalRelatorio = (d: DadosRelatorio): string => {
+  const n = d.itens.filter((i) => !i.fora_da_cobranca).length
+  return `${n} ${n === 1 ? 'aula' : 'aulas'} · Total: ${formatarBRL(d.total)}`
+}
 
 /** Texto do bloco de ajuste: "Ajuste: Desconto — -R$ 20,00" (desconto com "-", acréscimo com "+"). */
 export function textoAjuste(d: Pick<DadosRelatorio, 'ajuste' | 'ajusteDescricao'>): string {
@@ -144,6 +147,7 @@ export function tilesResumo(d: DadosRelatorio): Tile[] {
   const r = resumoRecibo(d.itens)
   const aDistancia = d.itens.filter((i) => i.status === 'presente' && i.a_distancia).length
   const media = frequenciaMedia(d.itens)
+  const semCobranca = d.itens.filter((i) => i.status === 'presente' && i.fora_da_cobranca).length
   const locais = locaisDoRelatorio(d)
   return [
     {
@@ -151,6 +155,7 @@ export function tilesResumo(d: DadosRelatorio): Tile[] {
       rotulo: d.aulasContratadas ? 'Aulas do pacote' : aDistancia > 0 ? `Aulas (${aDistancia} à distância)` : 'Aulas realizadas',
     },
     { valor: String(r.diasUnicos), rotulo: 'Dias treinados' },
+    ...(semCobranca > 0 ? [{ valor: String(semCobranca), rotulo: semCobranca === 1 ? 'Treino à distância' : 'Treinos à distância' }] : []),
     ...(media != null ? [{ valor: `${String(media).replace('.', ',')}/semana`, rotulo: 'Frequência média' }] : []),
     ...(locais.length > 1 ? [{ valor: String(locais.length), rotulo: 'Locais diferentes' }] : []),
   ]

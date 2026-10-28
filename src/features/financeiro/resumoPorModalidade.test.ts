@@ -53,4 +53,12 @@ describe('resumoPorModalidade (as 5 modalidades ativas)', () => {
   it('o "tempo de treino" de 1 minuto do relatório antigo deixa de aparecer', () => {
     expect(metricasDeTreino([item({ id: '1', modalidade: 'musculacao', exercicios_feitos: 4, series_feitas: 13, duracao_sessao_min: 1 })])).toEqual({ exercicios: 4, series: 13, minutos: 0 })
   })
+  it('treino à distância não cobrado aparece separado, sem virar aula', () => {
+    const itens = [
+      item({ id: '1', modalidade: 'corrida', volume: vol({ corridaKm: 5 }) }),
+      item({ id: '2', modalidade: 'corrida', volume: vol({ corridaKm: 4 }), a_distancia: true, fora_da_cobranca: true }),
+    ]
+    expect(textos(itens)).toEqual(['Corrida: 1 aula · 1 treino à distância · 9 km'])
+    expect(textos([item({ id: '3', modalidade: 'natacao', a_distancia: true, fora_da_cobranca: true })])).toEqual(['Natação: 1 treino à distância'])
+  })
 })

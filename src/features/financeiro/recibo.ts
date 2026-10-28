@@ -33,6 +33,10 @@ export type ItemRecibo = {
   volume?: Volume
   /** Tempo registrado no resultado da execução (min), fora da musculação. */
   duracao_execucao_min?: number | null
+  /** Execução (treino à distância ou de outra modalidade) ligada a esta aula. */
+  execucao_id?: string | null
+  /** Treino à distância feito no ciclo e NÃO cobrado: aparece no relatório, mas não conta como aula nem no total. */
+  fora_da_cobranca?: boolean
 }
 
 export type MetricasTreino = { exercicios: number; series: number; minutos: number }
@@ -53,7 +57,7 @@ export function ordenarItens(itens: ItemRecibo[]): ItemRecibo[] {
   return [...itens].sort((a, b) => a.starts_at.localeCompare(b.starts_at))
 }
 
-const presentes = (itens: ItemRecibo[]) => itens.filter((i) => i.status === 'presente')
+const presentes = (itens: ItemRecibo[]) => itens.filter((i) => i.status === 'presente' && !i.fora_da_cobranca)
 
 export type ResumoRecibo = { aulasRealizadas: number; diasUnicos: number; locais: string[] }
 
@@ -149,8 +153,10 @@ export type ResumoModalidade = {
   modalidade: string
   rotulo: string
   emoji: string
-  /** aulas presentes dessa modalidade */
+  /** aulas presentes dessa modalidade (as cobradas no ciclo) */
   aulas: number
+  /** treinos à distância dessa modalidade que não foram cobrados (só informativo) */
+  aDistanciaSemCobranca: number
   /** o que foi registrado, só com valor > 0: "12,4 km", "3,2 km nadados", "13 séries"… (vazio = só a contagem de aulas) */
   numeros: string[]
 }
@@ -199,13 +205,15 @@ export function resumoPorModalidade(itens: ItemRecibo[]): ResumoModalidade[] {
       const tempo = lista.reduce((a, i) => a + (duracaoConfiavel(i.duracao_sessao_min) ?? duracaoConfiavel(i.duracao_execucao_min) ?? 0), 0)
       if (tempo > 0) numeros.push(minutos(tempo))
       const cfg = MODALIDADES_CONFIG[modalidade as keyof typeof MODALIDADES_CONFIG]
-      return { modalidade, rotulo: cfg.label, emoji: cfg.emoji, aulas: lista.length, numeros }
+      return { modalidade, rotulo: cfg.label, emoji: cfg.emoji, aulas: lista.filter((i) => !i.fora_da_cobranca).length, aDistanciaSemCobranca: lista.filter((i) => i.fora_da_cobranca).length, numeros }
     })
 }
 
 /** "3 aulas · 12,4 km · 95 min" */
 export function textoResumoModalidade(r: ResumoModalidade): string {
-  return [`${r.aulas} ${r.aulas === 1 ? 'aula' : 'aulas'}`, ...r.numeros].join(' · ')
+  const aulas = r.aulas > 0 || r.aDistanciaSemCobranca === 0 ? [`${r.aulas} ${r.aulas === 1 ? 'aula' : 'aulas'}`] : []
+  const distancia = r.aDistanciaSemCobranca > 0 ? [`${r.aDistanciaSemCobranca} ${r.aDistanciaSemCobranca === 1 ? 'treino à distância' : 'treinos à distância'}`] : []
+  return [...aulas, ...distancia, ...r.numeros].join(' · ')
 }
 
 /** Aulas por semana em média, só quando o ciclo tem pelo menos 3 semanas de dados (antes disso a média engana). */

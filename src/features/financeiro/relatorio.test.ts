@@ -144,4 +144,10 @@ describe('relatório completo do ciclo', () => {
     const doc = await gerarRelatorioCompleto(d)
     expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
   })
+  it('tile de treinos à distância não cobrados e total só com as aulas cobradas', () => {
+    const d: DadosRelatorio = { ...dados, itens: [...dados.itens, item({ id: 'x', starts_at: '2026-10-09T15:30:00Z', a_distancia: true, fora_da_cobranca: true, modalidade: 'corrida' })] }
+    expect(tilesResumo(d).find((t) => t.rotulo === 'Treino à distância')?.valor).toBe('1')
+    expect(norm(resumoTotalRelatorio(d))).toBe('3 aulas · Total: R$ 280,00')
+  })
 })
+

@@ -1,4 +1,4 @@
-import { useItensDaFatura } from '@/features/pacotes/useItensDaFatura'
+import { useItensDoCiclo } from './useItensDoCiclo'
 import { useEffect, useMemo, useState } from 'react'
 import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
@@ -25,7 +25,6 @@ import {
   useDesfazerPagamentoFatura,
   useEnviarFatura,
   useFatura,
-  useTreinosADistanciaNoPeriodo,
   useMarcarFaturaPaga,
   type FormaPagamento,
 } from './api'
@@ -52,8 +51,7 @@ export function FaturaPage() {
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const { data: sessoesTodas } = useSessoesDetalhadas(fatura?.aluno_id)
   const { data: pesosTodos } = usePesos(fatura?.aluno_id)
-  const { data: treinosADistancia } = useTreinosADistanciaNoPeriodo(fatura?.modelo === 'mensal' ? fatura.aluno_id : undefined, fatura?.periodo_inicio, fatura?.periodo_fim)
-  const { data: itensFatura } = useItensDaFatura(fatura && fatura.status !== 'cancelada' ? fatura : undefined)
+  const { data: itensFatura } = useItensDoCiclo(fatura && fatura.status !== 'cancelada' ? fatura : undefined)
 
   const enviar = useEnviarFatura()
   const marcarPaga = useMarcarFaturaPaga()
@@ -134,7 +132,7 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =
-    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirPix ? qrDataUrl : null)), treinosADistancia: fatura.modelo === 'mensal' ? (treinosADistancia ?? 0) : undefined } : null
+    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirPix ? qrDataUrl : null)) } : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)

@@ -413,6 +413,7 @@ export function useCancelarFatura() {
 
 type LinhaRecibo = {
   id: string
+  execucao_id?: string | null
   status: ItemRecibo['status']
   valor: number | null
   aula: { starts_at: string; duration_min: number; local: string | null; tipo?: string } | null
@@ -441,6 +442,7 @@ export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
     nota: l.sessao?.prof_rating ?? null,
     data_sessao: l.sessao?.session_date ?? null,
     modalidade,
+    execucao_id: l.execucao_id ?? null,
     plano_nome: l.sessao?.plano?.name?.trim() || null,
     volume: ehModalidade(modalidade) && det ? volumeDaExecucao(modalidade, det) : undefined,
     duracao_execucao_min: positivo(det?.duracao_min) ?? positivo(det?.resultado?.tempo_min) ?? positivo(det?.resultado?.duracao_min),
@@ -456,7 +458,7 @@ export function useItensRecibo(faturaId: string | undefined, pacoteAberto?: { al
   return useQuery({
     queryKey: ['recibo', faturaId, pacoteAberto?.inicio ?? null],
     queryFn: async (): Promise<ItemRecibo[]> => {
-      const campos = `id, status, valor, aula:aulas${pacoteAberto ? '!inner' : ''}(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade, detalhes_execucao), ${SELECT_SESSAO_DETALHE}`
+      const campos = `id, status, valor, execucao_id, aula:aulas${pacoteAberto ? '!inner' : ''}(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade, detalhes_execucao), ${SELECT_SESSAO_DETALHE}`
       // pacote ainda aberto: as aulas ainda não foram ligadas à fatura (isso acontece ao encerrar/renovar), então vêm das presenças do pacote
       const consulta = supabase.from('aula_participantes').select(campos)
       const { data, error } = pacoteAberto
@@ -495,4 +497,41 @@ export function useTreinosADistanciaNoPeriodo(alunoId: string | undefined, inici
     },
     enabled: !!alunoId && !!inicio && !!fim,
   })
+}
+
+export type ExecucaoADistancia = { id: string; modalidade: string | null; concluido_em: string; detalhes_execucao: DetalhesExecucao | null }
+
+/** Treinos que o aluno concluiu à distância (pelo link) no período, com o resultado registrado — inclusive os que não foram cobrados. */
+export function useExecucoesADistanciaDoPeriodo(alunoId: string | undefined, inicio: string | undefined, fim: string | undefined) {
+  return useQuery({
+    queryKey: ['execucoes-a-distancia-periodo', alunoId, inicio, fim],
+    queryFn: async (): Promise<ExecucaoADistancia[]> => {
+      const { data, error } = await supabase
+        .from('execucoes_assincrono')
+        .select('id, modalidade, concluido_em, detalhes_execucao')
+        .eq('aluno_id', alunoId!)
+        .eq('origem', 'link')
+        .eq('status', 'concluido')
+        .gte('concluido_em', limitesDoDiaSP(inicio!).inicio.toISOString())
+        .lte('concluido_em', limitesDoDiaSP(fim!).fim.toISOString())
+        .order('concluido_em')
+      if (error) throw error
+      return (data ?? []) as ExecucaoADistancia[]
+    },
+    enabled: !!alunoId && !!inicio && !!fim,
+  })
+}
+
+/** Execução à distância não cobrada → item do relatório (fora da cobrança). Só números do resultado: prontidão não entra. */
+export function itemDeExecucaoADistancia(e: ExecucaoADistancia): ItemRecibo {
+  const base = paraItemRecibo({
+    id: `exec-${e.id}`,
+    status: 'presente',
+    valor: null,
+    execucao_id: e.id,
+    aula: { starts_at: e.concluido_em, duration_min: 0, local: null, tipo: 'distancia' },
+    execucao: { modalidade: e.modalidade, detalhes_execucao: e.detalhes_execucao },
+    sessao: null,
+  })
+  return { ...(base as ItemRecibo), fora_da_cobranca: true }
 }
