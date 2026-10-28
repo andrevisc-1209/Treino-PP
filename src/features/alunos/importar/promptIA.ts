@@ -50,6 +50,9 @@ COLUNAS
 
 REGRAS IMPORTANTES
 - NUNCA invente, complete nem corrija dados. Se não souber, deixe a célula vazia.
+- Cada dado pertence SÓ ao aluno da própria entrada: nunca copie telefone, e-mail ou data de um aluno para outro.
+- NÃO conserte telefone, e-mail ou data com erro (espaço, pedaço faltando, sem DDD): se não estiver correto na lista, deixe vazio.
+- Cada coluna só aceita o seu tipo de valor: nunca coloque M, F ou Outro na coluna objetivos, nem objetivo na coluna sexo.
 - NÃO inclua nenhuma informação de saúde (lesões, cirurgias, medicamentos, doenças, peso, altura), nem CPF, endereço, senha ou valor de mensalidade. Ignore essas informações.
 - Se uma célula tiver ponto e vírgula ou aspas, coloque-a entre aspas duplas.
 - Não repita o mesmo aluno.
