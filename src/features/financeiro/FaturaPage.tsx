@@ -1,3 +1,4 @@
+import { useItensDaFatura } from '@/features/pacotes/useItensDaFatura'
 import { useEffect, useMemo, useState } from 'react'
 import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
@@ -24,7 +25,6 @@ import {
   useDesfazerPagamentoFatura,
   useEnviarFatura,
   useFatura,
-  useItensRecibo,
   useTreinosADistanciaNoPeriodo,
   useMarcarFaturaPaga,
   type FormaPagamento,
@@ -53,7 +53,7 @@ export function FaturaPage() {
   const { data: sessoesTodas } = useSessoesDetalhadas(fatura?.aluno_id)
   const { data: pesosTodos } = usePesos(fatura?.aluno_id)
   const { data: treinosADistancia } = useTreinosADistanciaNoPeriodo(fatura?.modelo === 'mensal' ? fatura.aluno_id : undefined, fatura?.periodo_inicio, fatura?.periodo_fim)
-  const { data: itensFatura } = useItensRecibo(fatura && fatura.status !== 'cancelada' ? fatura.id : undefined)
+  const { data: itensFatura } = useItensDaFatura(fatura && fatura.status !== 'cancelada' ? fatura : undefined)
 
   const enviar = useEnviarFatura()
   const marcarPaga = useMarcarFaturaPaga()
@@ -214,7 +214,7 @@ export function FaturaPage() {
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             <dt className="text-slate-500">Modelo</dt>
             <dd>{rotuloModelo(fatura.modelo)}</dd>
-            <dt className="text-slate-500">Aulas</dt>
+            <dt className="text-slate-500">{fatura.modelo === 'pacote' ? 'Aulas do pacote' : 'Aulas'}</dt>
             <dd>{fatura.qtd_aulas}</dd>
             <dt className="text-slate-500">Valor das aulas</dt>
             <dd>{formatarBRL(fatura.valor_aulas)}</dd>
@@ -275,7 +275,7 @@ export function FaturaPage() {
           </div>
         )}
 
-        {pixDisponivel && pixPayload && (
+        {fatura.status !== 'paga' && pixDisponivel && pixPayload && (
           <div className="space-y-3 rounded-2xl bg-white p-4 text-center shadow-sm">
             <h2 className="text-left font-semibold">Pix</h2>
             {qrDataUrl && <img src={qrDataUrl} alt="QR Code Pix" className="mx-auto size-48" />}
@@ -286,6 +286,7 @@ export function FaturaPage() {
           </div>
         )}
 
+        {!(fatura.modelo === 'pacote' && fatura.status === 'paga') && (
         <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
           <h2 className="font-semibold">Mensagem para o aluno</h2>
           <textarea
@@ -304,6 +305,7 @@ export function FaturaPage() {
             </Button>
           )}
         </div>
+        )}
       </div>
 
       <BottomSheet open={pagamentoAberto} onClose={() => setPagamentoAberto(false)} title="Marcar como paga">

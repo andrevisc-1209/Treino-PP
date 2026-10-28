@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { limitesDoDiaSP } from '@/lib/datas'
+import { dataSP, limitesDoDiaSP } from '@/lib/datas'
 import type { ItemRecibo } from './recibo'
 
 export type ModeloCobranca = 'por_aula' | 'mensal'
@@ -441,16 +441,26 @@ export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
 }
 
 /** Aulas de um ciclo fechado (as ligadas à fatura), com local, PSE, nota do personal e totais do treino. Sem dados de prontidão. */
-export function useItensRecibo(faturaId: string | undefined) {
+export function useItensRecibo(faturaId: string | undefined, pacoteAberto?: { alunoId: string; inicio: string }) {
   return useQuery({
-    queryKey: ['recibo', faturaId],
+    queryKey: ['recibo', faturaId, pacoteAberto?.inicio ?? null],
     queryFn: async (): Promise<ItemRecibo[]> => {
-      const { data, error } = await supabase
-        .from('aula_participantes')
-        .select(`id, status, valor, aula:aulas(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade), ${SELECT_SESSAO_DETALHE}`)
-        .eq('fatura_id', faturaId!)
+      const campos = `id, status, valor, aula:aulas${pacoteAberto ? '!inner' : ''}(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade), ${SELECT_SESSAO_DETALHE}`
+      // pacote ainda aberto: as aulas ainda não foram ligadas à fatura (isso acontece ao encerrar/renovar), então vêm das presenças do pacote
+      const consulta = supabase.from('aula_participantes').select(campos)
+      const { data, error } = pacoteAberto
+        ? await consulta
+            .eq('aluno_id', pacoteAberto.alunoId)
+            .eq('status', 'presente')
+            .is('execucao_id', null)
+            .or(`fatura_id.is.null,fatura_id.eq.${faturaId}`)
+            .gte('aula.starts_at', `${pacoteAberto.inicio}T00:00:00-03:00`)
+        : await consulta.eq('fatura_id', faturaId!)
       if (error) throw error
-      return (data as unknown as LinhaRecibo[]).map(paraItemRecibo).filter((i): i is ItemRecibo => !!i)
+      return (data as unknown as LinhaRecibo[])
+        .filter((l) => !pacoteAberto || (l.aula && dataSP(l.aula.starts_at) >= pacoteAberto.inicio))
+        .map(paraItemRecibo)
+        .filter((i): i is ItemRecibo => !!i)
     },
     enabled: !!faturaId,
   })
