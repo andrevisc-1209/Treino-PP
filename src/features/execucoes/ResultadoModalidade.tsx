@@ -1,4 +1,8 @@
+import { useState } from 'react'
 import { Check } from 'lucide-react'
+import { ScaleQuestion } from '@/components/ScaleQuestion'
+import { DESCRITORES_PSE } from '@/features/sessoes/descritores'
+import { CHIPS_INTENSIDADE, PERGUNTAS_PRE } from './prontidaoExecucao'
 import { CAMPOS_TEMPO_SUBSTITUIDOS, distanciaNatacaoFeita, type EstadoResultado } from './resultado'
 import { formatarNumero } from '@/lib/format'
 import { dadosNatacaoDe, resumoTotalNatacao, rotuloAmbiente } from '@/types/natacao'
@@ -44,6 +48,99 @@ export function ReferenciaTreino({ modalidade, detalhes }: { modalidade: Modalid
     </div>
   )
 }
+
+/**
+ * Pré-treino opcional (sono, estresse, fadiga, dor muscular): a pessoa responde agora ou pula.
+ * Pular esconde o bloco e não grava nada; dá para responder só algumas.
+ */
+export function BlocoPreTreino({ estado, onEstado }: { estado: EstadoResultado; onEstado: (e: EstadoResultado) => void }) {
+  const [aberto, setAberto] = useState(Object.keys(estado.prontidao ?? {}).length > 0)
+  const [pulou, setPulou] = useState(false)
+  if (pulou) return null
+  if (!aberto) {
+    return (
+      <div className="space-y-2 rounded-2xl bg-slate-50 p-4">
+        <p className="font-semibold">Como você está hoje? (opcional)</p>
+        <p className="text-sm text-slate-600">4 perguntas rápidas (sono, estresse, fadiga e dor muscular) ajudam a acompanhar a prontidão para o treino.</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setAberto(true)} className="min-h-11 rounded-xl bg-brand px-3 text-sm font-medium text-white active:bg-brand-hover">
+            Responder
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPulou(true)
+              onEstado({ ...estado, prontidao: undefined })
+            }}
+            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+          >
+            Pular
+          </button>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-4 rounded-2xl bg-slate-50 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-semibold">Como você está hoje?</p>
+        <button
+          type="button"
+          onClick={() => {
+            setAberto(false)
+            setPulou(true)
+            onEstado({ ...estado, prontidao: undefined })
+          }}
+          className="min-h-11 rounded-xl px-3 text-sm font-medium text-brand-hover active:bg-slate-100"
+        >
+          Pular
+        </button>
+      </div>
+      {PERGUNTAS_PRE.map((p) => (
+        <div key={p.campo} className="rounded-2xl bg-white p-3">
+          <ScaleQuestion
+            titulo={p.titulo}
+            descritores={p.descritores}
+            polaridade={p.polaridade}
+            value={estado.prontidao?.[p.campo] ?? null}
+            onChange={(v) => onEstado({ ...estado, prontidao: { ...estado.prontidao, [p.campo]: v } })}
+            chips={CHIPS_INTENSIDADE}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Esforço percebido ao final (PSE 0–10): opcional; "Limpar" desfaz a resposta e pular é só não responder. */
+export function BlocoPse({ estado, onEstado }: { estado: EstadoResultado; onEstado: (e: EstadoResultado) => void }) {
+  return (
+    <div className="space-y-2 rounded-2xl bg-slate-50 p-4">
+      <ScaleQuestion
+        titulo="Esforço percebido (PSE)"
+        subtitulo="Como foi o treino? Opcional: pode pular."
+        descritores={DESCRITORES_PSE}
+        polaridade="negativa"
+        value={estado.pse ?? null}
+        onChange={(v) => onEstado({ ...estado, pse: v })}
+        chips={CHIPS_PSE}
+      />
+      {estado.pse != null && (
+        <button type="button" onClick={() => onEstado({ ...estado, pse: null })} className="min-h-11 rounded-xl px-3 text-sm font-medium text-brand-hover active:bg-slate-100">
+          Limpar resposta
+        </button>
+      )}
+    </div>
+  )
+}
+
+const CHIPS_PSE = [
+  { valor: 1, label: 'Repouso' },
+  { valor: 3, label: 'Leve' },
+  { valor: 5, label: 'Moderado' },
+  { valor: 8, label: 'Forte' },
+  { valor: 10, label: 'Máximo' },
+]
 
 /** "Tempo de execução [h] [min]" — opcional. Usado no resultado das modalidades e na musculação da página pública. */
 export function CampoTempoExecucao({ estado, onEstado }: { estado: EstadoResultado; onEstado: (e: EstadoResultado) => void }) {
@@ -97,8 +194,10 @@ export function FormResultadoModalidade({
   dicaNotas?: string
 }) {
   const livres = itensChecklist(modalidade, detalhes)
+  const temRpe = RESULTADO_CAMPOS[modalidade].some((c) => c.type === 'rpe')
   return (
     <div className="space-y-4">
+      <BlocoPreTreino estado={estado} onEstado={onEstado} />
       {livres.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-medium">{usaBlocos(modalidade) ? 'Blocos do treino' : 'Exercícios'}</p>
@@ -206,6 +305,8 @@ export function FormResultadoModalidade({
             )
           })}
         <CampoTempoExecucao estado={estado} onEstado={onEstado} />
+        {/* modalidades com RPE já perguntam o esforço no resultado */}
+        {!temRpe && <BlocoPse estado={estado} onEstado={onEstado} />}
         <Field label="Comentário">
           <textarea
             className="min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-brand"

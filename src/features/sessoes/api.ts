@@ -175,10 +175,11 @@ async function buscarUltimaCarga(alunoId: string, exercicioId: string): Promise<
 }
 
 export type PreTreinoInput = {
-  pre_sleep: number
-  pre_stress: number
-  pre_fatigue: number
-  pre_muscle_pain: number
+  /** null = a pessoa pulou o pré-treino (as 4 colunas ficam vazias e a prontidão não é calculada) */
+  pre_sleep: number | null
+  pre_stress: number | null
+  pre_fatigue: number | null
+  pre_muscle_pain: number | null
   plano_id: string | null
   plano_nome: string | null
   aula_id: string | null

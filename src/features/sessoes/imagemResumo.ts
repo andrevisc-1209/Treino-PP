@@ -15,7 +15,8 @@ export type DadosImagem = {
   destaque: string | null
   evolucao: string | null
   recorde: string | null
-  pse: string
+  /** null = PSE não informado (a linha some da imagem) */
+  pse: string | null
   marca: string
 }
 
@@ -94,7 +95,7 @@ export function desenharResumo(canvas: HTMLCanvasElement, d: DadosImagem) {
 
   ctx.fillStyle = '#9fb3c4'
   ctx.font = fonte(500, 32)
-  ctx.fillText(`PSE ${d.pse}`, W / 2, 1235)
+  if (d.pse) ctx.fillText(`PSE ${d.pse}`, W / 2, 1235)
   ctx.font = fonte(600, 34)
   ctx.fillText(d.marca, W / 2, 1295)
 }

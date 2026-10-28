@@ -53,7 +53,8 @@ const CHIPS_NOTA = [
   { valor: 10, label: 'Excelente' },
 ]
 
-type ResumoConcluido = { duracaoMin: number; pse: number; nota: number | null; cargaInterna: number }
+/** `pse`/`cargaInterna` ficam null quando a pessoa pulou o PSE (a carga interna precisa dele). */
+type ResumoConcluido = { duracaoMin: number; pse: number | null; nota: number | null; cargaInterna: number | null }
 
 function TreinoConcluidoResumo({
   alunoId,
@@ -99,7 +100,7 @@ function TreinoConcluidoResumo({
 
   const seriesFeitas = atual.reduce((acc, ex) => acc + ex.series.filter((s) => s.completed).length, 0)
   const volumeTotal = volumeSessao(atual)
-    const status = statusCargaInterna(resumo.cargaInterna)
+    const status = resumo.cargaInterna != null ? statusCargaInterna(resumo.cargaInterna) : null
   const recordes = useMemo(() => calcularRecordes(atual, historico), [atual, historico])
   const recordePrincipal = recordes.find((r) => r.tipo === 'volume') ?? recordes[0]
   const primeiroTreino = historico.length === 0
@@ -118,7 +119,7 @@ function TreinoConcluidoResumo({
   )
   const contexto = primeiroTreino ? 'Primeiro treino registrado 🎯' : `Treino #${sequencia.numeroTreino} · ${sequencia.naSemana}º da semana`
   const prontidaoInicio = sessao ? calcularProntidao(sessao) : null
-  const pseLabel = descritorPara(DESCRITORES_PSE, resumo.pse)
+  const pseLabel = resumo.pse != null ? descritorPara(DESCRITORES_PSE, resumo.pse) : ''
 
   const textoRecorde = (r: (typeof recordes)[number]) =>
     `Novo recorde: ${r.tipo === 'volume' ? 'Maior volume' : 'Maior carga'} em ${r.exercicio} (${formatarNumero(r.valor)} kg)`
@@ -137,7 +138,7 @@ function TreinoConcluidoResumo({
         repeticoes: String(repeticoes),
         destaque: destaque ? `Destaque: ${destaque.nome} · ${formatarNumero(destaque.volume)} kg` : null,
         evolucao: melhorEvolucao ? `${melhorEvolucao.exercicio} ${textoEvolucao(melhorEvolucao)}` : null,
-        pse: `${resumo.pse}/10 · ${pseLabel}`,
+        pse: resumo.pse != null ? `${resumo.pse}/10 · ${pseLabel}` : null,
         recorde: recordePrincipal ? textoRecorde(recordePrincipal) : null,
         marca: APP_NAME,
       })
@@ -162,11 +163,19 @@ function TreinoConcluidoResumo({
           <p className="mt-1 text-2xl font-extrabold leading-tight">{semCarga ? repeticoes : `${formatarNumero(volumeTotal)} kg`}</p>
           <p className="mt-1 text-xs text-white/80">{variacao}</p>
         </div>
-        <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
-          <p className="text-xs text-slate-500">Carga interna</p>
-          <p className="mt-1 text-2xl font-extrabold leading-tight">{formatarNumero(resumo.cargaInterna)} UA</p>
-          <span className={cn('mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold', status.classe)}>{status.label}</span>
-        </div>
+        {resumo.cargaInterna != null && status ? (
+          <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+            <p className="text-xs text-slate-500">Carga interna</p>
+            <p className="mt-1 text-2xl font-extrabold leading-tight">{formatarNumero(resumo.cargaInterna)} UA</p>
+            <span className={cn('mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold', status.classe)}>{status.label}</span>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+            <p className="text-xs text-slate-500">Duração</p>
+            <p className="mt-1 text-2xl font-extrabold leading-tight">{resumo.duracaoMin} min</p>
+            <span className="mt-1 inline-block text-xs text-slate-500">PSE não informado</span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
@@ -248,31 +257,30 @@ function TreinoConcluidoResumo({
 
       <div className="space-y-2 rounded-xl bg-white p-3 text-sm shadow-sm">
         <p className="text-xs font-medium text-slate-500">Esforço</p>
-        {prontidaoInicio != null ? (
+        {prontidaoInicio != null || resumo.pse != null ? (
           <div className="flex items-center justify-between gap-2">
-            <p>
-              <span className="text-xs text-slate-500">Prontidão inicial</span>
-              <br />
-              <span className="font-semibold">
-                {formatarNumero(prontidaoInicio)}/10 · {faixaProntidao(prontidaoInicio).label}
-              </span>
-            </p>
-            <ArrowRight size={16} className="shrink-0 text-slate-400" aria-hidden />
-            <p className="text-right">
-              <span className="text-xs text-slate-500">PSE final</span>
-              <br />
-              <span className="font-semibold">
-                {resumo.pse}/10 · {pseLabel}
-              </span>
-            </p>
+            {prontidaoInicio != null && (
+              <p>
+                <span className="text-xs text-slate-500">Prontidão inicial</span>
+                <br />
+                <span className="font-semibold">
+                  {formatarNumero(prontidaoInicio)}/10 · {faixaProntidao(prontidaoInicio).label}
+                </span>
+              </p>
+            )}
+            {prontidaoInicio != null && resumo.pse != null && <ArrowRight size={16} className="shrink-0 text-slate-400" aria-hidden />}
+            {resumo.pse != null && (
+              <p className={prontidaoInicio != null ? 'text-right' : undefined}>
+                <span className="text-xs text-slate-500">PSE final</span>
+                <br />
+                <span className="font-semibold">
+                  {resumo.pse}/10 · {pseLabel}
+                </span>
+              </p>
+            )}
           </div>
         ) : (
-          <p>
-            <span className="text-slate-500">PSE final: </span>
-            <span className="font-semibold">
-              {resumo.pse}/10 · {pseLabel}
-            </span>
-          </p>
+          <p className="text-slate-500">Prontidão e PSE não informados.</p>
         )}
         {resumo.nota != null && (
           <p className="border-t border-slate-100 pt-2">
@@ -377,10 +385,6 @@ export function PosTreino({
   const cargaInterna = pse != null && duracao.trim() ? pse * Number(duracao) : null
 
   const concluir = async () => {
-    if (pse == null) {
-      setErro('Informe o PSE')
-      return
-    }
     if (!duracao.trim() || Number(duracao) <= 0) {
       setErro('Informe a duração')
       return
@@ -389,7 +393,7 @@ export function PosTreino({
     setErro(null)
     onConcluirInicio?.()
     const duracaoMin = Number(duracao)
-    const novoResumo: ResumoConcluido = { duracaoMin, pse, nota, cargaInterna: pse * duracaoMin }
+    const novoResumo: ResumoConcluido = { duracaoMin, pse, nota, cargaInterna: pse != null ? pse * duracaoMin : null }
     atualizar.mutate(
       {
         status: 'concluida',
@@ -458,7 +462,7 @@ export function PosTreino({
       <div className="rounded-2xl bg-white p-4 shadow-sm md:rounded-none md:bg-transparent md:p-0 md:shadow-none">
         <ScaleQuestion
           titulo="Esforço percebido (PSE)"
-          subtitulo="Como o aluno sentiu o treino?"
+          subtitulo="Como o aluno sentiu o treino? Opcional: pode pular."
           descritores={DESCRITORES_PSE}
           polaridade="negativa"
           value={pse}
