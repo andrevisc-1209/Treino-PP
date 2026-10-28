@@ -1288,3 +1288,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - 🔒 Conteúdo igual ao de antes: só o que o personal montou, sem dado de saúde do aluno.
 - ℹ️ Os `�` no texto colado na conversa vêm da cópia do preview do aplicativo (o emoji se perde ao colar), não do texto enviado: o gerador monta os emojis normalmente. Se continuar aparecendo `�` direto no WhatsApp do aluno, me avise com um print da conversa.
 - ✅ Testes de padrão em `modalidades.test.ts` (saudação, negrito, link isolado, prazo, assinatura). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): enviar um treino à distância de musculação, corrida e natação e olhar a mensagem no WhatsApp.
+
+## 115. Enviar treino à distância: copiar a mensagem e colar no WhatsApp
+
+- 🐞 Visto no uso real (28/10/2026, print do WhatsApp Business): a mensagem aberta pelo link `wa.me?text=` chegava com os **emojis corrompidos ("�")**. Corrijo a explicação do item 114: o problema **não** era a cópia do preview; o WhatsApp (conforme aparelho/aplicativo) estraga os emojis que passam pelo texto do link, e o padrão visual novo, sozinho, não resolve isso.
+- ✅ Novo fluxo: depois de escolher a validade, abre a folha **"Mensagem para o aluno"** com o texto pronto (editável) e três ações: **Copiar e abrir WhatsApp** (copia e abre a conversa do aluno; é só colar), **Só copiar mensagem** e, como plano B, **Abrir WhatsApp com o texto pronto** (o jeito antigo). Colar mantém emojis, negrito e quebras de linha intactos.
+- ✅ Vale nos dois pontos de envio (aba Treinos do aluno e "Tipo de sessão" ao iniciar). Antes, o segundo nem tinha onde mostrar a folha.
+- ✅ A janela não é mais aberta antes da rede (não precisa mais do truque contra bloqueio de pop-up): o WhatsApp só abre no toque do botão.
+- ✅ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): enviar um treino à distância, tocar em "Copiar e abrir WhatsApp", colar e conferir os emojis; testar "Só copiar" e o plano B.

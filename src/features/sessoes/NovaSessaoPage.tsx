@@ -102,7 +102,7 @@ function NovaSessaoConteudo() {
   // treino de outra modalidade escolhido (do aluno ou planejado): pergunta presencial/à distância antes de iniciar
   const [escolhaSessao, setEscolhaSessao] = useState<{ plano: Plano } | { modelo: Modelo } | null>(null)
   const [abrindoOutra, setAbrindoOutra] = useState(false)
-  const { enviar: enviarAoAluno } = useEnviarTreinoAoAluno(id ?? '')
+  const { enviar: enviarAoAluno, seletor: seletorEnvio } = useEnviarTreinoAoAluno(id ?? '')
   const [copiando, setCopiando] = useState(false)
   const [verificando, setVerificando] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
@@ -709,6 +709,7 @@ function NovaSessaoConteudo() {
         onIniciar={iniciarOutraModalidade}
       />
 
+      {seletorEnvio}
       <ExecucaoPresencialSheet plano={presencial} alunoId={id} onClose={() => setPresencial(null)} />
 
       <BottomSheet open={!!conflito} onClose={() => setConflito(null)} title={conflito?.modelo.name}>
