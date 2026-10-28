@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { Gift } from 'lucide-react'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { formatarDataCompleta, hojeSP } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
@@ -10,6 +11,8 @@ import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { OnboardingChecklist } from '@/features/onboarding/OnboardingChecklist'
+import { AtivacaoCard } from '@/features/onboarding/AtivacaoCard'
+import { useAtivacao } from '@/features/onboarding/useAtivacao'
 import { CiclosParaFecharCard } from './CiclosParaFecharCard'
 import { PixCard } from './PixCard'
 import { ResumoSemAulas } from './ResumoSemAulas'
@@ -19,6 +22,7 @@ import { AtividadeRecente } from '@/features/execucoes/AtividadeRecente'
 export function HojePage() {
   useGerarAulasDiarias()
   const navigate = useNavigate()
+  const { emAtivacao, total } = useAtivacao()
   const hoje = hojeSP()
   const { data: aulas, isLoading, error } = useAulasDoDia(hoje)
   const [aulaAberta, setAulaAberta] = useState<Aula | null>(null)
@@ -76,16 +80,26 @@ export function HojePage() {
         </div>
       </header>
 
+      <AtivacaoCard />
       <OnboardingChecklist />
       <CiclosParaFecharCard />
       <ClimaCard />
-      <PixCard />
+      {!emAtivacao && <PixCard />}
       <AtividadeRecente />
+      {!emAtivacao && (total ?? 0) >= 3 && (
+        <Link to="/configuracoes" className="mb-4 flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm active:bg-slate-50">
+          <Gift size={20} className="shrink-0 text-brand-hover" aria-hidden />
+          <span>
+            <span className="block text-sm font-semibold">Indique um personal</span>
+            <span className="block text-xs text-slate-600">Vocês dois ganham 1 mês grátis</span>
+          </span>
+        </Link>
+      )}
 
       {isLoading && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
 
-      {aulas && aulas.length === 0 && <ResumoSemAulas onMarcarAula={() => setNovaAulaAberta(true)} />}
+      {aulas && aulas.length === 0 && !emAtivacao && <ResumoSemAulas onMarcarAula={() => setNovaAulaAberta(true)} />}
 
       {aulasOrdenadas && aulasOrdenadas.length > 0 && (
         <div className="space-y-2">

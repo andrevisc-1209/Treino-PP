@@ -124,7 +124,7 @@ export function AlunosPage() {
         <LinkConfiguracoes />
       </header>
 
-      <InstallBanner />
+      {(alunosAtivos?.length ?? 0) > 0 && <InstallBanner />}
 
       <div className="mb-4 grid grid-cols-3 gap-2">
         <CardMetrica icone={<Users size={16} />} valor={alunosAtivos?.length} label="Alunos ativos" />

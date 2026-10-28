@@ -45,7 +45,7 @@ export function ResumoSemAulas({ onMarcarAula }: { onMarcarAula: () => void }) {
       </div>
 
       <section className="space-y-1 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Próximas aulas</h2>
+        <h2 className="font-semibold">{proximas.length === 0 && (alunos?.length ?? 0) >= 3 ? 'Ótimo! Agora marque sua primeira aula.' : 'Próximas aulas'}</h2>
         {proximas.length === 0 ? (
           <p className="text-sm text-slate-500">Nada agendado para os próximos 7 dias.</p>
         ) : (

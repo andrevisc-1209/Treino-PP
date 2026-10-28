@@ -28,7 +28,7 @@ export function IndicacaoCard() {
       <div className="flex items-start gap-3">
         <Gift size={22} className="mt-0.5 shrink-0 text-brand-bright" aria-hidden />
         <div className="min-w-0">
-          <h2 className="font-semibold">Indique um personal e ganhem 1 mês grátis</h2>
+          <h2 className="font-semibold">Indique um personal: vocês dois ganham 1 mês grátis</h2>
           <p className="text-sm text-slate-600">
             Quando quem você indicou criar a conta e cadastrar {ALUNOS_PARA_GANHAR} alunos, <strong>vocês dois</strong> ganham 1 mês grátis. Você pode ganhar até {data.teto} meses.
           </p>
