@@ -91,6 +91,22 @@ function duracaoMinutos(v: unknown): number | null {
   return Number.isInteger(n) && n >= 1 && n <= 1440 ? n : null
 }
 
+/**
+ * Pré-treino (sono, estresse, fadiga, dor muscular) e esforço percebido (PSE), opcionais, escala 0–10, para QUALQUER modalidade.
+ * Mantenha igual a CHAVES_PRE_EXEC / CHAVE_PSE em src/features/execucoes/prontidaoExecucao.ts.
+ */
+export const CHAVES_PRE_EXEC = ['pre_sono', 'pre_estresse', 'pre_fadiga', 'pre_dor'] as const
+export const CHAVE_PSE = 'pse'
+
+function prePosDoResultado(bruto: Record<string, unknown>): Record<string, number> {
+  const saida: Record<string, number> = {}
+  for (const chave of [...CHAVES_PRE_EXEC, CHAVE_PSE]) {
+    const n = inteiro(bruto[chave], 0, 10)
+    if (n !== null) saida[chave] = n
+  }
+  return saida
+}
+
 export type EntradaExecucao = { detalhes?: unknown; notas?: unknown }
 export type ResultadoValidacao = { ok: true; detalhes: Record<string, unknown>; notas: string | null } | { ok: false; erro: string }
 
@@ -138,6 +154,7 @@ export function validarExecucao(
       exerciciosPlano.map((e) => ({ exercicio_id: e.exercicio_id, reps: e.reps ?? '', carga_kg: e.carga_kg ?? null })),
     )
     if (volume > 0) resultadoMusc.volume_kg_rep = volume
+    Object.assign(resultadoMusc, prePosDoResultado((bruto.resultado as Record<string, unknown> | undefined) ?? {}))
     if (Object.keys(resultadoMusc).length > 0) detalhes.resultado = resultadoMusc
   } else {
     const resultadoBruto = bruto.resultado && typeof bruto.resultado === 'object' ? (bruto.resultado as Record<string, unknown>) : {}
@@ -158,6 +175,7 @@ export function validarExecucao(
     }
     const minutos = duracaoMinutos(resultadoBruto[CAMPO_DURACAO.key])
     if (minutos !== null) resultado.duracao_minutos = minutos
+    Object.assign(resultado, prePosDoResultado(resultadoBruto))
     const livres = Array.isArray(bruto.exercicios_livres) ? bruto.exercicios_livres.slice(0, MAX_ITENS) : []
     detalhes.exercicios_livres = livres
       .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')

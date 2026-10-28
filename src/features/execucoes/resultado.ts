@@ -1,3 +1,4 @@
+import { camposPrePosDoResultado, type ProntidaoExec } from './prontidaoExecucao'
 import { dadosNatacaoDe } from '@/types/natacao'
 import { itensChecklist, RESULTADO_CAMPOS, type DetalhesExecucao, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 
@@ -10,6 +11,10 @@ export type EstadoResultado = {
   /** Tempo de execução (opcional), em dois campos de texto: horas e minutos. */
   duracaoH?: string
   duracaoMin?: string
+  /** Pré-treino respondido (opcional: pular deixa vazio). */
+  prontidao?: ProntidaoExec
+  /** Esforço percebido 0–10 ao final (opcional). */
+  pse?: number | null
 }
 
 export const RESULTADO_VAZIO: EstadoResultado = { valores: {}, feitos: [], notas: '' }
@@ -53,6 +58,7 @@ export function detalhesDoResultado(modalidade: Outra, detalhes: ModalidadeDetal
     const metros = distanciaNatacaoFeita(detalhes, e.feitos)
     if (metros > 0) resultado.distancia_total_m = metros
   }
+  Object.assign(resultado, camposPrePosDoResultado(e))
   const minutos = duracaoEmMinutos(e.duracaoH, e.duracaoMin)
   if (minutos !== null) {
     resultado.duracao_minutos = minutos

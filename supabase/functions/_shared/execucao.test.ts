@@ -126,3 +126,19 @@ describe('validade do link', () => {
     expect(linkValido({ expira_em: null, usado_em: '2026-10-20T10:00:00Z' }, agora)).toBe('usado')
   })
 })
+
+describe('pré-treino e PSE opcionais (qualquer modalidade)', () => {
+  it('aceita só inteiros de 0 a 10 e ignora o resto', () => {
+    const r = validarExecucao('corrida', { detalhes: { resultado: { pre_sono: 8, pre_estresse: 0, pre_fadiga: 11, pre_dor: 2.5, pse: 7, pre_x: 5 } } }, [])
+    expect(r.ok && r.detalhes.resultado).toEqual({ pre_sono: 8, pre_estresse: 0, pse: 7 })
+  })
+  it('vale também para a musculação', () => {
+    const r = validarExecucao('musculacao', { detalhes: { exercicios: [], resultado: { pre_sono: 6, pse: 9, duracao_minutos: 50 } } }, [])
+    expect(r.ok && r.detalhes.resultado).toEqual({ duracao_minutos: 50, pre_sono: 6, pse: 9 })
+  })
+  it('pular não grava nada', () => {
+    const r = validarExecucao('natacao', { detalhes: { resultado: {} } }, [])
+    expect(r.ok && r.detalhes.resultado).toEqual({})
+  })
+})
+

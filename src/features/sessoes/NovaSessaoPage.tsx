@@ -278,9 +278,10 @@ function NovaSessaoConteudo() {
         ? 'Dor muscular alta'
         : null
 
-  const comecarTreino = () => {
-    if (!todasRespondidas) {
-      setErro('Responda as 4 perguntas para iniciar o treino')
+  /** `pular`: inicia o treino sem as 4 respostas (o pré-treino é opcional) */
+  const comecarTreino = (pular = false) => {
+    if (!pular && !todasRespondidas) {
+      setErro('Responda as 4 perguntas ou toque em "Pular perguntas"')
       return
     }
     setErro(null)
@@ -290,10 +291,10 @@ function NovaSessaoConteudo() {
         plano_id: planoEscolhido?.id ?? null,
         plano_nome: planoEscolhido?.name ?? null,
         aula_id: aulaId,
-        pre_sleep: respostas.pre_sleep!,
-        pre_stress: respostas.pre_stress!,
-        pre_fatigue: respostas.pre_fatigue!,
-        pre_muscle_pain: respostas.pre_muscle_pain!,
+        pre_sleep: pular ? null : respostas.pre_sleep!,
+        pre_stress: pular ? null : respostas.pre_stress!,
+        pre_fatigue: pular ? null : respostas.pre_fatigue!,
+        pre_muscle_pain: pular ? null : respostas.pre_muscle_pain!,
       },
       {
         onSuccess: (sessaoId) => navigate(`/alunos/${id}/sessoes/${sessaoId}`, { replace: true }),
@@ -625,7 +626,7 @@ function NovaSessaoConteudo() {
           <div data-barra-fixa className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
             <div className="mx-auto max-w-2xl">
               {ultimaPergunta ? (
-                <Button onClick={comecarTreino} className="w-full" disabled={!todasRespondidas || iniciar.isPending}>
+                <Button onClick={() => comecarTreino()} className="w-full" disabled={!todasRespondidas || iniciar.isPending}>
                   Confirmar e iniciar treino
                 </Button>
               ) : (
@@ -640,6 +641,14 @@ function NovaSessaoConteudo() {
                   Avançar ({perguntaAtual + 1}/{PERGUNTAS.length})
                 </Button>
               )}
+              <button
+                type="button"
+                onClick={() => comecarTreino(true)}
+                disabled={iniciar.isPending}
+                className="mt-1 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-medium text-brand-hover active:bg-slate-100 disabled:opacity-60"
+              >
+                Pular perguntas e iniciar treino
+              </button>
             </div>
           </div>
 
@@ -671,9 +680,17 @@ function NovaSessaoConteudo() {
               </div>
               {todasRespondidas && <ResumoProntidao bemEstar={bemEstar} alerta={alerta} />}
               {erro && <p className="text-sm text-red-600">{erro}</p>}
-              <Button onClick={comecarTreino} className="w-full" disabled={!todasRespondidas || iniciar.isPending}>
+              <Button onClick={() => comecarTreino()} className="w-full" disabled={!todasRespondidas || iniciar.isPending}>
                 Confirmar e iniciar treino
               </Button>
+              <button
+                type="button"
+                onClick={() => comecarTreino(true)}
+                disabled={iniciar.isPending}
+                className="flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-medium text-brand-hover active:bg-slate-100 disabled:opacity-60"
+              >
+                Pular perguntas e iniciar treino
+              </button>
             </div>
           </div>
         </>

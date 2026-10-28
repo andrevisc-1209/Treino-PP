@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 import { tempoRestante } from './prazo'
-import { CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
+import { BlocoPreTreino, BlocoPse, CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
+import { camposPrePosDoResultado } from './prontidaoExecucao'
 import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mapearErroSupabase } from '@/lib/erros'
@@ -139,7 +140,10 @@ export function TreinoPublicoPage() {
                 obs: progresso.obs[e.exercicio_id] ?? '',
               })),
               // volume (kg·rep) é calculado no servidor a partir das séries feitas; aqui só o tempo informado
-              resultado: { ...(duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin) !== null ? { duracao_minutos: duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin) } : {}) },
+              resultado: {
+                ...(duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin) !== null ? { duracao_minutos: duracaoEmMinutos(progresso.resultado.duracaoH, progresso.resultado.duracaoMin) } : {}),
+                ...camposPrePosDoResultado(progresso.resultado),
+              },
             }
           : detalhesDoResultado(treino.modalidade, treino.detalhes, progresso.resultado)
       const r = await chamar(token, {
@@ -217,6 +221,7 @@ export function TreinoPublicoPage() {
 
       {treino.modalidade === 'musculacao' ? (
         <>
+          <BlocoPreTreino estado={progresso.resultado} onEstado={(resultado) => salvarProgresso({ ...progresso, resultado })} />
           <div className="space-y-1">
             <div className="h-2 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso do treino">
               <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} />
@@ -278,6 +283,7 @@ export function TreinoPublicoPage() {
             })}
           </ul>
           <CampoTempoExecucao estado={progresso.resultado} onEstado={(resultado) => salvarProgresso({ ...progresso, resultado })} />
+          <BlocoPse estado={progresso.resultado} onEstado={(resultado) => salvarProgresso({ ...progresso, resultado })} />
           <div className="space-y-1">
             <label className="text-sm font-medium" htmlFor="notas-treino">
               Como foi o treino? (opcional)

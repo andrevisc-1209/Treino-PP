@@ -132,3 +132,18 @@ describe('mensagem do treino à distância: prazo do link', () => {
   })
 })
 
+describe('descreverExecucao: pré-treino e PSE fora da musculação presencial', () => {
+  it('mostra a prontidão quando as 4 respostas existem, e o PSE', () => {
+    const linhas = descreverExecucao('corrida', { resultado: { pre_sono: 8, pre_estresse: 2, pre_fadiga: 2, pre_dor: 2, pse: 7 } })
+    expect(linhas).toContain('Prontidão: 8/10')
+    expect(linhas).toContain('PSE: 7/10')
+  })
+  it('respostas parciais aparecem uma a uma; sem respostas não aparece nada', () => {
+    expect(descreverExecucao('natacao', { resultado: { pre_sono: 4 } })).toContain('Sono: 4/10')
+    expect(descreverExecucao('natacao', { resultado: {} }).some((l) => l.startsWith('Prontidão') || l.startsWith('PSE'))).toBe(false)
+  })
+  it('musculação via link também mostra', () => {
+    expect(descreverExecucao('musculacao', { exercicios: [], resultado: { pse: 6 } })).toContain('PSE: 6/10')
+  })
+})
+

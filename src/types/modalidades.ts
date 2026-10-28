@@ -516,6 +516,7 @@ export function descreverExecucao(modalidade: ModalidadeTipo, d: DetalhesExecuca
     }
     if (typeof x.pse === 'number') linhas.push(`PSE: ${x.pse}/10`)
     if (typeof x.duracao_min === 'number') linhas.push(`Duração: ${formatarNumero(x.duracao_min)} min`)
+    if (typeof x.pse !== 'number') linhas.push(...linhasPrePos(x.resultado))
     return linhas
   }
   for (const c of RESULTADO_CAMPOS[modalidade]) {
@@ -526,5 +527,24 @@ export function descreverExecucao(modalidade: ModalidadeTipo, d: DetalhesExecuca
     else linhas.push(`${c.label}: ${typeof v === 'number' ? formatarNumero(v) : v}`)
   }
   for (const l of x.exercicios_livres ?? []) linhas.push(`${l.feito ? '✔' : '✘'} ${l.nome}`)
+  linhas.push(...linhasPrePos(x.resultado))
+  return linhas
+}
+
+/** Pré-treino (prontidão) e PSE respondidos pelo link do aluno ou na aula, fora da musculação presencial. */
+function linhasPrePos(resultado: Record<string, string | number> | undefined): string[] {
+  if (!resultado) return []
+  const linhas: string[] = []
+  const n = (k: string) => (typeof resultado[k] === 'number' ? (resultado[k] as number) : null)
+  const [sono, estresse, fadiga, dor] = [n('pre_sono'), n('pre_estresse'), n('pre_fadiga'), n('pre_dor')]
+  if (sono !== null && estresse !== null && fadiga !== null && dor !== null) {
+    linhas.push(`Prontidão: ${formatarNumero((sono + (10 - estresse) + (10 - fadiga) + (10 - dor)) / 4)}/10`)
+  } else {
+    if (sono !== null) linhas.push(`Sono: ${sono}/10`)
+    if (estresse !== null) linhas.push(`Estresse: ${estresse}/10`)
+    if (fadiga !== null) linhas.push(`Fadiga: ${fadiga}/10`)
+    if (dor !== null) linhas.push(`Dor muscular: ${dor}/10`)
+  }
+  if (n('pse') !== null) linhas.push(`PSE: ${n('pse')}/10`)
   return linhas
 }
