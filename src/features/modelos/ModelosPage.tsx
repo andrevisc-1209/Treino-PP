@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MoreVertical } from 'lucide-react'
-import { ClipboardList } from 'lucide-react'
+import { ClipboardList, MoreVertical, Search } from 'lucide-react'
 import { EstadoVazio } from '@/components/EstadoVazio'
 import { BottomSheet, Button, Fab, Field, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
@@ -29,6 +28,9 @@ import {
 } from '@/types/modalidades'
 import { useAplicarItensTemplate, type TemplateTreino } from '@/features/templates/api'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
+import { ehRascunho, filtrarModelos, MINIMO_PARA_BUSCA, modalidadesDaBiblioteca } from './biblioteca'
+import { cn } from '@/lib/utils'
+import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 
 export function ModelosPage() {
@@ -40,6 +42,8 @@ export function ModelosPage() {
   const duplicar = useDuplicarModelo()
   const excluir = useExcluirModelo()
 
+  const [busca, setBusca] = useState('')
+  const [filtroModalidade, setFiltroModalidade] = useState<ModalidadeTipo | null>(null)
   const [criando, setCriando] = useState(false)
   const [abrirModeloAoCriar, setAbrirModeloAoCriar] = useState(false)
   const [nomeNovo, setNomeNovo] = useState('')
@@ -69,6 +73,12 @@ export function ModelosPage() {
   const [duplicando, setDuplicando] = useState<Modelo | null>(null)
   const [nomeDuplicado, setNomeDuplicado] = useState('')
   const [erroDuplicado, setErroDuplicado] = useState<string | null>(null)
+
+  const comBusca = (modelos?.length ?? 0) >= MINIMO_PARA_BUSCA
+  const modalidadesPresentes = useMemo(() => modalidadesDaBiblioteca(modelos ?? []), [modelos])
+  // o filtro só vale enquanto a modalidade ainda existe na biblioteca (ex.: depois de excluir o último treino dela)
+  const modalidadeAtiva = filtroModalidade && modalidadesPresentes.some((x) => x.modalidade === filtroModalidade) ? filtroModalidade : null
+  const visiveis = useMemo(() => (comBusca ? filtrarModelos(modelos ?? [], busca, modalidadeAtiva) : (modelos ?? [])), [comBusca, modelos, busca, modalidadeAtiva])
 
   const abrirDuplicar = (m: Modelo) => {
     setMenuAberto(null)
@@ -211,11 +221,42 @@ export function ModelosPage() {
         />
       )}
 
+      {comBusca && (
+        <div className="mb-3 space-y-2">
+          <div className="relative">
+            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden />
+            <Input placeholder="Buscar por nome ou exercício" aria-label="Buscar treino planejado" value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
+          </div>
+          {modalidadesPresentes.length > 1 && (
+            <RolagemHorizontal className="py-1" corFundo="#f8fafc">
+              {[{ modalidade: null, qtd: modelos?.length ?? 0 }, ...modalidadesPresentes].map((x) => (
+                <button
+                  key={x.modalidade ?? 'todas'}
+                  type="button"
+                  aria-pressed={modalidadeAtiva === x.modalidade}
+                  onClick={(e) => {
+                    setFiltroModalidade(x.modalidade)
+                    e.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+                  }}
+                  className={cn(
+                    'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-sm font-medium transition',
+                    modalidadeAtiva === x.modalidade ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
+                  )}
+                >
+                  {x.modalidade ? `${MODALIDADES_CONFIG[x.modalidade].emoji} ${MODALIDADES_CONFIG[x.modalidade].label}` : 'Todos'} ({x.qtd})
+                </button>
+              ))}
+            </RolagemHorizontal>
+          )}
+        </div>
+      )}
+      {comBusca && visiveis.length === 0 && <p className="text-sm text-slate-600">Nenhum treino planejado encontrado.</p>}
+
       <ul className="space-y-2">
-        {modelos?.map((m) => {
+        {visiveis.map((m) => {
           const ordenados = [...m.modelo_exercicios].sort((a, b) => a.order_index - b.order_index)
           const previa = ordenados
-            .slice(0, 3)
+            .slice(0, 2)
             .map((i) => i.exercicio?.name)
             .filter(Boolean)
             .join(', ')
@@ -223,7 +264,7 @@ export function ModelosPage() {
           const cfgMod = MODALIDADES_CONFIG[m.modalidade ?? 'musculacao']
           const metrica = resumoModalidade(m.modalidade ?? 'musculacao', m.modalidade_detalhes)
           const nLivres = exerciciosLivresDe(m.modalidade_detalhes).length
-          const vazio = m.modelo_exercicios.length === 0 && !outraMod
+          const vazio = ehRascunho(m)
           return (
             <li key={m.id} className="rounded-2xl bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2">
@@ -242,7 +283,7 @@ export function ModelosPage() {
                       {[metrica, nLivres > 0 ? `${nLivres} ${nLivres === 1 ? 'exercício' : 'exercícios'}` : null].filter(Boolean).join(' · ') || 'Sem detalhes'}
                     </p>
                   ) : vazio ? (
-                    <p className="text-sm font-medium text-brand-hover">Nenhum exercício · toque para adicionar</p>
+                    <p className="text-sm font-medium text-amber-900">Rascunho · sem exercícios · continuar editando ›</p>
                   ) : (
                     <p className="text-sm text-slate-500">
                       {m.modelo_exercicios.length} exercícios{previa && ` · ${previa}`}
