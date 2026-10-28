@@ -176,7 +176,7 @@ export function ScaleQuestion({
                 )}
               >
                 <span className="text-base font-bold leading-tight">{c.valor}</span>
-                <span className="text-[11px] leading-tight">{c.label}</span>
+                <span className="text-xs leading-tight">{c.label}</span>
               </button>
             )
           })}

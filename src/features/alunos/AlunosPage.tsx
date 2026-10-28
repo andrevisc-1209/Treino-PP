@@ -1,3 +1,4 @@
+import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useExigirAssinatura } from "@/features/assinatura/useExigirAssinatura";
@@ -24,7 +25,6 @@ import { PuxarParaAtualizar } from "@/components/PuxarParaAtualizar";
 import { InstallBanner } from "@/components/InstallBanner";
 import { Avatar } from "@/components/Avatar";
 import { BotaoWhatsApp } from "@/components/BotaoWhatsApp";
-import { mapearErroSupabase } from "@/lib/erros";
 import { ListaSkeleton } from "@/components/Skeleton";
 import { confirmarAcao } from "@/components/ConfirmSheet";
 import { mostrarDesfazer } from "@/components/UndoToast";
@@ -66,7 +66,7 @@ import { MODALIDADES_CONFIG } from "@/types/modalidades";
 
 export function AlunosPage() {
   const [aba, setAba] = useState<"ativos" | "arquivados" | "lixeira">("ativos");
-  const { data: alunosAtivos, isLoading, error } = useAlunos();
+  const { data: alunosAtivos, isLoading, error, refetch } = useAlunos();
   const { data: alunosArquivados, isLoading: carregandoArquivados } =
     useAlunosArquivados();
   const { data: alunosNaLixeira, isLoading: carregandoLixeira } =
@@ -423,7 +423,7 @@ export function AlunosPage() {
           : aba === "arquivados"
             ? carregandoArquivados
             : carregandoLixeira) && <ListaSkeleton />}
-        {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
+        {error && <ErroComRetry erro={error} onTentar={() => refetch()} className="mb-4" />}
         {alunos?.length === 0 && aba === "ativos" && (
           <TragaSeusAlunos
             onCadastrarUm={exigir(() => navigate("/alunos/novo"))}

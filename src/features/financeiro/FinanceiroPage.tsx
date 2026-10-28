@@ -1,3 +1,4 @@
+import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
@@ -43,9 +44,9 @@ function CardResumo({ label, valor, qtd }: { label: string; valor: string; qtd: 
 }
 
 export function FinanceiroPage() {
-  const { data: alunosCobranca, isLoading: alunosLoading } = useAlunosComCobranca()
+  const { data: alunosCobranca, isLoading: alunosLoading, error: erroAlunos, refetch: recarregarAlunos } = useAlunosComCobranca()
   const { data: alunos } = useAlunos()
-  const { data: faturas, isLoading: faturasLoading } = useFaturasTodas()
+  const { data: faturas, isLoading: faturasLoading, error: erroFaturas, refetch: recarregarFaturas } = useFaturasTodas()
   const { data: participacoes } = useParticipacoesCobraveisTodas()
   const [params] = useSearchParams()
   const [filtro, setFiltro] = useState<Filtro>(params.get('filtro') === 'a_fechar' ? 'a_fechar' : 'todos')
@@ -119,8 +120,18 @@ export function FinanceiroPage() {
       </header>
 
       {(alunosLoading || faturasLoading) && <ListaSkeleton />}
+      {(erroAlunos || erroFaturas) && (
+        <ErroComRetry
+          erro={erroAlunos ?? erroFaturas}
+          onTentar={() => {
+            recarregarAlunos()
+            recarregarFaturas()
+          }}
+          className="mb-4"
+        />
+      )}
 
-      {!alunosLoading && !faturasLoading && (
+      {!alunosLoading && !faturasLoading && !erroAlunos && !erroFaturas && (
         <>
           {alunos?.length === 0 && (
             <div className="mb-4">
