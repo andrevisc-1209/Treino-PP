@@ -3,6 +3,7 @@
 
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
+import type { ModeloFatura } from './api'
 import { ehModalidade, MODALIDADES_CONFIG } from '@/types/modalidades'
 import { frequenciaSemanal, metricasDeTreino, notasPorTreino, ordenarItens, resumoRecibo, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
 
@@ -33,7 +34,7 @@ export type DadosRelatorio = {
   personalNome: string
   periodoInicio: string
   periodoFim: string
-  modelo: 'por_aula' | 'mensal'
+  modelo: ModeloFatura
   /** aulas cobradas no ciclo (mesmo formato do recibo) */
   itens: ItemRecibo[]
   ajuste: number
@@ -47,7 +48,7 @@ export type DadosRelatorio = {
 
 /** Dados do relatório de uma fatura já fechada. */
 export function dadosRelatorioDeFatura(
-  fatura: { periodo_inicio: string; periodo_fim: string; modelo: 'por_aula' | 'mensal'; ajuste: number; ajuste_descricao: string | null; total: number },
+  fatura: { periodo_inicio: string; periodo_fim: string; modelo: ModeloFatura; ajuste: number; ajuste_descricao: string | null; total: number },
   itens: ItemRecibo[],
   alunoNome: string,
   personalNome: string,
@@ -77,7 +78,7 @@ export function linhasDaTabela(d: DadosRelatorio): string[][] {
       i.a_distancia ? 'À distância' : formatarHoraInicioFim(i.starts_at, i.duration_min).replace('–', '-'),
       i.status !== 'presente' ? ROTULO_STATUS[i.status] : (rotuloModalidade(i.modalidade) ?? ''),
       i.local?.trim() ?? '',
-      d.modelo === 'mensal' || i.valor == null ? '-' : formatarBRL(i.valor),
+      d.modelo !== 'por_aula' || i.valor == null ? '-' : formatarBRL(i.valor),
     ]
   })
 }
@@ -333,6 +334,14 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
     doc.setFontSize(10.5)
     doc.setTextColor(...TEXTO)
     doc.text('Mensalidade: valor fixo do ciclo', margem, y)
+    y += 8
+  }
+  if (d.modelo === 'pacote') {
+    garantirEspaco(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10.5)
+    doc.setTextColor(...TEXTO)
+    doc.text('Pacote de aulas: valor fechado do pacote', margem, y)
     y += 8
   }
 

@@ -4,6 +4,8 @@ import { limitesDoDiaSP } from '@/lib/datas'
 import type { ItemRecibo } from './recibo'
 
 export type ModeloCobranca = 'por_aula' | 'mensal'
+/** Modelo gravado na fatura: o pacote de aulas vira uma fatura própria (a venda do pacote). */
+export type ModeloFatura = ModeloCobranca | 'pacote'
 
 export type AlunoCobranca = {
   aluno_id: string
@@ -179,7 +181,7 @@ export type Fatura = {
   aluno_id: string
   periodo_inicio: string
   periodo_fim: string
-  modelo: ModeloCobranca
+  modelo: ModeloFatura
   qtd_aulas: number
   valor_aulas: number
   ajuste: number

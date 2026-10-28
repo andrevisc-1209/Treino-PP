@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { payloadPacote, formularioDoPacote } from './formulario'
-import { aulasAnterioresParaContador, aulasRestantes, diasParaVencer, fimDoPacote, situacaoDoPacote, validarPacote, type Pacote } from './pacote'
+import { pacoteEsgotado, aulasAnterioresParaContador, aulasRestantes, diasParaVencer, fimDoPacote, situacaoDoPacote, validarPacote, type Pacote } from './pacote'
 
 const base: Pacote = { id: 'p1', aluno_id: 'a1', qtd_aulas: 10, valor: 800, validade_dias: 60, inicio: '2026-10-01', aulas_anteriores: 0, status: 'ativo' }
 
@@ -103,7 +103,7 @@ describe('aulasAnterioresParaContador', () => {
 })
 
 describe('formulário do pacote', () => {
-  const form = { modelo: 'pacote' as const, valorTexto: '800,50', diaCicloTexto: '', diasVencimentoTexto: '', cobrarDistancia: false, valorDistanciaTexto: '', qtdPacoteTexto: '10', validadePacoteTexto: '60', feitasPacoteTexto: '2' }
+  const form = { modelo: 'pacote' as const, valorTexto: '800,50', diaCicloTexto: '', diasVencimentoTexto: '', cobrarDistancia: false, valorDistanciaTexto: '', qtdPacoteTexto: '10', validadePacoteTexto: '60', feitasPacoteTexto: '2', pacoteRecebido: false, pagamentoDataTexto: '2026-10-28', formaPagamento: 'pix' as const }
   it('monta os dados do pacote novo', () => {
     expect(payloadPacote(form, 'a1')).toEqual({ aluno_id: 'a1', qtd_aulas: 10, valor: 800.5, validade_dias: 60, aulas_anteriores: 2 })
   })
@@ -116,5 +116,20 @@ describe('formulário do pacote', () => {
   it('ida e volta: o pacote ativo vira o formulário com o contador atual', () => {
     const f = formularioDoPacote(base, 4, form)
     expect(f).toMatchObject({ modelo: 'pacote', valorTexto: '800', qtdPacoteTexto: '10', validadePacoteTexto: '60', feitasPacoteTexto: '4' })
+  })
+})
+
+describe('pacoteEsgotado (a trava da próxima aula)', () => {
+  it('só trava quando as aulas acabaram', () => {
+    expect(pacoteEsgotado(base, 9)).toBe(false)
+    expect(pacoteEsgotado(base, 10)).toBe(true)
+    expect(pacoteEsgotado(base, 12)).toBe(true)
+  })
+  it('conta as aulas anteriores informadas pelo personal', () => {
+    expect(pacoteEsgotado({ ...base, aulas_anteriores: 4 }, 5)).toBe(false)
+    expect(pacoteEsgotado({ ...base, aulas_anteriores: 4 }, 6)).toBe(true)
+  })
+  it('prazo vencido sozinho não trava (só avisa)', () => {
+    expect(pacoteEsgotado(base, 0)).toBe(false)
   })
 })

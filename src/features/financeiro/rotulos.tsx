@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { FaturaStatus, ModeloCobranca } from './api'
+import type { FaturaStatus, ModeloFatura } from './api'
 
 const ROTULOS: Record<FaturaStatus, string> = {
   aberta: 'Aberta',
@@ -22,8 +22,8 @@ export function SeloFatura({ status, vencida }: { status: FaturaStatus; vencida?
   return <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-xs font-medium', CORES[status])}>{ROTULOS[status]}</span>
 }
 
-export function rotuloModelo(modelo: ModeloCobranca): string {
-  return modelo === 'por_aula' ? 'Por aula' : 'Mensal'
+export function rotuloModelo(modelo: ModeloFatura): string {
+  return modelo === 'por_aula' ? 'Por aula' : modelo === 'pacote' ? 'Pacote de aulas' : 'Mensal'
 }
 
 export function estaVencida(vencimento: string | null, status: FaturaStatus, hojeISO: string): boolean {

@@ -32,3 +32,40 @@ export function acaoNecessaria(faturasEmAtraso: { total: number }[], ciclosParaF
   if (faturasEmAtraso.length === 0 && ciclosParaFechar === 0) return null
   return { qtdAtraso: faturasEmAtraso.length, totalAtraso: faturasEmAtraso.reduce((a, f) => a + f.total, 0), qtdCiclosParaFechar: ciclosParaFechar }
 }
+
+export interface LinhaPacote {
+  alunoId: string
+  nome: string
+  faturaId: string
+  total: number
+  status: 'aberta' | 'enviada' | 'paga'
+  /** mesmo vocabulário dos filtros da lista; pacote nunca fica "a fechar" (a cobrança nasce na venda) */
+  estado: Exclude<EstadoLinha, 'todos' | 'a_fechar'>
+}
+
+/**
+ * Linhas dos alunos de pacote na lista do Financeiro: uma por pacote ativo, com a situação da fatura da venda.
+ * Pacote sem fatura (ou com a fatura cancelada) não gera linha: não há nada a receber.
+ */
+export function linhasDePacote(
+  pacotes: { aluno_id: string; fatura_id: string | null }[],
+  faturas: { id: string; total: number; status: string; vencimento: string | null }[],
+  nomes: Map<string, string>,
+  hojeISO: string,
+): LinhaPacote[] {
+  const linhas: LinhaPacote[] = []
+  for (const p of pacotes) {
+    const f = faturas.find((x) => x.id === p.fatura_id)
+    if (!f || (f.status !== 'aberta' && f.status !== 'enviada' && f.status !== 'paga')) continue
+    const vencida = f.status !== 'paga' && !!f.vencimento && f.vencimento < hojeISO
+    linhas.push({
+      alunoId: p.aluno_id,
+      nome: nomes.get(p.aluno_id) ?? '—',
+      faturaId: f.id,
+      total: f.total,
+      status: f.status,
+      estado: f.status === 'paga' ? 'paga' : vencida ? 'atraso' : 'enviada',
+    })
+  }
+  return linhas
+}

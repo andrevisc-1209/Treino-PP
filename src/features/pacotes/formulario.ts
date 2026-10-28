@@ -1,5 +1,5 @@
 import type { CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
-import type { SalvarPacoteInput } from './api'
+import type { PagamentoPacote, SalvarPacoteInput } from './api'
 import { aulasAnterioresParaContador, type Pacote } from './pacote'
 
 /** Formulário de cobrança → dados do pacote. `presencasNoApp` = presenças que o app já contou (0 num pacote novo). */
@@ -24,4 +24,9 @@ export function formularioDoPacote(p: Pacote, usadas: number, base: CobrancaForm
     validadePacoteTexto: String(p.validade_dias),
     feitasPacoteTexto: String(usadas),
   }
+}
+
+/** Pagamento escolhido no formulário (só vale na venda de um pacote novo). */
+export function pagamentoDoFormulario(v: CobrancaFormValor): PagamentoPacote {
+  return { recebido: v.pacoteRecebido, data: v.pagamentoDataTexto, forma: v.formaPagamento }
 }

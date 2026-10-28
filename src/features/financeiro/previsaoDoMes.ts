@@ -63,6 +63,8 @@ export function previsaoDoMes(args: {
   participacoesAbertas: ParticipacaoParaPrevisao[]
   aulasAgendadas: AulaAgendadaParaPrevisao[]
   idsAlunosAtivos: string[]
+  /** alunos de pacote: o valor deles já está nas faturas, então não contam como "sem valor" */
+  idsComPacote?: string[]
 }): PrevisaoDoMes {
   const mes = args.hojeISO.slice(0, 7)
   const ativas = args.cobrancas.filter((c) => c.ativo)
@@ -93,6 +95,7 @@ export function previsaoDoMes(args: {
       .map((p) => porAula(p.aluno_id)?.valor_aula ?? 0),
   )
 
-  const alunosSemValor = args.idsAlunosAtivos.filter((id) => !porAluno.has(id)).length
+  const comPacote = new Set(args.idsComPacote ?? [])
+  const alunosSemValor = args.idsAlunosAtivos.filter((id) => !porAluno.has(id) && !comPacote.has(id)).length
   return { recebido, aReceber, realizadoNaoFaturado, mensalidades, agendado, total: soma([recebido, aReceber, realizadoNaoFaturado, mensalidades, agendado]), alunosSemValor }
 }

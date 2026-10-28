@@ -1,4 +1,5 @@
 import type { CobrancaFormValor } from './CobrancaForm'
+import { hojeSP } from '@/lib/datas'
 import { validarDistancia } from './distancia'
 import { validarPacote } from '@/features/pacotes/pacote'
 
@@ -8,12 +9,18 @@ import { validarPacote } from '@/features/pacotes/pacote'
  * (o aluno era salvo, mas o erro ficava escondido na etapa 2, enquanto o usuário já estava na etapa 3).
  * Devolve a mensagem do primeiro problema, ou null se está tudo certo.
  */
-export function validarCobranca(v: CobrancaFormValor, minimoFeitasPacote = 0): string | null {
+export function validarCobranca(v: CobrancaFormValor, minimoFeitasPacote = 0, comPagamento = true): string | null {
   const valor = Number(v.valorTexto.replace(',', '.'))
   if (!v.valorTexto.trim() || Number.isNaN(valor) || valor <= 0) return 'Informe um valor maior que zero'
 
   // pacote não tem ciclo nem vencimento: vale o que o banco exige em aluno_pacotes
-  if (v.modelo === 'pacote') return validarPacote({ qtdTexto: v.qtdPacoteTexto, validadeTexto: v.validadePacoteTexto, feitasTexto: v.feitasPacoteTexto }, minimoFeitasPacote)
+  if (v.modelo === 'pacote') {
+    const erroPacote = validarPacote({ qtdTexto: v.qtdPacoteTexto, validadeTexto: v.validadePacoteTexto, feitasTexto: v.feitasPacoteTexto }, minimoFeitasPacote)
+    if (erroPacote || !comPagamento) return erroPacote
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v.pagamentoDataTexto)) return v.pacoteRecebido ? 'Informe a data do recebimento' : 'Informe o vencimento'
+    if (v.pacoteRecebido && v.pagamentoDataTexto > hojeSP()) return 'A data do recebimento não pode ser futura'
+    return null
+  }
 
   const dia = Number(v.diaCicloTexto)
   if (!v.diaCicloTexto.trim() || !Number.isInteger(dia) || dia < 1 || dia > 28) return 'Dia do ciclo deve ser entre 1 e 28'
