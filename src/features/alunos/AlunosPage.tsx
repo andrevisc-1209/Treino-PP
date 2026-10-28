@@ -7,6 +7,7 @@ import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { BottomSheet, Fab, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { BotaoExportarAlunos } from '@/features/alunos/exportar/BotaoExportarAlunos'
+import { TragaSeusAlunos } from './TragaSeusAlunos'
 import { CardMetrica } from '@/components/CardMetrica'
 import { CardDeslizavel, type AcaoDeslize } from '@/components/CardDeslizavel'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
@@ -167,8 +168,10 @@ export function AlunosPage() {
 
       {(aba === 'ativos' ? isLoading : aba === 'arquivados' ? carregandoArquivados : carregandoLixeira) && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
-      {alunos?.length === 0 && aba === 'ativos' && <p className="text-slate-500">Nenhum aluno ainda. Toque no + para cadastrar o primeiro.</p>}
-      {aba === 'ativos' && (
+      {alunos?.length === 0 && aba === 'ativos' && (
+        <TragaSeusAlunos onCadastrarUm={exigir(() => navigate('/alunos/novo'))} somenteLeitura={somenteLeitura} abrirPlanos={abrirPlanos} />
+      )}
+      {aba === 'ativos' && (alunos?.length ?? 0) > 0 && (
         <Link to="/alunos/importar" onClick={(e) => { if (somenteLeitura) { e.preventDefault(); abrirPlanos() } }} className="mb-2 block min-h-11 py-2 text-sm font-medium text-brand-hover underline">
           Importar alunos de uma planilha
         </Link>

@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
-import { Check, ChevronRight } from 'lucide-react'
+import { Check, ChevronRight, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAlunos } from '@/features/alunos/api'
 import { useHorariosFixos, useProfessionalConfig } from '@/features/agenda/api'
 import { useModelos } from '@/features/modelos/api'
+import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 
-type PassoOnboarding = { label: string; feito: boolean; to: string }
+type PassoOnboarding = { label: string; feito: boolean; to: string; /** outro jeito de cumprir o mesmo passo (linha logo abaixo) */ alternativa?: { label: string; to: string } }
 
 function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean } {
   const { data: config, isLoading: l1 } = useProfessionalConfig()
@@ -15,7 +16,12 @@ function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean
 
   const passos: PassoOnboarding[] = [
     { label: 'Configure sua chave Pix', feito: !!config?.pix_tipo, to: '/configuracoes' },
-    { label: 'Cadastre seu primeiro aluno', feito: (alunos?.length ?? 0) > 0, to: '/alunos/novo' },
+    {
+      label: 'Cadastre seu primeiro aluno',
+      feito: (alunos?.length ?? 0) > 0,
+      to: '/alunos/novo',
+      alternativa: { label: 'Ou traga vários de uma vez (planilha ou ajuda de uma IA)', to: ROTA_IMPORTAR },
+    },
     { label: 'Adicione um horário fixo', feito: (horarios?.length ?? 0) > 0, to: '/alunos' },
     { label: 'Monte seu primeiro treino planejado', feito: (modelos?.length ?? 0) > 0, to: '/meus-treinos/planejados' },
   ]
@@ -60,14 +66,15 @@ export function OnboardingChecklist() {
               </span>
               {!p.feito && <ChevronRight size={16} className="shrink-0 text-slate-400" />}
             </Link>
+            {!p.feito && p.alternativa && (
+              <Link to={p.alternativa.to} className="mb-1 ml-7 flex min-h-11 items-center gap-2 rounded-xl bg-brand-soft px-3 py-2 text-sm font-medium text-brand-hover active:bg-slate-100">
+                <Upload size={16} className="shrink-0" aria-hidden />
+                <span>{p.alternativa.label}</span>
+              </Link>
+            )}
           </li>
         ))}
       </ul>
-      {!passos[1].feito && (
-        <Link to="/alunos/importar" className="flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
-          Tem uma planilha de alunos? Importe de uma vez
-        </Link>
-      )}
       <Link to="/ajuda" className="flex min-h-11 items-center text-sm font-medium text-brand-hover">
         Precisa de ajuda? Veja a central de ajuda
       </Link>
