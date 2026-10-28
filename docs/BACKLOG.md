@@ -1154,6 +1154,14 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 
 - 🐞 Visto no uso real (28/10/2026): o atalho "Usar um modelo pronto" (item 98) só mostrava os modelos de **musculação**, porque a criação começa nessa modalidade e o seletor ficava preso a ela.
 - ✅ No atalho, o seletor ganha **abas de modalidade** (**Musculação, Corrida, Ciclismo e Brick**: as habilitadas no app que têm modelo do sistema). Ao escolher um modelo de outra modalidade, o formulário **troca a modalidade sozinho** e carrega os blocos do modelo. Pelo botão normal "Começar de um modelo" (dentro da criação), o seletor segue mostrando só a modalidade do formulário.
-- ℹ️ **Natação fica fora do atalho:** os modelos dela são do banco de exercícios de natação (aba "Modelos" dentro do formulário de natação), não treinos completos.
+- ℹ️ **Natação fica fora do atalho:** (correção no item 100: esta afirmação estava errada.)
 - ✅ Teste `atalhoDeModelo.test.ts`: as abas são só as modalidades habilitadas com modelo do sistema, na ordem do catálogo.
 - ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): abrir Treinos planejados vazio → "Usar um modelo pronto" → trocar de aba (Corrida/Ciclismo/Brick) → "Usar este modelo" e conferir que a criação abre na modalidade certa com os blocos.
+
+## 100. Modelos de natação no atalho "Usar um modelo pronto"
+
+- 🐞 Visto no uso real (28/10/2026): faltavam os modelos de natação nas abas do atalho. O item 99 dizia que eles eram só de exercícios; na verdade são **treinos completos** (10 modelos: piscina/mar × iniciante/intermediário/avançado) em `treino.templates_treino`.
+- ✅ Nova aba **Natação** no atalho (depois de Musculação). O cartão mostra nível · ambiente · nº de exercícios. Ao escolher, o formulário muda para natação e carrega ambiente e exercícios do modelo (ids novos; pede confirmação se já havia exercícios na mesma modalidade).
+- ✅ O botão "Começar de um modelo" dentro do formulário de natação continua como antes (não duplica o botão do formulário).
+- ✅ Testes em `atalhoDeModelo.test.ts` (abas incluem natação; conversão modelo → dados do formulário).
+- ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): Treinos planejados vazio → "Usar um modelo pronto" → aba Natação → "Usar este modelo" e conferir ambiente e exercícios.
