@@ -10,13 +10,9 @@ import { cn } from '@/lib/utils'
 import { formatarNumero } from '@/lib/format'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 import { tempoRestante } from './prazo'
-<<<<<<< HEAD
 import { BlocoPreTreino, BlocoPse, CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
 import { camposPrePosDoResultado } from './prontidaoExecucao'
-=======
-import { CampoTempoExecucao, FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
 import { confirmarDuracaoSeAtipica } from '@/features/sessoes/duracaoAtipica'
->>>>>>> origin/main
 import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { mapearErroSupabase } from '@/lib/erros'
