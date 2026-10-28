@@ -188,3 +188,13 @@ describe('telefone repetido entre alunos diferentes (aviso, nunca erro)', () => 
     expect(r.linhas.map((l) => l.status)).toEqual(['ok', 'ok'])
   })
 })
+
+describe('nome com número ou símbolo (aviso, nunca erro)', () => {
+  it('avisa sobra de planilha no lugar do nome e mantém a linha importável', () => {
+    const r = lerPlanilha('nome\nSOMA(A1:A2) Teste\n=ALGO\nMaria 2\nJoão da Silva\nAna-Clara D\'Ávila\nZé (JP)', [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.status)).toEqual(['aviso', 'aviso', 'aviso', 'ok', 'ok', 'aviso'])
+    expect(r.linhas[0].avisos[0]).toContain('parece sobra de planilha')
+    expect(selecionadasPorPadrao(r.linhas)).toEqual([2, 3, 4, 5, 6, 7])
+  })
+})

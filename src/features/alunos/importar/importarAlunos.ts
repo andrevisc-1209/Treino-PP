@@ -142,6 +142,8 @@ const soDigitos = (s: string | null | undefined) => (s ?? '').replace(/\D/g, '')
 const chaveDuplicado = (nome: string, telefone: string | null | undefined) => `${simplificar(nome)}|${soDigitos(telefone)}`
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+/** Dígitos e símbolos que quase nunca fazem parte do nome de uma pessoa. Só vira aviso. */
+const NOME_ESTRANHO = /[0-9=()[\]{}<>:@#$%^*_+~|\\]/
 
 export type ResultadoLeitura =
   | { ok: false; erro: string }
@@ -181,6 +183,9 @@ export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[],
     const nome = celula(cols, 'nome').replace(/\s+/g, ' ')
     if (!nome) return { linha, aluno: null, status: 'erro', erros: ['Sem nome.'], avisos }
     if (nome.length > 120) return { linha, aluno: null, status: 'erro', erros: ['Nome com mais de 120 letras.'], avisos }
+
+    // sobra de planilha/IA no lugar do nome ("SOMA(A1:A2) Teste", "Maria 2", "=ALGO"): entra, mas a revisão chama a atenção
+    if (NOME_ESTRANHO.test(nome)) avisos.push('O nome tem número ou símbolo (parece sobra de planilha): confira antes de importar.')
 
     let phone: string | null = null
     const tel = celula(cols, 'telefone')
