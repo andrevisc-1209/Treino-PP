@@ -7,6 +7,8 @@ import { AulaAcoesSheet } from './AulaAcoesSheet'
 import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { AulaCard } from './AulaCard'
+import { ProximaAulaCard } from './ProximaAulaCard'
+import { estaAtrasada, organizarAulasDoDia } from './proximaAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 import iconMark from '@/assets/brand/icon-mark.png'
@@ -30,20 +32,8 @@ export function HojePage() {
   const [novaAulaAberta, setNovaAulaAberta] = useState(false)
 
   const [agora] = useState(() => Date.now())
-  const proximaId = useMemo(() => {
-    const proxima = aulas?.find((a) => a.status === 'agendada' && new Date(a.starts_at).getTime() >= agora)
-    return proxima?.id
-  }, [aulas, agora])
-
-  // Aulas ainda por vir primeiro (na ordem em que já vêm do banco); realizadas
-  // e canceladas ficam esmaecidas no fim da lista, sem competir por atenção.
-  const aulasOrdenadas = useMemo(() => {
-    if (!aulas) return aulas
-    const pendentes = aulas.filter((a) => a.status === 'agendada')
-    const concluidasOuCanceladas = aulas.filter((a) => a.status !== 'agendada')
-    return [...pendentes, ...concluidasOuCanceladas]
-  }, [aulas])
-
+  // o destaque avança conforme as aulas são iniciadas, encerradas ou passam do horário (recalcula a cada carga da lista)
+  const organizadas = useMemo(() => (aulas ? organizarAulasDoDia(aulas, agora) : null), [aulas, agora])
   const concluidas = aulas?.filter((a) => a.status === 'realizada').length ?? 0
 
   const abrirMenu = (a: Aula) => {
@@ -82,8 +72,48 @@ export function HojePage() {
 
       <AtivacaoCard />
       <OnboardingChecklist />
+
+      {isLoading && <ListaSkeleton />}
+      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
+
+      {aulas && aulas.length === 0 && !emAtivacao && <ResumoSemAulas onMarcarAula={() => setNovaAulaAberta(true)} />}
+
+      {organizadas?.destaque && organizadas.situacao && (
+        <ProximaAulaCard
+          aula={organizadas.destaque}
+          situacao={organizadas.situacao}
+          outrasNoHorario={organizadas.outrasNoHorario}
+          onClick={() => abrirMenu(organizadas.destaque!)}
+          onComecar={() => comecar(organizadas.destaque!)}
+        />
+      )}
+
+      {organizadas && !organizadas.destaque && aulas && aulas.length > 0 && (
+        <p className="mb-4 rounded-2xl bg-brand-soft p-4 text-sm font-medium text-brand-hover">
+          Sem mais aulas por fazer hoje: {concluidas} {concluidas === 1 ? 'concluída' : 'concluídas'}.
+        </p>
+      )}
+
+      {organizadas && (organizadas.seguintes.length > 0 || organizadas.encerradas.length > 0) && (
+        <section className="mb-4" aria-labelledby="proximas-aulas">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 id="proximas-aulas" className="text-sm font-semibold text-slate-600">
+              {organizadas.destaque ? 'Próximas aulas' : 'Aulas de hoje'}
+            </h2>
+            <Link to="/agenda" className="flex min-h-11 items-center text-sm font-medium text-brand-hover">
+              Ver agenda
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {[...organizadas.seguintes, ...organizadas.encerradas].map((a) => (
+              <AulaCard key={a.id} aula={a} localResumido atrasada={estaAtrasada(a, agora)} onClick={() => abrirMenu(a)} onComecar={() => comecar(a)} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <CiclosParaFecharCard />
-      <ClimaCard />
+      <ClimaCard compacto />
       {!emAtivacao && <PixCard />}
       <AtividadeRecente />
       {!emAtivacao && (total ?? 0) >= 3 && (
@@ -94,19 +124,6 @@ export function HojePage() {
             <span className="block text-xs text-slate-600">Vocês dois ganham 1 mês grátis</span>
           </span>
         </Link>
-      )}
-
-      {isLoading && <ListaSkeleton />}
-      {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
-
-      {aulas && aulas.length === 0 && !emAtivacao && <ResumoSemAulas onMarcarAula={() => setNovaAulaAberta(true)} />}
-
-      {aulasOrdenadas && aulasOrdenadas.length > 0 && (
-        <div className="space-y-2">
-          {aulasOrdenadas.map((a) => (
-            <AulaCard key={a.id} aula={a} destaque={a.id === proximaId} onClick={() => abrirMenu(a)} onComecar={() => comecar(a)} />
-          ))}
-        </div>
       )}
 
       <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} passoInicial={passoInicial} />

@@ -5,12 +5,17 @@ import { MODALIDADES_CONFIG } from '@/types/modalidades'
 import { useAtividadeRecente, type AtividadeRecente as Item } from './api'
 import { tempoRelativo } from './metricas'
 
+/** quantas atividades aparecem de início; as demais ficam atrás de "Ver todas" */
+const VISIVEIS = 3
+
 /** Feed das últimas execuções de todos os alunos (treinos concluídos pelo link ou registrados na aula). */
 export function AtividadeRecente() {
   const { data } = useAtividadeRecente(10)
   const [nota, setNota] = useState<Item | null>(null)
+  const [verTodas, setVerTodas] = useState(false)
 
   if (!data || data.length === 0) return null
+  const lista = verTodas ? data : data.slice(0, VISIVEIS)
 
   return (
     <section className="mb-4 space-y-2" aria-labelledby="atividade-recente">
@@ -18,7 +23,7 @@ export function AtividadeRecente() {
         Atividade recente
       </h2>
       <ul className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm">
-        {data.map((a) => {
+        {lista.map((a) => {
           const cfg = MODALIDADES_CONFIG[a.modalidade]
           return (
             <li key={a.id} className="flex items-center gap-2 px-4 py-3">
@@ -44,6 +49,11 @@ export function AtividadeRecente() {
           )
         })}
       </ul>
+      {data.length > VISIVEIS && (
+        <button type="button" onClick={() => setVerTodas((v) => !v)} aria-expanded={verTodas} className="flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-medium text-brand-hover active:bg-slate-100">
+          {verTodas ? 'Mostrar menos' : `Ver todas (${data.length})`}
+        </button>
+      )}
 
       <BottomSheet open={!!nota} onClose={() => setNota(null)} title={nota?.aluno?.name ?? 'Observação'}>
         {nota && (
