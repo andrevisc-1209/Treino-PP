@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { lerPlanilha } from './importarAlunos'
-import { limparTextoColado, montarPromptIA } from './promptIA'
+import { OBJETIVOS } from '../opcoes'
+import { EQUIVALENCIAS, limparTextoColado, montarPromptIA } from './promptIA'
 
 // Resposta REAL de uma IA ao prompt, com a lista bagunçada de teste (28/10/2026). Ela não inventou nada, não levou saúde, CPF nem mensalidade e
 // descartou a repetida; ficou com apelido no nome e deixou o sexo vazio onde a lista dizia "mulher". O prompt foi apertado nesses dois pontos.
@@ -42,5 +43,51 @@ describe('prompt apertado depois da resposta real', () => {
   it('manda preencher o sexo quando a lista diz explicitamente (feminino, mulher, masculino, homem)', () => {
     expect(prompt).toMatch(/feminino.*mulher.*masculino.*homem/)
     expect(prompt).toContain('NÃO deduza pelo nome')
+  })
+})
+
+// 2ª resposta real (com o prompt já apertado em nome e sexo): nomes limpos, mas a data "15/11/89" e os objetivos "emagrecer e ganhar massa" ficaram vazios.
+const RESPOSTA_2 = [
+  'nome;telefone;email;nascimento;sexo;objetivos',
+  'Carla Menezes;(11) 99999-0001;carlinha.menezes@exemplo.com;;;',
+  'João Pedro;(21) 98888-0002;;03/07/1995;;Hipertrofia',
+  'Ana Beatriz Lima;;; ;F;Corrida/maratona',
+  'Paulo;;;;;Saúde e qualidade de vida',
+  'Marcos Vinícius;(31) 97777-0005;marcos@exemplo.com;;;Condicionamento físico',
+  'Fernanda;(11) 96666-0006;;;;Mobilidade/flexibilidade',
+  'Lucas Teixeira;;lucas.teixeira@exemplo.com;25/12/2001;;Hipertrofia',
+  'Beatriz Souza;;;;;',
+].join('\n')
+
+describe('2ª resposta real: nomes limpos', () => {
+  it('a importação lê os 8 sem erro nem aviso, com os nomes limpos', () => {
+    const r = lerPlanilha(RESPOSTA_2, [], '2026-10-28')
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.status)).toEqual(Array(8).fill('ok'))
+    expect(r.linhas.map((l) => l.aluno!.name)).toEqual(['Carla Menezes', 'João Pedro', 'Ana Beatriz Lima', 'Paulo', 'Marcos Vinícius', 'Fernanda', 'Lucas Teixeira', 'Beatriz Souza'])
+  })
+  it('se a IA mandar o ano com 2 dígitos, o app completa (é o que o prompt agora autoriza)', () => {
+    const r = lerPlanilha('nome;nascimento\nAna;15/11/89\nBia;03/07/05', [], '2026-10-28')
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas.map((l) => l.aluno!.birth_date)).toEqual(['1989-11-15', '2005-07-03'])
+    expect(r.linhas.every((l) => l.status === 'ok')).toBe(true)
+  })
+})
+
+describe('prompt: datas de 2 dígitos e equivalências de objetivo', () => {
+  const prompt = montarPromptIA()
+  it('autoriza o ano com 2 dígitos e só manda deixar vazio quando falta dia, mês ou há só a idade', () => {
+    expect(prompt).toContain('15/11/89')
+    expect(prompt).toContain('o app completa o ano')
+    expect(prompt).toContain('faltar dia ou mês')
+  })
+  it('traz as equivalências (emagrecer = Perder peso, ganhar massa = Hipertrofia) e só elas', () => {
+    expect(prompt).toContain('emagrecer, perder peso, secar, queimar gordura = Perder peso')
+    expect(prompt).toContain('ganhar massa')
+    expect(prompt).toContain('Aceite estas equivalências (e só elas)')
+  })
+  it('toda equivalência aponta para um objetivo que existe no app (não deriva)', () => {
+    for (const objetivo of Object.keys(EQUIVALENCIAS)) expect(OBJETIVOS).toContain(objetivo)
+    for (const o of OBJETIVOS.filter((x) => x !== 'Outros')) expect(Object.keys(EQUIVALENCIAS)).toContain(o)
   })
 })
