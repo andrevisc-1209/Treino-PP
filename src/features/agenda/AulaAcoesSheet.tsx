@@ -149,6 +149,7 @@ export function AulaAcoesSheet({
     <BottomSheet open={!!aula} onClose={fechar} title={titulo}>
       {passo === 'menu' && (
         <div className="space-y-1">
+          {aula.local && <p className="px-1 pb-1 text-sm text-slate-500">{aula.local}</p>}
           {aula.aula_participantes.length > 1 && (
             <ul className="mb-2 space-y-1 border-b border-slate-100 pb-2">
               {aula.aula_participantes.map((p) => (
