@@ -4,7 +4,7 @@
 
 import { OBJETIVOS } from '../opcoes'
 import { mascararTelefone, validarTelefone } from '@/lib/telefone'
-import { lerCsv } from './csv'
+import { lerCsv, serializarCsv } from './csv'
 
 export const LIMITE_IMPORTACAO = 50
 /** Quantas linhas do começo são olhadas atrás do cabeçalho (título solto, linha em branco etc.). */
@@ -145,7 +145,14 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export type ResultadoLeitura =
   | { ok: false; erro: string }
-  | { ok: true; linhas: LinhaImportada[]; colunasIgnoradas: string[]; semDados: false }
+  | {
+      ok: true
+      linhas: LinhaImportada[]
+      colunasIgnoradas: string[]
+      semDados: false
+      /** alunos que passaram do limite: ficam para a próxima importação (com o cabeçalho, prontos para colar de novo) */
+      restantes: { quantidade: number; texto: string } | null
+    }
 
 /**
  * Lê o texto da planilha e valida linha a linha. Erro SÓ quando não há nome (ou a planilha não tem a coluna "nome" / passa do limite).
@@ -158,9 +165,10 @@ export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[],
   const posCabecalho = tabela.slice(0, LINHAS_PARA_ACHAR_CABECALHO).findIndex((l) => mapearCabecalho(l).colunas.nome !== undefined)
   if (posCabecalho < 0) return { ok: false, erro: 'Não achei a coluna "nome" nas primeiras linhas. Use o modelo para baixar a planilha certa.' }
   const { colunas, ignoradas } = mapearCabecalho(tabela[posCabecalho])
-  const dados = tabela.slice(posCabecalho + 1)
-  if (dados.length === 0) return { ok: false, erro: 'A planilha só tem o cabeçalho, sem nenhum aluno.' }
-  if (dados.length > LIMITE_IMPORTACAO) return { ok: false, erro: `A planilha tem ${dados.length} alunos e o limite é ${LIMITE_IMPORTACAO} por vez. Divida em mais de uma planilha.` }
+  const todos = tabela.slice(posCabecalho + 1)
+  const dados = todos.slice(0, LIMITE_IMPORTACAO)
+  const restantes = todos.length > LIMITE_IMPORTACAO ? { quantidade: todos.length - LIMITE_IMPORTACAO, texto: serializarCsv([tabela[posCabecalho], ...todos.slice(LIMITE_IMPORTACAO)]) } : null
+  if (todos.length === 0) return { ok: false, erro: 'A planilha só tem o cabeçalho, sem nenhum aluno.' }
 
   const existentesChaves = new Set(existentes.map((e) => chaveDuplicado(e.name, e.phone)))
   const vistasNoArquivo = new Set<string>()
@@ -221,7 +229,7 @@ export function lerPlanilha(texto: string, existentes: ExistenteParaDuplicado[],
     vistasNoArquivo.add(chave)
     return { linha, aluno, status, erros, avisos }
   })
-  return { ok: true, linhas, colunasIgnoradas: ignoradas, semDados: false }
+  return { ok: true, linhas, colunasIgnoradas: ignoradas, semDados: false, restantes }
 }
 
 /** Linhas que já vêm marcadas para importar: tudo que não é erro nem duplicado. */

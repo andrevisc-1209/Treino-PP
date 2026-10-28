@@ -45,6 +45,7 @@ export function ImportarAlunosPage() {
   const [ignoradas, setIgnoradas] = useState<string[]>([])
   const [marcadas, setMarcadas] = useState<Set<number>>(new Set())
   const [criados, setCriados] = useState<string[] | null>(null)
+  const [restantes, setRestantes] = useState<{ quantidade: number; texto: string } | null>(null)
   const [colado, setColado] = useState('')
   const [promptCopiado, setPromptCopiado] = useState(false)
 
@@ -54,6 +55,7 @@ export function ImportarAlunosPage() {
     setArquivo(origem)
     setLinhas(r.linhas)
     setIgnoradas(r.colunasIgnoradas)
+    setRestantes(r.restantes)
     setMarcadas(new Set(selecionadasPorPadrao(r.linhas)))
   }
 
@@ -61,7 +63,7 @@ export function ImportarAlunosPage() {
     setErro(null)
     setLinhas(null)
     if (!f) return
-    if (f.size > TAMANHO_MAXIMO_ARQUIVO) return setErro('O arquivo é grande demais. Use uma planilha com até 50 alunos.')
+    if (f.size > TAMANHO_MAXIMO_ARQUIVO) return setErro('O arquivo é grande demais. Divida a planilha em partes menores.')
     if (!/\.(csv|txt)$/i.test(f.name)) return setErro('Use um arquivo CSV. No Excel ou Google Planilhas: Arquivo → Salvar como/Fazer download → CSV.')
     processar(decodificarArquivo(await f.arrayBuffer()), f.name)
   }
@@ -70,7 +72,7 @@ export function ImportarAlunosPage() {
     setErro(null)
     setLinhas(null)
     if (!colado.trim()) return setErro('Cole aqui o texto que a IA devolveu.')
-    if (colado.length > TAMANHO_MAXIMO_ARQUIVO) return setErro('O texto é grande demais. Use até 50 alunos por vez.')
+    if (colado.length > TAMANHO_MAXIMO_ARQUIVO) return setErro('O texto é grande demais. Mande a lista em partes menores.')
     processar(colado, 'Texto colado')
   }
 
@@ -132,7 +134,26 @@ export function ImportarAlunosPage() {
             Eles entraram só com os dados básicos. Complete cobrança e horários na ficha de cada um. Dados de saúde só entram com o consentimento do aluno.
           </p>
         </div>
-        <Button className="w-full" onClick={() => navigate('/alunos')}>
+        {restantes && (
+          <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <p className="text-sm text-slate-700">
+              Sua lista tinha mais alunos: {restantes.quantidade === 1 ? 'ficou 1 para importar agora' : `ficaram ${restantes.quantidade} para importar agora`} (o limite é {LIMITE_IMPORTACAO} por vez).
+            </p>
+            <Button
+              className="mt-3 w-full"
+              onClick={() => {
+                const texto = restantes.texto
+                setCriados(null)
+                setLinhas(null)
+                setMarcadas(new Set())
+                processar(texto, 'Restantes da lista')
+              }}
+            >
+              Importar {restantes.quantidade === 1 ? 'o restante' : `os ${restantes.quantidade} restantes`}
+            </Button>
+          </div>
+        )}
+        <Button className="w-full" variant={restantes ? 'outline' : 'primary'} onClick={() => navigate('/alunos')}>
           Ver meus alunos
         </Button>
         <Button variant="outline" className="w-full text-red-700" onClick={desfazerTudo} disabled={desfazer.isPending}>
@@ -193,6 +214,7 @@ export function ImportarAlunosPage() {
               <li>Toque em <strong>Copiar prompt para IA</strong>.</li>
               <li>Cole o prompt no ChatGPT, Gemini ou Claude e, em seguida, cole ou anexe a sua lista (contatos, caderno, planilha como estiver).</li>
               <li>Copie a resposta da IA e cole abaixo. Você confere tudo antes de gravar.</li>
+              <li className="list-none text-xs text-slate-600">Dica: a IA erra mais em lista longa. Mande de 20 a 30 alunos por vez; se passar de {LIMITE_IMPORTACAO}, o app importa os {LIMITE_IMPORTACAO} primeiros e deixa o resto para depois.</li>
             </ol>
             <div className="flex gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
@@ -236,6 +258,11 @@ export function ImportarAlunosPage() {
               {resumo.duplicado > 0 && ` · ${resumo.duplicado} já existem (fora por padrão)`}
               {resumo.erro > 0 && ` · ${resumo.erro} com erro (ficam de fora)`}
             </p>
+            {restantes && (
+              <p role="status" className="mt-2 rounded-xl bg-amber-50 p-2 text-xs text-amber-900">
+                Sua lista tem {resumo.total + restantes.quantidade} alunos. Esta importação traz os {resumo.total} primeiros (limite de {LIMITE_IMPORTACAO} por vez); depois você importa {restantes.quantidade === 1 ? 'o restante' : `os ${restantes.quantidade} restantes`} com um toque.
+              </p>
+            )}
             {ignoradas.length > 0 && <p className="mt-1 text-xs text-slate-500">Colunas que não usamos e foram ignoradas: {ignoradas.join(', ')}.</p>}
             <button type="button" className="mt-2 min-h-11 text-sm font-medium text-brand-hover underline" onClick={() => setLinhas(null)}>
               Trocar de planilha
