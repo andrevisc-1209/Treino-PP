@@ -12,13 +12,16 @@ import { EstadoVazio } from '@/components/EstadoVazio'
 import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 import { formatarBRL } from '@/lib/moeda'
-import { hojeSP } from '@/lib/datas'
+import { hojeSP, limitesDoDiaSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 import { cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
 import { alunosComCicloParaFechar } from './cicloPendente'
 import { estaVencida, rotuloModelo, SeloFatura } from './rotulos'
 import { recebidoPorMes } from './desempenho'
 import { acaoNecessaria, ehSemValor, prioridadeDaLinha } from './listaFinanceiro'
+import { previsaoDoMes, ultimoDiaDoMes } from './previsaoDoMes'
+import { useAulasNoIntervalo } from '@/features/agenda/api'
+import { BottomSheet } from '@/components/ui'
 import { useAlunosComCobranca, useFaturasTodas, useParticipacoesCobraveisTodas, type Fatura, type FaturaStatus } from './api'
 
 type Filtro = 'todos' | 'a_fechar' | 'enviada' | 'paga' | 'atraso'
@@ -51,10 +54,15 @@ export function FinanceiroPage() {
   const [params] = useSearchParams()
   const [filtro, setFiltro] = useState<Filtro>(params.get('filtro') === 'a_fechar' ? 'a_fechar' : 'todos')
   const [mostrarSemValor, setMostrarSemValor] = useState(false)
+  const [previsaoAberta, setPrevisaoAberta] = useState(false)
+  // aulas agendadas de agora até o fim do mês (a projeção da previsão); o "agora" fica fixo para a consulta não se refazer a cada render
+  const [agora] = useState(() => new Date())
   const qc = useQueryClient()
 
   const hoje = hojeSP()
   const mesAtual = hoje.slice(0, 7)
+  const fimDoMes = useMemo(() => limitesDoDiaSP(ultimoDiaDoMes(hoje)).fim, [hoje])
+  const { data: aulasAteFimDoMes } = useAulasNoIntervalo(agora, fimDoMes)
 
   const faturasAbertasEnviadas = useMemo(() => (faturas ?? []).filter((f) => f.status === 'aberta' || f.status === 'enviada'), [faturas])
   const faturasPagasNoMes = useMemo(() => (faturas ?? []).filter((f) => f.status === 'paga' && f.paga_em?.startsWith(mesAtual)), [faturas, mesAtual])
@@ -97,6 +105,18 @@ export function FinanceiroPage() {
     })
   }, [alunosCobranca, faturas, participacoes, hoje])
 
+  const previsao = useMemo(
+    () =>
+      previsaoDoMes({
+        hojeISO: hoje,
+        faturas: faturas ?? [],
+        cobrancas: alunosCobranca ?? [],
+        participacoesAbertas: participacoes ?? [],
+        aulasAgendadas: aulasAteFimDoMes ?? [],
+        idsAlunosAtivos: (alunos ?? []).map((a) => a.id),
+      }),
+    [hoje, faturas, alunosCobranca, participacoes, aulasAteFimDoMes, alunos],
+  )
   const recebimentos = useMemo(() => recebidoPorMes(faturas ?? [], hoje, 6), [faturas, hoje])
   const idsCicloEncerrado = useMemo(
     () => new Set(alunosComCicloParaFechar({ cobrancas: alunosCobranca ?? [], faturas: faturas ?? [], participacoes: participacoes ?? [], hoje })),
@@ -154,7 +174,7 @@ export function FinanceiroPage() {
             </div>
           )}
           {/* Celular: carrossel deslizável com encaixe. Tablet/desktop: três cards lado a lado + gráfico. */}
-          <RolagemHorizontal snap className="mb-4 md:grid md:grid-cols-3 md:gap-2 md:overflow-visible">
+          <RolagemHorizontal snap className="mb-4 md:grid md:grid-cols-4 md:gap-2 md:overflow-visible">
             <CardResumo
               label="A receber"
               valor={formatarBRL(faturasAbertasEnviadas.reduce((a, f) => a + f.total, 0))}
@@ -170,6 +190,18 @@ export function FinanceiroPage() {
               valor={formatarBRL(faturasEmAtraso.reduce((a, f) => a + f.total, 0))}
               qtd={faturasEmAtraso.length}
             />
+            {(alunosCobranca?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => setPrevisaoAberta(true)}
+              aria-label={`Previsto no mês: ${formatarBRL(previsao.total)}. Ver detalhes`}
+              className="w-[42%] shrink-0 snap-start rounded-2xl border border-brand/30 bg-brand-soft p-3 text-left shadow-sm active:bg-white md:w-auto md:shrink"
+            >
+              <p className="text-xs text-slate-600">Previsto no mês</p>
+              <p className="text-lg font-bold">{formatarBRL(previsao.total)}</p>
+              <p className="text-xs font-medium text-brand-hover">Ver detalhes ›</p>
+            </button>
+            )}
           </RolagemHorizontal>
 
           {acao && (
@@ -291,6 +323,48 @@ export function FinanceiroPage() {
         </>
       )}
     </div>
+      <BottomSheet open={previsaoAberta} onClose={() => setPrevisaoAberta(false)} title="Previsto no mês">
+        <div className="space-y-3">
+          <ul className="divide-y divide-slate-100 text-sm">
+            {[
+              { rotulo: 'Já recebido', ajuda: 'faturas pagas neste mês', valor: previsao.recebido },
+              { rotulo: 'A receber', ajuda: 'faturas abertas ou enviadas', valor: previsao.aReceber },
+              { rotulo: 'Realizado, ainda sem fatura', ajuda: 'aulas já dadas aos alunos "por aula"', valor: previsao.realizadoNaoFaturado },
+              { rotulo: 'Mensalidades do ciclo', ajuda: 'alunos "mensal" ainda sem fatura', valor: previsao.mensalidades },
+            ].map((l) => (
+              <li key={l.rotulo} className="flex items-start justify-between gap-3 py-2.5">
+                <span>
+                  <span className="block font-medium">{l.rotulo}</span>
+                  <span className="block text-xs text-slate-600">{l.ajuda}</span>
+                </span>
+                <span className="shrink-0 font-semibold">{formatarBRL(l.valor)}</span>
+              </li>
+            ))}
+            <li className="flex items-start justify-between gap-3 py-2.5 text-slate-700">
+              <span>
+                <span className="block font-medium">Aulas agendadas até o fim do mês</span>
+                <span className="block text-xs">Estimativa: depende de o aluno vir</span>
+              </span>
+              <span className="shrink-0 font-semibold">{formatarBRL(previsao.agendado)}</span>
+            </li>
+            <li className="flex items-center justify-between gap-3 pt-3 text-base">
+              <span className="font-bold">Previsto no mês</span>
+              <span className="font-bold">{formatarBRL(previsao.total)}</span>
+            </li>
+          </ul>
+          {previsao.alunosSemValor > 0 && (
+            <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+              {previsao.alunosSemValor} {previsao.alunosSemValor === 1 ? 'aluno sem valor definido não entra' : 'alunos sem valor definido não entram'} na previsão.{' '}
+              <Link to="/alunos" className="font-semibold underline">
+                Definir valores
+              </Link>
+            </p>
+          )}
+          <p className="text-xs text-slate-600">
+            Soma o que já entrou, o que está a receber e o que está a caminho. Os pagamentos podem cair no mês seguinte, e o valor das aulas agendadas pode mudar se houver falta ou cancelamento.
+          </p>
+        </div>
+      </BottomSheet>
     </PuxarParaAtualizar>
   )
 }

@@ -1296,3 +1296,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Vale nos dois pontos de envio (aba Treinos do aluno e "Tipo de sessão" ao iniciar). Antes, o segundo nem tinha onde mostrar a folha.
 - ✅ A janela não é mais aberta antes da rede (não precisa mais do truque contra bloqueio de pop-up): o WhatsApp só abre no toque do botão.
 - ✅ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): enviar um treino à distância, tocar em "Copiar e abrir WhatsApp", colar e conferir os emojis; testar "Só copiar" e o plano B.
+
+## 116. Previsão de ganho do mês no Financeiro
+
+- 💡 Pedido do dono (28/10/2026): ter previsibilidade de ganho sem poluir a tela.
+- ✅ Um **quarto cartão no carrossel do topo, "Previsto no mês"** (só aparece se há alunos com cobrança); ao tocar, abre a folha com a conta aberta: **Já recebido** (faturas pagas no mês) + **A receber** (abertas e enviadas) + **Realizado, ainda sem fatura** (aulas já dadas a alunos "por aula") + **Mensalidades do ciclo** (alunos "mensal" ainda sem fatura cobrindo o ciclo) + **Aulas agendadas até o fim do mês** (previstos × valor por aula, marcada como **estimativa**) = **Previsto no mês**.
+- ✅ Aluno sem cobrança definida fica fora da conta e a folha avisa quantos são, com atalho para definir os valores. Rodapé: pagamentos podem cair no mês seguinte e a projeção muda com falta/cancelamento.
+- ✅ Cálculo puro em `previsaoDoMes.ts` (testado: recebido do mês, a receber sem canceladas, mensal só "por aula" para realizado, mensalidade uma vez e sem duplicar fatura, projeção só de agendadas e previstos, arredondamento, último dia do mês). Sem migration e sem deploy.
+- ⚠️ **Não testado ao vivo por mim** (login com captcha): conferir o cartão e a folha a 390 px com uma conta que tenha aluno "por aula" com aulas agendadas e realizadas, um mensalista e uma fatura em atraso, e comparar a soma com o que você espera.
