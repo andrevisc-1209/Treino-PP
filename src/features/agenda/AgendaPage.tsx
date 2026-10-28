@@ -23,6 +23,7 @@ import {
   somarDias,
 } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
+import { direcaoDoDeslize, montarFaixa, rotuloAcessivelDoDia } from './faixaDeDias'
 import { AulaCard } from './AulaCard'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, type Aula } from './api'
@@ -134,6 +135,60 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
   )
 }
 
+/** Faixa dos 7 dias da semana (visão Dia): toque escolhe o dia; arrastar para o lado troca de semana; ponto = tem aula. */
+function FaixaDeDias({ dataAtual, onEscolher, onSemana }: { dataAtual: string; onEscolher: (iso: string) => void; onSemana: (direcao: 1 | -1) => void }) {
+  const hoje = hojeSP()
+  const inicioSemana = inicioDaSemanaSP(dataAtual)
+  const { inicio, fim } = limitesDaSemanaSP(inicioSemana)
+  const { data: aulas } = useAulasNoIntervalo(inicio, fim)
+  const [toqueX, setToqueX] = useState<number | null>(null)
+
+  const contagem = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const a of aulas ?? []) {
+      if (a.status === 'cancelada') continue
+      const d = dataSP(a.starts_at)
+      m.set(d, (m.get(d) ?? 0) + 1)
+    }
+    return m
+  }, [aulas])
+  const dias = montarFaixa(inicioSemana, hoje, dataAtual, contagem)
+
+  return (
+    <div
+      className="mb-3 grid grid-cols-7 gap-1"
+      role="group"
+      aria-label="Dias da semana"
+      onTouchStart={(e) => setToqueX(e.touches[0]?.clientX ?? null)}
+      onTouchEnd={(e) => {
+        if (toqueX === null) return
+        const dir = direcaoDoDeslize((e.changedTouches[0]?.clientX ?? toqueX) - toqueX)
+        setToqueX(null)
+        if (dir !== 0) onSemana(dir)
+      }}
+    >
+      {dias.map((d) => (
+        <button
+          key={d.iso}
+          type="button"
+          onClick={() => onEscolher(d.iso)}
+          aria-pressed={d.selecionado}
+          aria-current={d.hoje ? 'date' : undefined}
+          aria-label={rotuloAcessivelDoDia(d, formatarDataCompleta(d.iso))}
+          className={cn(
+            'flex min-h-14 flex-col items-center justify-center rounded-xl border text-xs font-medium transition',
+            d.selecionado ? 'border-brand bg-brand text-white' : d.hoje ? 'border-brand bg-white text-brand-hover' : 'border-slate-200 bg-white text-slate-700',
+          )}
+        >
+          <span>{d.sigla}</span>
+          <span className="text-base font-semibold leading-tight">{d.numero}</span>
+          <span className={cn('mt-0.5 size-1.5 rounded-full', d.aulas > 0 ? (d.selecionado ? 'bg-white' : 'bg-brand') : 'bg-transparent')} aria-hidden />
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function AgendaPage() {
   useGerarAulasDiarias()
   const qc = useQueryClient()
@@ -189,6 +244,8 @@ export function AgendaPage() {
           </button>
         </div>
       </div>
+
+      {modo === 'dia' && <FaixaDeDias dataAtual={dataAtual} onEscolher={setDataAtual} onSemana={(dir) => setDataAtual((d) => somarDias(d, dir * 7))} />}
 
       {modo === 'dia' && <p className="mb-3 font-semibold">{formatarDataCompleta(dataAtual)}</p>}
 
