@@ -1314,3 +1314,8 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **WhatsApp:** **3 dias antes** (já existia) e **1 dia antes** ("vence amanhã", pedido do dono). Segue as regras de sempre (opt-in, telefone verificado, uma mensagem por tipo por dia).
 - 🚀 **Deploy necessário:** função **`avisos-diarios`** (usa o segredo `RESEND_API_KEY`, o mesmo do e-mail de exclusão de conta). **Conferir** que o agendamento diário está ativo: `select jobname, schedule, active from cron.job;`. Sem migration.
 - ✅ Testes: `renovacao.test.ts` (dias de calendário em São Paulo, mês grátis, quem recebe o quê e quando, textos e escape do e-mail), `renovacaoBannerRegra.test.ts`. **Não testado ao vivo por mim** (captcha e precisa de assinatura perto do fim): simular com uma conta de teste cujo `assinatura_fim` esteja a 5, 3 e 1 dia (SQL no PR) e rodar a função uma vez à mão.
+
+## 118. Correção do e-mail de renovação: data repetida
+
+- 🐞 Visto no teste ao vivo (28/10/2026): o e-mail dizia "vai até **segunda, 02/nov, 02/11/2026**" (a data apareceu duas vezes, porque o dia da semana vinha junto com a data abreviada).
+- ✅ Agora: "vai até **segunda, 02/11/2026**", no texto e no HTML. Teste novo garante a data uma só vez. Sem migration. **Deploy:** função `avisos-diarios` (o texto do e-mail é montado nela).

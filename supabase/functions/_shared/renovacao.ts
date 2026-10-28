@@ -33,6 +33,8 @@ export function lembretesDoDia(dias: number): LembreteDoDia {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const dataBR = (iso: string) => dataSP(iso).split('-').reverse().join('/')
+/** Só o dia da semana, sem a data (diaSemanaCurto devolve "segunda, 02/nov"). */
+const diaDaSemana = (iso: string) => diaSemanaCurto(dataSP(iso)).split(',')[0]
 const primeiro = (nome: string | null) => (nome ?? '').trim().split(/\s+/)[0] ?? ''
 
 const QUANDO: Record<5 | 1 | 0, string> = { 5: 'termina em 5 dias', 1: 'termina amanhã', 0: 'termina hoje' }
@@ -47,7 +49,7 @@ export function montarEmailRenovacao(args: { nome: string | null; plano: string 
   const texto = [
     `${nome ? `Olá, ${nome}.` : 'Olá.'}`,
     '',
-    `Seu acesso ao Treino PP${plano} ${quando}: ${diaSemanaCurto(dataSP(args.fimIso))}, ${data}.`,
+    `Seu acesso ao Treino PP${plano} ${quando}: ${diaDaSemana(args.fimIso)}, ${data}.`,
     '',
     'O pagamento é avulso e não renova sozinho. Renove antes do fim para continuar registrando treinos, aulas e cobranças.',
     'Se o prazo passar, você continua vendo todos os seus dados, mas não consegue gravar novidades até renovar.',
@@ -65,7 +67,7 @@ export function montarEmailRenovacao(args: { nome: string | null; plano: string 
 <tr><td align="center" style="background-color:#ffffff;padding:28px 24px 20px;border-bottom:3px solid #367c39;"><img src="${esc(args.appUrl)}/brand/logo-email-branco.png" alt="Personal Perto" width="240" style="display:block;width:240px;max-width:100%;height:auto;" /></td></tr>
 <tr><td style="padding:32px 32px 8px;">
 <h1 style="margin:0 0 16px;font-size:22px;color:#0f2537;">Seu acesso ${esc(quando)}</h1>
-<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:#334155;">${nome ? `Olá, ${esc(nome)}. ` : ''}Seu acesso ao Treino PP${esc(plano)} vai até <strong>${esc(diaSemanaCurto(dataSP(args.fimIso)))}, ${esc(data)}</strong>.</p>
+<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:#334155;">${nome ? `Olá, ${esc(nome)}. ` : ''}Seu acesso ao Treino PP${esc(plano)} vai até <strong>${esc(diaDaSemana(args.fimIso))}, ${esc(data)}</strong>.</p>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#334155;">O pagamento é avulso e <strong>não renova sozinho</strong>. Renove antes do fim para continuar registrando treinos, aulas e cobranças. Se o prazo passar, você continua vendo todos os seus dados, mas não consegue gravar novidades até renovar.</p>
 <p style="margin:0 0 24px;text-align:center;"><a href="${esc(link)}" style="display:inline-block;background-color:#367c39;color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 28px;border-radius:10px;">Renovar agora</a></p>
 </td></tr>
