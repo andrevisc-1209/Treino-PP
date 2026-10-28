@@ -1205,3 +1205,12 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Local em "Lugar · Bairro" nos cartões da Agenda; o endereço completo aparece ao abrir a aula.
 - ℹ️ **Não feito:** "Confirmada / A confirmar" (a aula não guarda confirmação; seria produto novo com migration) e botão "Começar" nos cartões da Agenda (o início segue pelo menu da aula e pela tela Hoje).
 - ✅ Testes `leituraDaAgenda.test.ts` (abreviar nomes, agrupar horários, conflito do mesmo aluno). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px e em tablet a semana com dois alunos de mesmo prenome e duas aulas no mesmo horário.
+
+## 105. Auditoria de UX com conta em uso · PR 5: Treinos planejados com busca e filtro
+
+- (Segue o plano das 6 PRs do item 101.)
+- ✅ **Busca** por nome **ou por exercício** (sem diferenciar acento e maiúscula) e **filtro por modalidade** com contador ("🏊 Natação (1)", "Todos (12)"). Os dois só aparecem a partir de **6 treinos planejados** (com menos, a lista cabe na tela e a busca seria ruído); o filtro de modalidade só aparece se há mais de uma modalidade na biblioteca. Se a modalidade filtrada deixa de existir (ex.: excluiu o último treino dela), o filtro volta para "Todos" sozinho.
+- ✅ **Rascunho:** treino de musculação sem nenhum exercício agora diz "Rascunho · sem exercícios · continuar editando ›" (âmbar, em texto), em vez do "toque para adicionar".
+- ✅ Cartão mais compacto: no máximo **2** exemplos de exercício (eram 3).
+- ℹ️ **Não feito:** "arquivar" treino planejado (hoje há Editar, Duplicar e Excluir; arquivar exigiria coluna nova e migration). Fica como ideia caso a biblioteca cresça.
+- ✅ Testes `biblioteca.test.ts` (busca, modalidade, rascunho, contagem). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px com 6 ou mais treinos, busca por exercício e filtro por modalidade.
