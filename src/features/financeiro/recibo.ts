@@ -35,6 +35,10 @@ export type ItemRecibo = {
   duracao_execucao_min?: number | null
   /** Execução (treino à distância ou de outra modalidade) ligada a esta aula. */
   execucao_id?: string | null
+  /** Maior carga (kg) feita em cada exercício da sessão. */
+  cargas?: { exercicio_id: string; nome: string; carga_kg: number }[]
+  /** Pace médio da corrida registrada (segundos por km). */
+  pace_seg_km?: number | null
   /** Treino à distância feito no ciclo e NÃO cobrado: aparece no relatório, mas não conta como aula nem no total. */
   fora_da_cobranca?: boolean
 }

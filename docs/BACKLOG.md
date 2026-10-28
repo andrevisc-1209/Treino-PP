@@ -1386,7 +1386,7 @@ Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: p
 - ✅ **Tabela limpa:** o local sobe para o cabeçalho quando é um só (e vira nome curto, sem endereço, quando há vários); coluna Valor só no modelo por aula; modalidade com o nome do treino ("Musculação · Treino A"); pacote mostra "4 de 10 aulas do pacote".
 - ✅ **Fechamento:** fatura paga mostra "Pago em dd/mm/aaaa"; em aberto mostra o vencimento e, **só se o personal marcar "Incluir o QR Code Pix no relatório"**, o QR Pix. O recibo na tela ganhou o resumo por modalidade e a situação do ciclo.
 - ✅ **Treinos à distância no ciclo:** o relatório e o recibo passam a incluir os treinos que o aluno fez pelo link no período, **em qualquer modelo** (por aula, mensal e pacote), cobrados ou não. Os cobrados já entram como aula; os não cobrados aparecem como "treino à distância" (tabela, resumo por modalidade com km/metros, e cartão "Treinos à distância"), sem virar aula nem somar no total. Antes só o mensal mostrava uma contagem. Só números do resultado: prontidão não entra.
-- ✅ Parte B: ver item 128. ⏳ Parte C: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
+- ✅ Parte B: ver item 128. ✅ Parte C1 (evolução): item 129. ⏳ Parte C2 (relatório mensal) e: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
 - ⚠️ Limite: "assiduidade em %" não entrou, porque o relatório só conhece as aulas ligadas à fatura (não as previstas que não aconteceram); entra quando houver a base de aulas previstas.
 
 ### 127. Pacote: treino à distância gasta aula? (decisão do personal) — ✅ PR aberta
@@ -1398,4 +1398,10 @@ Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: p
 - ✅ Na fatura do ciclo/pacote há o cartão **"Avaliação do personal"** com três campos opcionais (até 500 caracteres cada): **conquistas do ciclo**, **pontos de atenção** e **próximos objetivos**. O texto fica salvo na fatura e aparece no PDF ("Avaliação do personal", antes da tabela de aulas) e no recibo da tela; vale para baixar o relatório de novo. Sem texto, a seção não aparece.
 - ✅ **LGPD:** o cartão avisa para não incluir lesões, cirurgias nem medicamentos; se o texto parece citar saúde, o app pergunta antes de salvar ("Revisar texto" / "Salvar mesmo assim"). A avaliação não entra no texto curto de compartilhar nem em mensagens.
 - 🗄️ **Migration** `20261084000000_fatura_avaliacao_do_personal.sql` (3 colunas em `treino.faturas`, CHECK de 500 caracteres; a RLS da fatura já isola por personal). Teste SQL: `supabase/tests/fatura_avaliacao.sql`.
+
+### 129. Relatório de acompanhamento (parte C1: evolução no ciclo, por modalidade) — ✅ PR aberta
+- ✅ Seção **"Evolução no ciclo"** no PDF e no recibo: primeiro × último registro do que o aluno repetiu. **Musculação:** maior carga por exercício feito em 2 treinos ou mais (até 4, os que mais subiram). **Corrida:** distância por treino e pace (mais rápido). **Natação:** metros por treino. **Ciclismo:** km por treino. **Brick:** bike e corrida em separado.
+- ✅ **Regras de honestidade:** só aparece com 2 registros comparáveis da mesma coisa e só o que **melhorou pelo menos 5%** (queda e variação pequena não entram; o aluno é um relatório de acompanhamento, não de alerta). Sem comparável, a seção some. Treino à distância com carga ou distância registrada também entra.
+- ✅ **LGPD:** só carga, distância e pace; peso, medidas e prontidão continuam fora.
+- Sem migration.
 

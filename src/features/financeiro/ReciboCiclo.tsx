@@ -11,6 +11,7 @@ import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto 
 import { formatarBRL } from '@/lib/moeda'
 import { useItensDoCiclo } from './useItensDoCiclo'
 import { avaliacaoDaFatura } from './avaliacao'
+import { evolucaoDoCiclo } from './evolucaoDoCiclo'
 import type { Fatura } from './api'
 import { baixarRelatorioCompleto, dadosRelatorioDeFatura, extrasDaFatura, statusDoCiclo } from './relatorio'
 import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoPorModalidade, resumoRecibo, textoCompartilharRecibo, textoResumoModalidade } from './recibo'
@@ -79,6 +80,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
   const notas = useMemo(() => notasPorTreino(itens), [itens])
   const modalidades = useMemo(() => resumoPorModalidade(itens), [itens])
   const avaliacao = avaliacaoDaFatura(fatura)
+  const evolucao = useMemo(() => evolucaoDoCiclo(itens), [itens])
 
   const personalNome = perfil?.name?.trim() || 'Personal'
   const periodo = `${formatarDataCurta(fatura.periodo_inicio)} a ${formatarDataCurta(fatura.periodo_fim)}`
@@ -174,6 +176,26 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
                 Inclui ajuste de {formatarBRL(fatura.ajuste)}
                 {fatura.ajuste_descricao ? ` (${fatura.ajuste_descricao})` : ''}.
               </p>
+            )}
+
+            {evolucao.length > 0 && (
+              <section className="recibo-bloco space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
+                <h2 className="text-sm font-semibold" style={{ color: NAVY }}>
+                  Evolução no ciclo
+                </h2>
+                <ul className="divide-y divide-slate-100">
+                  {evolucao.map((e) => (
+                    <li key={`${e.modalidade}-${e.assunto}`} className="space-y-0.5 py-2 text-sm">
+                      <p className="font-medium">
+                        {e.assunto} <span className="font-normal text-slate-500">· {e.modalidade}</span>
+                      </p>
+                      <p className="text-slate-600">
+                        {e.de} → {e.para} <span className="font-semibold" style={{ color: VERDE }}>{e.variacao}</span>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
 
             {avaliacao && (

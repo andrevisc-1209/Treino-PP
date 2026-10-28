@@ -4,6 +4,7 @@
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
 import type { ModeloFatura } from './api'
+import { evolucaoDoCiclo } from './evolucaoDoCiclo'
 import { avaliacaoDaFatura, type AvaliacaoPersonal } from './avaliacao'
 import { ehModalidade, MODALIDADES_CONFIG } from '@/types/modalidades'
 import { frequenciaMedia, frequenciaSemanal, metricasDeTreino, notasPorTreino, ordenarItens, resumoPorModalidade, resumoRecibo, textoResumoModalidade, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
@@ -389,6 +390,22 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
       y += 6.5
     }
     y += 3
+  }
+
+  // --- Evolução no ciclo (só o que melhorou e tem dois registros comparáveis) ---
+  const evolucao = evolucaoDoCiclo(d.itens)
+  if (evolucao.length > 0) {
+    titulo('Evolução no ciclo')
+    doc.setFontSize(10.5)
+    for (const e of evolucao) {
+      const linhasTexto = doc.splitTextToSize(`${e.assunto} (${e.modalidade}): ${e.de} → ${e.para}  ${e.variacao}`, largBloco - 6) as string[]
+      garantirEspaco(linhasTexto.length * 5 + 3)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...TEXTO)
+      doc.text(linhasTexto, margem + 2, y)
+      y += linhasTexto.length * 5 + 2
+    }
+    y += 4
   }
 
   // --- Avaliação do personal (só se ele escreveu) ---

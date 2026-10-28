@@ -158,5 +158,14 @@ describe('relatório completo do ciclo', () => {
     const doc = await gerarRelatorioCompleto({ ...dados, avaliacao: { conquistas: longa, atencao: longa, proximos: 'Correr 10 km' } })
     expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
   })
+  it('PDF com evolução no ciclo (musculação e corrida)', async () => {
+    const c = (kg: number) => [{ exercicio_id: 'e1', nome: 'Agachamento', carga_kg: kg }]
+    const itens = [
+      item({ id: 'e1', starts_at: '2026-10-06T15:30:00Z', modalidade: 'musculacao', cargas: c(40) }),
+      item({ id: 'e2', starts_at: '2026-10-27T15:30:00Z', modalidade: 'musculacao', cargas: c(50) }),
+    ]
+    const doc = await gerarRelatorioCompleto({ ...dados, itens })
+    expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
+  })
 })
 
