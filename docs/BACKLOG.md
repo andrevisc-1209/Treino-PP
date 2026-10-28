@@ -1319,3 +1319,10 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 
 - 🐞 Visto no teste ao vivo (28/10/2026): o e-mail dizia "vai até **segunda, 02/nov, 02/11/2026**" (a data apareceu duas vezes, porque o dia da semana vinha junto com a data abreviada).
 - ✅ Agora: "vai até **segunda, 02/11/2026**", no texto e no HTML. Teste novo garante a data uma só vez. Sem migration. **Deploy:** função `avisos-diarios` (o texto do e-mail é montado nela).
+
+## 119. Renovação em um toque: link direto no WhatsApp e no e-mail
+
+- 💡 Sugestão após o teste ao vivo dos lembretes (item 117): a mensagem do WhatsApp mandava o personal "abrir Configurações › Assinatura", sem link.
+- ✅ O WhatsApp de renovação (3 e 1 dia antes) agora termina com o **link sozinho na última linha** (o WhatsApp mostra a prévia): `https://treino.personalperto.com.br/configuracoes?secao=assinatura`. O botão **"Renovar agora"** do e-mail usa o mesmo link.
+- ✅ O app entende `?secao=assinatura` (também `dados`, `localizacao`, `aulas`, `pix`, `notificacoes`): abre as Configurações **com essa seção já expandida**, em vez de cair no acordeão fechado.
+- 🚀 **Deploy:** função `avisos-diarios` (os textos são montados nela). Sem migration. Testes atualizados em `notificacoes.test.ts` e `renovacao.test.ts`. **Não testado ao vivo por mim:** tocar no link no WhatsApp e no e-mail e conferir que a seção Assinatura abre expandida.

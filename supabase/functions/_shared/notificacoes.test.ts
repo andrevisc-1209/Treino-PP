@@ -81,7 +81,7 @@ describe('financeiro (plano do personal)', () => {
   it('pagamento confirmado e plano expirando', () => {
     expect(montarPagamentoPlano({ plano: 'Mensal', valor: 15, ate: '2026-11-14' })).toBe('💰 Pagamento confirmado!\nPlano: Mensal\nValor: R$ 15,00\nAcesso até: 14/11/2026')
     expect(montarPlanoExpirando({ nome: 'André Scherer', plano: 'Mensal', ate: '2026-10-18' })).toBe(
-      'André, seu plano Mensal vence em 3 dias (domingo, 18/out) — vale renovar em Configurações › Assinatura antes de perder o acesso.',
+      'André, seu plano Mensal vence em 3 dias (domingo, 18/out) — vale renovar antes de perder o acesso:\nhttps://treino.personalperto.com.br/configuracoes?secao=assinatura',
     )
     expect(montarPlanoExpirando({ nome: null, plano: null, ate: '2026-10-18' })).toMatch(/^Seu plano vence em 3 dias/)
   })

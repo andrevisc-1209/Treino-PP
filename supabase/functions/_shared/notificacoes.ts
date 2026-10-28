@@ -5,6 +5,9 @@
 import { numeroWhatsApp } from './whatsapp.ts'
 import { rotuloChuvaMm } from './clima.ts'
 
+/** Onde o personal renova o plano (abre Configurações com a seção Assinatura expandida). */
+export const LINK_RENOVAR = 'https://treino.personalperto.com.br/configuracoes?secao=assinatura'
+
 export const TIPOS_NOTIFICACAO = ['briefing_diario', 'pagamento_plano', 'plano_expirando', 'resumo_semanal', 'aluno_inativo', 'plano_vencido', 'treino_concluido', 'relato_novo'] as const
 export type TipoNotificacao = (typeof TIPOS_NOTIFICACAO)[number]
 
@@ -117,7 +120,8 @@ export function montarPagamentoPlano(args: { plano: string; valor: number; ate: 
 export function montarPlanoExpirando(args: { nome: string | null; plano: string | null; ate: string; dias?: 3 | 1 }): string {
   const nome = primeiroNome(args.nome)
   const quando = args.dias === 1 ? 'vence amanhã' : 'vence em 3 dias'
-  return `${nome ? `${nome}, s` : 'S'}eu plano${args.plano ? ` ${args.plano}` : ''} ${quando} (${diaSemanaCurto(args.ate)}) — vale renovar em Configurações › Assinatura antes de perder o acesso.`
+  // o link vai sozinho na última linha (o WhatsApp mostra a prévia) e já abre a seção Assinatura
+  return `${nome ? `${nome}, s` : 'S'}eu plano${args.plano ? ` ${args.plano}` : ''} ${quando} (${diaSemanaCurto(args.ate)}) — vale renovar antes de perder o acesso:\n${LINK_RENOVAR}`
 }
 
 // ---------- 3. resumo semanal ----------
