@@ -60,3 +60,20 @@ Sem taxa por aluno e sem comissão. 15 dias grátis, sem cartão. Link na bio."
 - Responder **todo comentário e DM em até 2 h** (as primeiras horas decidem o alcance).
 - Anotar no `leads.csv` quem veio de DM ou comentário (coluna "como conheci").
 - No dia seguinte, ver **saves e compartilhamentos** (valem mais que curtidas) e **cliques no link da bio**.
+
+---
+
+## Reels 4 · "Traga seus alunos em 2 minutos"  (produto, para a semana 2)
+
+**Telas a usar:** a tela de **importação** (modelo + "Está tudo bagunçado") e a **revisão** com os nomes fictícios. Mostrar a lista bagunçada de teste (`Maria Exemplo`, `João Exemplo`) e a resposta da IA.
+
+| Tempo | Imagem | Fala | Texto na tela |
+|---|---|---|---|
+| 0–3 s | Caderno / lista de contatos bagunçada | "Medo de migrar porque tem aluno demais para digitar?" | **Traga seus alunos em minutos** |
+| 3–10 s | Botão "Copiar prompt para IA", colando no ChatGPT/Gemini/Claude junto com a lista | "Copio o prompt do app, colo na IA que eu já uso e mando a minha lista do jeito que está." | Prompt pronto |
+| 10–18 s | A resposta da IA sendo colada e a tela de revisão (Pronto / Com aviso / Já existe) | "O app me mostra o que entrou, o que tem aviso e o que já existe. Eu confiro antes de gravar." | Você confere antes de gravar |
+| 18–24 s | Logo + link | "Sem digitar um por um. 15 dias grátis. Link na bio." | **15 dias grátis** |
+
+**Cuidados:** (1) dizer "a IA que eu já uso": **não** dizer que o app tem IA própria; (2) mostrar só dados fictícios e **não** colar lista real; (3) na legenda, citar o cuidado: "Mande só nome, contato, nascimento, sexo e objetivos: nunca dados de saúde, CPF ou senha".
+**Legenda:** "Tem alunos numa planilha ou numa lista bagunçada? O Treino PP dá o modelo e um prompt pronto para você usar no ChatGPT, Gemini ou Claude, e mostra uma revisão antes de gravar. Mande só dados básicos (nunca saúde, CPF ou senha). 15 dias grátis, sem cartão. Link na bio."
+
