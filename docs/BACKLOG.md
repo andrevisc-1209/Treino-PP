@@ -1377,3 +1377,13 @@ Pedido: muitos personais vendem pacote de aulas. Modelo de cobrança novo, ao la
 - ⚠️ Limites conhecidos: uma cobrança nova que começa no mesmo dia de outra do mesmo aluno é recusada (regra antiga: um início por aluno); aulas já marcadas como "treino concluído" depois do total não são travadas (só o início).
 - ✅ **Correção (achada no teste ao vivo):** a fatura de um pacote ainda aberto mostrava recibo com 0 aulas e o "Baixar relatório completo" ficava desabilitado, porque as aulas só eram ligadas à fatura ao encerrar/renovar. Agora o recibo e o relatório leem as presenças do pacote em andamento (`useItensDaFatura`). Fatura já paga não mostra mais o QR Pix, e a fatura paga de pacote não mostra a "Mensagem para o aluno" de cobrança.
 
+### 126. Relatório de acompanhamento (parte A: honesto, por modalidade e sem poluição) — ✅ PR aberta
+Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: peso e medidas fora do PDF; Pix só em aberto e só se o personal incluir; avaliação do personal na fatura na parte B; ordem A, B, C).
+- ✅ **Título e situação:** "Relatório de acompanhamento" (não mais "Recibo"); o cabeçalho diz **"Parcial do ciclo, atualizado em dd/mm/aaaa"** ou **"Ciclo encerrado"**.
+- ✅ **Por modalidade (as 5 ativas: musculação, corrida, natação, ciclismo, brick):** o relatório lê o resultado das execuções (antes só lia a musculação) e mostra uma linha por modalidade: corrida em km, natação em metros, ciclismo em km (ou minutos), brick com bike e corrida separados, musculação em séries. Sem dado, só a quantidade de aulas: nada de zero nem traço. Prontidão e demais respostas do aluno continuam fora.
+- ✅ **Métricas só quando confiáveis:** tempo fora de 20 min a 3 h não entra (acabou o "1 minuto"); frequência média só com 3 semanas ou mais; gráfico de frequência só com 3 semanas ou mais.
+- ✅ **Tabela limpa:** o local sobe para o cabeçalho quando é um só (e vira nome curto, sem endereço, quando há vários); coluna Valor só no modelo por aula; modalidade com o nome do treino ("Musculação · Treino A"); pacote mostra "4 de 10 aulas do pacote".
+- ✅ **Fechamento:** fatura paga mostra "Pago em dd/mm/aaaa"; em aberto mostra o vencimento e, **só se o personal marcar "Incluir o QR Code Pix no relatório"**, o QR Pix. O recibo na tela ganhou o resumo por modalidade e a situação do ciclo.
+- ⏳ Parte B: avaliação do personal (conquistas, pontos de atenção, próximos objetivos) salva na fatura (migration). Parte C: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
+- ⚠️ Limite: "assiduidade em %" não entrou, porque o relatório só conhece as aulas ligadas à fatura (não as previstas que não aconteceram); entra quando houver a base de aulas previstas.
+

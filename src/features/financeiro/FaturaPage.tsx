@@ -19,7 +19,7 @@ import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
 import { BotaoRelatorioFatura } from './BotaoRelatorio'
-import { dadosRelatorioDeFatura, type DadosRelatorio } from './relatorio'
+import { dadosRelatorioDeFatura, extrasDaFatura, type DadosRelatorio } from './relatorio'
 import {
   useCancelarFatura,
   useDesfazerPagamentoFatura,
@@ -65,6 +65,8 @@ export function FaturaPage() {
   const [dataPagamento, setDataPagamento] = useState(hojeSP())
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>('pix')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  // o Pix só vai no relatório quando o personal pede (o PDF circula) e só enquanto a fatura está em aberto
+  const [incluirPix, setIncluirPix] = useState(false)
   const [copiado, setCopiado] = useState<'mensagem' | 'pix' | null>(null)
   // O recibo abre sozinho logo depois de fechar o ciclo (?recibo=1) e pelo botão "Ver recibo".
   const reciboAberto = searchParams.get('recibo') === '1'
@@ -132,7 +134,7 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =
-    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal'), treinosADistancia: fatura.modelo === 'mensal' ? (treinosADistancia ?? 0) : undefined } : null
+    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirPix ? qrDataUrl : null)), treinosADistancia: fatura.modelo === 'mensal' ? (treinosADistancia ?? 0) : undefined } : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)
@@ -243,6 +245,12 @@ export function FaturaPage() {
             <Button variant="outline" className="mt-3 w-full" onClick={() => definirRecibo(true)}>
               <FileText size={18} /> Ver recibo
             </Button>
+          )}
+          {fatura.status !== 'cancelada' && fatura.status !== 'paga' && qrDataUrl && (
+            <label className="mt-3 flex min-h-11 items-center justify-between gap-3 text-sm">
+              <span>Incluir o QR Code Pix no relatório</span>
+              <input type="checkbox" checked={incluirPix} onChange={(e) => setIncluirPix(e.target.checked)} className="size-5 accent-brand" />
+            </label>
           )}
           {fatura.status !== 'cancelada' && <BotaoRelatorioFatura dados={dadosRelatorio} />}
         </div>
