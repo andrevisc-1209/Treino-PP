@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Quote } from 'lucide-react'
 import { BottomSheet } from '@/components/ui'
 import { MODALIDADES_CONFIG } from '@/types/modalidades'
+import { useMarcarLida, useNotificacoes } from '@/features/notificacoes/api'
 import { useAtividadeRecente, type AtividadeRecente as Item } from './api'
+import { priorizarAtividades } from './priorizarAtividade'
 import { tempoRelativo } from './metricas'
 
 /** quantas atividades aparecem de início; as demais ficam atrás de "Ver todas" */
@@ -13,9 +15,18 @@ export function AtividadeRecente() {
   const { data } = useAtividadeRecente(10)
   const [nota, setNota] = useState<Item | null>(null)
   const [verTodas, setVerTodas] = useState(false)
+  const { data: notificacoes } = useNotificacoes()
+  const marcarLida = useMarcarLida()
+  // observação do aluno ainda não lida no sino: execucao_id -> id da notificação
+  const observacaoNova = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const n of notificacoes ?? []) if (!n.lida && n.payload.tem_notas && n.payload.execucao_id) m.set(n.payload.execucao_id, n.id)
+    return m
+  }, [notificacoes])
 
   if (!data || data.length === 0) return null
-  const lista = verTodas ? data : data.slice(0, VISIVEIS)
+  const ordenada = priorizarAtividades(data, new Set(observacaoNova.keys()))
+  const lista = verTodas ? ordenada : ordenada.slice(0, VISIVEIS)
 
   return (
     <section className="mb-4 space-y-2" aria-labelledby="atividade-recente">
@@ -33,12 +44,21 @@ export function AtividadeRecente() {
                   {' '}
                   · {cfg.emoji} {a.plano_nome ?? cfg.label}
                 </span>
-                <span className="block text-xs text-slate-500">{tempoRelativo(a.concluido_em)}</span>
+                <span className="block text-xs text-slate-600">
+                  {tempoRelativo(a.concluido_em)}
+                  {a.notas_aluno && observacaoNova.has(a.id) && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">Nova observação</span>
+                  )}
+                </span>
               </p>
               {a.notas_aluno && (
                 <button
                   type="button"
-                  onClick={() => setNota(a)}
+                  onClick={() => {
+                    setNota(a)
+                    const notificacaoId = observacaoNova.get(a.id)
+                    if (notificacaoId) marcarLida.mutate(notificacaoId)
+                  }}
                   aria-label={`Ler observação de ${a.aluno?.name ?? 'aluno'}`}
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
                 >

@@ -61,7 +61,7 @@ export function AulaCard({
           )}
           {aula.status === 'realizada' && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">Realizada</span>}
           {aula.status === 'cancelada' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Cancelada</span>}
-          {participanteUnico && <BotaoWhatsApp telefone={participanteUnico.aluno?.phone} label={`WhatsApp de ${participanteUnico.aluno?.name}`} size={18} />}
+          {participanteUnico && <BotaoWhatsApp telefone={participanteUnico.aluno?.phone} label={`WhatsApp de ${participanteUnico.aluno?.name}`} size={16} comTexto />}
         </div>
       </div>
 

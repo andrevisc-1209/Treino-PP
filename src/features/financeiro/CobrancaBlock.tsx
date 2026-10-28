@@ -72,19 +72,24 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
       {isLoading && <ListaSkeleton />}
 
       {!isLoading && (!cobranca || !cobranca.ativo) && (
-        <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">Sem valor definido</span>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-slate-600">Sem valor definido</p>
+          <Button onClick={() => setEditando(true)}>Definir valor</Button>
+        </div>
       )}
 
       {!isLoading && cobranca?.ativo && (
-        <p className="text-sm text-slate-600">
-          {cobranca.modelo === 'por_aula' ? (
-            <>{formatarBRL(cobranca.valor_aula ?? 0)} por aula</>
-          ) : (
-            <>{formatarBRL(cobranca.valor_mensal ?? 0)} por mês</>
-          )}
-          {cobranca.modelo === 'por_aula' && cobranca.cobrar_distancia && cobranca.valor_distancia != null && <> · {formatarBRL(cobranca.valor_distancia)} por treino à distância</>}
-          {' · '}ciclo a partir do dia {cobranca.dia_ciclo} · vence {cobranca.dias_vencimento} dias após fechar
-        </p>
+        <div className="space-y-0.5">
+          <p className="font-medium">
+            {cobranca.modelo === 'por_aula' ? <>{formatarBRL(cobranca.valor_aula ?? 0)} por aula</> : <>{formatarBRL(cobranca.valor_mensal ?? 0)} por mês</>}
+            {cobranca.modelo === 'por_aula' && cobranca.cobrar_distancia && cobranca.valor_distancia != null && (
+              <span className="font-normal text-slate-600"> · {formatarBRL(cobranca.valor_distancia)} à distância</span>
+            )}
+          </p>
+          <p className="text-sm text-slate-600">
+            Ciclo a partir do dia {cobranca.dia_ciclo} · vence {cobranca.dias_vencimento} dias após fechar
+          </p>
+        </div>
       )}
 
       <BottomSheet open={editando} onClose={() => setEditando(false)} title="Cobrança">
