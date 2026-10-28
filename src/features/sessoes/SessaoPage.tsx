@@ -1,3 +1,4 @@
+import { confirmarDuracaoSeAtipica } from './duracaoAtipica'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ListaSkeleton, PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
@@ -560,7 +561,8 @@ function DetalheSessao({ sessionId, alunoId }: { sessionId: string; alunoId: str
     setEditando(true)
   }
 
-  const salvar = () => {
+  const salvar = async () => {
+    if (duracao.trim() && !(await confirmarDuracaoSeAtipica(Number(duracao)))) return
     atualizar.mutate(
       {
         post_pse: pse,

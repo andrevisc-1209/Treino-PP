@@ -1224,3 +1224,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Rótulo de acessibilidade do sino informa quantas pedem ação.
 - ✅ Testes `agrupar.test.ts` (grupos, ordem, contagem). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): gerar um treino concluído e um ciclo encerrado e conferir os grupos, o selo e "Marcar como lidos".
 - 🏁 Com esta PR fecha o plano de 6 PRs da auditoria (itens 101 a 106). Ideias de produto que ficaram de fora: confirmação de aula pelo aluno e arquivar treino planejado.
+
+## 108. Alerta quando o tempo informado foge do usual
+
+- 💡 Pedido do dono (28/10/2026): o tempo alimenta histórico e Performance, então um tempo absurdo (cronômetro esquecido, horas digitadas em minutos) suja os números.
+- ✅ Se o tempo for **menor que 20 min ou de 3 h para cima**, abre a pergunta **"O tempo está correto?"** ("Você informou 3 h 20 min, um tempo bem longo para um treino…") com **Corrigir** (volta ao campo) e **Está certo, continuar**. Nunca bloqueia; **tempo em branco não gera alerta** (dá para pular).
+- ✅ Vale em todas as modalidades e em todos os pontos que gravam duração: conclusão do treino de musculação (PosTreino), edição da sessão, resultado das outras modalidades no presencial, página do aluno à distância, **duração da aula** no horário fixo e na aula avulsa (mensagem trocada para "define o espaço que a aula ocupa na agenda").
+- ⚙️ Os limites ficam em `duracaoAtipica.ts` (`DURACAO_MINIMA_MIN`, `DURACAO_MAXIMA_MIN`): se ciclismo, brick ou natação em mar pedirem um teto maior, é uma constante por modalidade.
+- ✅ A folha de confirmação ganhou `textoCancelar` opcional ("Corrigir"). Testes `duracaoAtipica.test.ts`. Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): informar 10 min, 200 min, 45 min e em branco em cada tela.

@@ -7,7 +7,8 @@ import { formatarBRL } from '@/lib/moeda'
 import { MODALIDADES_CONFIG, type ModalidadeDetalhes, type ModalidadeTipo } from '@/types/modalidades'
 import { useRegistrarExecucaoPresencial } from './api'
 import { FormResultadoModalidade, ReferenciaTreino } from './ResultadoModalidade'
-import { detalhesDoResultado, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
+import { confirmarDuracaoSeAtipica } from '@/features/sessoes/duracaoAtipica'
+import { detalhesDoResultado, duracaoEmMinutos, RESULTADO_VAZIO, type EstadoResultado } from './resultado'
 import { mapearErroSupabase } from '@/lib/erros'
 
 export type PlanoParaExecucao = { id: string; name: string; modalidade: ModalidadeTipo; modalidade_detalhes: ModalidadeDetalhes }
@@ -27,8 +28,9 @@ export function ExecucaoPresencialSheet({ plano, alunoId, onClose }: { plano: Pl
     onClose()
   }
 
-  const salvar = () => {
+  const salvar = async () => {
     if (!plano || plano.modalidade === 'musculacao') return
+    if (!(await confirmarDuracaoSeAtipica(duracaoEmMinutos(estado.duracaoH, estado.duracaoMin)))) return
     setErro(null)
     registrar.mutate(
       { plano, detalhes: detalhesDoResultado(plano.modalidade, plano.modalidade_detalhes, estado), notas: estado.notas },
