@@ -83,7 +83,7 @@ Você citou três motivos de troca, e eles viram os três pilares da mensagem:
 | Objeção | Resposta |
 |---|---|
 | "Já uso planilha/WhatsApp, funciona." | Funciona até faltar quem pagou, quem treinou e o que foi feito. Aqui é o mesmo WhatsApp, mas com a agenda e a cobrança prontas. |
-| "Dá trabalho passar tudo para outro app." | O primeiro aluno leva minutos; os 15 dias são sem cartão. Você não precisa migrar tudo de uma vez. |
+| "Dá trabalho passar tudo para outro app." | Traga todos de uma vez: planilha (com modelo pronto) ou, se a lista estiver bagunçada, um prompt pronto para a IA que você já usa (ChatGPT, Gemini, Claude), com revisão antes de gravar. Os 15 dias são sem cartão. |
 | "Meus alunos não vão baixar app." | Não precisam. Treino à distância é um link no navegador; no presencial, o aluno não usa nada. |
 | "E se eu parar de pagar?" | Tudo continua visível para consulta; só não grava. Sem fidelidade, não renova sozinho. |
 | "Vocês cobram taxa do pagamento do aluno?" | Não. O aluno paga direto a você; o app gera a fatura e a mensagem. Sem comissão. |
