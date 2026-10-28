@@ -10,7 +10,7 @@ const COLUNAS = 'id, aluno_id, qtd_aulas, valor, validade_dias, inicio, aulas_an
 
 type PresencaLinha = { aluno_id: string; aula: { starts_at: string } | null }
 
-/** Presenças que contam no pacote: aula da agenda com o aluno presente, desde o dia de início (treino à distância não conta). */
+/** Presenças que contam no pacote: aula da agenda com o aluno presente, desde o dia de início (aula de treino à distância não conta; natação, corrida e demais modalidades presenciais contam). */
 export function contarPresencas(pacotes: Pacote[], presencas: PresencaLinha[]): Map<string, number> {
   const porAluno = new Map<string, number>()
   for (const p of pacotes) {
@@ -33,7 +33,7 @@ export async function buscarPacotesAtivos(): Promise<Map<string, PacoteComPresen
     .select('aluno_id, aula:aulas!inner(starts_at)')
     .in('aluno_id', lista.map((p) => p.aluno_id))
     .eq('status', 'presente')
-    .is('execucao_id', null)
+    .eq('aula.tipo', 'presencial')
     // o corte exato (dia de início em São Paulo) é feito em contarPresencas
     .gte('aula.starts_at', `${menorInicio}T00:00:00-03:00`)
   if (errP) throw errP
@@ -123,7 +123,7 @@ export async function encerrarPacoteComRelatorio(alunoId: string): Promise<void>
       .select('id, aula:aulas!inner(starts_at)')
       .eq('aluno_id', alunoId)
       .eq('status', 'presente')
-      .is('execucao_id', null)
+      .eq('aula.tipo', 'presencial')
       .is('fatura_id', null)
       .gte('aula.starts_at', `${p.inicio}T00:00:00-03:00`)
     if (errL) throw errL

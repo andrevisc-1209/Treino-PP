@@ -452,7 +452,7 @@ export function useItensRecibo(faturaId: string | undefined, pacoteAberto?: { al
         ? await consulta
             .eq('aluno_id', pacoteAberto.alunoId)
             .eq('status', 'presente')
-            .is('execucao_id', null)
+            .eq('aula.tipo', 'presencial')
             .or(`fatura_id.is.null,fatura_id.eq.${faturaId}`)
             .gte('aula.starts_at', `${pacoteAberto.inicio}T00:00:00-03:00`)
         : await consulta.eq('fatura_id', faturaId!)
