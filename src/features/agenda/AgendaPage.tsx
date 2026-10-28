@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarPlus, ChevronLeft, ChevronRight, TriangleAlert, Users } from 'lucide-react'
 import { EstadoVazio } from '@/components/EstadoVazio'
 import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
@@ -23,6 +23,7 @@ import {
   somarDias,
 } from '@/lib/datas'
 import { AulaAcoesSheet } from './AulaAcoesSheet'
+import { agruparPorHorario, conflitosDeAluno, criarAbreviador } from './leituraDaAgenda'
 import { direcaoDoDeslize, montarFaixa, rotuloAcessivelDoDia } from './faixaDeDias'
 import { AulaCard } from './AulaCard'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
@@ -34,6 +35,8 @@ function VisaoDia({ dataISO, onAbrirAula, onMarcarAula }: { dataISO: string; onA
   const { data: aulas, isLoading } = useAulasDoDia(dataISO)
   const { data: alunos } = useAlunos()
   const semAlunos = alunos?.length === 0
+  const gruposDoDia = useMemo(() => agruparPorHorario(aulas ?? []), [aulas])
+  const conflitos = useMemo(() => conflitosDeAluno(aulas ?? []), [aulas])
 
   return (
     <div className="space-y-2">
@@ -49,14 +52,23 @@ function VisaoDia({ dataISO, onAbrirAula, onMarcarAula }: { dataISO: string; onA
       {aulas?.length === 0 && !semAlunos && (
         <EstadoVazio icone={<CalendarPlus size={24} />} titulo="Nenhuma aula neste dia" acao={{ rotulo: 'Marcar aula', onClick: onMarcarAula }} />
       )}
-      {aulas?.map((a) => (
-        <AulaCard key={a.id} aula={a} onClick={() => onAbrirAula(a)} />
+      {gruposDoDia.map((g) => (
+        <div key={g.starts_at} className="space-y-2">
+          {g.aulas.length > 1 && (
+            <p className="flex items-center gap-1.5 pt-1 text-sm font-semibold text-slate-600">
+              <Users size={14} aria-hidden /> {g.aulas.length} aulas neste horário
+            </p>
+          )}
+          {g.aulas.map((a) => (
+            <AulaCard key={a.id} aula={a} localResumido conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} />
+          ))}
+        </div>
       ))}
     </div>
   )
 }
 
-function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAbrirAula: (a: Aula) => void }) {
+function VisaoSemana({ inicioSemana, onAbrirAula, onAbrirDia }: { inicioSemana: string; onAbrirAula: (a: Aula) => void; onAbrirDia: (dataISO: string) => void }) {
   const { inicio, fim } = limitesDaSemanaSP(inicioSemana)
   const { data: aulas, isLoading } = useAulasNoIntervalo(inicio, fim)
 
@@ -72,6 +84,9 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
     return map
   }, [aulas, dias])
 
+  const abreviar = useMemo(() => criarAbreviador((aulas ?? []).flatMap((a) => a.aula_participantes.map((p) => p.aluno?.name ?? ''))), [aulas])
+  const conflitos = useMemo(() => conflitosDeAluno(aulas ?? []), [aulas])
+
   if (isLoading) return <ListaSkeleton />
 
   return (
@@ -82,15 +97,23 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
           const doDia = porDia.get(d) ?? []
           return (
             <div key={d}>
-              <p className="mb-2 text-sm font-semibold text-slate-500">
-                {nomeDiaCurto(d)}, {formatarDataCurta(d)} · {doDia.length} {doDia.length === 1 ? 'aula' : 'aulas'}
-              </p>
+              <button
+                type="button"
+                onClick={() => onAbrirDia(d)}
+                aria-label={`Abrir o dia ${formatarDataCompleta(d)}`}
+                className="mb-1 flex min-h-11 w-full items-center justify-between rounded-xl text-sm font-semibold text-slate-600 active:bg-slate-100"
+              >
+                <span>
+                  {nomeDiaCurto(d)}, {formatarDataCurta(d)} · {doDia.length} {doDia.length === 1 ? 'aula' : 'aulas'}
+                </span>
+                <ChevronRight size={16} className="text-slate-400" aria-hidden />
+              </button>
               {doDia.length === 0 ? (
                 <p className="text-sm text-slate-500">—</p>
               ) : (
                 <div className="space-y-2">
                   {doDia.map((a) => (
-                    <AulaCard key={a.id} aula={a} onClick={() => onAbrirAula(a)} />
+                    <AulaCard key={a.id} aula={a} localResumido conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} />
                   ))}
                 </div>
               )}
@@ -105,25 +128,36 @@ function VisaoSemana({ inicioSemana, onAbrirAula }: { inicioSemana: string; onAb
           const doDia = porDia.get(d) ?? []
           return (
             <div key={d} className="space-y-2">
-              <p className="text-center text-xs font-semibold text-slate-500">
+              <button
+                type="button"
+                onClick={() => onAbrirDia(d)}
+                aria-label={`Abrir o dia ${formatarDataCompleta(d)}`}
+                className="min-h-11 w-full rounded-xl text-center text-xs font-semibold text-slate-500 active:bg-slate-100"
+              >
                 {nomeDiaCurto(d)}
                 <br />
                 {formatarDataCurta(d)}
-              </p>
+              </button>
               <div className="space-y-1.5">
                 {doDia.map((a) => (
                   <button type="button"
                     key={a.id}
                     onClick={() => onAbrirAula(a)}
+                    aria-label={`${formatarHoraInicioFim(a.starts_at, a.duration_min)}, ${a.aula_participantes.map((p) => p.aluno?.name).filter(Boolean).join(', ') || 'sem participantes'}`}
                     className={cn(
                       'w-full rounded-xl p-2 text-left text-xs shadow-sm active:bg-slate-50',
                       a.status === 'cancelada' ? 'bg-slate-100 opacity-60' : 'bg-white',
                     )}
                   >
                     <p className="font-semibold">{formatarHoraInicioFim(a.starts_at, a.duration_min)}</p>
-                    <p className="truncate text-slate-500">
-                      {a.aula_participantes.map((p) => p.aluno?.name).filter(Boolean).join(', ') || 'Sem participantes'}
+                    <p className="line-clamp-2 text-slate-600">
+                      {a.aula_participantes.map((p) => (p.aluno?.name ? abreviar(p.aluno.name) : '')).filter(Boolean).join(', ') || 'Sem participantes'}
                     </p>
+                    {conflitos.has(a.id) && (
+                      <p className="mt-0.5 flex items-center gap-1 font-medium text-amber-900">
+                        <TriangleAlert size={12} aria-hidden /> Conflito
+                      </p>
+                    )}
                   </button>
                 ))}
               </div>
@@ -252,7 +286,14 @@ export function AgendaPage() {
       {modo === 'dia' ? (
         <VisaoDia dataISO={dataAtual} onAbrirAula={setAulaAberta} onMarcarAula={() => setNovaAulaAberta(true)} />
       ) : (
-        <VisaoSemana inicioSemana={inicioSemana} onAbrirAula={setAulaAberta} />
+        <VisaoSemana
+          inicioSemana={inicioSemana}
+          onAbrirAula={setAulaAberta}
+          onAbrirDia={(d) => {
+            setDataAtual(d)
+            setModo('dia')
+          }}
+        />
       )}
 
       <Fab onClick={() => setNovaAulaAberta(true)} label="Nova aula" />
