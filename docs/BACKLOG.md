@@ -1114,3 +1114,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ A rota `/configuracoes/excluir-conta` entra no **modo foco** (sem navegação global nem avisos do topo). A lista de rotas do modo foco saiu do `RequireAuth` para `modoFoco.ts`, com teste.
 - ✅ **Validado ao vivo pelo dono:** o e-mail de exclusão chegou (duas contas de teste, protocolos `EXC-2026-X3RW6DT6` e `EXC-2026-B62GA8S4`), a tela "Sua conta está em exclusão" abre com a data (27/11/2026) e o protocolo, e a solicitação aparece como `pending` no banco, sem erro. Falta só testar o **cancelamento** e a **exclusão forçada** em conta de teste.
 
+## 95. Importação: o caminho da IA vem primeiro
+
+- ✅ Pedido do dono depois de validar o onboarding: na tela **Importar alunos** a aba **"Está tudo bagunçado, com ajuda de uma IA"** passa a ser a **primeira e a padrão** (antes abria em "Tenho uma planilha"). O estado vazio da tela de Alunos e o cartão de Primeiros passos seguem a mesma ordem (IA primeiro). Quem clica em "Tenho uma planilha" cai direto no caminho da planilha (`?via=planilha`).
+- ✅ `via.ts` com teste: só `?via=planilha` abre a planilha; sem parâmetro ou valor estranho abre a IA.
+- Sem migration e sem deploy. Não testado ao vivo por mim (login com captcha): abrir Alunos → Importar alunos e conferir a ordem das abas e o padrão.
+

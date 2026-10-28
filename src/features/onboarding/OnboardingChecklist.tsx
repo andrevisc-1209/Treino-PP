@@ -20,7 +20,7 @@ function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean
       label: 'Cadastre seu primeiro aluno',
       feito: (alunos?.length ?? 0) > 0,
       to: '/alunos/novo',
-      alternativa: { label: 'Ou traga vários de uma vez (planilha ou ajuda de uma IA)', to: ROTA_IMPORTAR },
+      alternativa: { label: 'Ou traga vários de uma vez (ajuda de uma IA ou planilha)', to: ROTA_IMPORTAR },
     },
     { label: 'Adicione um horário fixo', feito: (horarios?.length ?? 0) > 0, to: '/alunos' },
     { label: 'Monte seu primeiro treino planejado', feito: (modelos?.length ?? 0) > 0, to: '/meus-treinos/planejados' },
