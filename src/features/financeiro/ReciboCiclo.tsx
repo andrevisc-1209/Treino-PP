@@ -9,10 +9,10 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
-import { useItensDaFatura } from '@/features/pacotes/useItensDaFatura'
+import { useItensDoCiclo } from './useItensDoCiclo'
 import type { Fatura } from './api'
-import { baixarRelatorioCompleto, dadosRelatorioDeFatura } from './relatorio'
-import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoRecibo, textoCompartilharRecibo } from './recibo'
+import { baixarRelatorioCompleto, dadosRelatorioDeFatura, extrasDaFatura, statusDoCiclo } from './relatorio'
+import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoPorModalidade, resumoRecibo, textoCompartilharRecibo, textoResumoModalidade } from './recibo'
 
 const NAVY = '#0f2537'
 const VERDE = '#367c39'
@@ -52,7 +52,7 @@ function BlocoGrafico({ titulo, children }: { titulo: string; children: React.Re
 export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; alunoNome: string; onFechar: () => void }) {
   const { session } = useAuth()
   const { data: perfil } = usePerfilProfissional(session?.user.id)
-  const { data: itensBrutos, isLoading, error } = useItensDaFatura(fatura)
+  const { data: itensBrutos, isLoading, error } = useItensDoCiclo(fatura)
   const [raiz, setRaiz] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -76,6 +76,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
   const frequencia = useMemo(() => frequenciaSemanal(itens), [itens])
   const pse = useMemo(() => pseMedioPorSemana(itens), [itens])
   const notas = useMemo(() => notasPorTreino(itens), [itens])
+  const modalidades = useMemo(() => resumoPorModalidade(itens), [itens])
 
   const personalNome = perfil?.name?.trim() || 'Personal'
   const periodo = `${formatarDataCurta(fatura.periodo_inicio)} a ${formatarDataCurta(fatura.periodo_fim)}`
@@ -84,7 +85,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
   const baixarCompleto = async () => {
     setBaixando(true)
     try {
-      await baixarRelatorioCompleto(dadosRelatorioDeFatura(fatura, itens, alunoNome, personalNome))
+      await baixarRelatorioCompleto(dadosRelatorioDeFatura(fatura, itens, alunoNome, personalNome, extrasDaFatura(fatura)))
     } catch {
       mostrarErroGlobal('Não foi possível gerar o relatório. Tente de novo.')
     } finally {
@@ -147,7 +148,10 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
             </div>
             <div className="p-3" style={{ background: NAVY }}>
               <dt className="text-xs text-white/60">Período do ciclo</dt>
-              <dd className="font-medium">{periodo}</dd>
+              <dd className="font-medium">
+                {periodo}
+                <span className="block text-xs font-normal text-white/70">{statusDoCiclo({ periodoFim: fatura.periodo_fim }) === 'parcial' ? `Parcial do ciclo · atualizado em ${formatarDataCurta(hojeSP())}` : 'Ciclo encerrado'}</span>
+              </dd>
             </div>
           </dl>
         </header>
@@ -168,6 +172,24 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
                 Inclui ajuste de {formatarBRL(fatura.ajuste)}
                 {fatura.ajuste_descricao ? ` (${fatura.ajuste_descricao})` : ''}.
               </p>
+            )}
+
+            {modalidades.length > 0 && (
+              <section className="recibo-bloco space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
+                <h2 className="text-sm font-semibold" style={{ color: NAVY }}>
+                  Por modalidade
+                </h2>
+                <ul className="divide-y divide-slate-100">
+                  {modalidades.map((m) => (
+                    <li key={m.modalidade} className="flex items-center justify-between gap-3 py-2 text-sm">
+                      <span className="font-medium">
+                        <span aria-hidden>{m.emoji}</span> {m.rotulo}
+                      </span>
+                      <span className="text-right text-slate-600">{textoResumoModalidade(m)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
 
             <section className="recibo-bloco space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -193,9 +215,9 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium">
-                            {nomeDiaCurto(dia)}, {formatarDataCurta(dia)} · {formatarHoraInicioFim(i.starts_at, i.duration_min)}
+                            {nomeDiaCurto(dia)}, {formatarDataCurta(dia)} · {i.a_distancia ? 'treino à distância' : formatarHoraInicioFim(i.starts_at, i.duration_min)}
                           </p>
-                          <p className="truncate text-xs text-slate-500">{i.local?.trim() || 'Local não informado'}</p>
+                          <p className="truncate text-xs text-slate-500">{i.a_distancia ? (i.fora_da_cobranca ? 'Não cobrado' : 'Feito pelo aluno') : i.local?.trim() || 'Local não informado'}</p>
                         </div>
                         <span className="shrink-0 font-medium tabular-nums">{i.valor != null ? formatarBRL(i.valor) : '—'}</span>
                       </li>
@@ -205,7 +227,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
               )}
             </section>
 
-            {frequencia.length > 0 && (
+            {frequencia.length >= 3 && (
               <BlocoGrafico titulo="Frequência semanal (aulas por semana)">
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={frequencia} margin={{ left: 0, right: 8 }}>

@@ -1,5 +1,9 @@
 import { dataSP, formatarDataCurta, inicioDaSemanaSP, somarDias } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
+import { formatarNumero } from '@/lib/format'
+import { ehModalidade, MODALIDADES_CONFIG } from '@/types/modalidades'
+import { duracaoAtipica } from '@/features/sessoes/duracaoAtipica'
+import { volumeZero, type Volume } from '@/features/execucoes/volume'
 
 /** Uma aula do ciclo fechado (linha de aula_participantes já ligada à fatura). */
 export type ItemRecibo = {
@@ -23,6 +27,16 @@ export type ItemRecibo = {
   exercicios_feitos?: number
   /** Séries concluídas na sessão. */
   series_feitas?: number
+  /** Nome do treino planejado da sessão ("Treino A"), se houve. */
+  plano_nome?: string | null
+  /** Volume realizado (km, metros, minutos) registrado no resultado das modalidades fora da musculação. */
+  volume?: Volume
+  /** Tempo registrado no resultado da execução (min), fora da musculação. */
+  duracao_execucao_min?: number | null
+  /** Execução (treino à distância ou de outra modalidade) ligada a esta aula. */
+  execucao_id?: string | null
+  /** Treino à distância feito no ciclo e NÃO cobrado: aparece no relatório, mas não conta como aula nem no total. */
+  fora_da_cobranca?: boolean
 }
 
 export type MetricasTreino = { exercicios: number; series: number; minutos: number }
@@ -33,7 +47,7 @@ export type MetricasTreino = { exercicios: number; series: number; minutos: numb
  */
 export function metricasDeTreino(itens: ItemRecibo[]): MetricasTreino | null {
   const m = itens.reduce(
-    (a, i) => ({ exercicios: a.exercicios + (i.exercicios_feitos ?? 0), series: a.series + (i.series_feitas ?? 0), minutos: a.minutos + (i.duracao_sessao_min ?? 0) }),
+    (a, i) => ({ exercicios: a.exercicios + (i.exercicios_feitos ?? 0), series: a.series + (i.series_feitas ?? 0), minutos: a.minutos + (duracaoConfiavel(i.duracao_sessao_min) ?? duracaoConfiavel(i.duracao_execucao_min) ?? 0) }),
     { exercicios: 0, series: 0, minutos: 0 },
   )
   return m.exercicios > 0 || m.series > 0 || m.minutos > 0 ? m : null
@@ -43,7 +57,7 @@ export function ordenarItens(itens: ItemRecibo[]): ItemRecibo[] {
   return [...itens].sort((a, b) => a.starts_at.localeCompare(b.starts_at))
 }
 
-const presentes = (itens: ItemRecibo[]) => itens.filter((i) => i.status === 'presente')
+const presentes = (itens: ItemRecibo[]) => itens.filter((i) => i.status === 'presente' && !i.fora_da_cobranca)
 
 export type ResumoRecibo = { aulasRealizadas: number; diasUnicos: number; locais: string[] }
 
@@ -131,4 +145,81 @@ export function textoCompartilharRecibo(args: {
     `Personal: ${personalNome}`,
     'Gerado pelo Treino PP',
   ].join('\n')
+}
+
+// ---------- Resumo por modalidade ----------
+
+export type ResumoModalidade = {
+  modalidade: string
+  rotulo: string
+  emoji: string
+  /** aulas presentes dessa modalidade (as cobradas no ciclo) */
+  aulas: number
+  /** treinos à distância dessa modalidade que não foram cobrados (só informativo) */
+  aDistanciaSemCobranca: number
+  /** o que foi registrado, só com valor > 0: "12,4 km", "3,2 km nadados", "13 séries"… (vazio = só a contagem de aulas) */
+  numeros: string[]
+}
+
+const km = (v: number) => `${formatarNumero(Math.round(v * 10) / 10)} km`
+const minutos = (v: number) => `${formatarNumero(Math.round(v))} min`
+
+/** Duração registrada que parece verdadeira: fora da faixa de 20 min a 3 h é provável engano e não entra no relatório. */
+export const duracaoConfiavel = (min: number | null | undefined): number | null => (min != null && min > 0 && duracaoAtipica(min) === null ? min : null)
+
+/**
+ * Uma linha por modalidade que o aluno fez no ciclo, com os números que aquela modalidade registra (km na corrida, metros na
+ * natação, km ou minutos no ciclismo, bike e corrida no brick, séries na musculação). Nada de zero nem traço: sem dado,
+ * fica só a quantidade de aulas. Aulas sem treino registrado (sem modalidade) ficam de fora do resumo.
+ */
+export function resumoPorModalidade(itens: ItemRecibo[]): ResumoModalidade[] {
+  const grupos = new Map<string, ItemRecibo[]>()
+  for (const i of itens) {
+    if (i.status !== 'presente' || !ehModalidade(i.modalidade)) continue
+    grupos.set(i.modalidade, [...(grupos.get(i.modalidade) ?? []), i])
+  }
+  const ordem = Object.keys(MODALIDADES_CONFIG)
+  return [...grupos.entries()]
+    .sort(([a], [b]) => ordem.indexOf(a) - ordem.indexOf(b))
+    .map(([modalidade, lista]) => {
+      const v = lista.reduce<Volume>((a, i) => {
+        const x = i.volume ?? volumeZero()
+        return { natacaoKm: a.natacaoKm + x.natacaoKm, ciclismoKm: a.ciclismoKm + x.ciclismoKm, ciclismoMin: a.ciclismoMin + x.ciclismoMin, corridaKm: a.corridaKm + x.corridaKm }
+      }, volumeZero())
+      const series = lista.reduce((a, i) => a + (i.series_feitas ?? 0), 0)
+      const numeros: string[] = []
+      if (modalidade === 'musculacao') {
+        if (series > 0) numeros.push(`${series} ${series === 1 ? 'série' : 'séries'}`)
+      } else if (modalidade === 'natacao') {
+        if (v.natacaoKm > 0) numeros.push(`${formatarNumero(Math.round(v.natacaoKm * 1000))} m nadados`)
+      } else if (modalidade === 'corrida') {
+        if (v.corridaKm > 0) numeros.push(km(v.corridaKm))
+      } else if (modalidade === 'ciclismo') {
+        if (v.ciclismoKm > 0) numeros.push(km(v.ciclismoKm))
+        else if (v.ciclismoMin > 0) numeros.push(minutos(v.ciclismoMin))
+      } else if (modalidade === 'brick') {
+        if (v.ciclismoKm > 0) numeros.push(`${km(v.ciclismoKm)} de bike`)
+        else if (v.ciclismoMin > 0) numeros.push(`${minutos(v.ciclismoMin)} de bike`)
+        if (v.corridaKm > 0) numeros.push(`${km(v.corridaKm)} de corrida`)
+      }
+      const tempo = lista.reduce((a, i) => a + (duracaoConfiavel(i.duracao_sessao_min) ?? duracaoConfiavel(i.duracao_execucao_min) ?? 0), 0)
+      if (tempo > 0) numeros.push(minutos(tempo))
+      const cfg = MODALIDADES_CONFIG[modalidade as keyof typeof MODALIDADES_CONFIG]
+      return { modalidade, rotulo: cfg.label, emoji: cfg.emoji, aulas: lista.filter((i) => !i.fora_da_cobranca).length, aDistanciaSemCobranca: lista.filter((i) => i.fora_da_cobranca).length, numeros }
+    })
+}
+
+/** "3 aulas · 12,4 km · 95 min" */
+export function textoResumoModalidade(r: ResumoModalidade): string {
+  const aulas = r.aulas > 0 || r.aDistanciaSemCobranca === 0 ? [`${r.aulas} ${r.aulas === 1 ? 'aula' : 'aulas'}`] : []
+  const distancia = r.aDistanciaSemCobranca > 0 ? [`${r.aDistanciaSemCobranca} ${r.aDistanciaSemCobranca === 1 ? 'treino à distância' : 'treinos à distância'}`] : []
+  return [...aulas, ...distancia, ...r.numeros].join(' · ')
+}
+
+/** Aulas por semana em média, só quando o ciclo tem pelo menos 3 semanas de dados (antes disso a média engana). */
+export function frequenciaMedia(itens: ItemRecibo[]): number | null {
+  const semanas = frequenciaSemanal(itens)
+  if (semanas.length < 3) return null
+  const total = semanas.reduce((a, s) => a + s.valor, 0)
+  return Math.round((total / semanas.length) * 10) / 10
 }

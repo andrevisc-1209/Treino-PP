@@ -5,7 +5,7 @@ import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto 
 import { formatarBRL } from '@/lib/moeda'
 import type { ModeloFatura } from './api'
 import { ehModalidade, MODALIDADES_CONFIG } from '@/types/modalidades'
-import { frequenciaSemanal, metricasDeTreino, notasPorTreino, ordenarItens, resumoRecibo, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
+import { frequenciaMedia, frequenciaSemanal, metricasDeTreino, notasPorTreino, ordenarItens, resumoPorModalidade, resumoRecibo, textoResumoModalidade, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
 
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] as const
 
@@ -44,6 +44,38 @@ export type DadosRelatorio = {
   treinosADistancia?: number
   /** data (aaaa-mm-dd) impressa no rodapé; padrão: hoje (America/Sao_Paulo) */
   geradoEm?: string
+  /** pacote de aulas: quantas aulas foram vendidas ("4 de 10 aulas") */
+  aulasContratadas?: number
+  /** como o ciclo fecha: já pago, ou em aberto (com o Pix só se o personal pedir) */
+  fechamento?: FechamentoRelatorio
+}
+
+export type FechamentoRelatorio =
+  | { tipo: 'pago'; pagaEm: string }
+  | { tipo: 'aberto'; vencimento: string | null; pixQrDataUrl?: string | null }
+
+/** Relatório "parcial" enquanto o ciclo não terminou (ou o pacote segue aberto); "encerrado" depois do último dia. */
+export function statusDoCiclo(d: Pick<DadosRelatorio, 'periodoFim' | 'geradoEm'>): 'parcial' | 'encerrado' {
+  return (d.geradoEm ?? hojeSP()) < d.periodoFim ? 'parcial' : 'encerrado'
+}
+
+/** "Smart Fit Laranjeiras, R. X, 100 - Bairro" → "Smart Fit Laranjeiras": o nome do lugar, sem o endereço completo. */
+export function localCurto(local: string | null | undefined): string {
+  const t = (local ?? '').trim()
+  if (!t) return ''
+  const partes = t.split(',').map((x) => x.trim()).filter(Boolean)
+  // endereço sem nome de lugar ("Rua X, 100"): mantém rua e número
+  return partes.length > 1 && /^\d/.test(partes[1]) ? `${partes[0]}, ${partes[1]}` : partes[0]
+}
+
+/** Lugares diferentes (nome curto) onde houve aula presente. */
+export function locaisDoRelatorio(d: Pick<DadosRelatorio, 'itens'>): string[] {
+  const vistos = new Map<string, string>()
+  for (const i of d.itens) {
+    const nome = localCurto(i.local)
+    if (nome && !vistos.has(nome.toLowerCase())) vistos.set(nome.toLowerCase(), nome)
+  }
+  return [...vistos.values()]
 }
 
 /** Dados do relatório de uma fatura já fechada. */
@@ -52,8 +84,10 @@ export function dadosRelatorioDeFatura(
   itens: ItemRecibo[],
   alunoNome: string,
   personalNome: string,
+  extras: Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento' | 'geradoEm'> = {},
 ): DadosRelatorio {
   return {
+    ...extras,
     alunoNome,
     personalNome,
     periodoInicio: fatura.periodo_inicio,
@@ -69,21 +103,36 @@ export function dadosRelatorioDeFatura(
 const dm = (iso: string) => formatarDataCurta(iso)
 const ROTULO_STATUS: Record<ItemRecibo['status'], string> = { presente: 'Presente', falta: 'Falta', cancelou: 'Cancelou', previsto: 'Previsto' }
 
-/** Células da tabela: local/modalidade ficam vazios quando não há (nada de "-"); faltas e cancelamentos aparecem no lugar da modalidade. */
+/** Colunas da tabela: Local só quando há mais de um lugar (com um só, ele sobe para o cabeçalho); Valor só no modelo por aula. */
+export function colunasDaTabela(d: DadosRelatorio): { local: boolean; valor: boolean } {
+  return { local: locaisDoRelatorio(d).length > 1, valor: d.modelo === 'por_aula' }
+}
+
+export function cabecalhoDaTabela(d: DadosRelatorio): string[] {
+  const c = colunasDaTabela(d)
+  return ['Data', 'Horário', 'Modalidade', ...(c.local ? ['Local'] : []), ...(c.valor ? ['Valor'] : [])]
+}
+
+/** Células da tabela: modalidade (com o nome do treino) vazia quando não há; faltas e cancelamentos aparecem no lugar da modalidade. */
 export function linhasDaTabela(d: DadosRelatorio): string[][] {
+  const c = colunasDaTabela(d)
   return ordenarItens(d.itens).map((i) => {
     const dia = dataSP(i.starts_at)
+    const modalidade = rotuloModalidade(i.modalidade)
     return [
       `${nomeDiaCurto(dia)}, ${dm(dia)}`,
       i.a_distancia ? 'À distância' : formatarHoraInicioFim(i.starts_at, i.duration_min).replace('–', '-'),
-      i.status !== 'presente' ? ROTULO_STATUS[i.status] : (rotuloModalidade(i.modalidade) ?? ''),
-      i.local?.trim() ?? '',
-      d.modelo !== 'por_aula' || i.valor == null ? '-' : formatarBRL(i.valor),
+      i.status !== 'presente' ? ROTULO_STATUS[i.status] : modalidade ? (i.plano_nome ? `${modalidade} · ${i.plano_nome}` : modalidade) : '',
+      ...(c.local ? [localCurto(i.local)] : []),
+      ...(c.valor ? [i.valor == null ? '-' : formatarBRL(i.valor)] : []),
     ]
   })
 }
 
-export const resumoTotalRelatorio = (d: DadosRelatorio): string => `${d.itens.length} ${d.itens.length === 1 ? 'aula' : 'aulas'} · Total: ${formatarBRL(d.total)}`
+export const resumoTotalRelatorio = (d: DadosRelatorio): string => {
+  const n = d.itens.filter((i) => !i.fora_da_cobranca).length
+  return `${n} ${n === 1 ? 'aula' : 'aulas'} · Total: ${formatarBRL(d.total)}`
+}
 
 /** Texto do bloco de ajuste: "Ajuste: Desconto — -R$ 20,00" (desconto com "-", acréscimo com "+"). */
 export function textoAjuste(d: Pick<DadosRelatorio, 'ajuste' | 'ajusteDescricao'>): string {
@@ -93,16 +142,22 @@ export function textoAjuste(d: Pick<DadosRelatorio, 'ajuste' | 'ajusteDescricao'
 
 export type Tile = { valor: string; rotulo: string }
 
-/** Linha de resumo: aulas realizadas, valor total, dias treinados e local(is). */
+/** Linha de resumo: aulas realizadas (pacote: "4 de 10"), dias treinados e, quando dá para confiar, a frequência média semanal. */
 export function tilesResumo(d: DadosRelatorio): Tile[] {
   const r = resumoRecibo(d.itens)
-  const locais: Tile = r.locais.length === 1 ? { valor: r.locais[0], rotulo: 'Local' } : r.locais.length === 0 ? { valor: '—', rotulo: 'Local' } : { valor: String(r.locais.length), rotulo: 'Locais diferentes' }
   const aDistancia = d.itens.filter((i) => i.status === 'presente' && i.a_distancia).length
+  const media = frequenciaMedia(d.itens)
+  const semCobranca = d.itens.filter((i) => i.status === 'presente' && i.fora_da_cobranca).length
+  const locais = locaisDoRelatorio(d)
   return [
-    { valor: String(r.aulasRealizadas), rotulo: aDistancia > 0 ? `Aulas (${aDistancia} à distância)` : 'Aulas realizadas' },
-    { valor: formatarBRL(d.total), rotulo: 'Valor total do ciclo' },
+    {
+      valor: d.aulasContratadas ? `${r.aulasRealizadas} de ${d.aulasContratadas}` : String(r.aulasRealizadas),
+      rotulo: d.aulasContratadas ? 'Aulas do pacote' : aDistancia > 0 ? `Aulas (${aDistancia} à distância)` : 'Aulas realizadas',
+    },
     { valor: String(r.diasUnicos), rotulo: 'Dias treinados' },
-    locais,
+    ...(semCobranca > 0 ? [{ valor: String(semCobranca), rotulo: semCobranca === 1 ? 'Treino à distância' : 'Treinos à distância' }] : []),
+    ...(media != null ? [{ valor: `${String(media).replace('.', ',')}/semana`, rotulo: 'Frequência média' }] : []),
+    ...(locais.length > 1 ? [{ valor: String(locais.length), rotulo: 'Locais diferentes' }] : []),
   ]
 }
 
@@ -261,7 +316,7 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
 
   // --- Cabeçalho ---
   doc.setFillColor(...VERDE_ESCURO)
-  doc.rect(0, 0, larg, 42, 'F')
+  doc.rect(0, 0, larg, 47, 'F')
   let xTexto = margem
   if (logoDataUrl) {
     try {
@@ -276,7 +331,7 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8.5)
   doc.setTextColor(200, 230, 201)
-  doc.text('RECIBO · TREINO · PERSONAL PERTO', xTexto, 15)
+  doc.text('RELATÓRIO DE ACOMPANHAMENTO · TREINO · PERSONAL PERTO', xTexto, 15)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(255, 255, 255)
@@ -284,9 +339,12 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.text(`Personal: ${d.personalNome}`, xTexto, 31)
-  doc.text(`Período do ciclo: ${dm(d.periodoInicio)} a ${dm(d.periodoFim)}`, xTexto, 37)
+  const situacao = statusDoCiclo(d) === 'parcial' ? `Parcial do ciclo, atualizado em ${dataGeracao(d.geradoEm ?? hojeSP())}` : 'Ciclo encerrado'
+  doc.text(`Período: ${dm(d.periodoInicio)} a ${dm(d.periodoFim)} · ${situacao}`, xTexto, 37)
+  const lugares = locaisDoRelatorio(d)
+  if (lugares.length === 1) doc.text(`Local: ${lugares[0]}`, xTexto, 42.5, { maxWidth: larg - margem - xTexto })
 
-  let y = 52
+  let y = 57
   const garantirEspaco = (altura: number) => {
     if (y + altura > alt - 26) {
       doc.addPage()
@@ -312,18 +370,36 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
     y += desenharTiles(doc, treino, margem, y, largBloco) + 8
   }
 
+  // --- Por modalidade (só o que foi registrado em cada uma) ---
+  const modalidades = resumoPorModalidade(d.itens)
+  if (modalidades.length > 0) {
+    titulo('Por modalidade')
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10.5)
+    doc.setTextColor(...TEXTO)
+    for (const m of modalidades) {
+      garantirEspaco(7)
+      doc.setFont('helvetica', 'bold')
+      doc.text(m.rotulo, margem + 2, y)
+      doc.setFont('helvetica', 'normal')
+      doc.text(textoResumoModalidade(m), margem + 38, y, { maxWidth: largBloco - 40 })
+      y += 6.5
+    }
+    y += 3
+  }
+
   // --- Tabela de aulas ---
-  titulo('Aulas do ciclo')
+  titulo(d.modelo === 'pacote' ? 'Aulas do pacote' : 'Aulas do ciclo')
   autoTable(doc, {
     startY: y,
-    head: [['Data', 'Horário', 'Modalidade', 'Local', { content: 'Valor', styles: { halign: 'right' } }]],
+    head: [cabecalhoDaTabela(d).map((c) => (c === 'Valor' ? { content: c, styles: { halign: 'right' as const } } : c))],
     body: linhasDaTabela(d),
     margin: { left: margem, right: margem, bottom: 26 },
     theme: 'plain',
     styles: { fontSize: 10, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }, textColor: TEXTO, lineColor: LINHA, lineWidth: { bottom: 0.2 } },
     headStyles: { fillColor: VERDE_ESCURO, textColor: 255, fontStyle: 'bold', lineWidth: 0 },
     alternateRowStyles: { fillColor: ZEBRA },
-    columnStyles: { 4: { halign: 'right' } },
+    columnStyles: colunasDaTabela(d).valor ? { [cabecalhoDaTabela(d).length - 1]: { halign: 'right' } } : {},
     didDrawPage: rodape,
   })
   y = ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y) + 8
@@ -347,7 +423,8 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
 
   // --- Gráficos (mesmos dados do recibo: frequência semanal e nota do personal) ---
   const frequencia = frequenciaSemanal(d.itens)
-  if (frequencia.length > 0) {
+  // com menos de 3 semanas o gráfico não mostra tendência: a frequência média e a tabela já contam a história
+  if (frequencia.length >= 3) {
     garantirEspaco(58)
     titulo('Frequência semanal (aulas por semana)')
     y += 3
@@ -385,6 +462,31 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   doc.setFontSize(14)
   doc.setTextColor(...TOTAL_TEXTO)
   doc.text(resumoTotalRelatorio(d), margem + 4, y + 9.3)
+  y += 14
+
+  // --- Fechamento: pago, ou em aberto (com o Pix só quando o personal pediu) ---
+  const f = d.fechamento
+  if (f) {
+    const linhaFechamento = f.tipo === 'pago' ? `Pago em ${dataGeracao(f.pagaEm)}` : f.vencimento ? `Em aberto · vencimento ${dataGeracao(f.vencimento)}` : 'Em aberto'
+    garantirEspaco(f.tipo === 'aberto' && f.pixQrDataUrl ? 58 : 14)
+    y += 8
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...(f.tipo === 'pago' ? TOTAL_TEXTO : NAVY))
+    doc.text(linhaFechamento, margem, y)
+    if (f.tipo === 'aberto' && f.pixQrDataUrl) {
+      y += 4
+      try {
+        doc.addImage(f.pixQrDataUrl, 'PNG', margem, y, 38, 38)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9.5)
+        doc.setTextColor(...CINZA)
+        doc.text('Pix para pagamento: aponte a câmera do banco para o QR Code.', margem + 44, y + 10, { maxWidth: largBloco - 46 })
+      } catch {
+        // sem o QR o relatório continua válido: vale o vencimento acima
+      }
+    }
+  }
   return doc
 }
 
@@ -408,4 +510,22 @@ async function carregarLogo(): Promise<string | null> {
 export async function baixarRelatorioCompleto(d: DadosRelatorio): Promise<void> {
   const doc = await gerarRelatorioCompleto(d, await carregarLogo())
   doc.save(nomeArquivoRelatorio(d.alunoNome, d.periodoFim))
+}
+
+/** Como o relatório fecha a fatura: pago, ou em aberto (Pix só se o personal incluir). Cancelada não tem fechamento. */
+export function fechamentoDaFatura(
+  f: { status: string; paga_em: string | null; vencimento: string | null },
+  pixQrDataUrl?: string | null,
+): FechamentoRelatorio | undefined {
+  if (f.status === 'paga' && f.paga_em) return { tipo: 'pago', pagaEm: f.paga_em }
+  if (f.status === 'aberta' || f.status === 'enviada') return { tipo: 'aberto', vencimento: f.vencimento, pixQrDataUrl: pixQrDataUrl ?? null }
+  return undefined
+}
+
+/** Extras do relatório de uma fatura: aulas vendidas (pacote) e o fechamento. */
+export function extrasDaFatura(
+  f: { modelo: ModeloFatura; qtd_aulas: number; status: string; paga_em: string | null; vencimento: string | null },
+  pixQrDataUrl?: string | null,
+): Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento'> {
+  return { aulasContratadas: f.modelo === 'pacote' ? f.qtd_aulas : undefined, fechamento: fechamentoDaFatura(f, pixQrDataUrl) }
 }

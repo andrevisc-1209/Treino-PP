@@ -1,4 +1,4 @@
-import { useItensDaFatura } from '@/features/pacotes/useItensDaFatura'
+import { useItensDoCiclo } from './useItensDoCiclo'
 import { useEffect, useMemo, useState } from 'react'
 import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
@@ -19,13 +19,12 @@ import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
 import { BotaoRelatorioFatura } from './BotaoRelatorio'
-import { dadosRelatorioDeFatura, type DadosRelatorio } from './relatorio'
+import { dadosRelatorioDeFatura, extrasDaFatura, type DadosRelatorio } from './relatorio'
 import {
   useCancelarFatura,
   useDesfazerPagamentoFatura,
   useEnviarFatura,
   useFatura,
-  useTreinosADistanciaNoPeriodo,
   useMarcarFaturaPaga,
   type FormaPagamento,
 } from './api'
@@ -52,8 +51,7 @@ export function FaturaPage() {
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const { data: sessoesTodas } = useSessoesDetalhadas(fatura?.aluno_id)
   const { data: pesosTodos } = usePesos(fatura?.aluno_id)
-  const { data: treinosADistancia } = useTreinosADistanciaNoPeriodo(fatura?.modelo === 'mensal' ? fatura.aluno_id : undefined, fatura?.periodo_inicio, fatura?.periodo_fim)
-  const { data: itensFatura } = useItensDaFatura(fatura && fatura.status !== 'cancelada' ? fatura : undefined)
+  const { data: itensFatura } = useItensDoCiclo(fatura && fatura.status !== 'cancelada' ? fatura : undefined)
 
   const enviar = useEnviarFatura()
   const marcarPaga = useMarcarFaturaPaga()
@@ -65,6 +63,8 @@ export function FaturaPage() {
   const [dataPagamento, setDataPagamento] = useState(hojeSP())
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>('pix')
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  // o Pix só vai no relatório quando o personal pede (o PDF circula) e só enquanto a fatura está em aberto
+  const [incluirPix, setIncluirPix] = useState(false)
   const [copiado, setCopiado] = useState<'mensagem' | 'pix' | null>(null)
   // O recibo abre sozinho logo depois de fechar o ciclo (?recibo=1) e pelo botão "Ver recibo".
   const reciboAberto = searchParams.get('recibo') === '1'
@@ -132,7 +132,7 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =
-    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal'), treinosADistancia: fatura.modelo === 'mensal' ? (treinosADistancia ?? 0) : undefined } : null
+    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirPix ? qrDataUrl : null)) } : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)
@@ -243,6 +243,12 @@ export function FaturaPage() {
             <Button variant="outline" className="mt-3 w-full" onClick={() => definirRecibo(true)}>
               <FileText size={18} /> Ver recibo
             </Button>
+          )}
+          {fatura.status !== 'cancelada' && fatura.status !== 'paga' && qrDataUrl && (
+            <label className="mt-3 flex min-h-11 items-center justify-between gap-3 text-sm">
+              <span>Incluir o QR Code Pix no relatório</span>
+              <input type="checkbox" checked={incluirPix} onChange={(e) => setIncluirPix(e.target.checked)} className="size-5 accent-brand" />
+            </label>
           )}
           {fatura.status !== 'cancelada' && <BotaoRelatorioFatura dados={dadosRelatorio} />}
         </div>
