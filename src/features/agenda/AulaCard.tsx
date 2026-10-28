@@ -17,6 +17,7 @@ export function AulaCard({
   destaque,
   atrasada,
   localResumido,
+  conflito,
   onClick,
   onComecar,
 }: {
@@ -26,6 +27,8 @@ export function AulaCard({
   atrasada?: boolean
   /** só "Lugar · Bairro" em vez do endereço inteiro (Hoje); o endereço completo continua na Agenda */
   localResumido?: boolean
+  /** alunos que estão previstos em outra aula que se cruza com esta (conflito real, não aula em dupla) */
+  conflito?: string[]
   onClick: () => void
   /** "▶ Começar" — só aparece pra aula ainda agendada com algum participante previsto. */
   onComecar?: () => void
@@ -74,6 +77,12 @@ export function AulaCard({
         ))}
         {nomes.length === 0 && <span className="text-sm text-slate-500">Sem participantes</span>}
       </div>
+
+      {conflito && conflito.length > 0 && (
+        <p className="mt-1.5 flex items-center gap-1 text-sm font-medium text-amber-900">
+          <TriangleAlert size={14} aria-hidden /> Conflito: {conflito.join(', ')} em outra aula neste horário
+        </p>
+      )}
 
       {aula.local && (
         <p className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">

@@ -1194,3 +1194,14 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - 🔒 **LGPD:** a indicação "lesão" saiu do cartão da lista de alunos; continua só na ficha, onde há consentimento. (Objetivo e idade seguem na lista.)
 - ✅ **Ficha do aluno:** o cartão de consentimento LGPD com o botão **Revogar** desceu para o fim da página, junto de Arquivar, longe das ações de uso diário. A confirmação que explica o que será apagado já existia e foi mantida.
 - ✅ Testes `filaAlunos.test.ts` (dias, limites das faixas, contadores, ordenação). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px a lista com muitos alunos, o toque no card, os filtros e a ordenação.
+
+## 104. Auditoria de UX com conta em uso · PR 4: Agenda mais fácil de ler
+
+- (Segue o plano das 6 PRs do item 101.)
+- ✅ **Semana → dia:** tocar no cabeçalho de um dia (na grade do tablet e na lista do celular) abre aquele dia na visão Dia, com a lista detalhada.
+- ✅ **Nomes na grade semanal:** prenome quando é único entre os alunos da semana; **"Paulo G." / "Paulo P."** (prenome + inicial do último sobrenome) só quando dois alunos dividem o prenome; nome inteiro se nem assim se distinguem. O nome pode quebrar em 2 linhas (antes cortava com "…") e o nome completo está no rótulo de acessibilidade do botão.
+- ✅ **Horário compartilhado:** na visão Dia, aulas que começam juntas ganham o aviso neutro "N aulas neste horário" (pode ser dupla, grupo ou alunos em paralelo).
+- ✅ **Conflito de verdade:** só quando o **mesmo aluno** está previsto em duas aulas que se cruzam no tempo; aparece como "Conflito: Nome em outra aula neste horário" (texto + ícone) no cartão do dia e da semana, e como "Conflito" na grade. Aula cancelada ou participante que cancelou não conta; aulas seguidas (uma termina quando a outra começa) também não.
+- ✅ Local em "Lugar · Bairro" nos cartões da Agenda; o endereço completo aparece ao abrir a aula.
+- ℹ️ **Não feito:** "Confirmada / A confirmar" (a aula não guarda confirmação; seria produto novo com migration) e botão "Começar" nos cartões da Agenda (o início segue pelo menu da aula e pela tela Hoje).
+- ✅ Testes `leituraDaAgenda.test.ts` (abreviar nomes, agrupar horários, conflito do mesmo aluno). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px e em tablet a semana com dois alunos de mesmo prenome e duas aulas no mesmo horário.
