@@ -8,6 +8,7 @@ import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarErroGlobal } from '@/components/Toast'
+import { mostrarDesfazer } from '@/components/UndoToast'
 import { mapearErroSupabase } from '@/lib/erros'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { sugerirNomeDuplicado } from '@/lib/nomes'
@@ -28,7 +29,7 @@ import {
   type TipoExecucao,
 } from '@/types/modalidades'
 import { useAplicarItensTemplate, type TemplateTreino } from '@/features/templates/api'
-import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
+import { useArquivarModelo, useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, useModelosArquivados, type Modelo } from './api'
 import { ehRascunho, filtrarModelos, MINIMO_PARA_BUSCA, modalidadesDaBiblioteca } from './biblioteca'
 import { cn } from '@/lib/utils'
 import { RolagemHorizontal } from '@/components/RolagemHorizontal'
@@ -42,6 +43,9 @@ export function ModelosPage() {
   const atualizar = useAtualizarModelo()
   const duplicar = useDuplicarModelo()
   const excluir = useExcluirModelo()
+  const arquivar = useArquivarModelo()
+  const { data: arquivados } = useModelosArquivados()
+  const [verArquivados, setVerArquivados] = useState(false)
 
   const [busca, setBusca] = useState('')
   const [filtroModalidade, setFiltroModalidade] = useState<ModalidadeTipo | null>(null)
@@ -80,6 +84,10 @@ export function ModelosPage() {
   // o filtro só vale enquanto a modalidade ainda existe na biblioteca (ex.: depois de excluir o último treino dela)
   const modalidadeAtiva = filtroModalidade && modalidadesPresentes.some((x) => x.modalidade === filtroModalidade) ? filtroModalidade : null
   const visiveis = useMemo(() => (comBusca ? filtrarModelos(modelos ?? [], busca, modalidadeAtiva) : (modelos ?? [])), [comBusca, modelos, busca, modalidadeAtiva])
+  const qtdArquivados = arquivados?.length ?? 0
+  const listaExibida = verArquivados && qtdArquivados > 0 ? (arquivados ?? []) : visiveis
+  // sem nenhum arquivado (ex.: restaurou o último), "Arquivados" não faz sentido: cai na lista normal
+  const noArquivados = verArquivados && qtdArquivados > 0
 
   const abrirDuplicar = (m: Modelo) => {
     setMenuAberto(null)
@@ -189,6 +197,19 @@ export function ModelosPage() {
     )
   }
 
+  const arquivarModelo = (m: Modelo) => {
+    setMenuAberto(null)
+    arquivar.mutate(
+      { id: m.id, arquivar: true },
+      { onSuccess: () => mostrarDesfazer(`"${m.name}" foi arquivado.`, () => arquivar.mutate({ id: m.id, arquivar: false })), onError: (e) => mostrarErroGlobal(mapearErroSupabase(e)) },
+    )
+  }
+
+  const restaurarModelo = (m: Modelo) => {
+    setMenuAberto(null)
+    arquivar.mutate({ id: m.id, arquivar: false }, { onError: (e) => mostrarErroGlobal(mapearErroSupabase(e)) })
+  }
+
   const excluirModelo = async (m: Modelo) => {
     setMenuAberto(null)
     const ok = await confirmarAcao({
@@ -212,7 +233,7 @@ export function ModelosPage() {
 
       {isLoading && <ListaSkeleton />}
       {error && <ErroComRetry erro={error} onTentar={() => refetch()} className="mb-4" />}
-      {modelos?.length === 0 && (
+      {modelos?.length === 0 && qtdArquivados === 0 && (
         <EstadoVazio
           icone={<ClipboardList size={24} />}
           titulo="Monte seu primeiro treino planejado"
@@ -222,7 +243,19 @@ export function ModelosPage() {
         />
       )}
 
-      {comBusca && (
+      {qtdArquivados > 0 && (
+        <button
+          type="button"
+          aria-pressed={noArquivados}
+          onClick={() => setVerArquivados((v) => !v)}
+          className="mb-3 flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 active:bg-slate-50"
+        >
+          {noArquivados ? 'Voltar aos treinos planejados' : `Arquivados (${qtdArquivados})`}
+        </button>
+      )}
+      {noArquivados && <p className="mb-3 text-sm text-slate-600">Treinos arquivados não aparecem ao escolher treino. Os já aplicados aos alunos não mudam.</p>}
+      {!noArquivados && modelos?.length === 0 && qtdArquivados > 0 && <p className="mb-3 text-sm text-slate-600">Todos os seus treinos planejados estão arquivados.</p>}
+      {comBusca && !noArquivados && (
         <div className="mb-3 space-y-2">
           <div className="relative">
             <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden />
@@ -251,10 +284,10 @@ export function ModelosPage() {
           )}
         </div>
       )}
-      {comBusca && visiveis.length === 0 && <p className="text-sm text-slate-600">Nenhum treino planejado encontrado.</p>}
+      {comBusca && !noArquivados && visiveis.length === 0 && <p className="text-sm text-slate-600">Nenhum treino planejado encontrado.</p>}
 
       <ul className="space-y-2">
-        {visiveis.map((m) => {
+        {listaExibida.map((m) => {
           const ordenados = [...m.modelo_exercicios].sort((a, b) => a.order_index - b.order_index)
           const previa = ordenados
             .slice(0, 2)
@@ -348,15 +381,23 @@ export function ModelosPage() {
 
       <BottomSheet open={!!menuAberto} onClose={() => setMenuAberto(null)} title={menuAberto?.name}>
         <div className="space-y-1">
-          <button type="button" onClick={() => menuAberto && abrirEditar(menuAberto)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
-            Editar
-          </button>
-          <button type="button"
-            onClick={() => menuAberto && abrirDuplicar(menuAberto)}
-            className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
-          >
-            Duplicar
-          </button>
+          {menuAberto?.arquivado_em ? (
+            <button type="button" onClick={() => menuAberto && restaurarModelo(menuAberto)} disabled={arquivar.isPending} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+              Restaurar
+            </button>
+          ) : (
+            <>
+              <button type="button" onClick={() => menuAberto && abrirEditar(menuAberto)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+                Editar
+              </button>
+              <button type="button" onClick={() => menuAberto && abrirDuplicar(menuAberto)} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+                Duplicar
+              </button>
+              <button type="button" onClick={() => menuAberto && arquivarModelo(menuAberto)} disabled={arquivar.isPending} className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100">
+                Arquivar
+              </button>
+            </>
+          )}
           <button type="button"
             onClick={() => menuAberto && excluirModelo(menuAberto)}
             disabled={excluir.isPending}

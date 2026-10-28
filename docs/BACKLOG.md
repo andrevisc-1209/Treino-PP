@@ -1266,3 +1266,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **`ErroComRetry`:** erro de carregamento deixa de ser uma linha vermelha solta e vira uma caixa com a mensagem em português simples e o botão **Tentar de novo** (44 px), aplicada em **Hoje, Agenda (dia e semana, que não tratavam erro), Alunos, Treinos planejados, Exercícios e Financeiro**. No Financeiro, com erro, as telas de "organize suas cobranças" deixam de aparecer por engano.
 - ℹ️ **Offline:** já existe a faixa global "Sem conexão. Algumas ações podem falhar." (`OfflineBanner`); o retry cobre o resto. Telas de admin e o seletor de modelos continuam com a mensagem simples.
 - ✅ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): ligar o modo avião e abrir Alunos/Agenda/Financeiro para ver o erro e tocar em "Tentar de novo" com a rede de volta.
+
+## 112. Arquivar treino planejado
+
+- ✅ Pedido da auditoria de UX (sobra 2): o treino planejado ganha **Arquivar** no "⋮" (com toast **Desfazer**). O arquivado sai da lista e de todos os seletores (escolher treino do aluno, criar treino a partir de modelo, checklist de primeiro uso) **sem apagar nada**; os treinos já aplicados aos alunos não mudam.
+- ✅ Na tela, o botão **Arquivados (N)** (só aparece se houver) abre a lista dos arquivados, onde dá para **Restaurar** (no "⋮") ou **Excluir** de vez. Se todos estiverem arquivados, a tela avisa em vez de mostrar o "Monte seu primeiro treino".
+- 🗄️ **Migration** `20261078000000_arquivar_treino_planejado.sql`: coluna `treino.modelos.arquivado_em` (anulável; NULL = ativo). RLS e GRANT da tabela já cobrem a coluna. Teste em `supabase/tests/arquivar_treino_planejado.sql` (dono arquiva e restaura; outro personal não enxerga nem arquiva).
+- ⚠️ **Rodar a migration ANTES do merge:** o app passa a filtrar por `arquivado_em`; sem a coluna, a lista de Treinos planejados falha ao carregar. Sem deploy de função.
+- ⚠️ **Não testado ao vivo por mim** (login com captcha): arquivar, desfazer, abrir Arquivados, restaurar e confirmar que o treino arquivado some ao escolher treino para um aluno.
