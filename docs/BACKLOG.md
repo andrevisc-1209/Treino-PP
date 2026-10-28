@@ -1360,10 +1360,19 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ O painel (aba Indicadores, item 122) passa a mostrar cadastros, ativados, pagantes e **custo por pagante por origem** a partir dos próximos cadastros. Quem já se cadastrou continua "direto".
 - ⚠️ **Rodar a migration ANTES do merge.** Sem deploy de função. Testes em `origem.test.ts`. **Não testado ao vivo por mim:** abrir `https://treino.personalperto.com.br/landing.html?utm_source=instagram&utm_medium=reels&utm_campaign=teste` numa janela anônima, criar uma conta e conferir no painel (Indicadores → Por origem) o cadastro como "Instagram".
 
-### 124. Pacote de aulas (parte 1: cadastro, contador e alertas) — ✅ PR aberta
+### 124. Pacote de aulas (parte 1: cadastro, contador e alertas) — ✅ entregue (PR #246)
 Pedido: muitos personais vendem pacote de aulas. Modelo de cobrança novo, ao lado de "Por aula" e "Mensal".
 - ✅ **Cadastro:** na Cobrança (ficha e cadastro do aluno) a opção "Pacote de aulas" pede quantidade de aulas, valor do pacote, prazo para usar (dias) e, opcionalmente, "aulas já feitas" (ex.: 1 para a próxima ser a 2/10). Tudo editável depois. O pacote começa a contar hoje.
 - ✅ **Contador "2/10":** aulas anteriores informadas + presenças da agenda desde o início do pacote. Treino à distância não conta; em aula com mais de um aluno cada um gasta uma aula do próprio pacote.
 - ✅ **Alertas** na ficha (cobrança e cabeçalho) e no card da lista de Alunos: "Faltam 3 / 2 aulas", "Falta 1 aula", "Pacote acabou", "Pacote vence em N dias" (7 dias ou menos) e "Pacote vencido". Quem passa do total mostra "12/10" e segue como "acabou" (o app não apaga nada).
 - 🗄️ **Migration** `20261081000000_pacote_de_aulas.sql`: tabela `treino.aluno_pacotes` (histórico; um pacote ativo por aluno), RLS, GRANT só para authenticated sem DELETE, escrita bloqueada sem assinatura ativa, lixeira. Teste SQL em `supabase/tests/pacote_de_aulas.sql`. Aluno de pacote não usa `aluno_cobranca` (fica desligada), então não entra no fechamento de ciclo nem nos avisos de ciclo.
-- ⏳ **Parte 2 (próxima PR):** cobrança do pacote no Financeiro na venda (com "já recebeu" ou data de pagamento), travar ao chegar no total com "Renovar pacote" (novo ciclo) e relatório do pacote ao final.
+- ✅ **Parte 2:** ver item 125.
+
+### 125. Pacote de aulas (parte 2: cobrança, trava e renovação) — ✅ PR aberta
+- ✅ **Cobrança na venda:** ao vender o pacote (cadastro, ficha ou renovação) o personal escolhe **"Já recebi"** (data + forma) ou **"A receber"** (vencimento). A venda vira uma fatura `modelo = 'pacote'`, então entra sozinha nos cards (A receber, Recebido no mês, Em atraso), nos filtros e na previsão do Financeiro. Alunos de pacote aparecem na lista do Financeiro (selo pago / a receber / em atraso) e a ficha mostra o histórico de faturas.
+- ✅ **Trava no total (10/10):** iniciar treino (qualquer entrada: Alunos, ficha, agenda) e o check-in da agenda mostram "Pacote acabou" com **Renovar pacote**; sem renovar não segue. Falha ao ler o pacote deixa passar (a trava nunca impede o atendimento). Prazo vencido só avisa.
+- ✅ **Renovar pacote** (ficha, aviso de trava ou `?renovar=1`): encerra o atual, vende um novo hoje e cobra de novo. **Encerrar** sem renovar também existe.
+- ✅ **Relatório do pacote:** ao encerrar/renovar, as presenças do pacote são ligadas à fatura da venda e o relatório (PDF/recibo) lista as aulas. Edição do pacote atualiza a fatura enquanto ela não está paga; pacote já recebido trava o valor.
+- 🗄️ **Migration** `20261082000000_pacote_de_aulas_financeiro.sql` (aceita `pacote` em `faturas.modelo`; `aluno_pacotes.fatura_id`; policy recriada). Teste SQL: `supabase/tests/pacote_de_aulas_financeiro.sql`.
+- ⚠️ Limites conhecidos: uma cobrança nova que começa no mesmo dia de outra do mesmo aluno é recusada (regra antiga: um início por aluno); aulas já marcadas como "treino concluído" depois do total não são travadas (só o início).
+

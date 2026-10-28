@@ -18,7 +18,8 @@ import { cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
 import { alunosComCicloParaFechar } from './cicloPendente'
 import { estaVencida, rotuloModelo, SeloFatura } from './rotulos'
 import { recebidoPorMes } from './desempenho'
-import { acaoNecessaria, ehSemValor, prioridadeDaLinha } from './listaFinanceiro'
+import { acaoNecessaria, ehSemValor, linhasDePacote, prioridadeDaLinha } from './listaFinanceiro'
+import { usePacotesAtivos } from '@/features/pacotes/api'
 import { previsaoDoMes, ultimoDiaDoMes } from './previsaoDoMes'
 import { useAulasNoIntervalo } from '@/features/agenda/api'
 import { BottomSheet } from '@/components/ui'
@@ -51,6 +52,7 @@ export function FinanceiroPage() {
   const { data: alunos } = useAlunos()
   const { data: faturas, isLoading: faturasLoading, error: erroFaturas, refetch: recarregarFaturas } = useFaturasTodas()
   const { data: participacoes } = useParticipacoesCobraveisTodas()
+  const { data: pacotesAtivos } = usePacotesAtivos()
   const [params] = useSearchParams()
   const [filtro, setFiltro] = useState<Filtro>(params.get('filtro') === 'a_fechar' ? 'a_fechar' : 'todos')
   const [mostrarSemValor, setMostrarSemValor] = useState(false)
@@ -105,6 +107,17 @@ export function FinanceiroPage() {
     })
   }, [alunosCobranca, faturas, participacoes, hoje])
 
+  // alunos de pacote: a cobrança nasce na venda e entra nos filtros pela situação da fatura (paga, a receber, em atraso)
+  const linhasPacote = useMemo(
+    () =>
+      linhasDePacote(
+        [...(pacotesAtivos?.values() ?? [])].map((x) => x.pacote),
+        faturas ?? [],
+        new Map((alunos ?? []).map((a) => [a.id, a.name] as const)),
+        hoje,
+      ).filter((l) => filtro === 'todos' || l.estado === filtro),
+    [pacotesAtivos, faturas, alunos, hoje, filtro],
+  )
   const previsao = useMemo(
     () =>
       previsaoDoMes({
@@ -114,8 +127,9 @@ export function FinanceiroPage() {
         participacoesAbertas: participacoes ?? [],
         aulasAgendadas: aulasAteFimDoMes ?? [],
         idsAlunosAtivos: (alunos ?? []).map((a) => a.id),
+        idsComPacote: [...(pacotesAtivos?.keys() ?? [])],
       }),
-    [hoje, faturas, alunosCobranca, participacoes, aulasAteFimDoMes, alunos],
+    [hoje, faturas, alunosCobranca, participacoes, aulasAteFimDoMes, alunos, pacotesAtivos],
   )
   const recebimentos = useMemo(() => recebidoPorMes(faturas ?? [], hoje, 6), [faturas, hoje])
   const idsCicloEncerrado = useMemo(
@@ -163,7 +177,7 @@ export function FinanceiroPage() {
               />
             </div>
           )}
-          {(alunos?.length ?? 0) > 0 && (alunosCobranca?.length ?? 0) === 0 && (
+          {(alunos?.length ?? 0) > 0 && (alunosCobranca?.length ?? 0) === 0 && (pacotesAtivos?.size ?? 0) === 0 && (
             <div className="mb-4">
               <EstadoVazio
                 icone={<Landmark size={24} />}
@@ -190,7 +204,7 @@ export function FinanceiroPage() {
               valor={formatarBRL(faturasEmAtraso.reduce((a, f) => a + f.total, 0))}
               qtd={faturasEmAtraso.length}
             />
-            {(alunosCobranca?.length ?? 0) > 0 && (
+            {((alunosCobranca?.length ?? 0) > 0 || (pacotesAtivos?.size ?? 0) > 0) && (
             <button
               type="button"
               onClick={() => setPrevisaoAberta(true)}
@@ -275,11 +289,25 @@ export function FinanceiroPage() {
             ))}
           </RolagemHorizontal>
 
-          {linhasFiltradas.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
+          {linhasFiltradas.length === 0 && linhasPacote.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
             <p className="text-sm text-slate-600">{qtdSemValor > 0 ? 'Nenhuma cobrança com valor neste filtro.' : 'Nenhum aluno neste filtro.'}</p>
           )}
 
           <ul className="space-y-2">
+            {linhasPacote.map((l) => (
+              <li key={`pacote-${l.alunoId}`}>
+                <Link to={`/financeiro/${l.faturaId}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="min-w-0 truncate font-medium">{l.nome}</p>
+                    <p className="shrink-0 text-lg font-bold">{formatarBRL(l.total)}</p>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="min-w-0 text-sm text-slate-500">Pacote de aulas</p>
+                    <SeloFatura status={l.status as FaturaStatus} vencida={l.estado === 'atraso'} />
+                  </div>
+                </Link>
+              </li>
+            ))}
             {linhasFiltradas.map((l) => (
               <li key={l.alunoId}>
                 <Link to={`/alunos/${l.alunoId}/fechar-ciclo`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">

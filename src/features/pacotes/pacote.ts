@@ -43,6 +43,11 @@ export function diasParaVencer(p: Pick<Pacote, 'inicio' | 'validade_dias'>, hoje
   return diasEntre(hoje, fimDoPacote(p))
 }
 
+/** Todas as aulas do pacote já foram usadas: a próxima aula pede um pacote novo. */
+export function pacoteEsgotado(p: Pick<Pacote, 'qtd_aulas' | 'aulas_anteriores'>, presencasNoApp: number): boolean {
+  return aulasRestantes(p, presencasNoApp) === 0
+}
+
 export type NivelPacote = 'ok' | 'atencao' | 'esgotado'
 
 export type SituacaoPacote = {

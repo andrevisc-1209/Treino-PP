@@ -73,3 +73,13 @@ describe('ultimoDiaDoMes', () => {
     expect(ultimoDiaDoMes('2026-12-31')).toBe('2026-12-31')
   })
 })
+
+describe('previsaoDoMes — alunos de pacote', () => {
+  it('o valor do pacote entra pela fatura e o aluno de pacote não conta como "sem valor"', () => {
+    const faturas = [{ id: 'f1', aluno_id: 'a1', status: 'paga', paga_em: '2026-10-05', total: 800, periodo_fim: '2026-12-04' }] as never
+    const p = previsaoDoMes({ ...base, faturas, idsAlunosAtivos: ['a1', 'a2'], idsComPacote: ['a1'] })
+    expect(p.recebido).toBe(800)
+    expect(p.alunosSemValor).toBe(1)
+  })
+})
+

@@ -19,6 +19,7 @@ import { ConsentimentoSaudePage } from '@/features/alunos/ConsentimentoSaudePage
 import { TreinoPublicoPage } from '@/features/execucoes/TreinoPublicoPage'
 import { ConsentimentosPage } from '@/features/consentimentos/ConsentimentosPage'
 import { RetornoCheckoutPage } from '@/features/assinatura/RetornoCheckoutPage'
+import { GuardaPacote } from '@/features/pacotes/GuardaPacote'
 import { NovaSessaoPage } from '@/features/sessoes/NovaSessaoPage'
 import { SessaoPage } from '@/features/sessoes/SessaoPage'
 import { FinalizarSessaoPage } from '@/features/sessoes/FinalizarSessaoPage'
@@ -66,7 +67,7 @@ export default function App() {
           <Route path="/alunos/:id" element={<AlunoFichaPage />} />
           <Route path="/alunos/:id/editar" element={<AlunoFormPage mode="edit" />} />
           <Route path="/alunos/:id/planos/:planoId" element={<PlanoEditorPage />} />
-          <Route path="/alunos/:id/sessoes/nova" element={<NovaSessaoPage />} />
+          <Route path="/alunos/:id/sessoes/nova" element={<GuardaPacote><NovaSessaoPage /></GuardaPacote>} />
           <Route path="/alunos/:id/sessoes/:sessionId" element={<SessaoPage />} />
           <Route path="/alunos/:id/sessoes/:sessionId/finalizar" element={<FinalizarSessaoPage />} />
           <Route path="/alunos/:id/fechar-ciclo" element={<FecharCicloPage />} />

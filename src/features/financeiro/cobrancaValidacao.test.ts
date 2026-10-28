@@ -12,6 +12,9 @@ const ok: CobrancaFormValor = {
   qtdPacoteTexto: '',
   validadePacoteTexto: '60',
   feitasPacoteTexto: '',
+  pacoteRecebido: false,
+  pagamentoDataTexto: '2026-10-28',
+  formaPagamento: 'pix',
 }
 
 describe('validarCobranca (limites do banco: dia 1–28, vencimento 0–30)', () => {
@@ -47,8 +50,17 @@ describe('validarCobranca — pacote de aulas', () => {
     expect(validarCobranca({ ...pacote, qtdPacoteTexto: '' })).toMatch(/Quantidade/)
     expect(validarCobranca({ ...pacote, validadePacoteTexto: '0' })).toMatch(/Prazo/)
   })
+  it('exige a data do pagamento e não aceita recebimento no futuro', () => {
+    expect(validarCobranca({ ...pacote, pagamentoDataTexto: '' })).toMatch(/vencimento/i)
+    expect(validarCobranca({ ...pacote, pacoteRecebido: true, pagamentoDataTexto: '' })).toMatch(/recebimento/i)
+    expect(validarCobranca({ ...pacote, pacoteRecebido: true, pagamentoDataTexto: '2099-01-01' })).toMatch(/futura/)
+    expect(validarCobranca({ ...pacote, pacoteRecebido: true, pagamentoDataTexto: '2020-01-01' })).toBeNull()
+  })
+  it('editando um pacote existente o pagamento não é cobrado', () => {
+    expect(validarCobranca({ ...pacote, pagamentoDataTexto: '' }, 0, false)).toBeNull()
+  })
   it('na edição, não aceita menos aulas feitas do que o app já registrou', () => {
-    expect(validarCobranca({ ...pacote, feitasPacoteTexto: '1' }, 3)).toMatch(/já registrou/)
-    expect(validarCobranca({ ...pacote, feitasPacoteTexto: '3' }, 3)).toBeNull()
+    expect(validarCobranca({ ...pacote, feitasPacoteTexto: '1' }, 3, false)).toMatch(/já registrou/)
+    expect(validarCobranca({ ...pacote, feitasPacoteTexto: '3' }, 3, false)).toBeNull()
   })
 })

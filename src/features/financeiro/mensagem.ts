@@ -2,6 +2,7 @@ import type { Peso } from '@/features/alunos/api'
 import type { SessaoDetalhada } from '@/features/evolucao/api'
 import { evolucaoExercicio, exerciciosExecutados, pseMedia, variacaoPeso } from '@/features/evolucao/calc'
 import { formatarBRL } from '@/lib/moeda'
+import type { ModeloFatura } from './api'
 import { APP_NAME } from '@/config/app'
 
 export type ResumoTreinoPeriodo = {
@@ -42,7 +43,7 @@ export type MensagemFaturaInput = {
   periodoLabel: string
   quantidadeAulas: number
   datasAulas: string[]
-  modelo: 'por_aula' | 'mensal'
+  modelo: ModeloFatura
   valorUnitario: number | null
   total: number
   ajuste: number
@@ -61,7 +62,7 @@ export function montarMensagemFatura(input: MensagemFaturaInput): string {
   if (input.modelo === 'por_aula' && input.valorUnitario != null) {
     linhas.push(`💰 ${input.quantidadeAulas} × ${formatarBRL(input.valorUnitario)} = ${formatarBRL(input.total)}`)
   } else {
-    linhas.push(`💰 Mensalidade: ${formatarBRL(input.total)}`)
+    linhas.push(`💰 ${input.modelo === 'pacote' ? 'Pacote de aulas' : 'Mensalidade'}: ${formatarBRL(input.total)}`)
   }
 
   if (input.ajuste !== 0) {

@@ -6,6 +6,7 @@ import { dividirValor } from '@/features/financeiro/calc'
 import { formatarBRL } from '@/lib/moeda'
 import { dataSP, horaSP, montarDataHoraSP } from '@/lib/datas'
 import { descreverMenuAula } from './menuAula'
+import { useGuardaCheckIn } from '@/features/pacotes/useGuardaCheckIn'
 import { useCancelarAula, useCheckIn, useMarcarFalta, useProfessionalConfig, useRemarcarAula, valorPorAulaDoAluno, type Aula } from './api'
 
 type Passo = 'menu' | 'iniciar' | 'checkin' | 'falta' | 'cancelar' | 'remarcar'
@@ -23,6 +24,7 @@ export function AulaAcoesSheet({
   const navigate = useNavigate()
   const { data: config } = useProfessionalConfig()
   const checkIn = useCheckIn()
+  const guardaPacote = useGuardaCheckIn()
   const marcarFalta = useMarcarFalta()
   const cancelarAula = useCancelarAula()
   const remarcarAula = useRemarcarAula()
@@ -122,7 +124,8 @@ export function AulaAcoesSheet({
     setValoresGrupo(novosValores)
   }
 
-  const confirmarCheckInGrupo = () => {
+  const confirmarCheckInGrupo = async () => {
+    if (!(await guardaPacote(previstos.map((p) => ({ id: p.aluno_id, name: p.aluno?.name ?? 'Aluno' }))))) return fechar()
     const valoresPorAluno: Record<string, number> = {}
     for (const p of previstos) {
       valoresPorAluno[p.aluno_id] = Number((valoresGrupo[p.aluno_id] ?? '0').replace(',', '.')) || 0
@@ -211,7 +214,10 @@ export function AulaAcoesSheet({
           {previstos.map((p) => (
             <button type="button"
               key={p.id}
-              onClick={() => checkIn.mutate({ aulaId: aula.id, alunoIds: [p.aluno_id] }, { onSuccess: fechar })}
+              onClick={async () => {
+                if (!(await guardaPacote([{ id: p.aluno_id, name: p.aluno?.name ?? 'Aluno' }]))) return fechar()
+                checkIn.mutate({ aulaId: aula.id, alunoIds: [p.aluno_id] }, { onSuccess: fechar })
+              }}
               disabled={checkIn.isPending}
               className="w-full rounded-xl px-3 py-3 text-left active:bg-slate-100"
             >

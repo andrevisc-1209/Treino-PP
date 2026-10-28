@@ -28,7 +28,7 @@ import { pendentesComoExistentes } from '@/features/agenda/conflitos'
 import { HorarioFormSheet, type HorarioFormValor } from '@/features/agenda/HorarioFormSheet'
 import { hojeSP, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { useSalvarPacote } from '@/features/pacotes/api'
-import { payloadPacote } from '@/features/pacotes/formulario'
+import { pagamentoDoFormulario, payloadPacote } from '@/features/pacotes/formulario'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from '@/features/financeiro/CobrancaForm'
 import { payloadDistancia } from '@/features/financeiro/distancia'
@@ -317,7 +317,7 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
       if (cobrancaValor.valorTexto.trim() && !Number.isNaN(valorNum) && valorNum > 0) {
         try {
           if (cobrancaValor.modelo === 'pacote') {
-            await salvarPacote.mutateAsync(payloadPacote(cobrancaValor, alunoId))
+            await salvarPacote.mutateAsync({ dados: payloadPacote(cobrancaValor, alunoId), pagamento: pagamentoDoFormulario(cobrancaValor) })
           } else {
             await salvarCobranca.mutateAsync({
               aluno_id: alunoId,

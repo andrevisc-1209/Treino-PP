@@ -11,10 +11,34 @@ export function FinanceiroBlock({ alunoId }: { alunoId: string }) {
   const { data: cobranca } = useAlunoCobranca(alunoId)
   const { data: faturas } = useFaturasDoAluno(alunoId)
 
-  if (!cobranca?.ativo) return null
+  const ultimas = (faturas ?? []).slice(0, 3)
+
+  // aluno de pacote (sem cobrança por aula/mensal): só o histórico de faturas, sem ciclo a fechar
+  if (!cobranca?.ativo) {
+    if (ultimas.length === 0) return null
+    return (
+      <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="font-semibold">Financeiro</h2>
+        <ul className="divide-y divide-slate-100">
+          {ultimas.map((f) => (
+            <li key={f.id}>
+              <Link to={`/financeiro/${f.id}`} className="flex items-center justify-between gap-2 py-2 active:opacity-70">
+                <div>
+                  <p className="text-sm font-medium">
+                    {rotuloModelo(f.modelo)} · {f.periodo_inicio.slice(8, 10)}/{f.periodo_inicio.slice(5, 7)} a {f.periodo_fim.slice(8, 10)}/{f.periodo_fim.slice(5, 7)}
+                  </p>
+                  <p className="text-sm text-slate-500">{formatarBRL(f.total)}</p>
+                </div>
+                <SeloFatura status={f.status} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
 
   const ciclo = cicloAtual(cobranca.dia_ciclo, hojeSP())
-  const ultimas = (faturas ?? []).slice(0, 3)
   const status = statusFinanceiroDoAluno(faturas ?? [], ciclo.fim, hojeSP(), formatarBRL)
 
   return (
