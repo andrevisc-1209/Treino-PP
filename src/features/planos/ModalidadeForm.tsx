@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { BotaoComecarDeModelo, SeletorTemplate } from '@/features/templates/SeletorTemplate'
-import { estruturadoDoTemplate, MODALIDADES_COM_TEMPLATE_DO_SISTEMA, modalidadesDoAtalhoDeModelo, temBlocos } from '@/features/templates/aplicar'
+import { estruturadoDoTemplate, natacaoDoTemplate, MODALIDADES_COM_TEMPLATE_DO_SISTEMA, modalidadesDoAtalhoDeModelo, temBlocos } from '@/features/templates/aplicar'
 import type { TemplateTreino } from '@/features/templates/api'
 import { MODALIDADES_ATIVAS, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 import { BlocosEditor } from './BlocosEditor'
@@ -83,6 +83,17 @@ export function ModalidadeForm({
     if (trocou) onModalidade(t.modalidade)
     if (t.modalidade === 'musculacao') {
       onModeloMusculacao?.(t)
+      setEscolhendoModelo(false)
+      return
+    }
+    if (t.modalidade === 'natacao') {
+      const natacao = natacaoDoTemplate(t)
+      if (!natacao) return
+      if (!trocou && estruturado.natacao.blocos.length > 0) {
+        const ok = await confirmarAcao({ titulo: 'Usar modelo', mensagem: 'Os exercícios atuais serão substituídos pelos do modelo.', textoConfirmar: 'Substituir', destrutivo: true })
+        if (!ok) return
+      }
+      onEstruturado({ ...estruturado, natacao })
       setEscolhendoModelo(false)
       return
     }

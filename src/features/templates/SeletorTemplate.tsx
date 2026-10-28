@@ -4,12 +4,16 @@ import { cn } from '@/lib/utils'
 import { BottomSheet, Button } from '@/components/ui'
 import { mapearErroSupabase } from '@/lib/erros'
 import { MODALIDADES_CONFIG, resumoModalidade, type ModalidadeTipo } from '@/types/modalidades'
+import { ROTULO_NIVEL, templateNatacaoDe } from '@/features/natacao/templates'
 import { itensMusculacaoDe } from './aplicar'
 import { useTemplatesTreino, type TemplateTreino } from './api'
 
 function Cartao({ t, onUsar }: { t: TemplateTreino; onUsar: () => void }) {
   const itens = t.modalidade === 'musculacao' ? itensMusculacaoDe(t.modalidade_detalhes) : []
-  const resumo = t.modalidade === 'musculacao' ? `${itens.length} ${itens.length === 1 ? 'exercício' : 'exercícios'}` : resumoModalidade(t.modalidade, t.modalidade_detalhes)
+  const nat = t.modalidade === 'natacao' ? templateNatacaoDe(t) : null
+  const resumo = nat
+    ? `${ROTULO_NIVEL[nat.nivel]} · ${nat.ambiente === 'mar' ? 'Mar' : 'Piscina'} · ${nat.blocos.length} ${nat.blocos.length === 1 ? 'exercício' : 'exercícios'}`
+    : t.modalidade === 'musculacao' ? `${itens.length} ${itens.length === 1 ? 'exercício' : 'exercícios'}` : resumoModalidade(t.modalidade, t.modalidade_detalhes)
   return (
     <div className="space-y-2 rounded-2xl border border-slate-200 p-3">
       <div>
