@@ -25,10 +25,10 @@ export function rotuloModalidade(modalidade: string | null | undefined): string 
 const semAcento = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '')
 
 /** relatorio-andre-scherer-out-2026.pdf (mês/ano em que o ciclo termina) */
-export function nomeArquivoRelatorio(alunoNome: string, periodoFimISO: string): string {
+export function nomeArquivoRelatorio(alunoNome: string, periodoFimISO: string, prefixo = 'relatorio'): string {
   const slug = semAcento(alunoNome).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'aluno'
   const [ano, mes] = periodoFimISO.split('-').map(Number)
-  return `relatorio-${slug}-${MESES_ABREV[mes - 1]}-${ano}.pdf`
+  return `${prefixo}-${slug}-${MESES_ABREV[mes - 1]}-${ano}.pdf`
 }
 
 export type DadosRelatorio = {
@@ -46,6 +46,8 @@ export type DadosRelatorio = {
   treinosADistancia?: number
   /** data (aaaa-mm-dd) impressa no rodapé; padrão: hoje (America/Sao_Paulo) */
   geradoEm?: string
+  /** relatório mensal de acompanhamento: sem valores, pagamento, Pix nem total (só o trabalho realizado no mês) */
+  semFinanceiro?: boolean
   /** pacote de aulas: quantas aulas foram vendidas ("4 de 10 aulas") */
   aulasContratadas?: number
   /** avaliação escrita pelo personal (conquistas, pontos de atenção, próximos objetivos); sem texto, a seção não aparece */
@@ -109,7 +111,7 @@ const ROTULO_STATUS: Record<ItemRecibo['status'], string> = { presente: 'Present
 
 /** Colunas da tabela: Local só quando há mais de um lugar (com um só, ele sobe para o cabeçalho); Valor só no modelo por aula. */
 export function colunasDaTabela(d: DadosRelatorio): { local: boolean; valor: boolean } {
-  return { local: locaisDoRelatorio(d).length > 1, valor: d.modelo === 'por_aula' }
+  return { local: locaisDoRelatorio(d).length > 1, valor: d.modelo === 'por_aula' && !d.semFinanceiro }
 }
 
 export function cabecalhoDaTabela(d: DadosRelatorio): string[] {
@@ -335,7 +337,7 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8.5)
   doc.setTextColor(200, 230, 201)
-  doc.text('RELATÓRIO DE ACOMPANHAMENTO · TREINO · PERSONAL PERTO', xTexto, 15)
+  doc.text(d.semFinanceiro ? 'RELATÓRIO MENSAL DE ACOMPANHAMENTO · TREINO · PERSONAL PERTO' : 'RELATÓRIO DE ACOMPANHAMENTO · TREINO · PERSONAL PERTO', xTexto, 15)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(255, 255, 255)
@@ -343,7 +345,8 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.text(`Personal: ${d.personalNome}`, xTexto, 31)
-  const situacao = statusDoCiclo(d) === 'parcial' ? `Parcial do ciclo, atualizado em ${dataGeracao(d.geradoEm ?? hojeSP())}` : 'Ciclo encerrado'
+  const parcial = statusDoCiclo(d) === 'parcial'
+  const situacao = parcial ? `Parcial ${d.semFinanceiro ? 'do mês' : 'do ciclo'}, atualizado em ${dataGeracao(d.geradoEm ?? hojeSP())}` : d.semFinanceiro ? 'Mês encerrado' : 'Ciclo encerrado'
   doc.text(`Período: ${dm(d.periodoInicio)} a ${dm(d.periodoFim)} · ${situacao}`, xTexto, 37)
   const lugares = locaisDoRelatorio(d)
   if (lugares.length === 1) doc.text(`Local: ${lugares[0]}`, xTexto, 42.5, { maxWidth: larg - margem - xTexto })
@@ -431,7 +434,7 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   }
 
   // --- Tabela de aulas ---
-  titulo(d.modelo === 'pacote' ? 'Aulas do pacote' : 'Aulas do ciclo')
+  titulo(d.semFinanceiro ? 'Aulas do mês' : d.modelo === 'pacote' ? 'Aulas do pacote' : 'Aulas do ciclo')
   autoTable(doc, {
     startY: y,
     head: [cabecalhoDaTabela(d).map((c) => (c === 'Valor' ? { content: c, styles: { halign: 'right' as const } } : c))],
@@ -446,7 +449,7 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   })
   y = ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? y) + 8
 
-  if (d.modelo === 'mensal') {
+  if (d.modelo === 'mensal' && !d.semFinanceiro) {
     garantirEspaco(8)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10.5)
@@ -454,7 +457,7 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
     doc.text('Mensalidade: valor fixo do ciclo', margem, y)
     y += 8
   }
-  if (d.modelo === 'pacote') {
+  if (d.modelo === 'pacote' && !d.semFinanceiro) {
     garantirEspaco(8)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10.5)
@@ -482,7 +485,18 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
     y += 34 + 12
   }
 
-  // --- Ajuste e total ---
+  // --- Ajuste e total (o relatório mensal não tem parte financeira) ---
+  if (d.semFinanceiro) {
+    garantirEspaco(18)
+    doc.setFillColor(...TOTAL_FUNDO)
+    doc.roundedRect(margem, y, largBloco, 14, 2, 2, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(14)
+    doc.setTextColor(...TOTAL_TEXTO)
+    const n = d.itens.filter((i) => i.status === 'presente' && !i.fora_da_cobranca).length
+    doc.text(`${n} ${n === 1 ? 'aula realizada' : 'aulas realizadas'} no mês`, margem + 4, y + 9.3)
+    return doc
+  }
   if (d.ajuste !== 0) {
     const linhas = doc.splitTextToSize(textoAjuste(d), largBloco - 8) as string[]
     const altura = 6 + linhas.length * 5
@@ -551,7 +565,7 @@ async function carregarLogo(): Promise<string | null> {
 /** Gera e baixa o PDF com o nome relatorio-[aluno]-[mês-ano].pdf. */
 export async function baixarRelatorioCompleto(d: DadosRelatorio): Promise<void> {
   const doc = await gerarRelatorioCompleto(d, await carregarLogo())
-  doc.save(nomeArquivoRelatorio(d.alunoNome, d.periodoFim))
+  doc.save(nomeArquivoRelatorio(d.alunoNome, d.periodoFim, d.semFinanceiro ? 'relatorio-mensal' : 'relatorio'))
 }
 
 /** Como o relatório fecha a fatura: pago, ou em aberto (Pix só se o personal incluir). Cancelada não tem fechamento. */

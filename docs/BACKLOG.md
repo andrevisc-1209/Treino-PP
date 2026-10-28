@@ -1386,7 +1386,7 @@ Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: p
 - ✅ **Tabela limpa:** o local sobe para o cabeçalho quando é um só (e vira nome curto, sem endereço, quando há vários); coluna Valor só no modelo por aula; modalidade com o nome do treino ("Musculação · Treino A"); pacote mostra "4 de 10 aulas do pacote".
 - ✅ **Fechamento:** fatura paga mostra "Pago em dd/mm/aaaa"; em aberto mostra o vencimento e, **só se o personal marcar "Incluir o QR Code Pix no relatório"**, o QR Pix. O recibo na tela ganhou o resumo por modalidade e a situação do ciclo.
 - ✅ **Treinos à distância no ciclo:** o relatório e o recibo passam a incluir os treinos que o aluno fez pelo link no período, **em qualquer modelo** (por aula, mensal e pacote), cobrados ou não. Os cobrados já entram como aula; os não cobrados aparecem como "treino à distância" (tabela, resumo por modalidade com km/metros, e cartão "Treinos à distância"), sem virar aula nem somar no total. Antes só o mensal mostrava uma contagem. Só números do resultado: prontidão não entra.
-- ✅ Parte B: ver item 128. ✅ Parte C1 (evolução): item 129. ⏳ Parte C2 (relatório mensal) e: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
+- ✅ Parte B: ver item 128. ✅ Parte C1 (evolução): item 129. ✅ Parte C2 (relatório mensal): item 130. ⏳ Ainda aberto: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
 - ⚠️ Limite: "assiduidade em %" não entrou, porque o relatório só conhece as aulas ligadas à fatura (não as previstas que não aconteceram); entra quando houver a base de aulas previstas.
 
 ### 127. Pacote: treino à distância gasta aula? (decisão do personal) — ✅ PR aberta
@@ -1404,4 +1404,11 @@ Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: p
 - ✅ **Regras de honestidade:** só aparece com 2 registros comparáveis da mesma coisa e só o que **melhorou pelo menos 5%** (queda e variação pequena não entram; o aluno é um relatório de acompanhamento, não de alerta). Sem comparável, a seção some. Treino à distância com carga ou distância registrada também entra.
 - ✅ **LGPD:** só carga, distância e pace; peso, medidas e prontidão continuam fora.
 - Sem migration.
+
+### 130. Relatório de acompanhamento (parte C2: relatório mensal) — ✅ PR aberta
+- ✅ Na **ficha do aluno** (aba Resumo) há o cartão **"Relatório mensal"**: o personal escolhe o mês (últimos 12; padrão = mês anterior) e baixa o PDF. Funciona **sem fatura**, para qualquer aluno e modelo de cobrança.
+- ✅ Conteúdo: situação ("Parcial do mês" ou "Mês encerrado"), aulas realizadas, dias treinados, resumo por modalidade, evolução, treinos à distância, tabela do mês (com faltas e cancelamentos) e a avaliação do personal. **Nada financeiro:** sem valores, total, pagamento nem Pix.
+- ✅ A **avaliação do personal** do mensal é digitada na hora (3 campos opcionais) e **não fica salva** (sem migration); mesmo aviso de saúde e confirmação do relatório de ciclo.
+- Arquivo: `relatorio-mensal-<aluno>-<mês>-<ano>.pdf`. Sem migration e sem deploy de função.
+- ⏳ Ideias futuras: salvar a avaliação por mês; envio do relatório por e-mail; relatório mensal automático sugerido no fim do mês.
 

@@ -100,7 +100,7 @@ export function useRemoverAlunoCobranca() {
 // ============================================================
 
 /** Sessão ligada à aula, com o que o relatório do ciclo usa: nota, duração, modalidade e séries concluídas (nenhum dado de prontidão). */
-const SELECT_SESSAO_DETALHE = 'sessao:sessoes(session_date, post_pse, prof_rating, duration_minutes, plano:planos(modalidade, name), sessao_exercicios(exercicio_id, exercicio:exercicios(name), sessao_series(completed, load_kg)))'
+export const SELECT_SESSAO_DETALHE = 'sessao:sessoes(session_date, post_pse, prof_rating, duration_minutes, plano:planos(modalidade, name), sessao_exercicios(exercicio_id, exercicio:exercicios(name), sessao_series(completed, load_kg)))'
 
 type SessaoDetalhe = {
   session_date: string
