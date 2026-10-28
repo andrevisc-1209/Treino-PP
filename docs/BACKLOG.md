@@ -1098,3 +1098,12 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Marketing: Reels 4 ("Traga seus alunos em 2 minutos"), linha na prospecção do WhatsApp e a objeção "dá trabalho migrar" atualizada.
 - ⚠️ **Jurídico deve rever o texto da landing e a citação do ChatGPT, Gemini e Claude antes do merge (a landing é pública).** Sem migration e sem deploy de função. Depois do deploy do site: abrir `/modelo-alunos.csv` e conferir a seção a 390px.
 - ⏳ **PR 2 (app):** "Primeiros passos" com a linha "Traga vários alunos de uma vez", estado vazio da tela de Alunos com 3 botões, tela de importação com dois cartões (planilha | IA) e próximo passo depois de importar.
+
+## 93. Onboarding no app: "Traga seus alunos" (estratégia de ativação, parte do app)
+
+- ✅ **"Primeiros passos" (tela Hoje):** sob "Cadastre seu primeiro aluno" entra uma linha própria, de destaque: **"Ou traga vários de uma vez (planilha ou ajuda de uma IA)"** (levava um link sublinhado no fim do cartão). Some quando o primeiro aluno é cadastrado.
+- ✅ **Tela de Alunos vazia:** em vez de "toque no +", o cartão **"Traga seus alunos"** com 3 caminhos: **Tenho uma planilha**, **Minha lista está bagunçada** (abre direto no caminho da IA: `/alunos/importar?via=ia`) e **Cadastrar um aluno**. Em modo leitura (assinatura vencida) os botões abrem os planos, como o "+" já fazia.
+- ✅ **Tela de importação:** **duas abas** no topo ("Tenho uma planilha" | "Está tudo bagunçado, com ajuda de uma IA") em vez de uma página longa com a IA lá embaixo; abre na aba certa conforme a entrada (`?via=ia`).
+- ✅ **Depois de importar:** cartão **"Agora, o que falta"** (valor da cobrança e horários ficam na ficha; link para montar um treino planejado) e botão "Ver meus alunos e completar as fichas".
+- 📊 **Medição sem evento novo:** a importação já dispara `aluno_cadastrado`; a métrica é o funil existente (`perfil_concluido` → `aluno_cadastrado`). Evento novo exigiria Política nova.
+- ⚠️ Sem migration e sem deploy de função. **Não testado ao vivo por mim** (login com captcha): validar no celular com conta nova sem alunos: card "Primeiros passos", estado vazio, as duas abas e o "Agora, o que falta".
