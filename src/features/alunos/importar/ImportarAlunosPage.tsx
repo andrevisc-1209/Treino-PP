@@ -193,15 +193,6 @@ export function ImportarAlunosPage() {
             <button
               type="button"
               role="tab"
-              aria-selected={via === 'planilha'}
-              onClick={() => setVia('planilha')}
-              className={cn('min-h-12 rounded-xl border px-3 text-sm font-semibold', via === 'planilha' ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
-            >
-              Tenho uma planilha
-            </button>
-            <button
-              type="button"
-              role="tab"
               aria-selected={via === 'ia'}
               onClick={() => setVia('ia')}
               className={cn('min-h-12 rounded-xl border px-3 text-sm font-semibold', via === 'ia' ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
@@ -209,41 +200,16 @@ export function ImportarAlunosPage() {
               Está tudo bagunçado
               <span className={cn('ml-1 block text-xs font-medium', via === 'ia' ? 'text-white/90' : 'text-slate-500')}>com ajuda de uma IA</span>
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={via === 'planilha'}
+              onClick={() => setVia('planilha')}
+              className={cn('min-h-12 rounded-xl border px-3 text-sm font-semibold', via === 'planilha' ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+            >
+              Tenho uma planilha
+            </button>
           </div>
-
-          {via === 'planilha' && (
-            <>
-              <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-                <h2 className="font-semibold">Como funciona</h2>
-                <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
-                  <li>Baixe o modelo e preencha uma linha por aluno. Só o <strong>nome</strong> é obrigatório.</li>
-                  <li>Salve como <strong>CSV</strong> (Excel ou Google Planilhas: Salvar como / Fazer download → CSV).</li>
-                  <li>Envie o arquivo aqui. Você confere tudo antes de gravar. Até {LIMITE_IMPORTACAO} alunos por vez.</li>
-                </ol>
-                <Button variant="outline" className="w-full" onClick={baixarModelo}>
-                  <Download size={18} /> Baixar modelo (CSV)
-                </Button>
-                <div className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-                  <Info size={16} className="mt-0.5 shrink-0" aria-hidden />
-                  <p>
-                    Entram só <strong>nome, telefone, e-mail, nascimento, sexo e objetivos</strong>. Dados de saúde (lesão, cirurgia, medicamentos e altura) <strong>não</strong> vão pela
-                    planilha: só entram com o consentimento do aluno, depois, na ficha. Cobrança e horários também ficam para a ficha.
-                  </p>
-                </div>
-              </section>
-
-              <input ref={entrada} type="file" accept=".csv,.txt,text/csv" className="sr-only" onChange={(e) => escolher(e.target.files?.[0])} aria-label="Escolher arquivo CSV" />
-              <Button className="w-full" onClick={() => entrada.current?.click()}>
-                <FileSpreadsheet size={18} /> Escolher a planilha
-              </Button>
-            </>
-          )}
-
-          {erro && (
-            <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
-              {erro}
-            </p>
-          )}
 
           {via === 'ia' && (
             <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm" aria-label="Importar com ajuda de uma IA">
@@ -284,6 +250,40 @@ export function ImportarAlunosPage() {
                 Conferir o texto colado
               </Button>
             </section>
+          )}
+
+          {via === 'planilha' && (
+            <>
+              <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+                <h2 className="font-semibold">Como funciona</h2>
+                <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
+                  <li>Baixe o modelo e preencha uma linha por aluno. Só o <strong>nome</strong> é obrigatório.</li>
+                  <li>Salve como <strong>CSV</strong> (Excel ou Google Planilhas: Salvar como / Fazer download → CSV).</li>
+                  <li>Envie o arquivo aqui. Você confere tudo antes de gravar. Até {LIMITE_IMPORTACAO} alunos por vez.</li>
+                </ol>
+                <Button variant="outline" className="w-full" onClick={baixarModelo}>
+                  <Download size={18} /> Baixar modelo (CSV)
+                </Button>
+                <div className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                  <Info size={16} className="mt-0.5 shrink-0" aria-hidden />
+                  <p>
+                    Entram só <strong>nome, telefone, e-mail, nascimento, sexo e objetivos</strong>. Dados de saúde (lesão, cirurgia, medicamentos e altura) <strong>não</strong> vão pela
+                    planilha: só entram com o consentimento do aluno, depois, na ficha. Cobrança e horários também ficam para a ficha.
+                  </p>
+                </div>
+              </section>
+
+              <input ref={entrada} type="file" accept=".csv,.txt,text/csv" className="sr-only" onChange={(e) => escolher(e.target.files?.[0])} aria-label="Escolher arquivo CSV" />
+              <Button className="w-full" onClick={() => entrada.current?.click()}>
+                <FileSpreadsheet size={18} /> Escolher a planilha
+              </Button>
+            </>
+          )}
+
+          {erro && (
+            <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+              {erro}
+            </p>
           )}
         </>
       )}
