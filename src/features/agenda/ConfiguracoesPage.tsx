@@ -367,6 +367,10 @@ export function ConfiguracoesPage() {
           <Button variant="ghost" className="w-full text-red-600" onClick={() => supabase.auth.signOut()}>
             <LogOut size={18} /> Sair
           </Button>
+
+          <Link to="/configuracoes/excluir-conta" className="flex min-h-11 items-center justify-center text-sm text-slate-600 underline">
+            Excluir minha conta
+          </Link>
         </div>
       )}
 

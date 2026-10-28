@@ -5,6 +5,7 @@ import { DefinirSenhaPage } from '@/features/auth/DefinirSenhaPage'
 import { AuthCallbackPage } from '@/features/auth/AuthCallbackPage'
 import { AlunosPage } from '@/features/alunos/AlunosPage'
 import { AlunoFormPage } from '@/features/alunos/AlunoFormPage'
+import { ExcluirContaPage } from '@/features/conta/ExcluirContaPage'
 import { ImportarAlunosPage } from '@/features/alunos/importar/ImportarAlunosPage'
 import { AlunoFichaPage } from '@/features/alunos/AlunoFichaPage'
 import { TermoPage } from '@/features/alunos/TermoPage'
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="/" element={<HojePage />} />
           <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/configuracoes/excluir-conta" element={<ExcluirContaPage />} />
           <Route path="/ajuda" element={<AjudaPage />} />
           <Route path="/consentimentos" element={<ConsentimentosPage />} />
           <Route path="/alunos" element={<AlunosPage />} />
