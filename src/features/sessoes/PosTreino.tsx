@@ -384,15 +384,7 @@ export function PosTreino({
 
   const cargaInterna = pse != null && duracao.trim() ? pse * Number(duracao) : null
 
-<<<<<<< HEAD
-  const concluir = () => {
-=======
   const concluir = async () => {
-    if (pse == null) {
-      setErro('Informe o PSE')
-      return
-    }
->>>>>>> origin/main
     if (!duracao.trim() || Number(duracao) <= 0) {
       setErro('Informe a duração')
       return
