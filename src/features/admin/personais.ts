@@ -16,6 +16,18 @@ export function rotuloCidade(cidade: string | null | undefined): string {
   return c || NAO_INFORMADO
 }
 
+/** Cidade vinda da URL (?cidade=); vazio = sem filtro. */
+export function cidadeDaUrl(valor: string | null): string {
+  return (valor ?? '').trim()
+}
+
+/** Personais de uma cidade (o texto é o mesmo da coluna Cidade; "Não informado" pega quem não cadastrou); sem cidade, devolve todos. */
+export function filtrarPorCidade<T extends { cidade: string | null }>(lista: T[], cidade: string): T[] {
+  const alvo = cidade.trim()
+  if (!alvo) return lista
+  return lista.filter((p) => rotuloCidade(p.cidade) === alvo)
+}
+
 /** Link do Google Maps para a cidade; null se não informada. */
 export function linkMapsCidade(cidade: string | null | undefined): string | null {
   const c = (cidade ?? '').trim()

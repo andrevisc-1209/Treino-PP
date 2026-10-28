@@ -1331,3 +1331,10 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 
 - 🐞 Visto no uso real (28/10/2026): depois da reorganização do item 101, o clima ficou perto do fim da Hoje (abaixo das aulas e do Pix) e ninguém via.
 - ✅ O clima (compacto: temperatura, chuva com mm, UV, vento e a dica) volta para **logo abaixo da data**, antes do aviso "Sem mais aulas por fazer hoje" / do card Próxima aula e dos cards de primeiro uso. Pix, Atividade recente e Indique um personal seguem abaixo das aulas. Só muda a ordem na tela; sem migration e sem deploy. **Não testado ao vivo por mim** (captcha): abrir a Hoje a 390 px e conferir o clima sob a data.
+
+## 121. Admin: cidade abre a lista de personais daquela cidade
+
+- 💡 Pedido do dono (28/10/2026): clicar na cidade levava direto ao Google Maps; ele queria ver quais personais são dali.
+- ✅ Na **Visão geral** (tabela de cidades) e na **lista de Personais** (tabela e cartões), tocar na cidade abre a aba **Personais já filtrada** (`/admin?aba=personais&cidade=Curitiba/PR`), com o chip "Cidade: Curitiba/PR · 3 personais" e o botão **Limpar filtro ✕**. O link do Google Maps virou um pequeno ícone de mapa ao lado. A busca por nome/e-mail e o filtro de status continuam valendo em conjunto. "Não informado" lista quem não cadastrou cidade.
+- 🔒 Só dados do personal (como já era); nada de alunos. Sem migration e sem deploy. Testes em `personais.test.ts`. **Não testado ao vivo por mim** (login com captcha e MFA do admin): clicar numa cidade da Visão geral, conferir a lista e limpar o filtro.
+- 🗺️ Parte do plano do BI do admin (v1): esta PR é a 1 de 2; a 2 traz meta de pagantes, funil de ativação, lista de ação e origem do cadastro.
