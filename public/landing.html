@@ -618,6 +618,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js" integrity="sha384-O55L/6rhHr9CFvrxqv5luxOCcmVaBmETbZbJDP+Do8T0pztTACsFBD/IXCNkj7DV" crossorigin="anonymous"></script>
 <script>
+// Origem do cadastro (UTM, primeiro toque): guarda utm_source/medium/campaign no localStorage; o app (mesma origem) manda ao servidor, uma vez, quando
+// a conta nova entra (src/features/analytics/origem.ts, mesmo formato). Texto correspondente: Política de Privacidade, seção 3 ("Origem do seu cadastro").
+(function () {
+  try {
+    var CHAVE = 'treino_origem';
+    if (localStorage.getItem(CHAVE)) return;
+    var p = new URLSearchParams(window.location.search);
+    var limpar = function (v) { return (v || '').toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 60); };
+    var s = limpar(p.get('utm_source'));
+    if (!s) return;
+    localStorage.setItem(CHAVE, JSON.stringify({ s: s, m: limpar(p.get('utm_medium')) || null, c: limpar(p.get('utm_campaign')) || null, t: Date.now() }));
+  } catch (e) {}
+})();
+</script>
+<script>
 // Análise de uso (PostHog) com consentimento (LGPD). Nada é carregado antes do aceite. Sem gravação de sessão, sem cookies
 // (identificador só em localStorage) e sem autocaptura: só os eventos abaixo. Texto correspondente: Política de Privacidade, seção 3.
 (function () {
