@@ -1386,11 +1386,16 @@ Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: p
 - ✅ **Tabela limpa:** o local sobe para o cabeçalho quando é um só (e vira nome curto, sem endereço, quando há vários); coluna Valor só no modelo por aula; modalidade com o nome do treino ("Musculação · Treino A"); pacote mostra "4 de 10 aulas do pacote".
 - ✅ **Fechamento:** fatura paga mostra "Pago em dd/mm/aaaa"; em aberto mostra o vencimento e, **só se o personal marcar "Incluir o QR Code Pix no relatório"**, o QR Pix. O recibo na tela ganhou o resumo por modalidade e a situação do ciclo.
 - ✅ **Treinos à distância no ciclo:** o relatório e o recibo passam a incluir os treinos que o aluno fez pelo link no período, **em qualquer modelo** (por aula, mensal e pacote), cobrados ou não. Os cobrados já entram como aula; os não cobrados aparecem como "treino à distância" (tabela, resumo por modalidade com km/metros, e cartão "Treinos à distância"), sem virar aula nem somar no total. Antes só o mensal mostrava uma contagem. Só números do resultado: prontidão não entra.
-- ⏳ Parte B: avaliação do personal (conquistas, pontos de atenção, próximos objetivos) salva na fatura (migration). Parte C: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
+- ✅ Parte B: ver item 128. ⏳ Parte C: evolução por modalidade e relatório mensal. **Não incluído por LGPD:** peso e medidas.
 - ⚠️ Limite: "assiduidade em %" não entrou, porque o relatório só conhece as aulas ligadas à fatura (não as previstas que não aconteceram); entra quando houver a base de aulas previstas.
 
 ### 127. Pacote: treino à distância gasta aula? (decisão do personal) — ✅ PR aberta
 - ✅ No cadastro, na edição e na renovação do pacote há a opção **"Treino à distância gasta uma aula"** (padrão **desligado**, como o "Cobrar treinos à distância" do modelo por aula). Ligada, cada treino que o aluno conclui pelo link desde o início do pacote entra no contador (ex.: 3/10), nos alertas e na trava. Desligada, ele só aparece no histórico e no relatório.
 - ✅ O relatório e o recibo do pacote seguem a opção: ligada, o treino à distância conta como aula do pacote ("4 de 10"); desligada, aparece como "treino à distância", fora da cobrança.
 - 🗄️ **Migration** `20261083000000_pacote_conta_treino_a_distancia.sql` (coluna `aluno_pacotes.conta_distancia`, padrão falso; pacotes existentes não mudam de comportamento).
+
+### 128. Relatório de acompanhamento (parte B: avaliação do personal) — ✅ PR aberta
+- ✅ Na fatura do ciclo/pacote há o cartão **"Avaliação do personal"** com três campos opcionais (até 500 caracteres cada): **conquistas do ciclo**, **pontos de atenção** e **próximos objetivos**. O texto fica salvo na fatura e aparece no PDF ("Avaliação do personal", antes da tabela de aulas) e no recibo da tela; vale para baixar o relatório de novo. Sem texto, a seção não aparece.
+- ✅ **LGPD:** o cartão avisa para não incluir lesões, cirurgias nem medicamentos; se o texto parece citar saúde, o app pergunta antes de salvar ("Revisar texto" / "Salvar mesmo assim"). A avaliação não entra no texto curto de compartilhar nem em mensagens.
+- 🗄️ **Migration** `20261084000000_fatura_avaliacao_do_personal.sql` (3 colunas em `treino.faturas`, CHECK de 500 caracteres; a RLS da fatura já isola por personal). Teste SQL: `supabase/tests/fatura_avaliacao.sql`.
 
