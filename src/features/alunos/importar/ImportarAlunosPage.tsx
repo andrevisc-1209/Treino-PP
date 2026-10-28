@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, Check, Copy, Download, FileSpreadsheet, Info, Sparkles } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, Copy, Download, FileSpreadsheet, Info, Sparkles, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { hojeSP } from '@/lib/datas'
@@ -184,11 +184,12 @@ export function ImportarAlunosPage() {
         <Link to="/alunos" aria-label="Voltar para os alunos" className="flex size-11 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100">
           <ArrowLeft size={22} />
         </Link>
-        <h1 className="text-2xl font-bold">Importar alunos</h1>
+        <h1 className="text-2xl font-bold">Adicionar alunos</h1>
       </header>
 
       {!linhas && (
         <>
+          <p className="text-sm text-slate-600">Escolha como quer começar. Você confere os dados antes de salvar.</p>
           <div role="tablist" aria-label="Como trazer seus alunos" className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -197,8 +198,8 @@ export function ImportarAlunosPage() {
               onClick={() => setVia('ia')}
               className={cn('min-h-12 rounded-xl border px-3 text-sm font-semibold', via === 'ia' ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
             >
-              Está tudo bagunçado
-              <span className={cn('ml-1 block text-xs font-medium', via === 'ia' ? 'text-white/90' : 'text-slate-500')}>com ajuda de uma IA</span>
+              Colar lista com ajuda de IA
+              <span className={cn('block text-xs font-medium', via === 'ia' ? 'text-white/90' : 'text-slate-600')}>para lista bagunçada</span>
             </button>
             <button
               type="button"
@@ -207,7 +208,8 @@ export function ImportarAlunosPage() {
               onClick={() => setVia('planilha')}
               className={cn('min-h-12 rounded-xl border px-3 text-sm font-semibold', via === 'planilha' ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
             >
-              Tenho uma planilha
+              Importar planilha
+              <span className={cn('block text-xs font-medium', via === 'planilha' ? 'text-white/90' : 'text-slate-600')}>CSV pronto</span>
             </button>
           </div>
 
@@ -285,6 +287,14 @@ export function ImportarAlunosPage() {
               {erro}
             </p>
           )}
+
+          <Link to="/alunos/novo" className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm active:bg-slate-50">
+            <UserPlus size={20} className="shrink-0 text-brand-hover" aria-hidden />
+            <span>
+              <span className="block text-sm font-semibold">Cadastrar individualmente</span>
+              <span className="block text-xs text-slate-600">Para adicionar um aluno por vez</span>
+            </span>
+          </Link>
         </>
       )}
 
