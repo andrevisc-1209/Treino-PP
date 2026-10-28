@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { useQueryClient } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, CalendarCheck, MoreVertical, Play, Search, TriangleAlert, Users } from 'lucide-react'
+import { Archive, ArchiveRestore, CalendarCheck, MoreVertical, Play, Search, TriangleAlert, Upload, Users } from 'lucide-react'
 import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { BottomSheet, Fab, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
@@ -246,12 +246,21 @@ export function AlunosPage() {
         <TragaSeusAlunos onCadastrarUm={exigir(() => navigate('/alunos/novo'))} somenteLeitura={somenteLeitura} abrirPlanos={abrirPlanos} />
       )}
       {aba === 'ativos' && (alunos?.length ?? 0) > 0 && (
-        <Link to="/alunos/importar" onClick={(e) => { if (somenteLeitura) { e.preventDefault(); abrirPlanos() } }} className="mb-2 block min-h-11 py-2 text-sm font-medium text-brand-hover underline">
-          Importar alunos de uma planilha
-        </Link>
-      )}
-      {aba === 'ativos' && (alunos?.length ?? 0) > 0 && (
-        <BotaoExportarAlunos className="mb-2" discreto />
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <Link
+            to="/alunos/importar"
+            onClick={(e) => {
+              if (somenteLeitura) {
+                e.preventDefault()
+                abrirPlanos()
+              }
+            }}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+          >
+            <Upload size={16} aria-hidden /> Importar planilha
+          </Link>
+          <BotaoExportarAlunos lado />
+        </div>
       )}
       {alunos?.length === 0 && aba === 'arquivados' && <p className="text-slate-500">Nenhum aluno arquivado.</p>}
       {aba === 'lixeira' && (

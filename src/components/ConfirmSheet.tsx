@@ -5,6 +5,7 @@ type PedidoConfirmacao = {
   titulo: string
   mensagem: string
   textoConfirmar?: string
+  textoCancelar?: string
   destrutivo?: boolean
   resolver: (ok: boolean) => void
 }
@@ -16,7 +17,7 @@ const ouvintes = new Set<Ouvinte>()
  * Substitui o confirm() nativo por uma BottomSheet do design system.
  * Uso: if (!(await confirmarAcao({ titulo, mensagem }))) return
  */
-export function confirmarAcao(opts: { titulo: string; mensagem: string; textoConfirmar?: string; destrutivo?: boolean }): Promise<boolean> {
+export function confirmarAcao(opts: { titulo: string; mensagem: string; textoConfirmar?: string; textoCancelar?: string; destrutivo?: boolean }): Promise<boolean> {
   return new Promise((resolve) => {
     ouvintes.forEach((fn) => fn({ ...opts, resolver: resolve }))
   })
@@ -44,7 +45,7 @@ export function ConfirmHost() {
         <p className="text-sm text-slate-600">{pedido?.mensagem}</p>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => responder(false)} className="flex-1">
-            Cancelar
+            {pedido?.textoCancelar ?? 'Cancelar'}
           </Button>
           <Button
             onClick={() => responder(true)}

@@ -7,7 +7,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { montarCsvAlunos, nomeDoArquivoExportacao, type AlunoParaExportar } from './exportarAlunos'
 
 /** Baixa os alunos (ativos e arquivados; fora da lixeira) em CSV: só dados básicos, no mesmo formato da importação. */
-export function BotaoExportarAlunos({ className, discreto = false }: { className?: string; discreto?: boolean }) {
+export function BotaoExportarAlunos({ className, discreto = false, lado = false }: { className?: string; discreto?: boolean; /** botão secundário compacto para ficar ao lado de outro numa grade de 2 colunas (o aviso ocupa a linha toda) */ lado?: boolean }) {
   const [carregando, setCarregando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
 
@@ -33,6 +33,26 @@ export function BotaoExportarAlunos({ className, discreto = false }: { className
     } finally {
       setCarregando(false)
     }
+  }
+
+  if (lado) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={baixar}
+          disabled={carregando}
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50 disabled:opacity-60"
+        >
+          <Download size={16} aria-hidden /> {carregando ? 'Preparando…' : 'Exportar CSV'}
+        </button>
+        {aviso && (
+          <p role="status" className="col-span-2 text-xs text-slate-600">
+            {aviso}
+          </p>
+        )}
+      </>
+    )
   }
 
   return (

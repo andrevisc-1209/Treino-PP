@@ -1,3 +1,4 @@
+import { confirmarDuracaoSeAtipica } from '@/features/sessoes/duracaoAtipica'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { TriangleAlert } from 'lucide-react'
@@ -74,7 +75,7 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
     onClose()
   }
 
-  const salvar = () => {
+  const salvar = async () => {
     if (alunoIds.length === 0) {
       setErro('Selecione ao menos um aluno')
       return
@@ -87,6 +88,7 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
       setErro('Essa data e hora já passaram. Escolha um horário a partir de agora.')
       return
     }
+    if (!(await confirmarDuracaoSeAtipica(Number(duracao), 'aula'))) return
     setErro(null)
     criar.mutate(
       { alunoIds, startsAt, durationMin: Number(duracao), local: local.trim() || null },
