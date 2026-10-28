@@ -3,6 +3,9 @@ import type { ModalidadeDetalhes, ModalidadeTipo } from '@/types/modalidades'
 
 export const MODALIDADES_COM_TEMPLATE_DO_SISTEMA: ModalidadeTipo[] = ['musculacao', 'corrida', 'ciclismo', 'brick']
 
+/** As abas do atalho "Usar um modelo pronto": modalidades habilitadas no app que têm modelo do sistema, na ordem de MODALIDADES_COM_TEMPLATE_DO_SISTEMA. */
+export const modalidadesDoAtalhoDeModelo = (ativas: ModalidadeTipo[]): ModalidadeTipo[] => MODALIDADES_COM_TEMPLATE_DO_SISTEMA.filter((m) => ativas.includes(m))
+
 /** Dados do formulário a partir de um modelo pronto, com ids novos nos blocos (o JSON do banco não tem ids). */
 export function estruturadoDoTemplate(modalidade: ModalidadeTipo, detalhes: ModalidadeDetalhes): DadosEstruturados {
   const e = estruturadosDe(modalidade, detalhes as Record<string, unknown>)

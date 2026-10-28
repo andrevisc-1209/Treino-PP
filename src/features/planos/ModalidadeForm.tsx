@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { BotaoComecarDeModelo, SeletorTemplate } from '@/features/templates/SeletorTemplate'
-import { estruturadoDoTemplate, MODALIDADES_COM_TEMPLATE_DO_SISTEMA, temBlocos } from '@/features/templates/aplicar'
+import { estruturadoDoTemplate, MODALIDADES_COM_TEMPLATE_DO_SISTEMA, modalidadesDoAtalhoDeModelo, temBlocos } from '@/features/templates/aplicar'
 import type { TemplateTreino } from '@/features/templates/api'
 import { MODALIDADES_ATIVAS, MODALIDADES_CONFIG, usaBlocos, type BlocoTreino, type ExercicioLivre, type ModalidadeTipo, type TipoExecucao } from '@/types/modalidades'
 import { BlocosEditor } from './BlocosEditor'
@@ -64,8 +64,11 @@ export function ModalidadeForm({
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
   const [escolhendoModelo, setEscolhendoModelo] = useState(false)
+  // atalho do estado vazio: o seletor mostra as modalidades com modelo (a pessoa ainda não escolheu); pelo botão normal, só a do formulário
+  const [seletorDeTodas, setSeletorDeTodas] = useState(false)
   useEffect(() => {
     if (abrirSeletorDeModelo) {
+      setSeletorDeTodas(true)
       setEscolhendoModelo(true)
       onSeletorAberto?.()
     }
@@ -75,16 +78,19 @@ export function ModalidadeForm({
   const comModeloDoSistema = MODALIDADES_COM_TEMPLATE_DO_SISTEMA.includes(modalidade) && (modalidade !== 'musculacao' || !!onModeloMusculacao)
 
   const usarModelo = async (t: TemplateTreino) => {
-    if (modalidade === 'musculacao') {
+    // o modelo escolhido pode ser de outra modalidade (atalho do estado vazio): muda a modalidade do formulário antes de aplicar
+    const trocou = t.modalidade !== modalidade
+    if (trocou) onModalidade(t.modalidade)
+    if (t.modalidade === 'musculacao') {
       onModeloMusculacao?.(t)
       setEscolhendoModelo(false)
       return
     }
-    if (temBlocos(modalidade, estruturado)) {
+    if (!trocou && temBlocos(modalidade, estruturado)) {
       const ok = await confirmarAcao({ titulo: 'Usar modelo', mensagem: 'Os blocos atuais serão substituídos pelos do modelo.', textoConfirmar: 'Substituir', destrutivo: true })
       if (!ok) return
     }
-    onEstruturado({ ...estruturado, ...estruturadoDoTemplate(modalidade, t.modalidade_detalhes) })
+    onEstruturado({ ...estruturado, ...estruturadoDoTemplate(t.modalidade, t.modalidade_detalhes) })
     setEscolhendoModelo(false)
   }
 
@@ -196,9 +202,20 @@ export function ModalidadeForm({
               </button>
             </div>
           ) : (
-            <BotaoComecarDeModelo onClick={() => setEscolhendoModelo(true)} />
+            <BotaoComecarDeModelo
+              onClick={() => {
+                setSeletorDeTodas(false)
+                setEscolhendoModelo(true)
+              }}
+            />
           )}
-          <SeletorTemplate modalidade={modalidade} aberto={escolhendoModelo} onClose={() => setEscolhendoModelo(false)} onEscolher={usarModelo} />
+          <SeletorTemplate
+            modalidade={modalidade}
+            aberto={escolhendoModelo}
+            onClose={() => setEscolhendoModelo(false)}
+            onEscolher={usarModelo}
+            modalidadesEscolhaveis={seletorDeTodas ? modalidadesDoAtalhoDeModelo(MODALIDADES_ATIVAS) : undefined}
+          />
         </>
       )}
 

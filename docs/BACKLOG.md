@@ -1149,3 +1149,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Agenda, visão Dia: faixa dos 7 dias da semana** (Seg a Dom) acima do dia aberto: o dia escolhido em destaque, **hoje** marcado, **ponto nos dias com aula**; toque escolhe o dia e **arrastar para o lado troca de semana**; alvos de 56 px de altura; rótulo de leitor de tela ("Quarta, 28 de outubro: 2 aulas (hoje)"). Usa a mesma consulta da visão Semana (cache compartilhado). As setas "‹ ›" continuam andando de dia em dia.
 - ✅ Testes: `faixaDeDias.test.ts` (semana de segunda a domingo, hoje/selecionado/contagem, rótulo e direção do deslize).
 - ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): validar o atalho do estado vazio (e que o "+" não reabre o seletor) e a faixa na Agenda, inclusive o deslize no celular.
+
+## 99. "Usar um modelo pronto" com todas as modalidades
+
+- 🐞 Visto no uso real (28/10/2026): o atalho "Usar um modelo pronto" (item 98) só mostrava os modelos de **musculação**, porque a criação começa nessa modalidade e o seletor ficava preso a ela.
+- ✅ No atalho, o seletor ganha **abas de modalidade** (**Musculação, Corrida, Ciclismo e Brick**: as habilitadas no app que têm modelo do sistema). Ao escolher um modelo de outra modalidade, o formulário **troca a modalidade sozinho** e carrega os blocos do modelo. Pelo botão normal "Começar de um modelo" (dentro da criação), o seletor segue mostrando só a modalidade do formulário.
+- ℹ️ **Natação fica fora do atalho:** os modelos dela são do banco de exercícios de natação (aba "Modelos" dentro do formulário de natação), não treinos completos.
+- ✅ Teste `atalhoDeModelo.test.ts`: as abas são só as modalidades habilitadas com modelo do sistema, na ordem do catálogo.
+- ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): abrir Treinos planejados vazio → "Usar um modelo pronto" → trocar de aba (Corrida/Ciclismo/Brick) → "Usar este modelo" e conferir que a criação abre na modalidade certa com os blocos.
