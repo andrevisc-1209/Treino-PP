@@ -25,6 +25,9 @@ export const EQUIVALENCIAS: Record<string, string[]> = {
 /** A linha de exemplo do modelo (sem o cabeçalho): dado fictício. */
 const EXEMPLO = MODELO_CSV.split(/\r?\n/).filter(Boolean)
 
+/** Linha de saída do exemplo de entrada e saída do prompt (o teste a lê pela importação). */
+export const EXEMPLO_ENTRADA_SAIDA = 'Fernanda;(11) 96666-0006;;;F;Mobilidade/flexibilidade'
+
 const EQUIV_TEXTO = Object.entries(EQUIVALENCIAS)
   .map(([objetivo, palavras]) => `${palavras.join(', ')} = ${objetivo}`)
   .join('; ')
@@ -54,6 +57,14 @@ REGRAS IMPORTANTES
 EXEMPLO (dados fictícios):
 \`\`\`csv
 ${EXEMPLO.join('\n')}
+\`\`\`
+
+EXEMPLO DE ENTRADA E SAÍDA (dados fictícios): quando a lista diz "mulher" ou "homem", preencha o sexo.
+Entrada: Fernanda, mulher, wpp 11 96666 0006, quer alongar e ganhar mobilidade
+Saída:
+\`\`\`csv
+${CABECALHO_CSV}
+${EXEMPLO_ENTRADA_SAIDA}
 \`\`\`
 
 Agora vou colar a lista de alunos:
