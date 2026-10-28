@@ -104,12 +104,10 @@ describe('lerPlanilha', () => {
     expect(selecionadasPorPadrao(r.linhas)).toEqual([2, 4])
     expect(resumoLeitura(r.linhas)).toEqual({ total: 4, ok: 2, aviso: 0, duplicado: 2, erro: 0 })
   })
-  it('recusa planilha sem coluna nome, vazia, só cabeçalho e acima do limite', () => {
+  it('recusa planilha sem coluna nome, vazia e só cabeçalho', () => {
     expect(lerPlanilha('', [], HOJE)).toMatchObject({ ok: false })
     expect(lerPlanilha('telefone\n123', [], HOJE)).toMatchObject({ ok: false, erro: expect.stringContaining('"nome"') })
     expect(lerPlanilha('nome', [], HOJE)).toMatchObject({ ok: false, erro: expect.stringContaining('só tem o cabeçalho') })
-    const muitas = 'nome\n' + Array.from({ length: LIMITE_IMPORTACAO + 1 }, (_, i) => `Aluno ${i}`).join('\n')
-    expect(lerPlanilha(muitas, [], HOJE)).toMatchObject({ ok: false, erro: expect.stringContaining('limite é 50') })
     const exato = 'nome\n' + Array.from({ length: LIMITE_IMPORTACAO }, (_, i) => `Aluno ${i}`).join('\n')
     expect(lerPlanilha(exato, [], HOJE).ok).toBe(true)
   })
@@ -133,5 +131,34 @@ describe('planilha com título antes do cabeçalho (Google Planilhas)', () => {
     expect(normalizarObjetivos('Cond')).toEqual({ objetivos: ['Condicionamento físico'], ignorados: [] })
     expect(normalizarObjetivos('Per')).toEqual({ objetivos: [], ignorados: ['Per'] }) // curto demais
     expect(normalizarObjetivos('Perf')).toEqual({ objetivos: ['Performance esportiva'], ignorados: [] })
+  })
+})
+
+describe('lista maior que o limite: importa 50 e guarda o resto', () => {
+  const nomes = (n: number) => Array.from({ length: n }, (_, i) => `Aluno ${i + 1}`)
+  const texto = (n: number) => 'nome;telefone\n' + nomes(n).map((x, i) => `${x};(11) 9${String(1000 + i).padStart(4, '0')}-0000`).join('\n')
+
+  it('com 52 alunos, lê os 50 primeiros e deixa 2 para depois (texto pronto para colar, com cabeçalho)', () => {
+    const r = lerPlanilha(texto(52), [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.linhas).toHaveLength(LIMITE_IMPORTACAO)
+    expect(r.linhas[49].aluno?.name).toBe('Aluno 50')
+    expect(r.restantes?.quantidade).toBe(2)
+    expect(r.restantes?.texto.split('\r\n')[0]).toBe('nome;telefone')
+    const resto = lerPlanilha(r.restantes!.texto, [], HOJE)
+    if (!resto.ok) throw new Error(resto.erro)
+    expect(resto.linhas.map((l) => l.aluno?.name)).toEqual(['Aluno 51', 'Aluno 52'])
+    expect(resto.restantes).toBeNull()
+  })
+  it('com exatamente 50 não sobra nada', () => {
+    const r = lerPlanilha(texto(50), [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.restantes).toBeNull()
+  })
+  it('o resto guarda aspas e ponto e vírgula das células', () => {
+    const t = 'nome;obs\n' + nomes(50).map((n) => `${n};x`).join('\n') + '\n"Silva; Ana";"disse ""oi"""'
+    const r = lerPlanilha(t, [], HOJE)
+    if (!r.ok) throw new Error(r.erro)
+    expect(r.restantes?.texto).toContain('"Silva; Ana";"disse ""oi"""')
   })
 })

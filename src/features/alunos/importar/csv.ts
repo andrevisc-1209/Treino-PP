@@ -74,3 +74,9 @@ export function lerCsv(texto: string, delimitador: Delimitador = detectarDelimit
   if (celula !== '' || linha.length > 0) fecharLinha()
   return linhas
 }
+
+/** Monta o texto CSV (`;`) de volta a partir de linhas de células, com aspas onde precisa. Usado para guardar os alunos que sobram de uma lista grande. */
+export function serializarCsv(linhas: string[][], delimitador: Delimitador = ';'): string {
+  const celula = (v: string) => (v.includes(delimitador) || /["\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
+  return linhas.map((l) => l.map(celula).join(delimitador)).join('\r\n') + '\r\n'
+}
