@@ -4,6 +4,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { AssinaturaExpiradaBanner } from '@/components/AssinaturaExpiradaBanner'
 import { ExigirAssinaturaProvider } from '@/features/assinatura/ExigirAssinaturaProvider'
 import { TrialBanner } from '@/components/TrialBanner'
+import { RenovacaoBanner } from '@/components/RenovacaoBanner'
 import { useIsAdmin } from '@/features/admin/useIsAdmin'
 import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
 import { useAuth } from './AuthProvider'
@@ -62,6 +63,7 @@ export function RequireAuth() {
         {!modoFoco && (
           <div className="mx-auto max-w-2xl px-4 pt-4">
             <TrialBanner />
+            <RenovacaoBanner />
             <AssinaturaExpiradaBanner />
           </div>
         )}

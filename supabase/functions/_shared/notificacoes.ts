@@ -113,10 +113,11 @@ export function montarPagamentoPlano(args: { plano: string; valor: number; ate: 
   return `💰 Pagamento confirmado!\nPlano: ${args.plano}\nValor: ${brl(args.valor)}\nAcesso até: ${dataBR(args.ate)}`
 }
 
-/** Aviso do plano do próprio personal (vence em exatamente 3 dias, quando a function roda). */
-export function montarPlanoExpirando(args: { nome: string | null; plano: string | null; ate: string }): string {
+/** Aviso do plano do próprio personal (vence em 3 dias, ou amanhã com `dias: 1`, quando a function roda). */
+export function montarPlanoExpirando(args: { nome: string | null; plano: string | null; ate: string; dias?: 3 | 1 }): string {
   const nome = primeiroNome(args.nome)
-  return `${nome ? `${nome}, s` : 'S'}eu plano${args.plano ? ` ${args.plano}` : ''} vence em 3 dias (${diaSemanaCurto(args.ate)}) — vale renovar em Configurações › Assinatura antes de perder o acesso.`
+  const quando = args.dias === 1 ? 'vence amanhã' : 'vence em 3 dias'
+  return `${nome ? `${nome}, s` : 'S'}eu plano${args.plano ? ` ${args.plano}` : ''} ${quando} (${diaSemanaCurto(args.ate)}) — vale renovar em Configurações › Assinatura antes de perder o acesso.`
 }
 
 // ---------- 3. resumo semanal ----------
