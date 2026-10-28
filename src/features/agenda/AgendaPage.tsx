@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { EstadoVazio } from '@/components/EstadoVazio'
+import { useAlunos } from '@/features/alunos/api'
+import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 import { Fab } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
@@ -26,13 +29,25 @@ import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, type Aula } f
 
 type Modo = 'dia' | 'semana'
 
-function VisaoDia({ dataISO, onAbrirAula }: { dataISO: string; onAbrirAula: (a: Aula) => void }) {
+function VisaoDia({ dataISO, onAbrirAula, onMarcarAula }: { dataISO: string; onAbrirAula: (a: Aula) => void; onMarcarAula: () => void }) {
   const { data: aulas, isLoading } = useAulasDoDia(dataISO)
+  const { data: alunos } = useAlunos()
+  const semAlunos = alunos?.length === 0
 
   return (
     <div className="space-y-2">
       {isLoading && <ListaSkeleton />}
-      {aulas?.length === 0 && <p className="text-sm text-slate-500">Nenhuma aula neste dia.</p>}
+      {aulas?.length === 0 && semAlunos && (
+        <EstadoVazio
+          icone={<CalendarPlus size={24} />}
+          titulo="Sua agenda começa aqui"
+          texto="Cadastre um aluno e marque sua primeira aula. Você poderá organizar seus horários por dia ou semana."
+          acao={{ rotulo: 'Adicionar meus alunos', to: ROTA_IMPORTAR }}
+        />
+      )}
+      {aulas?.length === 0 && !semAlunos && (
+        <EstadoVazio icone={<CalendarPlus size={24} />} titulo="Nenhuma aula neste dia" acao={{ rotulo: 'Marcar aula', onClick: onMarcarAula }} />
+      )}
       {aulas?.map((a) => (
         <AulaCard key={a.id} aula={a} onClick={() => onAbrirAula(a)} />
       ))}
@@ -150,7 +165,7 @@ export function AgendaPage() {
               key={m}
               onClick={() => setModo(m)}
               className={cn(
-                'min-h-9 rounded-lg px-3 text-sm font-medium capitalize transition',
+                'min-h-11 rounded-lg px-4 text-sm font-medium capitalize transition',
                 modo === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
               )}
             >
@@ -159,17 +174,17 @@ export function AgendaPage() {
           ))}
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={() => navegar(-1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Anterior">
+          <button type="button" onClick={() => navegar(-1)} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Anterior">
             <ChevronLeft size={18} />
           </button>
           <button type="button"
             onClick={irParaHoje}
             aria-label={ehHoje ? 'Hoje' : `${rotulo} — voltar para hoje`}
-            className="min-h-9 min-w-24 whitespace-nowrap rounded-xl px-2 text-sm font-medium text-brand-hover active:bg-slate-100"
+            className="min-h-11 min-w-24 whitespace-nowrap rounded-xl px-2 text-sm font-medium text-brand-hover active:bg-slate-100"
           >
             {rotulo}
           </button>
-          <button type="button" onClick={() => navegar(1)} className="flex size-9 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Próximo">
+          <button type="button" onClick={() => navegar(1)} className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100" aria-label="Próximo">
             <ChevronRight size={18} />
           </button>
         </div>
@@ -178,7 +193,7 @@ export function AgendaPage() {
       {modo === 'dia' && <p className="mb-3 font-semibold">{formatarDataCompleta(dataAtual)}</p>}
 
       {modo === 'dia' ? (
-        <VisaoDia dataISO={dataAtual} onAbrirAula={setAulaAberta} />
+        <VisaoDia dataISO={dataAtual} onAbrirAula={setAulaAberta} onMarcarAula={() => setNovaAulaAberta(true)} />
       ) : (
         <VisaoSemana inicioSemana={inicioSemana} onAbrirAula={setAulaAberta} />
       )}

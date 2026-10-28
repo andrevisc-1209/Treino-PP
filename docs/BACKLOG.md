@@ -1120,3 +1120,13 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ `via.ts` com teste: só `?via=planilha` abre a planilha; sem parâmetro ou valor estranho abre a IA.
 - Sem migration e sem deploy. Não testado ao vivo por mim (login com captcha): abrir Alunos → Importar alunos e conferir a ordem das abas e o padrão.
 
+
+## 97. UX do primeiro uso (2/2): estados vazios iguais, navegação e acabamentos
+
+- 🎯 Segunda metade da auditoria de UX (ChatGPT e Gemini, 28/10/2026). O dono decidiu **tratar todos os estados vazios do mesmo jeito**.
+- ✅ **Componente `EstadoVazio`** (ícone, título que diz o que fazer, uma frase e UM botão), usado em: **Treinos planejados** ("Monte seu primeiro treino planejado" + "Criar treino planejado"), **Agenda** (conta sem alunos: "Sua agenda começa aqui" + "Adicionar meus alunos"; com alunos: "Nenhuma aula neste dia" + "Marcar aula") e **Financeiro** (sem alunos: "Organize suas cobranças"; com alunos mas sem cobrança: "Defina a cobrança dos seus alunos"). O texto solto "Nenhum aluno aqui." sumiu (agora só aparece "Nenhum aluno neste filtro." quando é o caso) e o gráfico vazio vira uma frase ("os valores e o gráfico aparecem conforme suas cobranças forem registradas"). Financeiro **não** promete que o app processa pagamento: só organiza e prepara a mensagem.
+- ✅ **Barra inferior:** **"Meus treinos" virou "Treinos"** (vocabulário fixo) e a ordem ficou **Hoje · Agenda · Alunos · Treinos · Financeiro** (proposta do ChatGPT; ele recomendou medir o acesso antes de trocar Treinos e Financeiro de lugar, mas a base de hoje é de testes: reavaliar com uso real). Teste trava rótulos e ordem.
+- ✅ **Alvos de toque da Agenda de 36 para 44 px** (setas, abas Dia/Semana e "Hoje"): violavam a regra do projeto. Teste trava a volta.
+- ✅ **Configurações:** grupo **"Privacidade e conta"** (Consentimentos de saúde dos alunos (LGPD), Preferências de cookies, Excluir minha conta) separado do "Indique…" e da Central de ajuda; "Sair" por último; o rótulo jurídico "Consentimentos LGPD" ganhou a finalidade.
+- ❌ **Não feito de propósito:** faixa de dias deslizante na Agenda (esforço médio), "Usar um modelo" em Treinos (não há biblioteca de modelos nessa tela; os modelos prontos só existem ao montar o treino de um aluno), "Cobranças" no lugar de Financeiro e "cobrança automática" (contradizem o produto), eventos novos de funil (exigiriam Política nova).
+- ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): validar com conta sem alunos as telas Agenda, Treinos e Financeiro vazias, a barra inferior, as setas da Agenda e Configurações.

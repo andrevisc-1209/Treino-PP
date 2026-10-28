@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MoreVertical } from 'lucide-react'
+import { ClipboardList } from 'lucide-react'
+import { EstadoVazio } from '@/components/EstadoVazio'
 import { BottomSheet, Button, Fab, Field, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { ExerciciosTabs } from '@/components/ExerciciosTabs'
@@ -198,7 +200,12 @@ export function ModelosPage() {
       {isLoading && <ListaSkeleton />}
       {error && <p className="text-red-600">{mapearErroSupabase(error)}</p>}
       {modelos?.length === 0 && (
-        <p className="text-sm text-slate-500">Nenhum treino planejado ainda. Crie treinos planejados para aplicar aos alunos.</p>
+        <EstadoVazio
+          icone={<ClipboardList size={24} />}
+          titulo="Monte seu primeiro treino planejado"
+          texto="Crie um modelo de exercícios para reutilizar nos treinos dos seus alunos."
+          acao={{ rotulo: 'Criar treino planejado', onClick: exigir(abrirNovo) }}
+        />
       )}
 
       <ul className="space-y-2">
