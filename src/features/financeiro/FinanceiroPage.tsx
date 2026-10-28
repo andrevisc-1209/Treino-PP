@@ -6,6 +6,10 @@ import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
 import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { Link, useSearchParams } from 'react-router-dom'
+import { Landmark } from 'lucide-react'
+import { EstadoVazio } from '@/components/EstadoVazio'
+import { useAlunos } from '@/features/alunos/api'
+import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 import { formatarBRL } from '@/lib/moeda'
 import { hojeSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
@@ -39,6 +43,7 @@ function CardResumo({ label, valor, qtd }: { label: string; valor: string; qtd: 
 
 export function FinanceiroPage() {
   const { data: alunosCobranca, isLoading: alunosLoading } = useAlunosComCobranca()
+  const { data: alunos } = useAlunos()
   const { data: faturas, isLoading: faturasLoading } = useFaturasTodas()
   const { data: participacoes } = useParticipacoesCobraveisTodas()
   const [params] = useSearchParams()
@@ -111,6 +116,26 @@ export function FinanceiroPage() {
 
       {!alunosLoading && !faturasLoading && (
         <>
+          {alunos?.length === 0 && (
+            <div className="mb-4">
+              <EstadoVazio
+                icone={<Landmark size={24} />}
+                titulo="Organize suas cobranças"
+                texto="Cadastre seus alunos e defina o valor de cada um: o app fecha o ciclo, gera a fatura e deixa a mensagem pronta para você enviar."
+                acao={{ rotulo: 'Adicionar meus alunos', to: ROTA_IMPORTAR }}
+              />
+            </div>
+          )}
+          {(alunos?.length ?? 0) > 0 && (alunosCobranca?.length ?? 0) === 0 && (
+            <div className="mb-4">
+              <EstadoVazio
+                icone={<Landmark size={24} />}
+                titulo="Defina a cobrança dos seus alunos"
+                texto="Na ficha de cada aluno, defina o valor e o ciclo: o app gera a fatura e deixa a mensagem pronta para você enviar."
+                acao={{ rotulo: 'Ver meus alunos', to: '/alunos' }}
+              />
+            </div>
+          )}
           {/* Celular: carrossel deslizável com encaixe. Tablet/desktop: três cards lado a lado + gráfico. */}
           <RolagemHorizontal snap className="mb-4 md:grid md:grid-cols-3 md:gap-2 md:overflow-visible">
             <CardResumo
@@ -132,6 +157,9 @@ export function FinanceiroPage() {
 
           <section className="mb-4 hidden rounded-2xl bg-white p-4 shadow-sm md:block">
             <h2 className="mb-2 text-sm font-semibold">Recebido nos últimos 6 meses</h2>
+            {!recebimentos.some((r) => r.total > 0) ? (
+              <p className="text-sm text-slate-600">Os valores e o gráfico aparecem conforme suas cobranças forem registradas.</p>
+            ) : (
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={recebimentos} margin={{ left: 0, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -141,6 +169,7 @@ export function FinanceiroPage() {
                 <Bar dataKey="total" fill="#367c39" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </section>
 
           <RolagemHorizontal className="mb-3 py-1" corFundo="#f8fafc">
@@ -163,7 +192,7 @@ export function FinanceiroPage() {
             ))}
           </RolagemHorizontal>
 
-          {linhasFiltradas.length === 0 && <p className="text-sm text-slate-500">Nenhum aluno aqui.</p>}
+          {linhasFiltradas.length === 0 && (alunosCobranca?.length ?? 0) > 0 && <p className="text-sm text-slate-600">Nenhum aluno neste filtro.</p>}
 
           <ul className="space-y-2">
             {linhasFiltradas.map((l) => (

@@ -337,20 +337,21 @@ export function ConfiguracoesPage() {
             )}
           </Acordeao>
 
-          <Link to="/consentimentos" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
-            <span className="flex items-center gap-2">
-              <ShieldCheck size={20} className="text-slate-500" aria-hidden />
-              Consentimentos LGPD
-            </span>
-            <ChevronRight size={20} className="text-slate-400" aria-hidden />
-          </Link>
-
           <IndicacaoCard />
 
           <Link to="/ajuda" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
             <span className="flex items-center gap-2">
               <LifeBuoy size={20} className="text-slate-500" aria-hidden />
               Central de ajuda
+            </span>
+            <ChevronRight size={20} className="text-slate-400" aria-hidden />
+          </Link>
+
+          <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Privacidade e conta</h2>
+          <Link to="/consentimentos" className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-white px-4 py-2 font-semibold shadow-sm active:bg-slate-50">
+            <span className="flex items-center gap-2">
+              <ShieldCheck size={20} className="text-slate-500" aria-hidden />
+              Consentimentos de saúde dos alunos (LGPD)
             </span>
             <ChevronRight size={20} className="text-slate-400" aria-hidden />
           </Link>
@@ -364,13 +365,13 @@ export function ConfiguracoesPage() {
           </button>
           <AvisoAnalytics reabrir={reabrirAviso} />
 
+          <Link to="/configuracoes/excluir-conta" className="flex min-h-11 items-center justify-center text-sm text-red-700 underline">
+            Excluir minha conta
+          </Link>
+
           <Button variant="ghost" className="w-full text-red-600" onClick={() => supabase.auth.signOut()}>
             <LogOut size={18} /> Sair
           </Button>
-
-          <Link to="/configuracoes/excluir-conta" className="flex min-h-11 items-center justify-center text-sm text-slate-600 underline">
-            Excluir minha conta
-          </Link>
         </div>
       )}
 

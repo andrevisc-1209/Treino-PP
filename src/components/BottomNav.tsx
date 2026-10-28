@@ -2,12 +2,13 @@ import { NavLink } from 'react-router-dom'
 import { CalendarDays, ClipboardList, DollarSign, Sun, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const ITEMS = [
+/** Ordem e rótulos da barra inferior (auditoria de UX de 28/10/2026): "Treinos" no lugar de "Meus treinos" (vocabulário fixo) e antes do Financeiro. */
+export const ITEMS = [
   { to: '/', label: 'Hoje', icon: Sun, end: true },
   { to: '/agenda', label: 'Agenda', icon: CalendarDays, end: false },
   { to: '/alunos', label: 'Alunos', icon: Users, end: false },
+  { to: '/meus-treinos', label: 'Treinos', icon: ClipboardList, end: false },
   { to: '/financeiro', label: 'Financeiro', icon: DollarSign, end: false },
-  { to: '/meus-treinos', label: 'Meus treinos', icon: ClipboardList, end: false },
 ]
 
 export function BottomNav() {
