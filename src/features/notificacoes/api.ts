@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { MODALIDADES_CONFIG, ehModalidade, type ModalidadeTipo } from '@/types/modalidades'
 import type { PayloadCiclo } from './ciclo'
+import { contarNaoLidas, type TipoNotificacao } from './agrupar'
 import { textoAvisoIndicacao, type PayloadIndicacao } from '@/features/indicacao/indicacao'
 
 export type Notificacao = {
@@ -34,14 +35,29 @@ export function useNotificacoes() {
   })
 }
 
+/** Não lidas: total (selo do sino) e quantas pedem ação (as que ficam em vermelho). */
 export function useNaoLidas() {
   return useQuery({
     queryKey: ['notificacoes-nao-lidas'],
     queryFn: async () => {
-      const { count, error } = await supabase.from('notificacoes_professor').select('id', { count: 'exact', head: true }).eq('lida', false)
+      // só o tipo de cada uma (leve); o total vem do count exato, caso haja mais do que o limite
+      const { data, count, error } = await supabase.from('notificacoes_professor').select('tipo', { count: 'exact' }).eq('lida', false).limit(500)
       if (error) throw error
-      return count ?? 0
+      const { acao } = contarNaoLidas((data ?? []).map((r) => r.tipo as TipoNotificacao))
+      return { total: count ?? data?.length ?? 0, acao }
     },
+  })
+}
+
+/** Marca como lidas todas as não lidas dos tipos informados (ex.: só os treinos concluídos). */
+export function useMarcarLidasPorTipo() {
+  const invalidar = useInvalidar()
+  return useMutation({
+    mutationFn: async (tipos: TipoNotificacao[]) => {
+      const { error } = await supabase.from('notificacoes_professor').update({ lida: true }).eq('lida', false).in('tipo', tipos)
+      if (error) throw error
+    },
+    onSuccess: invalidar,
   })
 }
 
