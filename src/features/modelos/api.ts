@@ -13,6 +13,8 @@ export type Modelo = {
   tipo_execucao: TipoExecucao
   modalidade_detalhes: ModalidadeDetalhes
   modelo_exercicios: { order_index: number; exercicio: { name: string } | null }[]
+  /** data em que foi arquivado; null = ativo */
+  arquivado_em: string | null
 }
 
 export type ModeloExercicioItem = {
@@ -28,6 +30,7 @@ export type ModeloExercicioItem = {
   exercicio: { id: string; name: string; muscle_group: string | null; equipment: string | null } | null
 }
 
+/** Treinos planejados ativos (os arquivados ficam fora de todas as listas e seletores). */
 export function useModelos() {
   return useQuery({
     queryKey: ['modelos'],
@@ -35,10 +38,40 @@ export function useModelos() {
       const { data, error } = await supabase
         .from('modelos')
         .select('*, modelo_exercicios(order_index, exercicio:exercicios(name))')
+        .is('arquivado_em', null)
         .order('name')
       if (error) throw error
       return data as Modelo[]
     },
+  })
+}
+
+/** Treinos planejados arquivados (aparecem só em "Arquivados", para restaurar ou excluir). */
+export function useModelosArquivados() {
+  return useQuery({
+    queryKey: ['modelos', 'arquivados'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('modelos')
+        .select('*, modelo_exercicios(order_index, exercicio:exercicios(name))')
+        .not('arquivado_em', 'is', null)
+        .order('name')
+      if (error) throw error
+      return data as Modelo[]
+    },
+  })
+}
+
+/** Arquiva (`arquivar: true`) ou restaura (`false`) um treino planejado; nada é apagado. */
+export function useArquivarModelo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, arquivar }: { id: string; arquivar: boolean }) => {
+      const { error } = await supabase.from('modelos').update({ arquivado_em: arquivar ? new Date().toISOString() : null }).eq('id', id)
+      if (error) throw error
+    },
+    // a chave ['modelos'] também invalida ['modelos', 'arquivados']
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['modelos'] }),
   })
 }
 
