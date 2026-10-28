@@ -22,11 +22,11 @@ FORMATO
 - Uma linha por aluno, no máximo ${LIMITE_IMPORTACAO} alunos. Se houver mais, faça só os ${LIMITE_IMPORTACAO} primeiros e me avise depois do bloco.
 
 COLUNAS
-- nome: obrigatório. Escreva como está na lista.
+- nome: obrigatório. Só o nome da pessoa, com maiúscula no começo de cada nome (João Pedro). Tire apelidos, observações e descrições entre parênteses ou depois do nome, e títulos como Sr. e Sra.
 - telefone: do Brasil, com DDD. Exemplo: (11) 91234-5678. Se estiver sem DDD ou incompleto, deixe vazio.
 - email: só se for um e-mail completo e válido; senão, deixe vazio.
 - nascimento: no formato dd/mm/aaaa. Se só houver a idade ou a data estiver incompleta, deixe vazio.
-- sexo: M, F ou Outro. Só se estiver claro na lista; NÃO deduza pelo nome. Senão, deixe vazio.
+- sexo: M, F ou Outro. Preencha quando a lista disser de forma explícita (F, feminino, mulher; M, masculino, homem). NÃO deduza pelo nome nem pela foto. Se não estiver explícito, deixe vazio.
 - objetivos: um ou mais, separados por | (barra vertical). Use SOMENTE estes valores, escritos exatamente assim: ${OBJETIVOS_DO_PROMPT.join(' | ')}. Se o objetivo da lista não corresponder a nenhum deles, deixe vazio.
 
 REGRAS IMPORTANTES
