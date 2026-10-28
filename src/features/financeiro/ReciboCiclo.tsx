@@ -9,7 +9,8 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { dataSP, formatarDataCurta, formatarHoraInicioFim, hojeSP, nomeDiaCurto } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
-import { useItensRecibo, type Fatura } from './api'
+import { useItensDaFatura } from '@/features/pacotes/useItensDaFatura'
+import type { Fatura } from './api'
 import { baixarRelatorioCompleto, dadosRelatorioDeFatura } from './relatorio'
 import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoRecibo, textoCompartilharRecibo } from './recibo'
 
@@ -51,7 +52,7 @@ function BlocoGrafico({ titulo, children }: { titulo: string; children: React.Re
 export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; alunoNome: string; onFechar: () => void }) {
   const { session } = useAuth()
   const { data: perfil } = usePerfilProfissional(session?.user.id)
-  const { data: itensBrutos, isLoading, error } = useItensRecibo(fatura.id)
+  const { data: itensBrutos, isLoading, error } = useItensDaFatura(fatura)
   const [raiz, setRaiz] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
