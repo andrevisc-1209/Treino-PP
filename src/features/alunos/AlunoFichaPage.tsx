@@ -186,6 +186,7 @@ export function AlunoFichaPage() {
   const { data: sessaoEmAndamento } = useSessaoEmAndamento(id)
   const { data: consentimento } = useConsentimentoDetalhado(id)
   const revogar = useRevogarConsentimento(id ?? '')
+  const [todasAvaliacoes, setTodasAvaliacoes] = useState(false)
   const arquivar = useArquivarAluno()
   const desarquivar = useDesarquivarAluno()
   const apagar = useApagarAluno()
@@ -343,14 +344,31 @@ export function AlunoFichaPage() {
           <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
             <h2 className="font-semibold">Dados</h2>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <dt className="text-slate-500">Nascimento</dt>
-              <dd>{formatarDataBR(aluno.birth_date)}</dd>
-              <dt className="text-slate-500">Telefone</dt>
-              <dd>{aluno.phone ?? '—'}</dd>
-              <dt className="text-slate-500">E-mail</dt>
-              <dd className="truncate">{aluno.email ?? '—'}</dd>
-              <dt className="text-slate-500">Medicamentos</dt>
-              <dd>{aluno.medications ?? '—'}</dd>
+              {/* só o que está preenchido: linha com "—" é ruído */}
+              {aluno.birth_date && (
+                <>
+                  <dt className="text-slate-500">Nascimento</dt>
+                  <dd>{formatarDataBR(aluno.birth_date)}</dd>
+                </>
+              )}
+              {aluno.phone && (
+                <>
+                  <dt className="text-slate-500">Telefone</dt>
+                  <dd>{aluno.phone}</dd>
+                </>
+              )}
+              {aluno.email && (
+                <>
+                  <dt className="text-slate-500">E-mail</dt>
+                  <dd className="truncate">{aluno.email}</dd>
+                </>
+              )}
+              {aluno.medications && (
+                <>
+                  <dt className="text-slate-500">Medicamentos</dt>
+                  <dd>{aluno.medications}</dd>
+                </>
+              )}
               {(aluno.modalidade_foco || aluno.data_prova) && (
                 <>
                   <dt className="text-slate-500">Objetivo esportivo</dt>
@@ -388,12 +406,17 @@ export function AlunoFichaPage() {
             {registrandoPeso && consentimento && <NovaAvaliacaoForm alunoId={aluno.id} alturaCm={aluno.height_cm} onDone={() => setRegistrandoPeso(false)} />}
             {pesos && pesos.length > 0 ? (
               <ul className="divide-y divide-slate-100">
-                {pesos.map((p) => (
+                {(todasAvaliacoes ? pesos : pesos.slice(0, 1)).map((p) => (
                   <AvaliacaoItem key={p.id} peso={p} />
                 ))}
               </ul>
             ) : (
               !registrandoPeso && <p className="text-sm text-slate-500">Nenhuma avaliação registrada ainda.</p>
+            )}
+            {pesos && pesos.length > 1 && (
+              <button type="button" onClick={() => setTodasAvaliacoes((v) => !v)} aria-expanded={todasAvaliacoes} className="flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-medium text-brand-hover active:bg-slate-100">
+                {todasAvaliacoes ? 'Mostrar só a última' : `Ver todas (${pesos.length})`}
+              </button>
             )}
           </div>
 

@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import { formatarBRL } from '@/lib/moeda'
 import { hojeSP } from '@/lib/datas'
-import { Button } from '@/components/ui'
 import { cicloAtual } from './calc'
 import { useAlunoCobranca, useFaturasDoAluno } from './api'
 import { SeloFatura, rotuloModelo } from './rotulos'
+import { statusFinanceiroDoAluno } from './statusAluno'
+import { cn } from '@/lib/utils'
 
 export function FinanceiroBlock({ alunoId }: { alunoId: string }) {
   const { data: cobranca } = useAlunoCobranca(alunoId)
@@ -14,19 +15,31 @@ export function FinanceiroBlock({ alunoId }: { alunoId: string }) {
 
   const ciclo = cicloAtual(cobranca.dia_ciclo, hojeSP())
   const ultimas = (faturas ?? []).slice(0, 3)
+  const status = statusFinanceiroDoAluno(faturas ?? [], ciclo.fim, hojeSP(), formatarBRL)
 
   return (
     <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">Financeiro</h2>
-        <Link to={`/alunos/${alunoId}/fechar-ciclo`}>
-          <Button variant="ghost">Ciclo atual</Button>
-        </Link>
+      <h2 className="font-semibold">Financeiro</h2>
+
+      <div
+        className={cn(
+          'flex items-center justify-between gap-2 rounded-xl p-3',
+          status.tom === 'alerta' ? 'bg-red-50 text-red-900' : status.tom === 'atencao' ? 'bg-amber-50 text-amber-950' : 'bg-brand-soft text-brand-hover',
+        )}
+      >
+        <p className="text-sm font-semibold">{status.texto}</p>
+        {status.acao && (
+          <Link
+            to={status.acao.faturaId ? `/financeiro/${status.acao.faturaId}` : `/alunos/${alunoId}/fechar-ciclo`}
+            className="flex min-h-11 shrink-0 items-center rounded-xl bg-white px-3 text-sm font-medium text-slate-900 active:bg-slate-100"
+          >
+            {status.acao.rotulo}
+          </Link>
+        )}
       </div>
 
-      <p className="text-sm text-slate-500">
-        {rotuloModelo(cobranca.modelo)} · ciclo {ciclo.inicio.slice(8, 10)}/{ciclo.inicio.slice(5, 7)} a {ciclo.fim.slice(8, 10)}/
-        {ciclo.fim.slice(5, 7)}
+      <p className="text-sm text-slate-600">
+        {rotuloModelo(cobranca.modelo)} · ciclo {ciclo.inicio.slice(8, 10)}/{ciclo.inicio.slice(5, 7)} a {ciclo.fim.slice(8, 10)}/{ciclo.fim.slice(5, 7)}
       </p>
 
       {ultimas.length === 0 && <p className="text-sm text-slate-500">Nenhuma fatura ainda.</p>}

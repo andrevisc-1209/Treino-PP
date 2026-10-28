@@ -15,11 +15,14 @@ export function BotaoWhatsApp({
   label,
   className,
   size = 20,
+  comTexto = false,
 }: {
   telefone: string | null | undefined
   label?: string
   className?: string
   size?: number
+  /** ícone + a palavra "WhatsApp" (botão mais claro nos cartões); sem isso, só o ícone quadrado */
+  comTexto?: boolean
 }) {
   const link = linkWhatsApp(telefone)
   if (!link) return null
@@ -31,9 +34,15 @@ export function BotaoWhatsApp({
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
       aria-label={label ?? 'Abrir WhatsApp'}
-      className={cn('flex size-11 shrink-0 items-center justify-center rounded-xl text-emerald-600 active:bg-emerald-50', className)}
+      className={cn(
+        comTexto
+          ? 'flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 active:bg-emerald-50'
+          : 'flex size-11 shrink-0 items-center justify-center rounded-xl text-emerald-600 active:bg-emerald-50',
+        className,
+      )}
     >
       <IconeWhatsApp size={size} />
+      {comTexto && 'WhatsApp'}
     </a>
   )
 }

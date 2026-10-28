@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, ChevronLeft, ChevronRight, TriangleAlert, Users } from 'lucide-react'
@@ -26,12 +27,13 @@ import { AulaAcoesSheet } from './AulaAcoesSheet'
 import { agruparPorHorario, conflitosDeAluno, criarAbreviador } from './leituraDaAgenda'
 import { direcaoDoDeslize, montarFaixa, rotuloAcessivelDoDia } from './faixaDeDias'
 import { AulaCard } from './AulaCard'
+import { decidirComecar } from './comecarAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, type Aula } from './api'
 
 type Modo = 'dia' | 'semana'
 
-function VisaoDia({ dataISO, onAbrirAula, onMarcarAula }: { dataISO: string; onAbrirAula: (a: Aula) => void; onMarcarAula: () => void }) {
+function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: string; onAbrirAula: (a: Aula) => void; onComecar: (a: Aula) => void; onMarcarAula: () => void }) {
   const { data: aulas, isLoading } = useAulasDoDia(dataISO)
   const { data: alunos } = useAlunos()
   const semAlunos = alunos?.length === 0
@@ -60,7 +62,7 @@ function VisaoDia({ dataISO, onAbrirAula, onMarcarAula }: { dataISO: string; onA
             </p>
           )}
           {g.aulas.map((a) => (
-            <AulaCard key={a.id} aula={a} localResumido conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} />
+            <AulaCard key={a.id} aula={a} localResumido conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} onComecar={() => onComecar(a)} />
           ))}
         </div>
       ))}
@@ -230,6 +232,21 @@ export function AgendaPage() {
   const [dataAtual, setDataAtual] = useState(hojeSP())
   const [aulaAberta, setAulaAberta] = useState<Aula | null>(null)
   const [novaAulaAberta, setNovaAulaAberta] = useState(false)
+  const [passoInicial, setPassoInicial] = useState<'menu' | 'iniciar'>('menu')
+  const navigate = useNavigate()
+
+  const abrirMenu = (a: Aula) => {
+    setPassoInicial('menu')
+    setAulaAberta(a)
+  }
+  const comecar = (a: Aula) => {
+    const decisao = decidirComecar(a)
+    if (decisao.tipo === 'navegar') navigate(decisao.to)
+    else if (decisao.tipo === 'escolher') {
+      setPassoInicial('iniciar')
+      setAulaAberta(a)
+    } else abrirMenu(a)
+  }
 
   const inicioSemana = inicioDaSemanaSP(dataAtual)
 
@@ -284,11 +301,11 @@ export function AgendaPage() {
       {modo === 'dia' && <p className="mb-3 font-semibold">{formatarDataCompleta(dataAtual)}</p>}
 
       {modo === 'dia' ? (
-        <VisaoDia dataISO={dataAtual} onAbrirAula={setAulaAberta} onMarcarAula={() => setNovaAulaAberta(true)} />
+        <VisaoDia dataISO={dataAtual} onAbrirAula={abrirMenu} onComecar={comecar} onMarcarAula={() => setNovaAulaAberta(true)} />
       ) : (
         <VisaoSemana
           inicioSemana={inicioSemana}
-          onAbrirAula={setAulaAberta}
+          onAbrirAula={abrirMenu}
           onAbrirDia={(d) => {
             setDataAtual(d)
             setModo('dia')
@@ -297,7 +314,7 @@ export function AgendaPage() {
       )}
 
       <Fab onClick={() => setNovaAulaAberta(true)} label="Nova aula" />
-      <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} />
+      <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} passoInicial={passoInicial} />
       <NovaAulaAvulsaSheet open={novaAulaAberta} onClose={() => setNovaAulaAberta(false)} dataInicial={dataAtual} />
     </div>
     </PuxarParaAtualizar>

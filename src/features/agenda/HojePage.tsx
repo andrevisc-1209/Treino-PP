@@ -9,6 +9,7 @@ import { ListaSkeleton } from '@/components/Skeleton'
 import { AulaCard } from './AulaCard'
 import { ProximaAulaCard } from './ProximaAulaCard'
 import { estaAtrasada, organizarAulasDoDia } from './proximaAula'
+import { decidirComecar } from './comecarAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
 import iconMark from '@/assets/brand/icon-mark.png'
@@ -42,15 +43,12 @@ export function HojePage() {
   }
 
   const comecar = (a: Aula) => {
-    const previstos = a.aula_participantes.filter((p) => p.status === 'previsto')
-    if (previstos.length === 1) {
-      navigate(`/alunos/${previstos[0].aluno_id}/sessoes/nova?aula=${a.id}`)
-    } else if (previstos.length > 1) {
+    const decisao = decidirComecar(a)
+    if (decisao.tipo === 'navegar') navigate(decisao.to)
+    else if (decisao.tipo === 'escolher') {
       setPassoInicial('iniciar')
       setAulaAberta(a)
-    } else {
-      abrirMenu(a)
-    }
+    } else abrirMenu(a)
   }
 
   return (
