@@ -1274,3 +1274,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - 🗄️ **Migration** `20261078000000_arquivar_treino_planejado.sql`: coluna `treino.modelos.arquivado_em` (anulável; NULL = ativo). RLS e GRANT da tabela já cobrem a coluna. Teste em `supabase/tests/arquivar_treino_planejado.sql` (dono arquiva e restaura; outro personal não enxerga nem arquiva).
 - ⚠️ **Rodar a migration ANTES do merge:** o app passa a filtrar por `arquivado_em`; sem a coluna, a lista de Treinos planejados falha ao carregar. Sem deploy de função.
 - ⚠️ **Não testado ao vivo por mim** (login com captcha): arquivar, desfazer, abrir Arquivados, restaurar e confirmar que o treino arquivado some ao escolher treino para um aluno.
+
+## 113. Aula avulsa: local com busca de endereço do Google
+
+- 🐞 Visto no uso real (28/10/2026): ao marcar uma **aula avulsa**, o campo Local era um texto comum e não buscava endereço no Google (o horário fixo e os locais do aluno já buscavam).
+- ✅ O campo Local da aula avulsa agora usa o mesmo **autocomplete do Google Places** do horário fixo ("Nome — endereço" depois de escolher; texto livre continua valendo). Os **4 locais usados mais recentemente** viram atalhos em chips (antes eram a lista escondida do `datalist`), e tocar num deles preenche o campo.
+- ℹ️ Sem a chave `VITE_GOOGLE_MAPS_API_KEY` o campo segue como texto simples (comportamento do componente). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): em Agenda → Nova aula, digitar um endereço e escolher uma sugestão; tocar num local recente; marcar a aula e conferir o local no cartão.

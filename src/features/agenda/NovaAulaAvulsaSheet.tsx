@@ -10,6 +10,7 @@ import { hojeSP, horaMinimaSP, limitesDoDiaSP, montarDataHoraSP } from '@/lib/da
 import { aulasSobrepoe } from './conflitos'
 import { useAulasNoIntervalo, useCriarAulaAvulsa, useProfessionalConfig, type Aula } from './api'
 import { mapearErroSupabase } from '@/lib/erros'
+import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
 
 function useLocaisUsados() {
   return useQuery({
@@ -45,6 +46,8 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
   })
   const [duracao, setDuracao] = useState(String(config?.duracao_padrao_min ?? 60))
   const [local, setLocal] = useState('')
+  // o campo do Google é não controlado: trocar a chave o recria com o texto escolhido num atalho de local recente
+  const [versaoLocal, setVersaoLocal] = useState(0)
   const [erro, setErro] = useState<string | null>(null)
 
   const limites = data ? limitesDoDiaSP(data) : undefined
@@ -135,12 +138,33 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
         </Field>
 
         <Field label="Local">
-          <Input value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Opcional" list="locais-usados" />
-          <datalist id="locais-usados">
-            {locais?.map((l) => (
-              <option key={l} value={l} />
-            ))}
-          </datalist>
+          {/* mesmo campo do horário fixo: sugestões do Google Places; texto livre continua valendo */}
+          <GooglePlacesAutocomplete
+            key={versaoLocal}
+            defaultValue={local}
+            onChangeTexto={setLocal}
+            onSelecionar={() => {}}
+            limparAoSelecionar={false}
+            placeholder="Opcional — busque um endereço"
+          />
+          {locais && locais.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2" aria-label="Locais usados recentemente">
+              {locais.slice(0, 4).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => {
+                    setLocal(l)
+                    setVersaoLocal((v) => v + 1)
+                  }}
+                  className="min-h-11 max-w-full truncate rounded-full border border-slate-300 bg-white px-3 text-sm text-slate-700 active:bg-slate-50"
+                  title={l}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
         </Field>
 
         {conflito && (
