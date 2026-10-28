@@ -1224,3 +1224,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Rótulo de acessibilidade do sino informa quantas pedem ação.
 - ✅ Testes `agrupar.test.ts` (grupos, ordem, contagem). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): gerar um treino concluído e um ciclo encerrado e conferir os grupos, o selo e "Marcar como lidos".
 - 🏁 Com esta PR fecha o plano de 6 PRs da auditoria (itens 101 a 106). Ideias de produto que ficaram de fora: confirmação de aula pelo aluno e arquivar treino planejado.
+
+## 107. Importar e exportar alunos: botões lado a lado
+
+- 🐞 Visto no uso real (28/10/2026): na lista de Alunos, "Importar alunos de uma planilha" e "Exportar alunos (CSV)" eram dois links sublinhados soltos, com um vão grande entre eles, e pareciam erro da tela.
+- ✅ Agora são **dois botões secundários lado a lado** (ícone + texto, 44 px de altura): **Importar planilha** e **Exportar CSV**. O aviso da exportação ("N alunos exportados…") aparece abaixo, na largura toda. Em modo somente leitura (assinatura vencida), Importar continua abrindo os planos.
+- ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px a linha dos dois botões e o aviso depois de exportar.
