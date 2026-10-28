@@ -1051,6 +1051,14 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ⚠️ **Ordem para o dono:** (1) rodar a migration `20261074000000_exclusao_de_conta.sql` ANTES do merge; (2) rodar o teste `supabase/tests/exclusao_de_conta.sql` (esperado "(a) OK" … "(h) OK"); (3) deploy da função `npx supabase functions deploy excluir-conta --project-ref avgrnvpvjhymsrnapfgu`; (4) **agendar o job** uma vez: `supabase/cron/exclusao_de_conta.sql`; (5) jurídico revisar Termos 2.8, Política 5.1/6 e a citação do CTN (arts. 174 e 195). Sem o job agendado nada é apagado depois dos 30 dias.
 - ⏳ Fora desta versão: **exportar os dados antes de excluir** (portabilidade, art. 18, V), aviso ao admin dos pedidos pendentes, e e-mail de "exclusão concluída". Não testado ao vivo por mim: exige conta autenticada; o fluxo foi coberto pelo teste SQL e pelos testes de regras.
 
+## 88. Exportar alunos em CSV (portabilidade)
+
+- ✅ **Alunos → "Exportar alunos (CSV)"** (link discreto abaixo de "Importar…") e, na tela **Excluir minha conta**, um botão "Antes de excluir" para levar uma cópia. Baixa os alunos **ativos e arquivados** (fora da lixeira) em `alunos-aaaa-mm-dd.csv`, com `;` e acentos certos no Excel.
+- ✅ **Mesmas colunas do modelo da importação** (nome, telefone, e-mail, nascimento dd/mm/aaaa, sexo, objetivos com `|`) mais `situacao` (ativo/arquivado, ignorada na importação): o arquivo volta pela importação (há teste de ida e volta).
+- ✅ **Só dados básicos; nada de saúde** (lesão, cirurgia, medicamentos, altura): o CSV é um arquivo solto no aparelho, sem a proteção do app. Texto na tela e no aviso depois do download. **Proteção contra fórmula de planilha**: nome que começa com `=`, `+`, `-` ou `@` ganha um apóstrofo na frente (senão o Excel executaria ao abrir).
+- ⏳ **Não coberto:** cópia **completa** (treinos, fichas, avaliações, faturas, dados de saúde) para o art. 18, V: hoje o titular pede ao Encarregado (contato@personalperto.com.br). Se quiser no app, precisa de decisão sobre onde o arquivo sai (e-mail com link expirável, por exemplo).
+- Sem migration e sem deploy. Não testado ao vivo (login com captcha): validar no celular baixar o CSV, abrir no Excel/Planilhas e importar de volta.
+
 ## 89. Termos de Uso 1.5 (importação, exportação e dois alinhamentos)
 
 - ✅ **3.5** importação de alunos por planilha (base legal, só dados básicos, sem saúde, sem lista de terceiros, limite de 50, o app lê o arquivo no aparelho e não o guarda, dá para desfazer); **3.6** exportação (arquivo sem saúde, responsabilidade do personal, art. 46); **2.5** fim do período = **modo de consulta** (antes dizia "acesso suspenso", o que o app não faz); **3.2** prova de aceite do aluno eliminada com a conta (alinha com a Política 1.9).

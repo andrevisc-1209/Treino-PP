@@ -6,6 +6,7 @@ import { Archive, ArchiveRestore, CalendarCheck, MoreVertical, Play, Search, Tri
 import { cn, desambiguarPorNome, idade } from '@/lib/utils'
 import { BottomSheet, Fab, Input } from '@/components/ui'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
+import { BotaoExportarAlunos } from '@/features/alunos/exportar/BotaoExportarAlunos'
 import { CardMetrica } from '@/components/CardMetrica'
 import { CardDeslizavel, type AcaoDeslize } from '@/components/CardDeslizavel'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
@@ -171,6 +172,9 @@ export function AlunosPage() {
         <Link to="/alunos/importar" onClick={(e) => { if (somenteLeitura) { e.preventDefault(); abrirPlanos() } }} className="mb-2 block min-h-11 py-2 text-sm font-medium text-brand-hover underline">
           Importar alunos de uma planilha
         </Link>
+      )}
+      {aba === 'ativos' && (alunos?.length ?? 0) > 0 && (
+        <BotaoExportarAlunos className="mb-2" discreto />
       )}
       {alunos?.length === 0 && aba === 'arquivados' && <p className="text-slate-500">Nenhum aluno arquivado.</p>}
       {aba === 'lixeira' && (

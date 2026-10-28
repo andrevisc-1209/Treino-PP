@@ -4,6 +4,7 @@ import { ArrowLeft, Check, TriangleAlert } from 'lucide-react'
 import { Button, Field, Input } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
 import { mapearErroSupabase } from '@/lib/erros'
+import { BotaoExportarAlunos } from '@/features/alunos/exportar/BotaoExportarAlunos'
 import { PALAVRA_CONFIRMACAO, TEXTO_APAGADO, TEXTO_RETIDO, confirmacaoValida, dataDaExclusao, previsaoDaExclusao } from './exclusao'
 import { useSolicitarExclusao, type ResultadoSolicitacao } from './api'
 
@@ -66,6 +67,12 @@ export function ExcluirContaPage() {
           <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
           <span>Os dados dos seus alunos também são apagados. Se precisar de algo (como telefones), guarde antes.</span>
         </p>
+      </section>
+
+      <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="font-semibold">Antes de excluir</h2>
+        <p className="text-sm text-slate-700">Leve uma cópia dos seus alunos (nome, contato, nascimento, sexo e objetivos). Dados de saúde não vão no arquivo.</p>
+        <BotaoExportarAlunos />
       </section>
 
       <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
