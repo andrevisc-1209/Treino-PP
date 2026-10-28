@@ -12,6 +12,7 @@ const ok: CobrancaFormValor = {
   qtdPacoteTexto: '',
   validadePacoteTexto: '60',
   feitasPacoteTexto: '',
+  pacoteContaDistancia: false,
   pacoteRecebido: false,
   pagamentoDataTexto: '2026-10-28',
   formaPagamento: 'pix',

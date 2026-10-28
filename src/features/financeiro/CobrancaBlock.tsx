@@ -29,6 +29,7 @@ function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
     qtdPacoteTexto: '',
     validadePacoteTexto: '60',
     feitasPacoteTexto: '',
+    pacoteContaDistancia: false,
     pacoteRecebido: false,
     pagamentoDataTexto: hojeSP(),
     formaPagamento: 'pix',

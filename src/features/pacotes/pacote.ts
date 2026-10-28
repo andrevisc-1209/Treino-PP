@@ -14,6 +14,8 @@ export type Pacote = {
   inicio: string
   aulas_anteriores: number
   status: 'ativo' | 'encerrado'
+  /** o treino à distância (pelo link) também gasta uma aula do pacote */
+  conta_distancia: boolean
 }
 
 /** Faltando este tanto de aulas (ou menos) o app já avisa: 3, 2 e 1. */
