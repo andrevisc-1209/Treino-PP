@@ -34,6 +34,8 @@ pessoa, não disparo em massa.
 
 > "Entendi. O Treino PP faz [a dor que ele citou]. Custa R$ 15/mês, alunos ilimitados, e dá para testar 15 dias sem cartão. Se quiser, **eu te ajudo a cadastrar o seu primeiro aluno** agora pelo celular. Topa?"
 
+Se ele disser que tem os alunos numa planilha ou numa lista bagunçada, acrescente: "Dá para trazer todos de uma vez: o app tem um modelo de planilha e um prompt pronto para você colar no ChatGPT, Gemini ou Claude. Você confere tudo antes de gravar. Mande para a IA só nome, contato, nascimento, sexo e objetivos, nunca dados de saúde."
+
 Se sim, enviar: `https://treino.personalperto.com.br/landing.html?utm_source=whatsapp&utm_medium=prospeccao`
 
 ### 4. Ajudar a cadastrar o primeiro aluno (o que mais converte)
@@ -58,7 +60,7 @@ Se sim, enviar: `https://treino.personalperto.com.br/landing.html?utm_source=wha
 |---|---|
 | "Já uso planilha e funciona." | "Entendo! A planilha funciona até faltar saber quem pagou e quem sumiu. Dá pra testar 15 dias em paralelo, sem trocar nada. Quer tentar com 1 aluno só?" |
 | "Meus alunos não vão usar app." | "Eles não precisam: no presencial o aluno não usa nada, e no treino à distância é só um link no navegador." |
-| "Dá trabalho migrar." | "Dá pra começar com 1 aluno e ir passando aos poucos. Eu te ajudo no primeiro." |
+| "Dá trabalho migrar." | "Dá pra trazer todos de uma vez: planilha ou, se estiver bagunçado, um prompt pronto para a sua IA (ChatGPT, Gemini ou Claude). Você confere antes de gravar. Ou começa com 1 aluno e eu te ajudo." |
 | "Está caro." | "É R$ 15/mês com alunos ilimitados e sem comissão. Se preferir, o semestre sai R$ 10/mês." |
 | "E os dados dos alunos?" | "Dados de saúde só entram com o consentimento do aluno, e cada personal vê só os próprios alunos." |
 | "Vocês cobram o aluno por mim?" | "Não. O app organiza o ciclo, gera a fatura e deixa a mensagem pronta; o aluno paga direto a você. Sem taxa sobre isso." |
