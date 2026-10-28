@@ -9,6 +9,8 @@ import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/n
 import { useAuth } from './AuthProvider'
 import { CompletarPerfilGate } from './CompletarPerfilGate'
 import { useAplicarIndicacaoGuardada } from '@/features/indicacao/api'
+import { useMinhaExclusao } from '@/features/conta/api'
+import { ExclusaoPendenteTela } from '@/features/conta/ExclusaoPendenteTela'
 
 // Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
 // execução, pós-treino) escondem a navegação global — ver docs/ux-audit e a
@@ -40,6 +42,7 @@ function NotificacoesRealtime({ professionalId }: { professionalId: string }) {
 export function RequireAuth() {
   const { session, loading } = useAuth()
   const { isAdmin, loading: adminLoading } = useIsAdmin()
+  const { data: exclusao } = useMinhaExclusao(session?.user.id)
   const location = useLocation()
   if (loading || adminLoading) return <div className="p-8 text-center text-slate-500">Carregando…</div>
   if (!session) return location.pathname === '/' ? <IrParaLandingOuLogin /> : <Navigate to="/login" replace />
@@ -48,6 +51,9 @@ export function RequireAuth() {
   // essa conta). Pedido explícito: toda vez que essa conta logar, cair
   // direto no /admin.
   if (isAdmin) return <Navigate to="/admin" replace />
+
+  // conta com exclusão pedida: só a tela de protocolo/cancelamento (o banco também barra as gravações)
+  if (exclusao) return <ExclusaoPendenteTela exclusao={exclusao} />
 
   const modoFoco = ROTAS_MODO_FOCO.some((r) => r.test(location.pathname))
 

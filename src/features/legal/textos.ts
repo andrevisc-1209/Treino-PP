@@ -1,5 +1,5 @@
-export const TERMOS_USO_VERSAO = '1.3'
-export const PRIVACIDADE_VERSAO = '1.8'
+export const TERMOS_USO_VERSAO = '1.4'
+export const PRIVACIDADE_VERSAO = '1.9'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
 
@@ -18,6 +18,7 @@ Bem-vindo ao Treino · Personal Perto. Estes Termos regem o uso da plataforma (a
 2.5. Fim do período: ao término do período pago, o acesso é suspenso até nova contratação. Como não há renovação automática, não há assinatura recorrente a cancelar.
 2.6. Direito de arrependimento: o Usuário pode desistir da contratação em até 7 (sete) dias corridos contados do pagamento (CDC, art. 49), sem precisar justificar, e receber o reembolso integral do valor pago, pelo mesmo meio de pagamento. Para exercer o direito, basta pedir por contato@personalperto.com.br dentro do prazo. Com o reembolso, o acesso pago é encerrado.
 2.7. Programa de indicação: o Usuário pode convidar outro profissional com o seu código de indicação. Quando o convidado cria a conta com o código (até 7 dias depois de se cadastrar) e cadastra 3 (três) ou mais alunos com nomes diferentes, o convidante e o convidado ganham, cada um, 1 (um) mês de acesso gratuito, somado ao fim do acesso que já tinham. O convidante pode ganhar até 6 (seis) meses por esse programa; o convidado ganha sempre. O benefício não é pago em dinheiro, não é transferível e não vale para a própria conta nem para contas criadas só para obter o benefício (por exemplo, com alunos fictícios). A plataforma pode recusar ou revogar o benefício em caso de fraude ou abuso, e pode alterar ou encerrar o programa a qualquer momento, sem afetar benefícios já concedidos.
+2.8. Exclusão da conta: o Usuário pode excluir a própria conta a qualquer momento, em Configurações → Excluir minha conta. O acesso é bloqueado na hora e os dados são eliminados de vez em até 30 (trinta) dias, período em que o pedido pode ser cancelado. A exclusão elimina também os dados dos alunos do Usuário, que deve guardar antes o que precisar, e não gera reembolso do plano em vigor (o direito de arrependimento da cláusula 2.6 continua valendo). Ficam guardados por 5 (cinco) anos, por obrigação legal, apenas os registros dos pagamentos do plano, sem identificação do Usuário (Política de Privacidade, seção 5).
 
 3. Dados dos alunos e LGPD
 O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, VI). A plataforma atua como OPERADORA (art. 5º, VII), tratando esses dados somente em nome do Personal Trainer e conforme as instruções dele. Estas cláusulas constituem o contrato de tratamento de dados entre Controlador e Operadora (art. 39).
@@ -96,10 +97,10 @@ Não vendemos, alugamos nem compartilhamos dados pessoais para fins de marketing
 
 5. Armazenamento, retenção e segurança
 5.1. Prazos de retenção
-• Dados operacionais (fichas, treinos, agenda): enquanto a conta estiver ativa; após a exclusão da conta ou o pedido do titular, são eliminados em até 90 dias.
-• Registros financeiros (cobranças e faturas): 5 anos, por obrigação legal e fiscal (art. 16, I).
-• Registro de consentimento do aluno (data e hora, IP e versão do termo): pelo prazo necessário para comprovar o aceite, mesmo após a exclusão dos demais dados (art. 16, I e art. 7º, VI).
-• Registros de acesso e auditoria: 6 meses (Marco Civil da Internet, art. 15).
+• Dados operacionais (fichas, treinos, agenda, alunos): enquanto a conta estiver ativa. Quando o Personal Trainer pede a exclusão da conta, o acesso é bloqueado na hora e os dados são eliminados de vez em até 30 dias (nesse período o pedido pode ser cancelado). Pedidos de outros titulares: até 90 dias.
+• Registros financeiros: 5 anos, por obrigação legal e fiscal (art. 16, I; Código Tributário Nacional, arts. 174 e 195). Depois da exclusão da conta, ficam guardados apenas os registros dos pagamentos do plano feitos pelo Personal Trainer ao Treino PP (valor, data, plano e identificador do pagamento), sem nome, CPF ou e-mail. As cobranças e faturas que o Personal Trainer emite aos próprios alunos são dele e são eliminadas com a conta.
+• Registro de consentimento do aluno (data e hora, IP e versão do termo): enquanto a conta do Personal Trainer existir, para comprovar o aceite (art. 7º, VI); é eliminado junto com a conta.
+• Registros de acesso e auditoria: 6 meses (Marco Civil da Internet, art. 15). Os de ações administrativas perdem o vínculo com a conta excluída.
 5.2. Segregação e acesso: cada Personal Trainer acessa somente os dados dos seus próprios alunos (isolamento por profissional no banco). A administração da plataforma vê apenas dados cadastrais do Personal Trainer e números agregados, nunca dados individuais de alunos.
 5.3. Segurança: tráfego criptografado (HTTPS/TLS), controle de acesso por autenticação e privacidade desde a concepção para dados sensíveis.
 
@@ -113,6 +114,7 @@ O titular (Personal Trainer ou aluno) pode pedir, a qualquer momento:
 • informação sobre os compartilhamentos realizados e sobre a possibilidade de não consentir e suas consequências;
 • revogação do consentimento;
 • petição à ANPD (Autoridade Nacional de Proteção de Dados), em caso de violação (art. 18, §1º).
+O Personal Trainer exclui a própria conta dentro do app, em Configurações → Excluir minha conta: o acesso é bloqueado na hora, o pedido recebe um protocolo por e-mail e os dados são eliminados em até 30 dias, podendo o pedido ser cancelado nesse período.
 Alunos devem fazer os pedidos ao seu Personal Trainer (controlador), que pode contar com o apoio da plataforma.
 
 7. Encarregado de proteção de dados (DPO)
