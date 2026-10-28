@@ -1,3 +1,4 @@
+import { normalizarBIv1, normalizarListaAcao, type FiltrosBI } from './biV1'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
 import { supabase } from '@/lib/supabase'
@@ -233,6 +234,35 @@ export function useAdminBI(dias: PeriodoBI) {
       const { data, error } = await supabase.rpc('admin_bi', { p_dias: dias })
       if (error) throw error
       return normalizarBI(data)
+    },
+  })
+}
+
+/** BI v1: meta, funil, cidades e origens (filtros vazios = sem filtro). Só agregados. */
+export function useAdminBIv1(dias: number, filtros: FiltrosBI) {
+  return useQuery({
+    queryKey: ['admin', 'bi-v1', dias, filtros.cidade, filtros.situacao, filtros.origem],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_bi_v1', {
+        p_dias: dias,
+        p_cidade: filtros.cidade || null,
+        p_situacao: filtros.situacao || null,
+        p_origem: filtros.origem || null,
+      })
+      if (error) throw error
+      return normalizarBIv1(data)
+    },
+  })
+}
+
+/** Personais que pedem uma ação sua agora (teste acabando sem 3 alunos, pagante sem uso, plano vencendo). */
+export function useAdminListaAcao() {
+  return useQuery({
+    queryKey: ['admin', 'lista-acao'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_lista_acao')
+      if (error) throw error
+      return normalizarListaAcao(data)
     },
   })
 }

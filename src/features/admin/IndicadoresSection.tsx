@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { mapearErroSupabase } from '@/lib/erros'
 import { formatarMoeda } from './financeiro'
 import { useAdminBI } from './api'
+import { BiV1Section } from './BiV1Section'
 import {
   agruparSerie,
   passoDoGrafico,
@@ -209,6 +210,8 @@ export function IndicadoresSection() {
           </Chip>
         ))}
       </div>
+
+      <BiV1Section dias={periodo} />
 
       {isLoading && <ListaSkeleton linhas={3} />}
       {error && <p className="py-4 text-sm text-red-600">{mapearErroSupabase(error)}</p>}
