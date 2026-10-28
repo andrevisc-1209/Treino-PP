@@ -3,9 +3,10 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { useAluno } from '@/features/alunos/api'
 import { BottomSheet, Button } from '@/components/ui'
+import { Copy, MessageCircle } from 'lucide-react'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { gerarMensagemTreino } from '@/lib/mensagemTreino'
-import { linkWhatsAppComTexto } from '@/lib/whatsapp'
+import { linkWhatsApp, linkWhatsAppComTexto } from '@/lib/whatsapp'
 import type { ModalidadeDetalhes, ModalidadeTipo } from '@/types/modalidades'
 import { buscarExerciciosParaMensagem, gerarLinkTreino } from './api'
 import { avisoValidade, lerValidadePadrao, salvarValidadePadrao, SeletorValidadeLink, type ValidadeLink } from './validadeLink'
@@ -14,10 +15,13 @@ import { mapearErroSupabase } from '@/lib/erros'
 export type TreinoParaEnvio = { id: string; name: string; modalidade: ModalidadeTipo; detalhes: ModalidadeDetalhes }
 type Treino = TreinoParaEnvio | (() => Promise<TreinoParaEnvio>)
 
+type Previa = { texto: string; telefone: string | null | undefined; avisoDoPrazo: string }
+
 /**
  * Envia o treino ao aluno pelo WhatsApp (mensagem pronta + link público para registrar a execução).
- * A aba do WhatsApp é aberta ANTES de esperar a rede — senão o navegador do celular bloqueia o pop-up — por isso
- * o treino pode vir como função assíncrona (ex.: criar o treino a partir de um treino planejado primeiro).
+ * A mensagem NÃO vai mais direto no link `wa.me?text=`: dependendo do aparelho/aplicativo o WhatsApp corrompe os emojis (vira "�")
+ * e a formatação se perde. Em vez disso o personal vê a mensagem numa folha, **copia e abre a conversa** e cola: o texto chega intacto.
+ * O treino pode vir como função assíncrona (ex.: criar o treino a partir de um treino planejado primeiro).
  *
  * `enviar(treino, validade)`: com a validade já escolhida (ex.: na folha "Tipo de sessão"), envia direto.
  * Sem ela, abre a folha `seletor` (renderize-a na tela) para o personal escolher a validade do link antes de confirmar.
@@ -29,9 +33,10 @@ export function useEnviarTreinoAoAluno(alunoId: string): { enviar: (treino: Trei
   const [pendente, setPendente] = useState<Treino | null>(null)
   const [validade, setValidade] = useState<ValidadeLink>(lerValidadePadrao)
   const resolverRef = useRef<(() => void) | null>(null)
+  const [previa, setPrevia] = useState<Previa | null>(null)
+  const [textoEditavel, setTextoEditavel] = useState('')
 
   const executar = async (treino: Treino, escolhida: ValidadeLink) => {
-    const janela = window.open('about:blank', '_blank')
     try {
       const t = typeof treino === 'function' ? await treino() : treino
       const [exercicios, gerado] = await Promise.all([
@@ -48,14 +53,29 @@ export function useEnviarTreinoAoAluno(alunoId: string): { enviar: (treino: Trei
         link: gerado.link,
         expiraEm: gerado.expiraEm,
       })
-      const url = linkWhatsAppComTexto(aluno?.phone, mensagem)
-      if (janela && !janela.closed) janela.location.href = url
-      else window.location.assign(url)
-      mostrarInfoGlobal(avisoValidade(escolhida, gerado.expiraEm))
+      setTextoEditavel(mensagem)
+      setPrevia({ texto: mensagem, telefone: aluno?.phone, avisoDoPrazo: avisoValidade(escolhida, gerado.expiraEm) })
     } catch (e) {
-      janela?.close()
       mostrarErroGlobal(mapearErroSupabase(e))
     }
+  }
+
+  /** Copia a mensagem (a cópia começa no toque, antes de abrir o WhatsApp) e, se pedido, abre a conversa do aluno. */
+  const copiarEAbrir = async (abrir: boolean) => {
+    if (!previa) return
+    const copia = navigator.clipboard?.writeText(textoEditavel)
+    if (abrir) window.open(linkWhatsApp(previa.telefone) ?? 'https://wa.me/', '_blank', 'noopener,noreferrer')
+    try {
+      await copia
+      mostrarInfoGlobal(abrir ? 'Mensagem copiada: cole na conversa do WhatsApp.' : 'Mensagem copiada.')
+    } catch {
+      mostrarErroGlobal('Não deu para copiar. Toque no texto, selecione tudo e copie.')
+    }
+  }
+
+  const abrirComTexto = () => {
+    if (!previa) return
+    window.open(linkWhatsAppComTexto(previa.telefone, textoEditavel), '_blank', 'noopener,noreferrer')
   }
 
   const enviar = async (treino: Treino, validadeEscolhida?: ValidadeLink) => {
@@ -80,7 +100,6 @@ export function useEnviarTreinoAoAluno(alunoId: string): { enviar: (treino: Trei
     const t = pendente
     if (!t) return
     salvarValidadePadrao(validade)
-    // o clique do botão ainda é o gesto do usuário: window.open dentro de executar() não é bloqueado
     const feito = executar(t, validade)
     setPendente(null)
     feito.finally(() => {
@@ -108,5 +127,39 @@ export function useEnviarTreinoAoAluno(alunoId: string): { enviar: (treino: Trei
     </BottomSheet>
   )
 
-  return { enviar, seletor }
+  const fecharPrevia = () => {
+    if (previa) mostrarInfoGlobal(previa.avisoDoPrazo)
+    setPrevia(null)
+  }
+
+  const seletorComPrevia = (
+    <>
+      {seletor}
+      <BottomSheet open={!!previa} onClose={fecharPrevia} title="Mensagem para o aluno">
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Copie a mensagem e cole na conversa do WhatsApp: assim os emojis e a formatação chegam certinhos. Você pode ajustar o texto antes.
+          </p>
+          <textarea
+            aria-label="Mensagem para o aluno"
+            value={textoEditavel}
+            onChange={(e) => setTextoEditavel(e.target.value)}
+            rows={12}
+            className="max-h-72 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand"
+          />
+          <Button onClick={() => copiarEAbrir(true)} className="w-full">
+            <MessageCircle size={18} aria-hidden /> Copiar e abrir WhatsApp
+          </Button>
+          <Button variant="outline" onClick={() => copiarEAbrir(false)} className="w-full">
+            <Copy size={18} aria-hidden /> Só copiar mensagem
+          </Button>
+          <button type="button" onClick={abrirComTexto} className="flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-medium text-brand-hover active:bg-slate-100">
+            Abrir WhatsApp com o texto pronto
+          </button>
+        </div>
+      </BottomSheet>
+    </>
+  )
+
+  return { enviar, seletor: seletorComPrevia }
 }
