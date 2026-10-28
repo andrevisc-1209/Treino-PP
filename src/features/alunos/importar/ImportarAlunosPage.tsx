@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, Check, Download, FileSpreadsheet, Info } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, Copy, Download, FileSpreadsheet, Info, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { hojeSP } from '@/lib/datas'
@@ -11,6 +11,7 @@ import { useAlunos } from '../api'
 import { decodificarArquivo } from './csv'
 import { LIMITE_IMPORTACAO, MODELO_CSV, TAMANHO_MAXIMO_ARQUIVO, lerPlanilha, resumoLeitura, selecionadasPorPadrao, type LinhaImportada, type StatusLinha } from './importarAlunos'
 import { useDesfazerImportacao, useImportarAlunos } from './api'
+import { limparTextoColado, montarPromptIA } from './promptIA'
 
 const ROTULO: Record<StatusLinha, string> = { ok: 'Pronto', aviso: 'Com aviso', duplicado: 'Já existe', erro: 'Com erro' }
 const COR: Record<StatusLinha, string> = {
@@ -44,6 +45,17 @@ export function ImportarAlunosPage() {
   const [ignoradas, setIgnoradas] = useState<string[]>([])
   const [marcadas, setMarcadas] = useState<Set<number>>(new Set())
   const [criados, setCriados] = useState<string[] | null>(null)
+  const [colado, setColado] = useState('')
+  const [promptCopiado, setPromptCopiado] = useState(false)
+
+  const processar = (texto: string, origem: string) => {
+    const r = lerPlanilha(limparTextoColado(texto), existentes ?? [], hojeSP())
+    if (!r.ok) return setErro(r.erro)
+    setArquivo(origem)
+    setLinhas(r.linhas)
+    setIgnoradas(r.colunasIgnoradas)
+    setMarcadas(new Set(selecionadasPorPadrao(r.linhas)))
+  }
 
   const escolher = async (f: File | undefined) => {
     setErro(null)
@@ -51,12 +63,26 @@ export function ImportarAlunosPage() {
     if (!f) return
     if (f.size > TAMANHO_MAXIMO_ARQUIVO) return setErro('O arquivo é grande demais. Use uma planilha com até 50 alunos.')
     if (!/\.(csv|txt)$/i.test(f.name)) return setErro('Use um arquivo CSV. No Excel ou Google Planilhas: Arquivo → Salvar como/Fazer download → CSV.')
-    const r = lerPlanilha(decodificarArquivo(await f.arrayBuffer()), existentes ?? [], hojeSP())
-    if (!r.ok) return setErro(r.erro)
-    setArquivo(f.name)
-    setLinhas(r.linhas)
-    setIgnoradas(r.colunasIgnoradas)
-    setMarcadas(new Set(selecionadasPorPadrao(r.linhas)))
+    processar(decodificarArquivo(await f.arrayBuffer()), f.name)
+  }
+
+  const conferirColado = () => {
+    setErro(null)
+    setLinhas(null)
+    if (!colado.trim()) return setErro('Cole aqui o texto que a IA devolveu.')
+    if (colado.length > TAMANHO_MAXIMO_ARQUIVO) return setErro('O texto é grande demais. Use até 50 alunos por vez.')
+    processar(colado, 'Texto colado')
+  }
+
+  const copiarPrompt = async () => {
+    const texto = montarPromptIA()
+    try {
+      await navigator.clipboard.writeText(texto)
+      setPromptCopiado(true)
+      setTimeout(() => setPromptCopiado(false), 3000)
+    } catch {
+      window.prompt('Copie o prompt:', texto) // navegador sem permissão de área de transferência
+    }
   }
 
   const alternar = (n: number) =>
@@ -158,6 +184,44 @@ export function ImportarAlunosPage() {
               {erro}
             </p>
           )}
+
+          <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm" aria-label="Importar com ajuda de uma IA">
+            <h2 className="flex items-center gap-2 font-semibold">
+              <Sparkles size={18} className="text-brand-bright" aria-hidden /> Seus alunos estão bagunçados? Use uma IA
+            </h2>
+            <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
+              <li>Toque em <strong>Copiar prompt para IA</strong>.</li>
+              <li>Cole o prompt no ChatGPT, Gemini ou Claude e, em seguida, cole ou anexe a sua lista (contatos, caderno, planilha como estiver).</li>
+              <li>Copie a resposta da IA e cole abaixo. Você confere tudo antes de gravar.</li>
+            </ol>
+            <div className="flex gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
+              <p>
+                <strong>Cuidado com a privacidade:</strong> ao colar dados de alunos numa IA, você envia dados pessoais a um serviço de terceiros. Mande só nome, telefone, e-mail,
+                nascimento, sexo e objetivos; <strong>nunca</strong> dados de saúde, CPF ou senhas. Prefira o chat temporário ou desligue o uso das conversas para treinar a IA. Você responde por esse
+                envio (Termos de Uso, cláusula 3.5). Confira o resultado: a IA pode errar.
+              </p>
+            </div>
+            <Button variant="outline" className="w-full" onClick={copiarPrompt}>
+              {promptCopiado ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />} {promptCopiado ? 'Prompt copiado' : 'Copiar prompt para IA'}
+            </Button>
+            <label className="block text-sm font-medium" htmlFor="texto-colado">
+              Cole aqui a resposta da IA
+            </label>
+            <textarea
+              id="texto-colado"
+              value={colado}
+              onChange={(e) => setColado(e.target.value)}
+              rows={5}
+              spellCheck={false}
+              autoCapitalize="off"
+              placeholder="nome;telefone;email;nascimento;sexo;objetivos"
+              className="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm"
+            />
+            <Button className="w-full" onClick={conferirColado} disabled={!colado.trim()}>
+              Conferir o texto colado
+            </Button>
+          </section>
         </>
       )}
 

@@ -1,4 +1,4 @@
-export const TERMOS_USO_VERSAO = '1.6'
+export const TERMOS_USO_VERSAO = '1.7'
 export const PRIVACIDADE_VERSAO = '1.9'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
@@ -38,6 +38,7 @@ O Personal Trainer é o CONTROLADOR dos dados dos seus alunos (LGPD, art. 5º, V
 • os alunos são pessoas com quem ele tem relação (atuais ou antigos) e que ele tem base legal para tratar os dados delas (LGPD, art. 7º); é proibido importar listas de contatos compradas, obtidas de terceiros ou reunidas para divulgação, sem relação com o aluno;
 • o arquivo contém apenas dados básicos (nome, telefone, e-mail, data de nascimento, sexo e objetivos). Dados de saúde (lesões, cirurgias, medicamentos, altura e outros) não podem ser importados e só são registrados depois, com o consentimento do aluno, na forma da cláusula 3.1;
 • os dados estão corretos e, para menores de 18 anos, ele tem o consentimento do responsável legal (art. 14).
+• se usar uma ferramenta de inteligência artificial ou outro serviço de terceiros para preparar a planilha, ele responde por esse envio de dados: deve mandar apenas os dados básicos listados acima e nunca dados de saúde, CPF ou senhas.
 A plataforma lê o arquivo no aparelho do Personal Trainer, mostra uma revisão antes de gravar e grava só os campos básicos. Ela não guarda o arquivo enviado, não verifica a origem nem a exatidão dos dados e pode recusar arquivos fora do formato ou acima do limite. O Personal Trainer pode desfazer a importação logo depois de concluída. Os alunos importados seguem as mesmas regras dos demais (lixeira, exclusão e consentimento de saúde).
 3.6. Exportação de alunos: o Personal Trainer pode baixar os seus alunos em arquivo CSV (nome, telefone, e-mail, data de nascimento, sexo e objetivos, sem dados de saúde). O arquivo baixado fica no aparelho do Personal Trainer, fora da proteção da plataforma: ele é responsável por guardá-lo com segurança, não compartilhá-lo sem base legal e apagá-lo quando não precisar mais (LGPD, art. 46).
 3.7. Mensagens aos alunos: a plataforma prepara textos (por exemplo, de cobrança, agenda e treino) e o e-mail de consentimento de saúde, mas quem decide enviar, e para quem, é o Personal Trainer, que responde por ter relação e autorização do aluno para o contato. As mensagens da plataforma não levam dados de saúde, e o Personal Trainer não deve incluí-los ao editar o texto ou ao conversar com o aluno.

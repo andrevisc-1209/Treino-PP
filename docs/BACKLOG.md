@@ -1073,3 +1073,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - 📌 **Sem re-aceite por enquanto** (decisão do dono: a base de hoje é de testes). Reabrir antes de ter clientes reais: quem já tem conta não é chamado a aceitar versões novas; só quem se cadastra aceita a vigente.
 - ⏳ Ainda sem texto: "fase Beta" (1.3) e o limite de responsabilidade (6.2), que o jurídico avalia. `docs/TERMOS-SUGESTOES.md` fica como histórico (A a F já aplicadas).
 - ⚠️ **Rodar a migration `20261076000000_termos_1_6.sql` ANTES do merge** (registra a versão 1.6; sem ela o cadastro novo é recusado).
+
+## 91. Importar alunos com ajuda de uma IA (prompt + colar texto) e Termos 1.7
+
+- ✅ Na tela de importação: **"Seus alunos estão bagunçados? Use uma IA"**: botão **Copiar prompt para IA** + 3 passos + **aviso de privacidade** (dados pessoais vão a um serviço de terceiros; só nome, telefone, e-mail, nascimento, sexo e objetivos; nunca saúde, CPF ou senhas; chat temporário; o personal responde, Termos 3.5) e uma caixa **"Cole aqui a resposta da IA"** que entra na mesma revisão do arquivo (sem precisar salvar como CSV).
+- ✅ **O prompt vem do código** (`promptIA.ts`): cabeçalho, limite de 50 e lista de objetivos são os da importação (se mudarem, o prompt muda junto; "Outros" fica de fora). Manda a IA **nunca inventar**, deixar vazio o que não souber, não deduzir sexo pelo nome e ignorar saúde, CPF, endereço, senha e mensalidade. **O exemplo do prompt é lido pela própria importação nos testes.** O texto colado perde o bloco de código (```csv) que a IA costuma devolver.
+- ✅ **Termos 1.7** (aprovado pelo jurídico): a 3.5 diz que quem usa IA ou outro serviço de terceiros para preparar a planilha responde por esse envio. Teste liga o texto à tela.
+- ⚠️ **Rodar a migration `20261077000000_termos_1_7.sql` ANTES do merge** (registra a versão; sem ela o cadastro novo é recusado). Sem deploy. Não testado ao vivo (login com captcha): validar no celular copiar o prompt, colar numa IA com uma lista fictícia, colar a resposta e conferir a revisão.
+- ⏳ Ideia futura: aceitar o CSV de contatos do Google (colunas "First Name", "Phone 1 - Value").

@@ -21,6 +21,10 @@ describe('Termos × importação e exportação de alunos', () => {
     expect(c35).toContain('desfazer a importação')
     expect(c35).toContain('não guarda o arquivo enviado')
   })
+  it('a 3.5 põe no personal a responsabilidade de usar IA ou serviço de terceiros para preparar a planilha (a tela diz o mesmo)', () => {
+    expect(c35).toContain('ferramenta de inteligência artificial')
+    expect(c35).toContain('nunca dados de saúde, CPF ou senhas')
+  })
   it('a 3.6 diz que o arquivo exportado não leva saúde e é responsabilidade do personal', () => {
     expect(c36).toContain('sem dados de saúde')
     expect(c36).toContain('fora da proteção da plataforma')
