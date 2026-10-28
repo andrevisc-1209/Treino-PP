@@ -1059,3 +1059,9 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ⏳ **Não coberto:** cópia **completa** (treinos, fichas, avaliações, faturas, dados de saúde) para o art. 18, V: hoje o titular pede ao Encarregado (contato@personalperto.com.br). Se quiser no app, precisa de decisão sobre onde o arquivo sai (e-mail com link expirável, por exemplo).
 - Sem migration e sem deploy. Não testado ao vivo (login com captcha): validar no celular baixar o CSV, abrir no Excel/Planilhas e importar de volta.
 
+## 89. Termos de Uso 1.5 (importação, exportação e dois alinhamentos)
+
+- ✅ **3.5** importação de alunos por planilha (base legal, só dados básicos, sem saúde, sem lista de terceiros, limite de 50, o app lê o arquivo no aparelho e não o guarda, dá para desfazer); **3.6** exportação (arquivo sem saúde, responsabilidade do personal, art. 46); **2.5** fim do período = **modo de consulta** (antes dizia "acesso suspenso", o que o app não faz); **3.2** prova de aceite do aluno eliminada com a conta (alinha com a Política 1.9).
+- ✅ Teste `termosImportacao.test.ts` (o limite de 50 e as promessas dos Termos batem com o código) e `versoesRegistradas.test.ts` (**falha se a versão atual dos Termos ou da Política não estiver registrada em alguma migration**: sem a linha, o cadastro novo é recusado).
+- 📄 `docs/TERMOS-SUGESTOES.md`: sugestões **não aplicadas** com texto proposto (mensagens aos alunos, link do treino à distância, pagamentos personal↔aluno, uso aceitável e suspensão, lixeira, suporte) e pontos para o jurídico (Beta, limite de responsabilidade, **re-aceite de versão nova por quem já tem conta**, citação do CTN).
+- ⚠️ **Rodar a migration `20261075000000_termos_1_5.sql` ANTES do merge** (registra a versão 1.5; sem ela o cadastro novo é recusado) e **mandar o texto para o jurídico antes de mergear**. Sem teste SQL (é só um INSERT).

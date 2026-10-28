@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { PRIVACIDADE_TEXTO, PRIVACIDADE_VERSAO, TERMOS_USO_TEXTO, TERMOS_USO_VERSAO } from './textos'
+import { PRIVACIDADE_TEXTO, TERMOS_USO_TEXTO } from './textos'
 import { DIAS_CARENCIA, PALAVRA_CONFIRMACAO, TEXTO_APAGADO, TEXTO_RETIDO } from '../conta/exclusao'
 
 // A tela, o banco e os textos legais precisam dizer a mesma coisa sobre a exclusão da conta. Este teste aponta a divergência.
@@ -30,11 +30,5 @@ describe('exclusão de conta × textos legais × migration', () => {
   it('a Política não promete mais 90 dias para o personal nem guardar faturas dos alunos ou consentimento depois da exclusão', () => {
     expect(PRIVACIDADE_TEXTO).not.toMatch(/mesmo após a exclusão dos demais dados/)
     expect(PRIVACIDADE_TEXTO).not.toMatch(/Registros financeiros \(cobranças e faturas\)/)
-  })
-  it('as versões novas dos textos estão registradas na migration (sem isso o cadastro novo é recusado)', () => {
-    expect(TERMOS_USO_VERSAO).toBe('1.4')
-    expect(PRIVACIDADE_VERSAO).toBe('1.9')
-    expect(migration).toContain("('termos', '1.4')")
-    expect(migration).toContain("('privacidade', '1.9')")
   })
 })
