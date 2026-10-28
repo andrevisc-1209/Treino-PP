@@ -1107,3 +1107,10 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ **Depois de importar:** cartão **"Agora, o que falta"** (valor da cobrança e horários ficam na ficha; link para montar um treino planejado) e botão "Ver meus alunos e completar as fichas".
 - 📊 **Medição sem evento novo:** a importação já dispara `aluno_cadastrado`; a métrica é o funil existente (`perfil_concluido` → `aluno_cadastrado`). Evento novo exigiria Política nova.
 - ⚠️ Sem migration e sem deploy de função. **Não testado ao vivo por mim** (login com captcha): validar no celular com conta nova sem alunos: card "Primeiros passos", estado vazio, as duas abas e o "Agora, o que falta".
+
+## 94. Excluir a conta sem o banner de trial
+
+- 🐞 Visto no uso real (28/10/2026): depois de pedir a exclusão, a tela "Pedido registrado" ainda mostrava o banner **"Você tem 14 dias de trial… Assinar agora"** no topo (e a barra de navegação de baixo): contraditório logo depois de a pessoa pedir para sair.
+- ✅ A rota `/configuracoes/excluir-conta` entra no **modo foco** (sem navegação global nem avisos do topo). A lista de rotas do modo foco saiu do `RequireAuth` para `modoFoco.ts`, com teste.
+- ✅ **Validado ao vivo pelo dono:** o e-mail de exclusão chegou (duas contas de teste, protocolos `EXC-2026-X3RW6DT6` e `EXC-2026-B62GA8S4`), a tela "Sua conta está em exclusão" abre com a data (27/11/2026) e o protocolo, e a solicitação aparece como `pending` no banco, sem erro. Falta só testar o **cancelamento** e a **exclusão forçada** em conta de teste.
+

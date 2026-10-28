@@ -8,14 +8,10 @@ import { useIsAdmin } from '@/features/admin/useIsAdmin'
 import { useGerarNotificacoesCiclo, useNotificacoesRealtime } from '@/features/notificacoes/api'
 import { useAuth } from './AuthProvider'
 import { CompletarPerfilGate } from './CompletarPerfilGate'
+import { emModoFoco } from './modoFoco'
 import { useAplicarIndicacaoGuardada } from '@/features/indicacao/api'
 import { useMinhaExclusao } from '@/features/conta/api'
 import { ExclusaoPendenteTela } from '@/features/conta/ExclusaoPendenteTela'
-
-// Modo foco: cadastro/edição de aluno e todo o ciclo de uma sessão (pré-treino,
-// execução, pós-treino) escondem a navegação global — ver docs/ux-audit e a
-// tarefa "modo aula". A saída passa a ser o botão "✕ Sair" de cada tela.
-const ROTAS_MODO_FOCO = [/^\/alunos\/novo$/, /^\/alunos\/[^/]+\/editar$/, /^\/alunos\/[^/]+\/sessoes\//]
 
 /** Visitante deslogado em "/" vê a landing (HTML estático em public/). App instalado (PWA) vai direto pro login. */
 function IrParaLandingOuLogin() {
@@ -55,7 +51,7 @@ export function RequireAuth() {
   // conta com exclusão pedida: só a tela de protocolo/cancelamento (o banco também barra as gravações)
   if (exclusao) return <ExclusaoPendenteTela exclusao={exclusao} />
 
-  const modoFoco = ROTAS_MODO_FOCO.some((r) => r.test(location.pathname))
+  const modoFoco = emModoFoco(location.pathname)
 
   return (
     <CompletarPerfilGate userId={session.user.id}>
