@@ -9,6 +9,7 @@ import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { usePacotesAtivos } from '@/features/pacotes/api'
 import { PacoteChip } from '@/features/pacotes/PacoteChip'
 import { situacaoDoPacote } from '@/features/pacotes/pacote'
+import { RelatorioMensalCard } from '@/features/financeiro/RelatorioMensalCard'
 import { CobrancaBlock } from '@/features/financeiro/CobrancaBlock'
 import { FinanceiroBlock } from '@/features/financeiro/FinanceiroBlock'
 import { HistoricoTab } from '@/features/sessoes/HistoricoTab'
@@ -390,6 +391,8 @@ export function AlunoFichaPage() {
           <CobrancaBlock alunoId={aluno.id} />
 
           <FinanceiroBlock alunoId={aluno.id} />
+
+          <RelatorioMensalCard aluno={{ id: aluno.id, name: aluno.name }} />
 
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">

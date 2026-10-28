@@ -7,7 +7,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { useSalvarAvaliacaoFatura, type Fatura } from './api'
 import { avaliacaoAlterada, citaDadoDeSaude, colunasDaAvaliacao, LIMITE_AVALIACAO, textosDaAvaliacao, validarAvaliacao, type AvaliacaoTextos } from './avaliacao'
 
-const CAMPOS: { chave: keyof AvaliacaoTextos; rotulo: string; dica: string }[] = [
+export const CAMPOS_AVALIACAO: { chave: keyof AvaliacaoTextos; rotulo: string; dica: string }[] = [
   { chave: 'conquistas', rotulo: 'Conquistas do ciclo', dica: 'Ex.: não faltou nenhuma aula e já corre 5 km sem parar.' },
   { chave: 'atencao', rotulo: 'Pontos de atenção', dica: 'Ex.: caprichar no alongamento e na técnica do crawl.' },
   { chave: 'proximos', rotulo: 'Próximos objetivos', dica: 'Ex.: completar 10 km e subir a carga no agachamento.' },
@@ -57,7 +57,7 @@ export function AvaliacaoPersonalCard({ fatura }: { fatura: Fatura }) {
         <ClipboardPen size={18} aria-hidden /> Avaliação do personal
       </h2>
       <p className="text-sm text-slate-600">Opcional. O que você escrever aparece no relatório e no recibo do aluno. Não inclua lesões, cirurgias nem medicamentos.</p>
-      {CAMPOS.map((c) => (
+      {CAMPOS_AVALIACAO.map((c) => (
         <Field key={c.chave} label={c.rotulo}>
           <textarea
             className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base outline-none focus:border-brand"

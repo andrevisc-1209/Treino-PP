@@ -167,5 +167,19 @@ describe('relatório completo do ciclo', () => {
     const doc = await gerarRelatorioCompleto({ ...dados, itens })
     expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
   })
+  it('relatório mensal: sem coluna Valor, nome do arquivo próprio e PDF gerado sem parte financeira', async () => {
+    const mensal: DadosRelatorio = { ...dados, modelo: 'mensal', semFinanceiro: true, total: 0, ajuste: 0, ajusteDescricao: null, periodoInicio: '2026-10-01', periodoFim: '2026-10-31', geradoEm: '2026-11-02' }
+    expect(cabecalhoDaTabela(mensal)).not.toContain('Valor')
+    expect(cabecalhoDaTabela({ ...mensal, modelo: 'por_aula' })).not.toContain('Valor')
+    expect(nomeArquivoRelatorio('Bruno Paulo', '2026-10-31', 'relatorio-mensal')).toBe('relatorio-mensal-bruno-paulo-out-2026.pdf')
+    expect(statusDoCiclo(mensal)).toBe('encerrado')
+    const doc = await gerarRelatorioCompleto(mensal)
+    expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
+    const conteudo = doc.output()
+    expect(conteudo).toContain('RELAT')
+    expect(conteudo).toContain('no mês')
+    expect(conteudo).not.toContain('R$')
+    expect(conteudo).not.toContain('Total')
+  })
 })
 
