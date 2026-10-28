@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Field, Input } from '@/components/ui'
@@ -33,6 +33,8 @@ export function ModalidadeForm({
   legadoNatacao,
   modeloMusculacao,
   onModeloMusculacao,
+  abrirSeletorDeModelo = false,
+  onSeletorAberto,
 }: {
   modalidade: ModalidadeTipo
   onModalidade: (m: ModalidadeTipo) => void
@@ -54,10 +56,22 @@ export function ModalidadeForm({
   /** só ao CRIAR treino de musculação: modelo pronto escolhido (os exercícios são gravados depois que o treino é criado) */
   modeloMusculacao?: TemplateTreino | null
   onModeloMusculacao?: (t: TemplateTreino | null) => void
+  /** abre o seletor de modelos prontos assim que o formulário aparece (atalho "Usar um modelo pronto" do estado vazio) */
+  abrirSeletorDeModelo?: boolean
+  /** avisa que o pedido acima já foi atendido (a página zera o sinal: a próxima criação não reabre o seletor) */
+  onSeletorAberto?: () => void
 }) {
   const campos = MODALIDADES_CONFIG[modalidade].campos
   const atualizar = (key: string, valor: string) => onValores({ ...valores, [key]: valor })
   const [escolhendoModelo, setEscolhendoModelo] = useState(false)
+  useEffect(() => {
+    if (abrirSeletorDeModelo) {
+      setEscolhendoModelo(true)
+      onSeletorAberto?.()
+    }
+    // só quando o sinal liga: onSeletorAberto muda a cada render e não deve disparar de novo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirSeletorDeModelo])
   const comModeloDoSistema = MODALIDADES_COM_TEMPLATE_DO_SISTEMA.includes(modalidade) && (modalidade !== 'musculacao' || !!onModeloMusculacao)
 
   const usarModelo = async (t: TemplateTreino) => {

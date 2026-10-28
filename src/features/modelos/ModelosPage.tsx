@@ -41,6 +41,7 @@ export function ModelosPage() {
   const excluir = useExcluirModelo()
 
   const [criando, setCriando] = useState(false)
+  const [abrirModeloAoCriar, setAbrirModeloAoCriar] = useState(false)
   const [nomeNovo, setNomeNovo] = useState('')
   const [erroNovo, setErroNovo] = useState<string | null>(null)
   const [modalidadeNova, setModalidadeNova] = useState<ModalidadeTipo>('musculacao')
@@ -88,7 +89,8 @@ export function ModelosPage() {
     )
   }
 
-  const abrirNovo = () => {
+  const abrirNovo = (comModeloPronto = false) => {
+    setAbrirModeloAoCriar(comModeloPronto)
     setNomeNovo('')
     setModalidadeNova('musculacao')
     setExecucaoNova('sincrono')
@@ -204,7 +206,8 @@ export function ModelosPage() {
           icone={<ClipboardList size={24} />}
           titulo="Monte seu primeiro treino planejado"
           texto="Crie um modelo de exercícios para reutilizar nos treinos dos seus alunos."
-          acao={{ rotulo: 'Criar treino planejado', onClick: exigir(abrirNovo) }}
+          acao={{ rotulo: 'Criar do zero', onClick: exigir(() => abrirNovo()) }}
+          acaoSecundaria={{ rotulo: 'Usar um modelo pronto', onClick: exigir(() => abrirNovo(true)) }}
         />
       )}
 
@@ -259,7 +262,7 @@ export function ModelosPage() {
         })}
       </ul>
 
-      <Fab onClick={exigir(abrirNovo)} label="Novo treino planejado" />
+      <Fab onClick={exigir(() => abrirNovo())} label="Novo treino planejado" />
 
       <BottomSheet open={criando} onClose={() => setCriando(false)} title="Novo treino planejado">
         <div className="space-y-4">
@@ -267,6 +270,8 @@ export function ModelosPage() {
             <Input value={nomeNovo} onChange={(e) => setNomeNovo(e.target.value)} autoFocus placeholder="Full body A" />
           </Field>
           <ModalidadeForm
+            abrirSeletorDeModelo={abrirModeloAoCriar}
+            onSeletorAberto={() => setAbrirModeloAoCriar(false)}
             modalidade={modalidadeNova}
             onModalidade={(mo) => {
               setModalidadeNova(mo)
