@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, LifeBuoy, Lock, LogOut, ShieldCheck } from 'lucide-react'
 import { IndicacaoCard } from '@/features/indicacao/IndicacaoCard'
 import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
@@ -32,6 +32,9 @@ const TIPOS_PIX: { value: PixTipo; label: string }[] = [
 
 type SecaoId = 'dados' | 'assinatura' | 'localizacao' | 'aulas' | 'pix' | 'notificacoes'
 
+/** `?secao=assinatura` (links do e-mail e do WhatsApp de renovação) abre a seção já expandida. */
+const SECOES: SecaoId[] = ['dados', 'assinatura', 'localizacao', 'aulas', 'pix', 'notificacoes']
+
 // Valores quando o personal ainda não tem linha em professional_config.
 const PADRAO = { cobrarFalta: true, cobrarCancel: false, duracao: '60', pixTipo: 'cpf' as PixTipo, pixChave: '', pixNome: '' }
 
@@ -62,7 +65,9 @@ export function ConfiguracoesPage() {
   const [erros, setErros] = useState<Partial<Record<SecaoId, string>>>({})
   const [salvando, setSalvando] = useState(false)
   // true/false = escolha da pessoa; ausente = usa o padrão da seção (abre sozinha só quando falta algo importante)
-  const [abertas, setAbertas] = useState<Partial<Record<SecaoId, boolean>>>({})
+  const [params] = useSearchParams()
+  const secaoDoLink = SECOES.find((s) => s === params.get('secao'))
+  const [abertas, setAbertas] = useState<Partial<Record<SecaoId, boolean>>>(() => (secaoDoLink ? { [secaoDoLink]: true } : {}))
 
   useEffect(() => {
     if (perfil) {

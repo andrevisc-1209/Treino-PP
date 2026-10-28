@@ -42,6 +42,8 @@ describe('textos', () => {
     const um = montarPlanoExpirando({ nome: 'André Scherer', plano: 'Mensal', ate: '2026-10-29', dias: 1 })
     expect(um).toContain('vence amanhã')
     expect(um).not.toContain('3 dias')
+    // o link vai sozinho na última linha, para a prévia do WhatsApp, e abre a seção Assinatura
+    expect(um.split('\n').pop()).toBe('https://treino.personalperto.com.br/configuracoes?secao=assinatura')
   })
   it('e-mail: assunto por prazo, data, botão e aviso de que não renova sozinho', () => {
     const e = montarEmailRenovacao({ nome: 'André Scherer', plano: 'Mensal', fimIso: '2026-11-27T15:00:00Z', dias: 5, appUrl: 'https://app.exemplo' })
@@ -54,7 +56,7 @@ describe('textos', () => {
     expect(e.texto.match(/27\/11/g)).toHaveLength(1)
     expect(e.texto).not.toContain('nov,')
     expect(e.texto).toContain('Olá, André.')
-    expect(e.texto).toContain('https://app.exemplo/configuracoes')
+    expect(e.texto).toContain('https://app.exemplo/configuracoes?secao=assinatura')
     expect(e.html).toContain('Renovar agora')
     expect(e.html).toContain('não renova sozinho')
   })

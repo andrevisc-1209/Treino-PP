@@ -45,7 +45,7 @@ export function montarEmailRenovacao(args: { nome: string | null; plano: string 
   const data = dataBR(args.fimIso)
   const assunto = `Seu acesso ao Treino PP ${quando}`
   const plano = args.plano ? ` (plano ${args.plano})` : ''
-  const link = `${args.appUrl}/configuracoes`
+  const link = `${args.appUrl}/configuracoes?secao=assinatura`
   const texto = [
     `${nome ? `Olá, ${nome}.` : 'Olá.'}`,
     '',
