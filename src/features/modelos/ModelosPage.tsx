@@ -28,7 +28,7 @@ import {
 } from '@/types/modalidades'
 import { useAplicarItensTemplate, type TemplateTreino } from '@/features/templates/api'
 import { useAtualizarModelo, useCriarModelo, useDuplicarModelo, useExcluirModelo, useModelos, type Modelo } from './api'
-import { ehRascunho, filtrarModelos, MINIMO_PARA_BUSCA, modalidadeDe, modalidadesDaBiblioteca } from './biblioteca'
+import { ehRascunho, filtrarModelos, MINIMO_PARA_BUSCA, modalidadesDaBiblioteca } from './biblioteca'
 import { cn } from '@/lib/utils'
 import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
