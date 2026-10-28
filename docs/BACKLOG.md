@@ -1165,3 +1165,12 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ O botão "Começar de um modelo" dentro do formulário de natação continua como antes (não duplica o botão do formulário).
 - ✅ Testes em `atalhoDeModelo.test.ts` (abas incluem natação; conversão modelo → dados do formulário).
 - ⚠️ Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): Treinos planejados vazio → "Usar um modelo pronto" → aba Natação → "Usar este modelo" e conferir ambiente e exercícios.
+
+## 102. Auditoria de UX com conta em uso · PR 2: Financeiro mostra o que exige ação
+
+- (Segue o plano das 6 PRs descrito no item 101.)
+- ✅ Bloco **Ação necessária** logo abaixo dos três totais: "N faturas em atraso · R$ X" e "N ciclos encerrados para fechar", cada um com botão que abre a lista já filtrada (Em atraso / A fechar). Se não há nada a fazer, o bloco some.
+- ✅ **R$ 0,00 fora da lista por padrão:** ciclo em aberto sem aula (aluno "por aula" sem aula no ciclo) fica atrás do botão **Mostrar sem valor (N)**. Conferido na regra de ciclo: esses registros são legítimos (ciclo ainda vazio), não erro de geração, por isso ficam acessíveis em vez de sumir. Ciclo **já encerrado** continua visível mesmo zerado (falta fechá-lo); mensal nunca é "sem valor".
+- ✅ Ordem da lista: **em atraso**, depois **ciclos encerrados**, depois o resto. Cada linha mostra nome e **valor em destaque**, com modelo, nº de aulas e data de fechamento na linha de baixo; o status segue em texto (A fechar, Ciclo encerrado, Enviada, Paga, Em atraso), nunca só cor.
+- ✅ Gráfico de 6 meses mais baixo quando há valor em até 2 meses.
+- ✅ Testes `listaFinanceiro.test.ts` (sem valor, prioridade, ação necessária). Sem migration e sem deploy. **Não testado ao vivo por mim** (login com captcha): conferir a 390px a conta com faturas em atraso, ciclos encerrados e alunos "por aula" sem aula.

@@ -6,7 +6,7 @@ import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
 import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Landmark } from 'lucide-react'
+import { ChevronRight, Landmark, TriangleAlert } from 'lucide-react'
 import { EstadoVazio } from '@/components/EstadoVazio'
 import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
@@ -17,6 +17,7 @@ import { cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
 import { alunosComCicloParaFechar } from './cicloPendente'
 import { estaVencida, rotuloModelo, SeloFatura } from './rotulos'
 import { recebidoPorMes } from './desempenho'
+import { acaoNecessaria, ehSemValor, prioridadeDaLinha } from './listaFinanceiro'
 import { useAlunosComCobranca, useFaturasTodas, useParticipacoesCobraveisTodas, type Fatura, type FaturaStatus } from './api'
 
 type Filtro = 'todos' | 'a_fechar' | 'enviada' | 'paga' | 'atraso'
@@ -48,6 +49,7 @@ export function FinanceiroPage() {
   const { data: participacoes } = useParticipacoesCobraveisTodas()
   const [params] = useSearchParams()
   const [filtro, setFiltro] = useState<Filtro>(params.get('filtro') === 'a_fechar' ? 'a_fechar' : 'todos')
+  const [mostrarSemValor, setMostrarSemValor] = useState(false)
   const qc = useQueryClient()
 
   const hoje = hojeSP()
@@ -99,10 +101,14 @@ export function FinanceiroPage() {
     () => new Set(alunosComCicloParaFechar({ cobrancas: alunosCobranca ?? [], faturas: faturas ?? [], participacoes: participacoes ?? [], hoje })),
     [alunosCobranca, faturas, participacoes, hoje],
   )
-  // os de ciclo já encerrado vêm primeiro (são os que precisam de ação); o resto mantém a ordem
-  const linhasFiltradas = (filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)).toSorted(
-    (a, b) => Number(idsCicloEncerrado.has(b.alunoId)) - Number(idsCicloEncerrado.has(a.alunoId)),
-  )
+  // por padrão a lista mostra o que tem valor: ciclo em aberto sem aula (R$ 0,00) fica atrás do botão "Mostrar sem valor"
+  const doFiltro = filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)
+  const qtdSemValor = doFiltro.filter((l) => ehSemValor(l, idsCicloEncerrado.has(l.alunoId))).length
+  const linhasFiltradas = doFiltro
+    .filter((l) => mostrarSemValor || !ehSemValor(l, idsCicloEncerrado.has(l.alunoId)))
+    .toSorted((a, b) => prioridadeDaLinha(a, idsCicloEncerrado.has(a.alunoId)) - prioridadeDaLinha(b, idsCicloEncerrado.has(b.alunoId)))
+  const acao = acaoNecessaria(faturasEmAtraso, idsCicloEncerrado.size)
+  const poucosMeses = recebimentos.filter((r) => r.total > 0).length <= 2
 
   return (
     <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
@@ -155,12 +161,46 @@ export function FinanceiroPage() {
             />
           </RolagemHorizontal>
 
+          {acao && (
+            <section className="mb-4 rounded-2xl bg-amber-50 p-4 text-amber-950 ring-1 ring-amber-300" aria-label="Ação necessária">
+              <h2 className="flex items-center gap-2 text-sm font-bold">
+                <TriangleAlert size={16} aria-hidden /> Ação necessária
+              </h2>
+              <ul className="mt-2 space-y-1">
+                {acao.qtdAtraso > 0 && (
+                  <li>
+                    <button type="button" onClick={() => setFiltro('atraso')} className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl bg-white px-3 text-left text-sm font-medium active:bg-amber-100">
+                      <span>
+                        {acao.qtdAtraso} {acao.qtdAtraso === 1 ? 'fatura em atraso' : 'faturas em atraso'} · {formatarBRL(acao.totalAtraso)}
+                      </span>
+                      <span className="flex shrink-0 items-center text-brand-hover">
+                        Ver <ChevronRight size={16} aria-hidden />
+                      </span>
+                    </button>
+                  </li>
+                )}
+                {acao.qtdCiclosParaFechar > 0 && (
+                  <li>
+                    <button type="button" onClick={() => setFiltro('a_fechar')} className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl bg-white px-3 text-left text-sm font-medium active:bg-amber-100">
+                      <span>
+                        {acao.qtdCiclosParaFechar} {acao.qtdCiclosParaFechar === 1 ? 'ciclo encerrado para fechar' : 'ciclos encerrados para fechar'}
+                      </span>
+                      <span className="flex shrink-0 items-center text-brand-hover">
+                        Ver <ChevronRight size={16} aria-hidden />
+                      </span>
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
+
           <section className="mb-4 hidden rounded-2xl bg-white p-4 shadow-sm md:block">
             <h2 className="mb-2 text-sm font-semibold">Recebido nos últimos 6 meses</h2>
             {!recebimentos.some((r) => r.total > 0) ? (
               <p className="text-sm text-slate-600">Os valores e o gráfico aparecem conforme suas cobranças forem registradas.</p>
             ) : (
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={poucosMeses ? 112 : 160}>
               <BarChart data={recebimentos} margin={{ left: 0, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
@@ -192,14 +232,22 @@ export function FinanceiroPage() {
             ))}
           </RolagemHorizontal>
 
-          {linhasFiltradas.length === 0 && (alunosCobranca?.length ?? 0) > 0 && <p className="text-sm text-slate-600">Nenhum aluno neste filtro.</p>}
+          {linhasFiltradas.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
+            <p className="text-sm text-slate-600">{qtdSemValor > 0 ? 'Nenhuma cobrança com valor neste filtro.' : 'Nenhum aluno neste filtro.'}</p>
+          )}
 
           <ul className="space-y-2">
             {linhasFiltradas.map((l) => (
               <li key={l.alunoId}>
                 <Link to={`/alunos/${l.alunoId}/fechar-ciclo`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium">{l.nome}</p>
+                    <p className="min-w-0 truncate font-medium">{l.nome}</p>
+                    <p className="shrink-0 text-lg font-bold">{formatarBRL(l.totalCiclo)}</p>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="min-w-0 text-sm text-slate-500">
+                      {rotuloModelo(l.modelo)} · {l.qtdAulasCiclo} aula{l.qtdAulasCiclo === 1 ? '' : 's'} · fecha em {l.ciclo.fim.slice(8, 10)}/{l.ciclo.fim.slice(5, 7)}
+                    </p>
                     {l.ultimaFatura && l.estado !== 'a_fechar' ? (
                       <SeloFatura status={l.ultimaFatura.status as FaturaStatus} vencida={l.estado === 'atraso'} />
                     ) : (
@@ -214,14 +262,21 @@ export function FinanceiroPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {rotuloModelo(l.modelo)} · {l.qtdAulasCiclo} aula{l.qtdAulasCiclo === 1 ? '' : 's'} · {formatarBRL(l.totalCiclo)} · fecha em{' '}
-                    {l.ciclo.fim.slice(8, 10)}/{l.ciclo.fim.slice(5, 7)}
-                  </p>
                 </Link>
               </li>
             ))}
           </ul>
+
+          {qtdSemValor > 0 && (
+            <button
+              type="button"
+              aria-pressed={mostrarSemValor}
+              onClick={() => setMostrarSemValor((v) => !v)}
+              className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl text-sm font-medium text-brand-hover active:bg-slate-100"
+            >
+              {mostrarSemValor ? 'Ocultar sem valor' : `Mostrar sem valor (${qtdSemValor})`}
+            </button>
+          )}
         </>
       )}
     </div>
