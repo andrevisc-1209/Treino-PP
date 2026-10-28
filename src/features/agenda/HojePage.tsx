@@ -68,6 +68,9 @@ export function HojePage() {
         </div>
       </header>
 
+      {/* o clima fica logo abaixo da data: é a primeira coisa que o personal quer ver antes de treinar ao ar livre */}
+      <ClimaCard compacto />
+
       <AtivacaoCard />
       <OnboardingChecklist />
 
@@ -111,7 +114,6 @@ export function HojePage() {
       )}
 
       <CiclosParaFecharCard />
-      <ClimaCard compacto />
       {!emAtivacao && <PixCard />}
       <AtividadeRecente />
       {!emAtivacao && (total ?? 0) >= 3 && (
