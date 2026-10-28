@@ -1065,3 +1065,11 @@ Conferi cada ponto no código antes de agir. **Falsos:** "Esqueci minha senha" s
 - ✅ Teste `termosImportacao.test.ts` (o limite de 50 e as promessas dos Termos batem com o código) e `versoesRegistradas.test.ts` (**falha se a versão atual dos Termos ou da Política não estiver registrada em alguma migration**: sem a linha, o cadastro novo é recusado).
 - 📄 `docs/TERMOS-SUGESTOES.md`: sugestões **não aplicadas** com texto proposto (mensagens aos alunos, link do treino à distância, pagamentos personal↔aluno, uso aceitável e suspensão, lixeira, suporte) e pontos para o jurídico (Beta, limite de responsabilidade, **re-aceite de versão nova por quem já tem conta**, citação do CTN).
 - ⚠️ **Rodar a migration `20261075000000_termos_1_5.sql` ANTES do merge** (registra a versão 1.5; sem ela o cadastro novo é recusado) e **mandar o texto para o jurídico antes de mergear**. Sem teste SQL (é só um INSERT).
+
+## 90. Termos de Uso 1.6 (sugestões A a F do jurídico)
+
+- ✅ Aprovado pelo jurídico (28/10/2026): **1.4** a plataforma não recebe, não intermedeia e não repassa valores entre personal e aluno (igual ao que a landing já diz); **2.9** uso aceitável e suspensão (conta falsa, burlar limites, mensagem indesejada; aviso ao usuário, e saída pela exportação da 3.6); **3.7** mensagens aos alunos (o personal decide o envio e responde pela autorização; sem dado de saúde); **3.8** link do treino à distância (sem senha, validade de 24 horas a 30 dias, enviar só ao próprio aluno); **3.9** lixeira de 30 dias; **9** suporte: Central de ajuda, botão "Reportar um problema" e contato@personalperto.com.br.
+- ✅ Testes (`termosImportacao.test.ts`) ligam as promessas ao código: validade do link (`VALIDADES_HORAS`, `VALIDADE_MAXIMA_HORAS`), lixeira (`LIXEIRA_DIAS`) e o texto do botão de suporte. `versoesRegistradas.test.ts` exige a migration da versão.
+- 📌 **Sem re-aceite por enquanto** (decisão do dono: a base de hoje é de testes). Reabrir antes de ter clientes reais: quem já tem conta não é chamado a aceitar versões novas; só quem se cadastra aceita a vigente.
+- ⏳ Ainda sem texto: "fase Beta" (1.3) e o limite de responsabilidade (6.2), que o jurídico avalia. `docs/TERMOS-SUGESTOES.md` fica como histórico (A a F já aplicadas).
+- ⚠️ **Rodar a migration `20261076000000_termos_1_6.sql` ANTES do merge** (registra a versão 1.6; sem ela o cadastro novo é recusado).
