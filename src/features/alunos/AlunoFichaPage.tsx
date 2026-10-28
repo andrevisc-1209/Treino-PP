@@ -366,18 +366,6 @@ export function AlunoFichaPage() {
 
           <FinanceiroBlock alunoId={aluno.id} />
 
-          {consentimento && (
-            <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
-              <p className="text-sm text-slate-600">
-                Consentimento LGPD v{consentimento.consent_version} em {formatarDataBR(consentimento.consented_at)} · {rotuloMetodoConsentimento(consentimento.method)}
-                {consentimento.method === 'papel' && <span className="mt-0.5 block text-xs text-slate-500">{LEMBRETE_PROVA_CONSENTIMENTO}</span>}
-              </p>
-              <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
-                Revogar
-              </Button>
-            </div>
-          )}
-
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2 font-semibold">
@@ -408,6 +396,18 @@ export function AlunoFichaPage() {
               !registrandoPeso && <p className="text-sm text-slate-500">Nenhuma avaliação registrada ainda.</p>
             )}
           </div>
+
+          {consentimento && (
+            <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-600">
+                Consentimento LGPD v{consentimento.consent_version} em {formatarDataBR(consentimento.consented_at)} · {rotuloMetodoConsentimento(consentimento.method)}
+                {consentimento.method === 'papel' && <span className="mt-0.5 block text-xs text-slate-500">{LEMBRETE_PROVA_CONSENTIMENTO}</span>}
+              </p>
+              <Button variant="ghost" onClick={handleRevogar} disabled={revogar.isPending} className="shrink-0 text-red-600">
+                Revogar
+              </Button>
+            </div>
+          )}
 
           {aluno.active ? (
             <div className="space-y-1">

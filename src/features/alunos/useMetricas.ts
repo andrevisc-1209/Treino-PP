@@ -55,3 +55,17 @@ export function useAlunosSemTreinoRecente() {
 export function useListaAlunosSemTreino() {
   return useSemTreinoRecente((alunos) => alunos)
 }
+
+/** Data (AAAA-MM-DD) do último treino concluído de cada aluno; quem nunca treinou não aparece no mapa. */
+export function useUltimaSessaoPorAluno() {
+  return useQuery({
+    queryKey: ['metricas', 'ultima-sessao-por-aluno'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('sessoes').select('aluno_id, session_date').eq('status', 'concluida').order('session_date', { ascending: false })
+      if (error) throw error
+      const ultima = new Map<string, string>()
+      for (const s of data) if (!ultima.has(s.aluno_id)) ultima.set(s.aluno_id, s.session_date)
+      return ultima
+    },
+  })
+}
