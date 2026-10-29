@@ -10,6 +10,7 @@ import { mostrarErroGlobal } from '@/components/Toast'
 import { BotaoSairModoFoco } from '@/components/SairModoFoco'
 import { cn, formatarTelefone, idade } from '@/lib/utils'
 import { dataSP } from '@/lib/datas'
+import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { formatarDataBR, formatarNumero, formatarPesoKg, formatarSexo } from '@/lib/format'
 import { BottomSheet, Button, ChipsMultiSelect, Field, Input } from '@/components/ui'
 import { enviarConsentimentoSaude, useAluno, useAlunos, useConsentimentoAtivo, useConsentimentoSaude, usePesos, useSalvarAluno, type EnvioConsentimento } from './api'
@@ -57,6 +58,8 @@ const schema = z
     weight_kg: z.preprocess(numOrUndef, z.number().positive('Peso inválido').optional()),
     phone: z.string().max(30, 'Máximo 30 caracteres').optional(),
     email: z.preprocess((v) => (v === '' ? undefined : v), z.string().email('E-mail inválido').max(254, 'Máximo 254 caracteres').optional()),
+    cpf: z.preprocess((v) => (v === '' ? undefined : v), z.string().refine(validarCPF, 'CPF inválido').optional()),
+    endereco: z.string().max(200, 'Máximo 200 caracteres').optional(),
 
     objetivos: z.array(z.string()),
     objetivo_notes: z.string().max(2000, 'Máximo 2000 caracteres').optional(),
@@ -127,7 +130,7 @@ const schema = z
 type FormInput = z.input<typeof schema>
 type FormOutput = z.output<typeof schema>
 
-const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'phone', 'email', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'nome_prova', 'data_prova'] as const
+const STEP1_FIELDS = ['name', 'birth_date', 'sex', 'phone', 'email', 'cpf', 'endereco', 'objetivos', 'objetivo_notes', 'modalidade_foco', 'prova_alvo', 'nome_prova', 'data_prova'] as const
 const STEP2_FIELDS = [
   'lgpd_consent',
   'height_cm',
@@ -238,6 +241,8 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
         weight_kg: pesos?.[0]?.weight_kg,
         phone: aluno.phone ?? '',
         email: aluno.email ?? '',
+        cpf: aluno.cpf ? mascararCPF(aluno.cpf) : '',
+        endereco: aluno.endereco ?? '',
         objetivos: aluno.objetivos,
         objetivo_notes: aluno.objetivo_notes ?? '',
         modalidade_foco: aluno.modalidade_foco ?? '',
@@ -510,6 +515,18 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
 
             <Field label="E-mail" error={formState.errors.email?.message}>
               <Input type="email" {...register('email')} autoComplete="email" />
+            </Field>
+
+            <Field label="CPF (opcional, para o contrato)" error={formState.errors.cpf?.message}>
+              <Controller
+                control={control}
+                name="cpf"
+                render={({ field }) => <Input inputMode="numeric" placeholder="000.000.000-00" value={String(field.value ?? '')} onChange={(e) => field.onChange(mascararCPF(e.target.value))} />}
+              />
+            </Field>
+
+            <Field label="Endereço (opcional, para o contrato)" error={formState.errors.endereco?.message}>
+              <Input {...register('endereco')} autoComplete="street-address" placeholder="Rua, número, bairro, cidade/UF" />
             </Field>
 
             <Field label="Objetivos" error={formState.errors.objetivos?.message}>
