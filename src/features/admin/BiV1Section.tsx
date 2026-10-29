@@ -24,6 +24,7 @@ import {
   SEM_FILTROS,
   SITUACOES_BI,
   type FiltrosBI,
+  type FunilBI,
   type MetaBI,
   type SituacaoBI,
 } from './biV1'
@@ -42,7 +43,7 @@ function Cartao({ titulo, children, id }: { titulo: string; children: React.Reac
 }
 
 /** Meta de pagantes: barra de progresso, ritmo necessário × real e a curva dos últimos dias (acumulado de quem já pagou). */
-function BlocoMeta({ meta }: { meta: MetaBI }) {
+export function BlocoMeta({ meta }: { meta: MetaBI }) {
   const hoje = hojeSP()
   const p = progressoDaMeta(meta.pagantes_ativos, hoje)
   const real = ritmoSemanal(meta.serie)
@@ -88,11 +89,53 @@ function BlocoMeta({ meta }: { meta: MetaBI }) {
   )
 }
 
+/** "Quem precisa de ação agora": personais com trial acabando sem ativação, pagantes sem uso e planos vencendo, com atalho de WhatsApp. */
+export function CartaoAcao({ lista }: { lista: ReturnType<typeof useAdminListaAcao> }) {
+  return (
+    <Cartao id="bi1-acao" titulo={`Quem precisa de ação agora${lista.data ? ` (${lista.data.length})` : ''}`}>
+      {lista.isLoading && <ListaSkeleton linhas={2} />}
+      {lista.error && <p className="text-sm text-red-600">{mapearErroSupabase(lista.error)}</p>}
+      {lista.data && lista.data.length === 0 && <p className="text-sm text-slate-600">Ninguém pede ação agora. 👏</p>}
+      <ul className="divide-y divide-slate-100">
+        {(lista.data ?? []).map((i) => {
+          const whats = linkContatoPersonal(i.telefone)
+          return (
+            <li key={`${i.professional_id}-${i.motivo}`} className="flex items-center gap-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-800">
+                  {i.nome || '—'} <span className="font-normal text-slate-500">· {i.cidade ?? 'Não informado'}</span>
+                </p>
+                <p className="text-xs text-slate-600">
+                  <span
+                    className={cn(
+                      'mr-1 inline-block rounded-full px-2 py-0.5 font-medium',
+                      i.motivo === 'trial_sem_ativacao' ? 'bg-amber-100 text-amber-900' : i.motivo === 'pagante_sem_uso' ? 'bg-red-100 text-red-900' : 'bg-brand-soft text-brand-hover',
+                    )}
+                  >
+                    {ROTULO_MOTIVO[i.motivo]}
+                  </span>
+                  {detalheDoMotivo(i)}
+                </p>
+              </div>
+              {whats ? (
+                <a href={whats} target="_blank" rel="noopener noreferrer" aria-label={`Chamar ${i.nome} no WhatsApp`} className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 active:bg-emerald-50">
+                  <MessageCircle size={16} aria-hidden /> WhatsApp
+                </a>
+              ) : (
+                <span className="shrink-0 text-xs text-slate-500">sem telefone</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Cartao>
+  )
+}
+
 export function BiV1Section({ dias }: { dias: number }) {
   const [filtros, setFiltros] = useState<FiltrosBI>(SEM_FILTROS)
   const [investimentoTexto, setInvestimentoTexto] = useState('')
   const { data, isLoading, error } = useAdminBIv1(dias, filtros)
-  const lista = useAdminListaAcao()
   const regioes = useAdminRegioes()
 
   const cidadesOpcoes = (regioes.data ?? []).map((r) => r.cidade)
@@ -113,51 +156,12 @@ export function BiV1Section({ dias }: { dias: number }) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Target size={18} className="text-brand-hover" aria-hidden />
-        <h2 className="font-heading font-semibold text-accent">Meta, funil e ações</h2>
+        <h2 className="font-heading font-semibold text-accent">Funil, cidades e origens</h2>
+        <Link to="/admin?aba=geral" className="ml-auto inline-flex min-h-11 items-center text-sm font-medium text-brand-hover underline">Meta e ações ficam na Visão geral</Link>
       </div>
 
       {isLoading && <ListaSkeleton linhas={3} />}
       {error && <p className="py-4 text-sm text-red-600">{mapearErroSupabase(error)}</p>}
-      {data && <BlocoMeta meta={data.meta} />}
-
-      <Cartao id="bi1-acao" titulo={`Quem precisa de ação agora${lista.data ? ` (${lista.data.length})` : ''}`}>
-        {lista.isLoading && <ListaSkeleton linhas={2} />}
-        {lista.error && <p className="text-sm text-red-600">{mapearErroSupabase(lista.error)}</p>}
-        {lista.data && lista.data.length === 0 && <p className="text-sm text-slate-600">Ninguém pede ação agora. 👏</p>}
-        <ul className="divide-y divide-slate-100">
-          {(lista.data ?? []).map((i) => {
-            const whats = linkContatoPersonal(i.telefone)
-            return (
-              <li key={`${i.professional_id}-${i.motivo}`} className="flex items-center gap-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-800">
-                    {i.nome || '—'} <span className="font-normal text-slate-500">· {i.cidade ?? 'Não informado'}</span>
-                  </p>
-                  <p className="text-xs text-slate-600">
-                    <span
-                      className={cn(
-                        'mr-1 inline-block rounded-full px-2 py-0.5 font-medium',
-                        i.motivo === 'trial_sem_ativacao' ? 'bg-amber-100 text-amber-900' : i.motivo === 'pagante_sem_uso' ? 'bg-red-100 text-red-900' : 'bg-brand-soft text-brand-hover',
-                      )}
-                    >
-                      {ROTULO_MOTIVO[i.motivo]}
-                    </span>
-                    {detalheDoMotivo(i)}
-                  </p>
-                </div>
-                {whats ? (
-                  <a href={whats} target="_blank" rel="noopener noreferrer" aria-label={`Chamar ${i.nome} no WhatsApp`} className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 active:bg-emerald-50">
-                    <MessageCircle size={16} aria-hidden /> WhatsApp
-                  </a>
-                ) : (
-                  <span className="shrink-0 text-xs text-slate-500">sem telefone</span>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </Cartao>
-
       <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center" role="group" aria-label="Filtros do funil, das cidades e das origens">
         <p className="text-sm font-medium text-slate-600 sm:mr-1">Filtrar funil, cidades e origens:</p>
         <select aria-label="Cidade" value={filtros.cidade} onChange={(e) => setFiltros((f) => ({ ...f, cidade: e.target.value }))} className={sel}>
@@ -197,6 +201,11 @@ export function BiV1Section({ dias }: { dias: number }) {
             <p className="mb-3 text-xs text-slate-500">
               Cada linha mostra quantos chegaram à etapa e a % do total de cadastros. “Pagou” conta quem já pagou ou tem plano pago, mesmo sem ter passado por todas as etapas (por exemplo, plano liberado por você).
             </p>
+            {gargalo && (
+              <p className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+                Maior perda: <strong>{gargalo.rotulo}</strong> (só {gargalo.pctDaAnterior}% de quem chegou na etapa anterior).
+              </p>
+            )}
             {data.funil.cadastrou === 0 ? (
               <p className="text-sm text-slate-600">Ninguém se cadastrou neste período com esses filtros.</p>
             ) : (
@@ -221,11 +230,6 @@ export function BiV1Section({ dias }: { dias: number }) {
                   </li>
                 ))}
               </ul>
-            )}
-            {gargalo && (
-              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
-                Maior perda: <strong>{gargalo.rotulo}</strong> (só {gargalo.pctDaAnterior}% de quem chegou na etapa anterior).
-              </p>
             )}
           </Cartao>
 
@@ -326,5 +330,39 @@ export function BiV1Section({ dias }: { dias: number }) {
         </>
       )}
     </div>
+  )
+}
+
+/** Funil resumido da Visão geral: a maior perda primeiro e as cinco etapas em uma linha cada. */
+export function FunilCompacto({ funil }: { funil: FunilBI }) {
+  const etapas = etapasDoFunil(funil)
+  const gargalo = maiorGargalo(etapas)
+  return (
+    <Cartao id="geral-funil" titulo="Funil de ativação (cadastros dos últimos 30 dias)">
+      {funil.cadastrou === 0 ? (
+        <p className="text-sm text-slate-600">Ninguém se cadastrou nos últimos 30 dias.</p>
+      ) : (
+        <>
+          {gargalo && (
+            <p className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+              Maior perda: <strong>{gargalo.rotulo}</strong> (só {gargalo.pctDaAnterior}% de quem chegou na etapa anterior).
+            </p>
+          )}
+          <ul className="divide-y divide-slate-100 text-sm">
+            {etapas.map((e) => (
+              <li key={e.chave} className="flex items-baseline justify-between gap-2 py-1.5">
+                <span className="text-slate-700">{e.rotulo}</span>
+                <span className="text-slate-700">
+                  <strong>{e.valor}</strong> · {e.pctDoInicio}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <Link to="/admin?aba=indicadores" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+        Ver análise completa em Indicadores
+      </Link>
+    </Cartao>
   )
 }
