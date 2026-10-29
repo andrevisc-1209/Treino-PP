@@ -1462,7 +1462,7 @@ Origem: auditoria de UX do painel admin (itens 133 e 134); aprovada em 28/10/202
 - ✅ **Filtros de um clique com contador:** Trial acabando (3 dias), Sem treinos em 30 dias, Sem alunos, Vencidos.
 - ✅ **Ordenação:** nome, acesso que acaba primeiro, menos treinos em 30 dias.
 - ✅ Funciona também nos cartões do celular. Testes novos para situação, uso, filtros e ordenação.
-- ⏳ **Última atividade** (data do último uso) por personal: precisa de uma migration (a função de métricas não devolve isso hoje); vai junto do PR 4 (registrar contato).
+- ✅ **Última atividade** por personal entrou no item 136 (precisava de migration).
 - ⚠️ Não testado ao vivo no navegador (precisa da conta admin).
 
 ### 136. Painel admin: registrar contato, adiar alerta e última atividade (PR 4 da auditoria de UX) — ✅ PR aberta
