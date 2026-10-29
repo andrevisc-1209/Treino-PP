@@ -8,6 +8,7 @@ import type { MetricasPersonal } from './personais'
 import { normalizarFinanceiro } from './financeiro'
 import { normalizarBI, type PeriodoBI } from './bi'
 import { normalizarIndicacoes } from './indicacoes'
+import { normalizarResumoAdmin } from '@/features/agenda/resumoPublica'
 import { normalizarAtividade, normalizarContatos, normalizarResumoContatos, type CanalContato, type ResultadoContato } from './contatos'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
@@ -357,5 +358,17 @@ export function useAdminRegistrarContato() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
+  })
+}
+
+/** Totais da página pública da agenda (sem nome, telefone ou mensagem de visitante). */
+export function useAdminAgendaPublica() {
+  return useQuery({
+    queryKey: ['admin', 'agenda-publica'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_agenda_publica_resumo')
+      if (error) throw error
+      return normalizarResumoAdmin(data)
+    },
   })
 }

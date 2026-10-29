@@ -1,5 +1,6 @@
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { normalizarPedidos, type PedidoAgenda } from './pedidos'
+import { normalizarResumo } from './resumoPublica'
 import { janelasDosDias, type JanelaSemanal, type ParametrosAgenda } from './disponibilidade'
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -785,6 +786,20 @@ export function useAprovarPedido() {
       void qc.invalidateQueries({ queryKey: ['pedidos-agenda'] })
       void qc.invalidateQueries({ queryKey: ['aulas'] })
       void qc.invalidateQueries({ queryKey: ['alunos'] })
+    },
+  })
+}
+
+/** Números da página pública (pedidos da semana, pendentes, tempo de resposta, aulas realizadas pelo link). Erro (migration ainda não rodada) = sem cartão. */
+export function useResumoAgendaPublica(ativo: boolean) {
+  return useQuery({
+    queryKey: ['pedidos-agenda', 'resumo'],
+    enabled: ativo,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('resumo_agenda_publica')
+      if (error) throw error
+      return normalizarResumo(data)
     },
   })
 }
