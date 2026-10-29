@@ -111,8 +111,8 @@ describe('relatório completo do ciclo', () => {
   })
   it('fechamento: pago mostra a data; em aberto leva o Pix só quando enviado; cancelada não tem', () => {
     expect(fechamentoDaFatura({ status: 'paga', paga_em: '2026-10-28', vencimento: null })).toEqual({ tipo: 'pago', pagaEm: '2026-10-28' })
-    expect(fechamentoDaFatura({ status: 'aberta', paga_em: null, vencimento: '2026-11-05' })).toEqual({ tipo: 'aberto', vencimento: '2026-11-05', pixQrDataUrl: null })
-    expect(fechamentoDaFatura({ status: 'enviada', paga_em: null, vencimento: null }, 'data:x')).toMatchObject({ pixQrDataUrl: 'data:x' })
+    expect(fechamentoDaFatura({ status: 'aberta', paga_em: null, vencimento: '2026-11-05' })).toEqual({ tipo: 'aberto', vencimento: '2026-11-05', pix: null })
+    expect(fechamentoDaFatura({ status: 'enviada', paga_em: null, vencimento: null }, { payload: '000201', recebedor: 'André' })).toMatchObject({ pix: { payload: '000201', recebedor: 'André' } })
     expect(fechamentoDaFatura({ status: 'cancelada', paga_em: null, vencimento: null })).toBeUndefined()
   })
   it('métricas de treino: somadas quando existem; seção omitida quando não há dado', () => {
@@ -168,18 +168,37 @@ describe('relatório completo do ciclo', () => {
     expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
   })
   it('relatório mensal: sem coluna Valor, nome do arquivo próprio e PDF gerado sem parte financeira', async () => {
-    const mensal: DadosRelatorio = { ...dados, modelo: 'mensal', semFinanceiro: true, total: 0, ajuste: 0, ajusteDescricao: null, periodoInicio: '2026-10-01', periodoFim: '2026-10-31', geradoEm: '2026-11-02' }
+    const mensal: DadosRelatorio = { ...dados, modelo: 'mensal', semFinanceiro: true, mensal: true, total: 0, ajuste: 0, ajusteDescricao: null, periodoInicio: '2026-10-01', periodoFim: '2026-10-31', geradoEm: '2026-11-02' }
     expect(cabecalhoDaTabela(mensal)).not.toContain('Valor')
     expect(cabecalhoDaTabela({ ...mensal, modelo: 'por_aula' })).not.toContain('Valor')
     expect(nomeArquivoRelatorio('Bruno Paulo', '2026-10-31', 'relatorio-mensal')).toBe('relatorio-mensal-bruno-paulo-out-2026.pdf')
     expect(statusDoCiclo(mensal)).toBe('encerrado')
-    const doc = await gerarRelatorioCompleto(mensal)
+    const doc = await gerarRelatorioCompleto(mensal, null, { comprimir: false })
     expect(String.fromCharCode(...new Uint8Array(doc.output('arraybuffer')).slice(0, 5))).toBe('%PDF-')
     const conteudo = doc.output()
     expect(conteudo).toContain('RELAT')
     expect(conteudo).toContain('no mês')
     expect(conteudo).not.toContain('R$')
     expect(conteudo).not.toContain('Total')
+  })
+  it('cobrança + Pix na primeira página: o PDF de um ciclo curto tem 1 página, com QR vetorial e copia e cola escrito', async () => {
+    const payload = '00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-4266141740005204000053039865406200.005802BR5913ANDRE SCHERER6009SAO PAULO62070503***6304ABCD'
+    const d: DadosRelatorio = { ...dados, total: 200, ajuste: 0, ajusteDescricao: null, fechamento: { tipo: 'aberto', vencimento: '2026-10-31', pix: { payload, recebedor: 'André Scherer' } } }
+    const doc = await gerarRelatorioCompleto(d, null, { comprimir: false })
+    expect(doc.getNumberOfPages()).toBe(1)
+    const conteudo = doc.output()
+    expect(conteudo).toContain('André Scherer')
+    expect(conteudo).toContain('00020126580014br.gov.bcb.pix')
+  })
+  it('sem Pix incluído o PDF não leva nenhum código de pagamento', async () => {
+    const doc = await gerarRelatorioCompleto({ ...dados, fechamento: { tipo: 'aberto', vencimento: '2026-10-31', pix: null } }, null, { comprimir: false })
+    expect(doc.output()).not.toContain('br.gov.bcb.pix')
+  })
+  it('ciclo com a cobrança desligada: sem valores e sem Pix, com o fecho de aulas do ciclo', async () => {
+    const doc = await gerarRelatorioCompleto({ ...dados, semFinanceiro: true }, null, { comprimir: false })
+    const conteudo = doc.output()
+    expect(conteudo).not.toContain('R$')
+    expect(conteudo).toContain('no ciclo')
   })
 })
 

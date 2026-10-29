@@ -66,6 +66,8 @@ export function FaturaPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   // o Pix só vai no relatório quando o personal pede (o PDF circula) e só enquanto a fatura está em aberto
   const [incluirPix, setIncluirPix] = useState(false)
+  // a cobrança (valor, vencimento, status) vai no relatório por padrão; desligada, o relatório fica só com o acompanhamento
+  const [incluirCobranca, setIncluirCobranca] = useState(true)
   const [copiado, setCopiado] = useState<'mensagem' | 'pix' | null>(null)
   // O recibo abre sozinho logo depois de fechar o ciclo (?recibo=1) e pelo botão "Ver recibo".
   const reciboAberto = searchParams.get('recibo') === '1'
@@ -133,7 +135,7 @@ export function FaturaPage() {
   if (!fatura) return <p className="p-4 text-slate-500">Fatura não encontrada.</p>
 
   const dadosRelatorio: DadosRelatorio | null =
-    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirPix ? qrDataUrl : null)) } : null
+    itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirCobranca && incluirPix && pixPayload ? { payload: pixPayload, recebedor: config?.pix_nome ?? null } : null)), semFinanceiro: !incluirCobranca } : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)
@@ -245,9 +247,15 @@ export function FaturaPage() {
               <FileText size={18} /> Ver recibo
             </Button>
           )}
-          {fatura.status !== 'cancelada' && fatura.status !== 'paga' && qrDataUrl && (
+          {fatura.status !== 'cancelada' && (
             <label className="mt-3 flex min-h-11 items-center justify-between gap-3 text-sm">
-              <span>Incluir o QR Code Pix no relatório</span>
+              <span>Incluir a cobrança no relatório</span>
+              <input type="checkbox" checked={incluirCobranca} onChange={(e) => setIncluirCobranca(e.target.checked)} className="size-5 accent-brand" />
+            </label>
+          )}
+          {fatura.status !== 'cancelada' && fatura.status !== 'paga' && incluirCobranca && pixPayload && (
+            <label className="mt-1 flex min-h-11 items-center justify-between gap-3 text-sm">
+              <span>Incluir o Pix (QR Code e copia e cola)</span>
               <input type="checkbox" checked={incluirPix} onChange={(e) => setIncluirPix(e.target.checked)} className="size-5 accent-brand" />
             </label>
           )}

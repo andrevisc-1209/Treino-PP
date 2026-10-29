@@ -33,6 +33,8 @@ export type ItemRecibo = {
   volume?: Volume
   /** Tempo registrado no resultado da execução (min), fora da musculação. */
   duracao_execucao_min?: number | null
+  /** A aula (presença, falta ou cancelamento) foi cobrada. Itens de uma fatura são todos cobrados. */
+  cobrar?: boolean | null
   /** Execução (treino à distância ou de outra modalidade) ligada a esta aula. */
   execucao_id?: string | null
   /** Maior carga (kg) feita em cada exercício da sessão. */
@@ -163,6 +165,8 @@ export type ResumoModalidade = {
   aDistanciaSemCobranca: number
   /** o que foi registrado, só com valor > 0: "12,4 km", "3,2 km nadados", "13 séries"… (vazio = só a contagem de aulas) */
   numeros: string[]
+  /** o número que merece destaque no relatório ("12,4 km", "13 séries"); null se a modalidade não registrou nada */
+  destaque: string | null
 }
 
 const km = (v: number) => `${formatarNumero(Math.round(v * 10) / 10)} km`
@@ -206,10 +210,27 @@ export function resumoPorModalidade(itens: ItemRecibo[]): ResumoModalidade[] {
         else if (v.ciclismoMin > 0) numeros.push(`${minutos(v.ciclismoMin)} de bike`)
         if (v.corridaKm > 0) numeros.push(`${km(v.corridaKm)} de corrida`)
       }
+      const kmTotal = v.natacaoKm + v.ciclismoKm + v.corridaKm
+      const destaque =
+        modalidade === 'musculacao'
+          ? series > 0
+            ? `${series} ${series === 1 ? 'série' : 'séries'}`
+            : null
+          : modalidade === 'natacao'
+            ? v.natacaoKm >= 1
+              ? km(v.natacaoKm)
+              : v.natacaoKm > 0
+                ? `${formatarNumero(Math.round(v.natacaoKm * 1000))} m`
+                : null
+            : kmTotal > 0
+              ? km(kmTotal)
+              : v.ciclismoMin > 0
+                ? minutos(v.ciclismoMin)
+                : null
       const tempo = lista.reduce((a, i) => a + (duracaoConfiavel(i.duracao_sessao_min) ?? duracaoConfiavel(i.duracao_execucao_min) ?? 0), 0)
       if (tempo > 0) numeros.push(minutos(tempo))
       const cfg = MODALIDADES_CONFIG[modalidade as keyof typeof MODALIDADES_CONFIG]
-      return { modalidade, rotulo: cfg.label, emoji: cfg.emoji, aulas: lista.filter((i) => !i.fora_da_cobranca).length, aDistanciaSemCobranca: lista.filter((i) => i.fora_da_cobranca).length, numeros }
+      return { modalidade, rotulo: cfg.label, emoji: cfg.emoji, aulas: lista.filter((i) => !i.fora_da_cobranca).length, aDistanciaSemCobranca: lista.filter((i) => i.fora_da_cobranca).length, numeros, destaque }
     })
 }
 
@@ -227,3 +248,24 @@ export function frequenciaMedia(itens: ItemRecibo[]): number | null {
   const total = semanas.reduce((a, s) => a + s.valor, 0)
   return Math.round((total / semanas.length) * 10) / 10
 }
+
+/**
+ * Assiduidade: aulas realizadas de aulas que contavam. Falta e cancelamento só entram na conta quando foram COBRADOS (o personal decide
+ * isso aula a aula); sem nenhum deles, não há o que mostrar (null) e o relatório fica só com "aulas realizadas".
+ */
+export function assiduidade(itens: ItemRecibo[]): { realizadas: number; previstas: number; faltasCobradas: number } | null {
+  const doCiclo = itens.filter((i) => !i.fora_da_cobranca)
+  const realizadas = doCiclo.filter((i) => i.status === 'presente').length
+  const faltasCobradas = doCiclo.filter((i) => (i.status === 'falta' || i.status === 'cancelou') && i.cobrar !== false).length
+  return faltasCobradas > 0 ? { realizadas, previstas: realizadas + faltasCobradas, faltasCobradas } : null
+}
+
+/** Nota média do personal (0–10) e em quantos treinos; null se nenhum treino foi avaliado. */
+export function notaMedia(itens: ItemRecibo[]): { media: number; treinos: number } | null {
+  const notas = notasPorTreino(itens)
+  if (notas.length === 0) return null
+  return { media: Math.round((notas.reduce((a, n) => a + n.valor, 0) / notas.length) * 10) / 10, treinos: notas.length }
+}
+
+/** O gráfico de nota só aparece com 5 treinos avaliados ou mais; antes disso, vale a média. */
+export const MINIMO_NOTAS_PARA_GRAFICO = 5

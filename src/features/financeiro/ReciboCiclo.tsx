@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Check, FileDown, Share2, X } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { APP_NAME } from '@/config/app'
-import iconMark from '@/assets/brand/icon-mark.png'
+import logoPP from '@/assets/brand/logo-personal-perto-sm.png'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
@@ -14,7 +14,7 @@ import { avaliacaoDaFatura } from './avaliacao'
 import { evolucaoDoCiclo } from './evolucaoDoCiclo'
 import type { Fatura } from './api'
 import { baixarRelatorioCompleto, dadosRelatorioDeFatura, extrasDaFatura, statusDoCiclo } from './relatorio'
-import { frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoPorModalidade, resumoRecibo, textoCompartilharRecibo, textoResumoModalidade } from './recibo'
+import { MINIMO_NOTAS_PARA_GRAFICO, frequenciaSemanal, notasPorTreino, ordenarItens, pseMedioPorSemana, resumoPorModalidade, resumoRecibo, textoCompartilharRecibo, textoResumoModalidade } from './recibo'
 
 const NAVY = '#0f2537'
 const VERDE = '#367c39'
@@ -139,7 +139,9 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
       <div className="mx-auto max-w-2xl space-y-4 p-4 pb-10 print:p-0">
         <header className="recibo-bloco overflow-hidden rounded-2xl" style={{ background: NAVY }}>
           <div className="flex items-center gap-3 p-4">
-            <img src={iconMark} alt="" className="h-10 w-auto shrink-0" />
+            <span className="flex shrink-0 items-center rounded-lg bg-white px-2 py-1">
+              <img src={logoPP} alt="Personal Perto" className="h-9 w-auto" />
+            </span>
             <div className="min-w-0 text-white">
               <p className="text-xs uppercase tracking-wide text-white/60">Recibo · {APP_NAME}</p>
               <h1 className="truncate text-lg font-bold">{alunoNome}</h1>
@@ -298,8 +300,8 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
               </BlocoGrafico>
             )}
 
-            {notas.length >= 2 && (
-              <BlocoGrafico titulo="Avaliação do personal por treino (0–10)">
+            {notas.length >= MINIMO_NOTAS_PARA_GRAFICO && (
+              <BlocoGrafico titulo="Nota do personal por treino (0 a 10)">
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={notas} margin={{ top: 8, left: 0, right: 12 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
