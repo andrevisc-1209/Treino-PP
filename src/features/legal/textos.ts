@@ -1,5 +1,5 @@
 export const TERMOS_USO_VERSAO = '1.7'
-export const PRIVACIDADE_VERSAO = '1.10'
+export const PRIVACIDADE_VERSAO = '1.11'
 
 export const TERMOS_USO_TEXTO = `Termos e Condições de Uso (v${TERMOS_USO_VERSAO})
 
@@ -88,6 +88,7 @@ O operador responde solidariamente apenas quando descumpre a lei ou as instruç�
 • Código de indicação: guardamos o seu código e a ligação entre a conta de quem indicou e a de quem foi indicado, apenas para conceder o benefício do programa de indicação (execução de contrato — art. 7º, V). Quem indica vê só quantas indicações teve e quantas geraram benefício, nunca o nome, o e-mail ou qualquer dado de quem foi indicado.
 2.2. Dados dos alunos
 • Nome, contato, objetivos, horários e dados de treino: gestão da agenda e do acompanhamento pelo Personal Trainer.
+• CPF e endereço do aluno (opcionais): guardados no cadastro apenas para preencher o contrato de prestação de serviço que o Personal Trainer gera no app (execução de contrato — art. 7º, V). Ficam visíveis só ao Personal Trainer responsável, nunca à administração da plataforma, e não aparecem em relatórios, mensagens nem no arquivo de exportação.
 • Dados de saúde (sensíveis, art. 11): medidas corporais (altura, peso, percentual de gordura e circunferências), lesões, cirurgias, medicamentos e respostas de bem-estar e de esforço percebido. Só são registrados com o consentimento específico e destacado do aluno (art. 11, I), dado preferencialmente por link enviado pelo Personal Trainer ou, em alternativa, por termo escrito colhido e guardado pelo próprio Personal Trainer.
 • Mecanismo de consentimento: pelo link, o aluno aceita ou recusa digitalmente e o aceite registra data e hora, versão do termo e endereço IP, como prova do consentimento (esse registro não é exibido ao Personal Trainer). Quando o consentimento é colhido fora da plataforma, registramos apenas a declaração do Personal Trainer e a data; a prova do consentimento fica sob guarda e responsabilidade dele, como Controlador.
 • Menores de 18 anos: o consentimento deve ser dado pelo responsável legal (art. 14). O Personal Trainer é responsável por garantir isso antes de inserir os dados.

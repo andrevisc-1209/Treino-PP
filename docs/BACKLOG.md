@@ -1474,3 +1474,15 @@ Origem: auditoria de UX do painel admin (itens 133 a 135); aprovada em 28/10/202
 - ✅ Banco: tabela `admin_contatos` com RLS e leitura só do admin (escrita só pelas funções); funções `admin_registrar_contato`, `admin_contatos_resumo`, `admin_contatos_do_personal` e `admin_personais_atividade`, todas exigindo admin com MFA. Teste em `supabase/tests/admin_contatos_e_atividade.sql`.
 - ⏳ Depois: medir se contatar trial no fim converte mais (cruzar contatos com conversão); coortes e churn quando houver cerca de 20 pagantes.
 - ⚠️ Não testado ao vivo (precisa da conta admin com MFA e da migration aplicada): registrar um contato com "adiar 7 dias" e ver o alerta sair da Visão geral.
+
+### 137. Contrato do aluno (minuta em PDF na ficha) — ✅ PR aberta
+Origem: escuta ativa com um personal (28/10/2026): ele usa um contrato com regras próprias (pagamento, reposição, aviso de falta de 24 h, reajuste, trancamento); decisões do dono em 29/10/2026. **Tem migration** (`20261086000000_aluno_cpf_endereco.sql`): rodar no SQL Editor ANTES do merge.
+- ✅ Cartão **"Contrato"** na ficha do aluno: formulário e PDF A4 pronto para imprimir e assinar (`contrato-<aluno>-<ano>.pdf`). Nada é enviado nem assinado no app.
+- ✅ **Já vem preenchido** com nome, telefone e e-mail do aluno, nome, CPF e cidade do personal, forma de cobrança e valores (por aula, mensal ou pacote ativo) e o CPF e o endereço do aluno quando cadastrados. O que falta vira linha em branco para preencher à mão.
+- ✅ **Cadastro do aluno** ganha **CPF** (validado, com máscara) e **endereço**, opcionais. No contrato, o que o personal digitar pode ser **guardado no cadastro** (opção ligada por padrão). Não são dados de saúde: ficam nos campos gerais, visíveis só ao personal, fora do admin, dos relatórios, das mensagens e do CSV.
+- ✅ **Regras escolhidas pelo personal**, cada uma ligável: aviso mínimo para cancelar (padrão 12 h), falta sem aviso cobrada, reposição (mesmo mês, prazo em dias ou sem reposição), **multa e juros por atraso (padrão 2% e 1% ao mês; aviso ao passar de 2%, o limite do CDC)**, marcação prévia, horários conforme a agenda, perda do horário por faltas, reajuste com aviso prévio e, na mensal, trancamento com aviso e taxa. As últimas regras escolhidas ficam lembradas no aparelho.
+- ✅ **Menor de idade:** o formulário liga sozinho pela data de nascimento e pede nome e CPF do responsável legal (só no PDF, nunca guardados).
+- ✅ **Sem dado de saúde no contrato:** a cláusula de saúde só remete ao termo de consentimento do app. Rodapé: "Modelo-padrão… recomenda-se revisão antes do uso".
+- ✅ **Política de Privacidade 1.11** (CPF e endereço do aluno, para o contrato) registrada na migration junto com as colunas.
+- ⏳ **Antes de divulgar:** revisão do texto-base por um advogado. Etapa 2 (futura): guardar o contrato assinado (upload), com selo "contrato até…"; precisa de Storage, política de retenção e limites.
+- ⚠️ Não testado ao vivo (a migration ainda não foi aplicada) e o PDF não foi visto renderizado; conferir a 390 px e imprimir uma folha.

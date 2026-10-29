@@ -27,6 +27,23 @@ const comSaude: SalvarAlunoInput = {
   medications: 'losartana',
 }
 
+describe('CPF e endereço do aluno (para o contrato; não são dados de saúde)', () => {
+  it('CPF vai só com os dígitos e endereço sem espaços nas pontas; vazio vira null', () => {
+    const g = camposGerais({ ...base, cpf: '390.533.447-05', endereco: '  Rua A, 10  ' }, 'prof')
+    expect(g.cpf).toBe('39053344705')
+    expect(g.endereco).toBe('Rua A, 10')
+    const vazio = camposGerais({ ...base, cpf: '', endereco: '   ' }, 'prof')
+    expect(vazio.cpf).toBeNull()
+    expect(vazio.endereco).toBeNull()
+    expect(camposGerais(base, 'prof')).toMatchObject({ cpf: null, endereco: null })
+  })
+  it('ficam nos campos gerais, nunca nos clínicos (o banco só exige consentimento para os clínicos)', () => {
+    expect(COLUNAS_CLINICAS).not.toContain('cpf')
+    expect(COLUNAS_CLINICAS).not.toContain('endereco')
+    expect(Object.keys(camposClinicos({ ...base, cpf: '39053344705', endereco: 'Rua A' }))).not.toContain('cpf')
+  })
+})
+
 describe('payload do aluno: gerais x clínicos (o banco exige consentimento antes dos clínicos)', () => {
   it('o payload geral NUNCA carrega campo clínico', () => {
     const geral = camposGerais(comSaude, 'prof-1')

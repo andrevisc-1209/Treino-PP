@@ -28,6 +28,8 @@ export function camposGerais(input: SalvarAlunoInput, professionalId: string) {
     sex: input.sex || null,
     phone: input.phone || null,
     email: input.email || null,
+    cpf: input.cpf ? input.cpf.replace(/\D/g, '') : null,
+    endereco: input.endereco?.trim() || null,
     objetivos: input.objetivos,
     objetivo_notes: input.objetivos.includes('Outros') ? input.objetivo_notes || null : null,
     modalidade_foco: input.modalidade_foco || null,

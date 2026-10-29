@@ -14,6 +14,9 @@ export type Aluno = {
   height_cm: number | null
   phone: string | null
   email: string | null
+  /** só os 11 dígitos; opcional, usado para preencher o contrato */
+  cpf: string | null
+  endereco: string | null
   active: boolean
   /** quando foi para a lixeira (só aluno arquivado); some de vez 30 dias depois */
   apagado_em: string | null
@@ -239,6 +242,8 @@ export type SalvarAlunoInput = {
   height_cm?: number
   phone?: string
   email?: string
+  cpf?: string
+  endereco?: string
   weight_kg?: number
   objetivos: string[]
   objetivo_notes?: string
