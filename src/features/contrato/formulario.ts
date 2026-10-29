@@ -20,6 +20,8 @@ export type FormContrato = {
   valorPacote: string
   validadeDias: string
   vencimentoDia: string
+  /** cidade/UF do foro e da assinatura */
+  foro: string
   regras: RegrasContrato
 }
 
@@ -34,6 +36,8 @@ export type OrigemContrato = {
   horariosTexto: string
   /** local mais usado nos horários ou o primeiro local de treino do aluno */
   localSugerido: string
+  /** cidade/UF do perfil do personal */
+  foroSugerido: string
 }
 
 const numeroTexto = (n: number | null | undefined): string => (n === null || n === undefined ? '' : String(n).replace('.', ','))
@@ -59,6 +63,7 @@ export function formularioInicial(o: OrigemContrato): FormContrato {
     valorPacote: numeroTexto(o.pacote?.valor),
     validadeDias: numeroTexto(o.pacote?.validade_dias),
     vencimentoDia: '',
+    foro: o.foroSugerido,
     regras: { ...REGRAS_PADRAO, ...(o.regrasSalvas ?? {}) },
   }
 }
@@ -83,7 +88,7 @@ export function dadosDoFormulario(f: FormContrato, c: ContextoContrato): DadosCo
   const dia = lerNumero(f.vencimentoDia)
   return {
     personal: c.personal,
-    aluno: { nome: c.aluno.nome, cpf: soDigitos(f.cpf), endereco: f.endereco.trim() || null, telefone: c.aluno.telefone, email: c.aluno.email },
+    aluno: { nome: c.aluno.nome, cpf: soDigitos(f.cpf), endereco: f.endereco.trim().slice(0, 200) || null, telefone: c.aluno.telefone, email: c.aluno.email },
     responsavel: f.menor ? { nome: f.respNome.trim() || null, cpf: soDigitos(f.respCpf) } : null,
     modalidades: f.modalidades,
     local: f.local.trim(),
@@ -97,6 +102,7 @@ export function dadosDoFormulario(f: FormContrato, c: ContextoContrato): DadosCo
     validadeDias: lerNumero(f.validadeDias),
     vencimentoDia: dia === null ? null : Math.trunc(dia),
     regras: f.regras,
+    foro: f.foro.trim(),
     geradoEm: c.hoje,
   }
 }

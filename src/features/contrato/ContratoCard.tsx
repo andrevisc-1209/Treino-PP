@@ -102,7 +102,14 @@ function Formulario({ aluno, inicial, userId, contexto, onFechar }: { aluno: Alu
           <Input inputMode="numeric" placeholder="000.000.000-00" value={f.cpf} onChange={(e) => mudar('cpf', mascararCPF(e.target.value))} />
         </Field>
         <Field label="Endereço do aluno">
-          <Input value={f.endereco} maxLength={200} onChange={(e) => mudar('endereco', e.target.value)} placeholder="Rua, número, bairro, cidade/UF" />
+          <GooglePlacesAutocomplete
+            defaultValue={f.endereco}
+            onChangeTexto={(texto) => mudar('endereco', texto)}
+            onSelecionar={() => {}}
+            limparAoSelecionar={false}
+            somenteEndereco
+            placeholder="Busque o endereço ou digite (rua, número, bairro, cidade/UF)"
+          />
         </Field>
         {mudouNoCadastro(f, { cpf: aluno.cpf, endereco: aluno.endereco }) && (
           <Opcao ligado={f.salvarNoCadastro} onChange={(v) => mudar('salvarNoCadastro', v)}>
@@ -145,6 +152,10 @@ function Formulario({ aluno, inicial, userId, contexto, onFechar }: { aluno: Alu
         <Field label="Início do contrato">
           <Input type="date" value={f.inicio} onChange={(e) => mudar('inicio', e.target.value)} />
         </Field>
+        <Field label="Cidade do foro e da assinatura">
+          <Input value={f.foro} onChange={(e) => mudar('foro', e.target.value)} placeholder="Ex.: Rio de Janeiro/RJ" />
+        </Field>
+        <p className="text-xs text-slate-600">Já vem da cidade do seu perfil; altere se o foro for outro.</p>
       </Secao>
 
       <Secao titulo="Valor e pagamento">
@@ -289,6 +300,7 @@ function Folha({ aluno, onFechar }: { aluno: Aluno; onFechar: () => void }) {
     regrasSalvas: lerRegrasSalvas(guardado, userId),
     // horários e locais são só sugestão: se a busca falhar, o formulário abre em branco e o personal digita
     horariosTexto: descreverHorarios(horarios.data ?? [], hoje),
+    foroSugerido: [perfil.data?.cidade?.trim(), perfil.data?.uf?.trim()].filter(Boolean).join('/'),
     localSugerido: localDosHorarios(horarios.data ?? [], hoje) || (locais.data?.[0] ? `${locais.data[0].nome} — ${locais.data[0].endereco}` : ''),
   })
   return (

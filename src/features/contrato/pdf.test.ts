@@ -18,6 +18,7 @@ const d: DadosContrato = {
   validadeDias: null,
   vencimentoDia: 10,
   regras: { ...REGRAS_PADRAO, reajuste: true, perdaDoHorario: true, trancamento: true, trancamentoTaxaPct: 30 },
+  foro: 'Rio de Janeiro/RJ',
   geradoEm: '2026-10-29',
 }
 

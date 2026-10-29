@@ -11,6 +11,7 @@ const origem: OrigemContrato = {
   regrasSalvas: null,
   horariosTexto: '',
   localSugerido: '',
+  foroSugerido: 'Rio de Janeiro/RJ',
 }
 const contexto = { personal: { nome: 'André', cpf: '52998224725', cidade: 'Rio', uf: 'RJ' }, aluno: { nome: 'Maria', telefone: '(21) 9', email: null }, hoje: '2026-10-29' }
 
@@ -27,6 +28,14 @@ describe('formulário inicial', () => {
     const f = formularioInicial({ ...origem, horariosTexto: 'segundas e quartas, às 07:00', localSugerido: 'Academia X — Rua Y, 10' })
     expect(f).toMatchObject({ diasHorarios: 'segundas e quartas, às 07:00', local: 'Academia X — Rua Y, 10' })
     expect(dadosDoFormulario({ ...f, diasHorarios: 'terças, às 8h' }, contexto).diasHorarios).toBe('terças, às 8h')
+  })
+  it('o foro vem da cidade do perfil e pode ser trocado', () => {
+    const f = formularioInicial(origem)
+    expect(f.foro).toBe('Rio de Janeiro/RJ')
+    expect(dadosDoFormulario({ ...f, foro: ' Niterói/RJ ' }, contexto).foro).toBe('Niterói/RJ')
+  })
+  it('endereço do aluno é cortado em 200 caracteres (limite do banco)', () => {
+    expect(dadosDoFormulario({ ...formularioInicial(origem), endereco: 'a'.repeat(250) }, contexto).aluno.endereco).toHaveLength(200)
   })
   it('sem cobrança nem pacote começa em mensal; aluno menor liga o responsável; regras salvas sobrepõem o padrão', () => {
     const f = formularioInicial({ ...origem, cobranca: null, menor: true, regrasSalvas: { antecedenciaHoras: 24 } })

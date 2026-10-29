@@ -1492,3 +1492,9 @@ Origem: primeiro uso do contrato (29/10/2026). Só tela; sem migration.
 - ✅ **Local das aulas** usa a mesma busca de endereço do Google Places das telas de horário e de locais de treino do aluno (campo comum se a chave `VITE_GOOGLE_MAPS_API_KEY` não estiver configurada). Já vem preenchido com o local mais usado nos horários fixos do aluno ou, se não houver, com o primeiro local de treino cadastrado; continua editável.
 - ✅ **Dias e horários** já vêm dos horários fixos ativos do aluno, em texto ("segundas e quartas, às 07:00; sextas, às 18:30 (45 min)"), agrupando dias iguais; continuam editáveis. Horário inativo ou com data final vencida não entra.
 - ⚠️ Não testado ao vivo no navegador.
+
+### 139. Contrato: busca de endereço do aluno e cidade do foro — ✅ PR aberta
+Origem: uso do contrato (29/10/2026). Só tela; sem migration.
+- ✅ **Endereço do aluno** passa a usar a busca de endereços do Google (só endereços; o campo fica com o endereço completo, sem o "nome —" na frente). Sem a chave `VITE_GOOGLE_MAPS_API_KEY`, continua campo de texto. Cortado em 200 caracteres (limite do banco).
+- ✅ **Cidade do foro e da assinatura:** campo novo no formulário, já preenchido com a cidade e a UF do perfil do personal e editável. A mesma cidade vale para a cláusula do foro e para a linha "Cidade, data" antes das assinaturas.
+- ⚠️ Não testado ao vivo no navegador.

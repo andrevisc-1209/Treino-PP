@@ -60,6 +60,7 @@ export function GooglePlacesAutocomplete({
   placeholder,
   defaultValue,
   limparAoSelecionar = true,
+  somenteEndereco = false,
   onChangeTexto,
 }: {
   onSelecionar: (local: LocalSelecionado) => void
@@ -68,6 +69,8 @@ export function GooglePlacesAutocomplete({
   defaultValue?: string
   /** false pra campo único que deve mostrar "nome — endereço" depois de selecionar, em vez de limpar pra adicionar outro (ver LocaisTreinoBlock pro caso padrão). */
   limparAoSelecionar?: boolean
+  /** Endereço residencial: sugere só endereços e, ao escolher, o campo fica só com o endereço (sem o "nome —" na frente). */
+  somenteEndereco?: boolean
   /** Digitação livre, pra quando o campo também aceita texto sem passar pelo autocomplete. */
   onChangeTexto?: (texto: string) => void
 }) {
@@ -82,6 +85,7 @@ export function GooglePlacesAutocomplete({
       if (cancelado || !inputRef.current || !window.google) return
       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
         fields: ['name', 'formatted_address', 'place_id', 'url'],
+        ...(somenteEndereco ? { types: ['address'] } : {}),
       })
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace()
@@ -93,7 +97,7 @@ export function GooglePlacesAutocomplete({
         }
         onSelecionar(local)
         if (inputRef.current) {
-          const textoFinal = limparAoSelecionar ? '' : `${local.nome} — ${local.endereco}`
+          const textoFinal = limparAoSelecionar ? '' : somenteEndereco ? local.endereco : `${local.nome} — ${local.endereco}`
           inputRef.current.value = textoFinal
           onChangeTexto?.(textoFinal)
         }
