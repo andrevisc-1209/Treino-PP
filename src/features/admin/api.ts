@@ -8,6 +8,7 @@ import type { MetricasPersonal } from './personais'
 import { normalizarFinanceiro } from './financeiro'
 import { normalizarBI, type PeriodoBI } from './bi'
 import { normalizarIndicacoes } from './indicacoes'
+import { normalizarAtividade, normalizarContatos, normalizarResumoContatos, type CanalContato, type ResultadoContato } from './contatos'
 
 export type ResumoAdmin = { total_personais: number; total_alunos: number; regioes_ativas: number }
 
@@ -303,5 +304,58 @@ export function useAdminRevogarIndicacao() {
       qc.invalidateQueries({ queryKey: ['admin', 'bonus'] })
       qc.invalidateQueries({ queryKey: ['admin', 'historico'] })
     },
+  })
+}
+
+export function useAdminContatosResumo() {
+  return useQuery({
+    queryKey: ['admin', 'contatos-resumo'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_contatos_resumo')
+      if (error) throw error
+      return normalizarResumoContatos(data)
+    },
+  })
+}
+
+/** Último uso do app por personal (só a data); null = nunca usou além do cadastro. */
+export function useAdminAtividade() {
+  return useQuery({
+    queryKey: ['admin', 'atividade'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_personais_atividade')
+      if (error) throw error
+      return normalizarAtividade(data)
+    },
+  })
+}
+
+export function useAdminContatosDoPersonal(professionalId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'contatos', professionalId],
+    enabled: !!professionalId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_contatos_do_personal', { p_professional_id: professionalId })
+      if (error) throw error
+      return normalizarContatos(data)
+    },
+  })
+}
+
+export function useAdminRegistrarContato() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { professionalId: string; motivo: string; canal: CanalContato; resultado: ResultadoContato; observacao: string; adiarDias: number }) => {
+      const { error } = await supabase.rpc('admin_registrar_contato', {
+        p_professional_id: v.professionalId,
+        p_motivo: v.motivo,
+        p_canal: v.canal,
+        p_resultado: v.resultado,
+        p_observacao: v.observacao,
+        p_adiar_dias: v.adiarDias,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
   })
 }
