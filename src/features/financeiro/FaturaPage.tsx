@@ -19,7 +19,7 @@ import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
 import { AvaliacaoPersonalCard } from './AvaliacaoPersonalCard'
-import { BotaoRelatorioFatura } from './BotaoRelatorio'
+import { BotaoRelatorioFatura, BotaoResumoCobranca } from './BotaoRelatorio'
 import { dadosRelatorioDeFatura, extrasDaFatura, type DadosRelatorio } from './relatorio'
 import {
   useCancelarFatura,
@@ -136,6 +136,12 @@ export function FaturaPage() {
 
   const dadosRelatorio: DadosRelatorio | null =
     itensFatura && itensFatura.length > 0 ? { ...dadosRelatorioDeFatura(fatura, itensFatura, aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, incluirCobranca && incluirPix && pixPayload ? { payload: pixPayload, recebedor: config?.pix_nome ?? null } : null)), semFinanceiro: !incluirCobranca } : null
+
+  // resumo de cobrança (1 página): o Pix entra sempre que está configurado, porque o documento existe para cobrar
+  const dadosCobranca: DadosRelatorio | null =
+    fatura.status === 'aberta' || fatura.status === 'enviada'
+      ? dadosRelatorioDeFatura(fatura, itensFatura ?? [], aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, pixPayload ? { payload: pixPayload, recebedor: config?.pix_nome ?? null } : null))
+      : null
 
   const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
   const linkBase = linkWhatsApp(aluno?.phone)
@@ -260,6 +266,7 @@ export function FaturaPage() {
             </label>
           )}
           {fatura.status !== 'cancelada' && <BotaoRelatorioFatura dados={dadosRelatorio} />}
+          {dadosCobranca && <BotaoResumoCobranca dados={dadosCobranca} />}
         </div>
 
         {fatura.status !== 'cancelada' && <AvaliacaoPersonalCard fatura={fatura} />}

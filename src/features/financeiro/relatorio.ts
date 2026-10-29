@@ -7,7 +7,7 @@ import type { ModeloFatura } from './api'
 import { evolucaoDoCiclo } from './evolucaoDoCiclo'
 import { avaliacaoDaFatura, type AvaliacaoPersonal } from './avaliacao'
 import { ehModalidade, MODALIDADES_CONFIG } from '@/types/modalidades'
-import { assiduidade, frequenciaMedia, frequenciaSemanal, metricasDeTreino, MINIMO_NOTAS_PARA_GRAFICO, notaMedia, notasPorTreino, ordenarItens, resumoPorModalidade, resumoRecibo, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
+import { assiduidade, frequenciaMedia, frequenciaSemanal, metricasDeTreino, MINIMO_NOTAS_PARA_GRAFICO, notaMedia, notasPorTreino, ordenarItens, resumoPorModalidade, resumoRecibo, textoResumoModalidade, type ItemRecibo, type PontoNota, type PontoSemana } from './recibo'
 
 const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] as const
 
@@ -370,53 +370,12 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
   const largBloco = larg - margem * 2
   const geradoEm = dataGeracao(d.geradoEm ?? hojeSP())
 
-  const rodape = () => {
-    doc.setDrawColor(...LINHA)
-    doc.setLineWidth(0.3)
-    doc.line(margem, alt - 20, larg - margem, alt - 20)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(...CINZA)
-    doc.setFontSize(9)
-    doc.text(`Gerado via Treino · Personal Perto · ${geradoEm}`, larg / 2, alt - 14, { align: 'center' })
-    doc.setFontSize(8)
-    doc.text('Este documento é um resumo informativo e não tem valor fiscal.', larg / 2, alt - 9.5, { align: 'center' })
-  }
+  const rodape = () => desenharRodape(doc, geradoEm)
 
-  // --- Cabeçalho compacto: logo da marca à esquerda, identificação à direita ---
-  const alturaCab = 36
-  doc.setFillColor(...VERDE_ESCURO)
-  doc.rect(0, 0, larg, alturaCab, 'F')
-  let xTexto = margem
-  if (logoDataUrl) {
-    try {
-      const dim = dimensoesDoPng(logoDataUrl) ?? { w: 1485, h: 565 }
-      const hLogo = 17
-      const wLogo = Math.min(hLogo * (dim.w / dim.h), 52)
-      doc.setFillColor(255, 255, 255)
-      doc.roundedRect(margem, 8, wLogo + 6, 20, 3, 3, 'F')
-      doc.addImage(logoDataUrl, 'PNG', margem + 3, 9.5, wLogo, wLogo / (dim.w / dim.h))
-      xTexto = margem + wLogo + 12
-    } catch {
-      xTexto = margem
-    }
-  }
   const parcial = statusDoCiclo(d) === 'parcial'
   const quando = d.mensal ? 'do mês' : 'do ciclo'
   const situacao = parcial ? `Parcial ${quando}, atualizado em ${geradoEm}` : d.mensal ? 'Mês encerrado' : 'Ciclo encerrado'
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(200, 230, 201)
-  doc.text(d.mensal ? 'RELATÓRIO MENSAL DE ACOMPANHAMENTO' : 'RELATÓRIO DE ACOMPANHAMENTO', xTexto, 12)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(16)
-  doc.setTextColor(255, 255, 255)
-  doc.text(d.alunoNome, xTexto, 19.5, { maxWidth: larg - margem - xTexto })
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Personal: ${d.personalNome}`, xTexto, 25.5, { maxWidth: larg - margem - xTexto })
-  const lugares = locaisDoRelatorio(d)
-  doc.text(`${dm(d.periodoInicio)} a ${dm(d.periodoFim)} · ${situacao}`, xTexto, 30.5, { maxWidth: larg - margem - xTexto })
-  if (lugares.length === 1) doc.text(`Local: ${lugares[0]}`, xTexto, 34.5, { maxWidth: larg - margem - xTexto })
+  const alturaCab = desenharCabecalho(doc, d, logoDataUrl, d.mensal ? 'RELATÓRIO MENSAL DE ACOMPANHAMENTO' : 'RELATÓRIO DE ACOMPANHAMENTO', situacao)
 
   let y = alturaCab + 8
   const garantirEspaco = (altura: number) => {
@@ -498,68 +457,9 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
 
   // --- Resumo financeiro: valor, situação e Pix juntos, na primeira página (antes da tabela) ---
   if (!d.semFinanceiro) {
-    const f = d.fechamento
-    const pix = f?.tipo === 'aberto' ? f.pix : null
-    const ajusteTexto = d.ajuste !== 0 ? (doc.splitTextToSize(textoAjuste(d), pix ? largBloco - 56 : largBloco - 10) as string[]) : []
-    const alturaCard = Math.max(pix ? 40 : 26, 22 + ajusteTexto.length * 4.6)
-    const copiaCola = pix ? (doc.splitTextToSize(pix.payload, largBloco - 8) as string[]) : []
-    const alturaCopia = pix ? 12 + copiaCola.length * 3.2 : 0
-    garantirEspaco(alturaCard + alturaCopia + 8)
-    doc.setFillColor(...ZEBRA)
-    doc.setDrawColor(...LINHA)
-    doc.setLineWidth(0.3)
-    doc.roundedRect(margem, y, largBloco, alturaCard, 2.5, 2.5, 'FD')
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
-    doc.setTextColor(...NAVY)
-    doc.text('Resumo financeiro', margem + 5, y + 7)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(8.5)
-    doc.setTextColor(...CINZA)
-    doc.text(resumoTotalRelatorio(d).replace(/ · Total:.*/, '') + (d.modelo === 'pacote' ? ' · pacote de aulas' : ''), margem + 5, y + 12)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(20)
-    doc.setTextColor(...TOTAL_TEXTO)
-    doc.text(formatarBRL(d.total), margem + 5, y + 22)
-    let yy = y + 22
-    if (ajusteTexto.length > 0) {
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8.5)
-      doc.setTextColor(...AJUSTE_TEXTO)
-      doc.text(ajusteTexto, margem + 5, yy + 5)
-      yy += 4.6 * ajusteTexto.length
-    }
-    if (f) {
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(10)
-      doc.setTextColor(...(f.tipo === 'pago' ? TOTAL_TEXTO : NAVY))
-      doc.text(f.tipo === 'pago' ? `Pago em ${dataGeracao(f.pagaEm)}` : f.vencimento ? `Em aberto · vencimento ${dataGeracao(f.vencimento)}` : 'Em aberto', margem + 5, yy + 6.5)
-    }
-    if (pix) {
-      const lado = 32
-      const qx = larg - margem - lado - 4
-      desenharQr(doc, QRCode.create(pix.payload, { errorCorrectionLevel: 'M' }), qx, y + 4, lado)
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(...CINZA)
-      doc.text('Pague via Pix', qx + lado / 2, y + 4 + lado + 3.2, { align: 'center' })
-    }
-    y += alturaCard + 3
-    if (pix) {
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(...CINZA)
-      const intro = `${pix.recebedor ? `Recebedor: ${pix.recebedor}. ` : ''}Confira o valor e o recebedor no app do seu banco antes de confirmar. Pix copia e cola:`
-      const linhasIntro = doc.splitTextToSize(intro, largBloco) as string[]
-      doc.text(linhasIntro, margem, y + 3)
-      y += linhasIntro.length * 3.4 + 2
-      doc.setFont('courier', 'normal')
-      doc.setFontSize(7)
-      doc.setTextColor(...TEXTO)
-      doc.text(copiaCola, margem, y + 3)
-      y += copiaCola.length * 3.2 + 3
-    }
-    y += 5
+    const medida = medirResumoFinanceiro(doc, d, largBloco)
+    garantirEspaco(medida.alturaTotal)
+    y = desenharResumoFinanceiro(doc, QRCode, d, medida, y, larg, margem, largBloco)
   }
 
   // --- Tabela de aulas (compacta; continua na próxima página se for longa) ---
@@ -610,6 +510,134 @@ export async function gerarRelatorioCompleto(d: DadosRelatorio, logoDataUrl?: st
     doc.text(`${n} ${n === 1 ? 'aula realizada' : 'aulas realizadas'} ${d.mensal ? 'no mês' : 'no ciclo'}`, margem + 4, y + 9.3)
   }
   return doc
+}
+
+function desenharRodape(doc: Doc, geradoEm: string) {
+  const larg = doc.internal.pageSize.getWidth()
+  const alt = doc.internal.pageSize.getHeight()
+  const margem = 16
+  doc.setDrawColor(...LINHA)
+  doc.setLineWidth(0.3)
+  doc.line(margem, alt - 20, larg - margem, alt - 20)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...CINZA)
+  doc.setFontSize(9)
+  doc.text(`Gerado via Treino · Personal Perto · ${geradoEm}`, larg / 2, alt - 14, { align: 'center' })
+  doc.setFontSize(8)
+  doc.text('Este documento é um resumo informativo e não tem valor fiscal.', larg / 2, alt - 9.5, { align: 'center' })
+}
+
+/** Cabeçalho verde com a logo da marca à esquerda e a identificação à direita; devolve a altura ocupada. */
+function desenharCabecalho(doc: Doc, d: DadosRelatorio, logoDataUrl: string | null | undefined, titulo: string, situacao: string): number {
+  const larg = doc.internal.pageSize.getWidth()
+  const margem = 16
+  const alturaCab = 36
+  doc.setFillColor(...VERDE_ESCURO)
+  doc.rect(0, 0, larg, alturaCab, 'F')
+  let xTexto = margem
+  if (logoDataUrl) {
+    try {
+      const dim = dimensoesDoPng(logoDataUrl) ?? { w: 1485, h: 565 }
+      const hLogo = 17
+      const wLogo = Math.min(hLogo * (dim.w / dim.h), 52)
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(margem, 8, wLogo + 6, 20, 3, 3, 'F')
+      doc.addImage(logoDataUrl, 'PNG', margem + 3, 9.5, wLogo, wLogo / (dim.w / dim.h))
+      xTexto = margem + wLogo + 12
+    } catch {
+      xTexto = margem
+    }
+  }
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(200, 230, 201)
+  doc.text(titulo, xTexto, 12)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(16)
+  doc.setTextColor(255, 255, 255)
+  doc.text(d.alunoNome, xTexto, 19.5, { maxWidth: larg - margem - xTexto })
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(`Personal: ${d.personalNome}`, xTexto, 25.5, { maxWidth: larg - margem - xTexto })
+  doc.text(`${dm(d.periodoInicio)} a ${dm(d.periodoFim)} · ${situacao}`, xTexto, 30.5, { maxWidth: larg - margem - xTexto })
+  const lugares = locaisDoRelatorio(d)
+  if (lugares.length === 1) doc.text(`Local: ${lugares[0]}`, xTexto, 34.5, { maxWidth: larg - margem - xTexto })
+  return alturaCab
+}
+
+type MedidaFinanceiro = { pix: PixDoRelatorio | null; ajusteTexto: string[]; alturaCard: number; copiaCola: string[]; alturaTotal: number }
+
+/** Mede o cartão financeiro (e o copia e cola) para saber se cabe na página antes de desenhar. */
+function medirResumoFinanceiro(doc: Doc, d: DadosRelatorio, largBloco: number): MedidaFinanceiro {
+  const f = d.fechamento
+  const pix = f?.tipo === 'aberto' ? (f.pix ?? null) : null
+  const ajusteTexto = d.ajuste !== 0 ? (doc.splitTextToSize(textoAjuste(d), pix ? largBloco - 56 : largBloco - 10) as string[]) : []
+  const alturaCard = Math.max(pix ? 40 : 26, 22 + ajusteTexto.length * 4.6)
+  const copiaCola = pix ? (doc.splitTextToSize(pix.payload, largBloco - 8) as string[]) : []
+  const alturaCopia = pix ? 12 + copiaCola.length * 3.2 : 0
+  return { pix, ajusteTexto, alturaCard, copiaCola, alturaTotal: alturaCard + alturaCopia + 8 }
+}
+
+/** Cartão "Resumo financeiro": total, ajuste, situação e, quando há Pix, QR em vetor + recebedor + copia e cola. Devolve o novo y. */
+function desenharResumoFinanceiro(doc: Doc, QRCode: { create: (texto: string, o: { errorCorrectionLevel: 'M' }) => MatrizQr }, d: DadosRelatorio, m: MedidaFinanceiro, yInicial: number, larg: number, margem: number, largBloco: number): number {
+  let y = yInicial
+  const f = d.fechamento
+  const { pix, ajusteTexto, alturaCard, copiaCola } = m
+  doc.setFillColor(...ZEBRA)
+  doc.setDrawColor(...LINHA)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(margem, y, largBloco, alturaCard, 2.5, 2.5, 'FD')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(...NAVY)
+  doc.text('Resumo financeiro', margem + 5, y + 7)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(...CINZA)
+  doc.text(resumoTotalRelatorio(d).replace(/ · Total:.*/, '') + (d.modelo === 'pacote' ? ' · pacote de aulas' : ''), margem + 5, y + 12)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(20)
+  doc.setTextColor(...TOTAL_TEXTO)
+  doc.text(formatarBRL(d.total), margem + 5, y + 22)
+  let yy = y + 22
+  if (ajusteTexto.length > 0) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(...AJUSTE_TEXTO)
+    doc.text(ajusteTexto, margem + 5, yy + 5)
+    yy += 4.6 * ajusteTexto.length
+  }
+  if (f) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(...(f.tipo === 'pago' ? TOTAL_TEXTO : NAVY))
+    doc.text(f.tipo === 'pago' ? `Pago em ${dataGeracao(f.pagaEm)}` : f.vencimento ? `Em aberto · vencimento ${dataGeracao(f.vencimento)}` : 'Em aberto', margem + 5, yy + 6.5)
+  }
+  if (pix) {
+    const lado = 32
+    const qx = larg - margem - lado - 4
+    desenharQr(doc, QRCode.create(pix.payload, { errorCorrectionLevel: 'M' }), qx, y + 4, lado)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...CINZA)
+    doc.text('Pague via Pix', qx + lado / 2, y + 4 + lado + 3.2, { align: 'center' })
+  }
+  y += alturaCard + 3
+  if (pix) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...CINZA)
+    const intro = `${pix.recebedor ? `Recebedor: ${pix.recebedor}. ` : ''}Confira o valor e o recebedor no app do seu banco antes de confirmar. Pix copia e cola:`
+    const linhasIntro = doc.splitTextToSize(intro, largBloco) as string[]
+    doc.text(linhasIntro, margem, y + 3)
+    y += linhasIntro.length * 3.4 + 2
+    doc.setFont('courier', 'normal')
+    doc.setFontSize(7)
+    doc.setTextColor(...TEXTO)
+    doc.text(copiaCola, margem, y + 3)
+    y += copiaCola.length * 3.2 + 3
+  }
+  return y + 5
 }
 
 type MatrizQr = { modules: { size: number; get: (linha: number, coluna: number) => number } }
@@ -675,4 +703,71 @@ export function extrasDaFatura(
   pix?: PixDoRelatorio | null,
 ): Pick<DadosRelatorio, 'aulasContratadas' | 'fechamento' | 'avaliacao'> {
   return { aulasContratadas: f.modelo === 'pacote' ? f.qtd_aulas : undefined, fechamento: fechamentoDaFatura(f, pix), avaliacao: avaliacaoDaFatura(f) }
+}
+
+/** Linhas de "Aulas contabilizadas" do resumo de cobrança: o que está sendo cobrado, em poucas palavras. */
+export function linhasAulasContabilizadas(d: DadosRelatorio): string[] {
+  const r = resumoRecibo(d.itens)
+  const a = assiduidade(d.itens)
+  const linhas: string[] = []
+  const valores = [...new Set(d.itens.filter((i) => i.status === 'presente' && !i.fora_da_cobranca && i.valor != null).map((i) => i.valor as number))]
+  if (d.modelo === 'pacote') linhas.push(`Pacote de ${d.aulasContratadas ?? r.aulasRealizadas} aulas · ${r.aulasRealizadas} ${r.aulasRealizadas === 1 ? 'realizada' : 'realizadas'}`)
+  else if (d.modelo === 'mensal') linhas.push(`Mensalidade do ciclo · ${r.aulasRealizadas} ${r.aulasRealizadas === 1 ? 'aula realizada' : 'aulas realizadas'}`)
+  else if (valores.length === 1 && r.aulasRealizadas > 0) linhas.push(`${r.aulasRealizadas} ${r.aulasRealizadas === 1 ? 'aula' : 'aulas'} × ${formatarBRL(valores[0])}`)
+  else linhas.push(`${r.aulasRealizadas} ${r.aulasRealizadas === 1 ? 'aula realizada' : 'aulas realizadas'}`)
+  if (a) linhas.push(`${a.faltasCobradas} ${a.faltasCobradas === 1 ? 'falta ou cancelamento cobrado' : 'faltas ou cancelamentos cobrados'}`)
+  for (const m of resumoPorModalidade(d.itens)) linhas.push(`${m.rotulo}: ${textoResumoModalidade(m)}`)
+  const datas = ordenarItens(d.itens)
+    .filter((i) => i.status === 'presente' && !i.fora_da_cobranca)
+    .map((i) => `${nomeDiaCurto(dataSP(i.starts_at))} ${dm(dataSP(i.starts_at))}`)
+  if (datas.length > 0) linhas.push(`Datas: ${datas.join(' · ')}`)
+  return linhas
+}
+
+/**
+ * Resumo de cobrança em uma página: o que está sendo cobrado, o valor, o vencimento e o Pix. É o que o personal envia quando quer
+ * só cobrar (sem avaliação nem evolução). O Pix entra quando vem em `fechamento.pix`.
+ */
+export async function gerarResumoCobranca(d: DadosRelatorio, logoDataUrl?: string | null, opcoes: { comprimir?: boolean } = {}) {
+  const [doc, { default: QRCode }] = await Promise.all([criarDoc(opcoes.comprimir ?? true), import('qrcode')])
+  const larg = doc.internal.pageSize.getWidth()
+  const alt = doc.internal.pageSize.getHeight()
+  const margem = 16
+  const largBloco = larg - margem * 2
+  const geradoEm = dataGeracao(d.geradoEm ?? hojeSP())
+  const f = d.fechamento
+  const situacao = f?.tipo === 'pago' ? `Pago em ${dataGeracao(f.pagaEm)}` : 'Em aberto'
+  const alturaCab = desenharCabecalho(doc, d, logoDataUrl, 'RESUMO DE COBRANÇA', situacao)
+  desenharRodape(doc, geradoEm)
+
+  let y = alturaCab + 10
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...NAVY)
+  doc.text('Aulas contabilizadas', margem, y)
+  y += 6
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10.5)
+  doc.setTextColor(...TEXTO)
+  for (const linha of linhasAulasContabilizadas(d)) {
+    const partes = doc.splitTextToSize(linha, largBloco - 4) as string[]
+    doc.text(partes, margem + 2, y)
+    y += partes.length * 4.8 + 1.5
+  }
+  y += 6
+
+  const medida = medirResumoFinanceiro(doc, d, largBloco)
+  if (y + medida.alturaTotal > alt - 26) {
+    doc.addPage()
+    desenharRodape(doc, geradoEm)
+    y = 20
+  }
+  y = desenharResumoFinanceiro(doc, QRCode, d, medida, y, larg, margem, largBloco)
+  return doc
+}
+
+/** Gera e baixa o resumo de cobrança: cobranca-[aluno]-[mês-ano].pdf. */
+export async function baixarResumoCobranca(d: DadosRelatorio): Promise<void> {
+  const doc = await gerarResumoCobranca(d, await carregarLogo())
+  doc.save(nomeArquivoRelatorio(d.alunoNome, d.periodoFim, 'cobranca'))
 }
