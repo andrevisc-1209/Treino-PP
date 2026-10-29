@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Gift, MessageSquareQuote, Wallet } from "lucide-react";
+import { Bell, CalendarPlus, Gift, MessageSquareQuote, Wallet } from "lucide-react";
 import { BottomSheet } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { tempoRelativo } from "@/features/execucoes/metricas";
@@ -51,6 +51,7 @@ export function SinoNotificacoes() {
   const abrir = (n: Notificacao) => {
     if (!n.lida) marcar.mutate(n.id);
     setAberto(false);
+    if (n.tipo === "pedido_aula") return navigate("/agenda?pedidos=1");
     if (!n.aluno_id) return navigate("/configuracoes");
     navigate(
       n.tipo === "ciclo_encerrado"
@@ -85,6 +86,33 @@ export function SinoNotificacoes() {
               className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-medium text-slate-700 active:bg-slate-50"
             >
               Ver indicações
+            </button>
+          </div>
+        </li>
+      );
+    }
+    if (n.tipo === "pedido_aula") {
+      return (
+        <li
+          key={n.id}
+          className={cn(
+            "rounded-2xl border p-3",
+            n.lida ? "border-slate-200 bg-white" : "border-brand bg-brand-soft",
+          )}
+        >
+          <p className="text-sm">
+            <CalendarPlus size={14} className="mr-1 inline align-[-2px]" aria-hidden />{" "}
+            <strong>Novo pedido de aula</strong>
+          </p>
+          <p className="mt-1 text-sm text-slate-700">Alguém pediu um horário pela sua página pública. Aprove ou recuse na Agenda.</p>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-xs text-slate-500">{tempoRelativo(n.criada_em)}</span>
+            <button
+              type="button"
+              onClick={() => abrir(n)}
+              className="min-h-11 rounded-xl bg-brand px-4 text-sm font-medium text-white active:bg-brand-hover"
+            >
+              Ver pedido
             </button>
           </div>
         </li>

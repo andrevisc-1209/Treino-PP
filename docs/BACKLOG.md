@@ -1528,3 +1528,14 @@ Origem: escuta ativa com um personal (28/10/2026); decisões do dono em 29/10/20
 - ✅ O cálculo das vagas do servidor é o mesmo da agenda do personal, com teste de paridade entre os dois.
 - ⏳ **Parte 2 (próxima PR):** chave e link do personal em Configurações (copiar, compartilhar, trocar link, QR), fila "Pedidos de aula" na Agenda com contador, **aprovar** (marca a aula para o aluno do telefone ou abre o cadastro preenchido) e **recusar** (mensagem pronta), aviso no sino e por WhatsApp da plataforma, e os outros pedidos do mesmo horário viram "indisponível". Sem essa parte o personal ainda não tem como ligar a página: a PR atual fica dormente de propósito.
 - ⚠️ Não testado ao vivo (migration, função e segredo ainda não aplicados).
+
+### 143. Agenda, fase 2 (parte 2): o personal liga a página, recebe e responde os pedidos de aula — ✅ PR aberta
+Origem: continuação do item 142. **Tem migration** (`20261090000000_agenda_pedidos_avisos.sql`) e **redeploy da Edge Function `agenda-publica`**; ver o aviso na PR.
+- ✅ **Configurações → "Página pública da agenda":** chave "Aceitar pedidos pelo link" (desligada por padrão), o link para **copiar** e **enviar no WhatsApp**, **"Trocar o link"** (com confirmação; o antigo para de funcionar) e um aviso quando ainda não há horários cadastrados.
+- ✅ **Fila de pedidos:** faixa "N pedidos de aula para responder" no alto da Agenda abre a lista (também por `?pedidos=1`). Cada pedido mostra horário, nome, telefone formatado, mensagem do visitante, botão **Conversar** no WhatsApp e se a pessoa **já é aluna** (reconhece o telefone em qualquer formato).
+- ✅ **Aprovar:** confere que o horário continua livre, marca a aula (para o aluno que já tem o telefone, ou cria um **cadastro rápido só com nome e telefone** para completar depois, sem dado de saúde), e os outros pedidos pendentes do mesmo horário viram "indisponível". Depois aparece o botão **"Avisar no WhatsApp"** com a mensagem de confirmação pronta.
+- ✅ **Recusar:** marca como recusado e oferece o WhatsApp com a mensagem pronta ("não consegui confirmar… quer outros horários?"). O app nunca manda mensagem sozinho ao visitante.
+- ✅ **Aviso ao personal:** no **sino** ("Novo pedido de aula", conta como "pede ação") e por **WhatsApp da plataforma** (só o dia e a hora pedidos, sem nome, telefone nem mensagem do visitante; respeita o opt-in e o telefone verificado). Falha no aviso nunca derruba o pedido.
+- ✅ Banco: o sino aceita `pedido_aula` sem aluno (um aviso por pedido) e o log de WhatsApp aceita o tipo (por evento). Teste em `supabase/tests/agenda_pedidos_avisos.sql`.
+- ⏳ Ideias: QR Code do link, mostrar as vagas na visão da semana, lista de espera (fase 3) e histórico dos pedidos respondidos.
+- ⚠️ Não testado ao vivo (migration, redeploy da função e segredo do captcha ainda dependem de você).

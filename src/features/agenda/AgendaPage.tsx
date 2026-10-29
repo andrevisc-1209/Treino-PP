@@ -1,6 +1,6 @@
 import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, ChevronLeft, ChevronRight, TriangleAlert, Users } from 'lucide-react'
@@ -31,9 +31,10 @@ import { AulaCard } from './AulaCard'
 import { decidirComecar } from './comecarAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { OferecerVagaSheet } from './OferecerVaga'
+import { PedidosAgendaSheet } from './PedidosAgendaSheet'
 import { useVagasDoDia } from './useVagasDoDia'
 import type { Vaga } from './vagas'
-import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, type Aula } from './api'
+import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, usePedidosPendentes, type Aula } from './api'
 
 type Modo = 'dia' | 'semana'
 
@@ -271,6 +272,12 @@ export function AgendaPage() {
   const [novaAulaAberta, setNovaAulaAberta] = useState(false)
   const [passoInicial, setPassoInicial] = useState<'menu' | 'iniciar'>('menu')
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const { data: pedidos } = usePedidosPendentes()
+  // "?pedidos=1" (aviso do sino e do WhatsApp) abre a lista de pedidos de aula
+  const pedidosAbertos = params.get('pedidos') === '1'
+  const abrirPedidos = () => setParams({ pedidos: '1' }, { replace: true })
+  const fecharPedidos = () => setParams({}, { replace: true })
 
   const abrirMenu = (a: Aula) => {
     setPassoInicial('menu')
@@ -305,6 +312,20 @@ export function AgendaPage() {
         </div>
         <LinkConfiguracoes />
       </header>
+
+      {(pedidos?.length ?? 0) > 0 && (
+        <button
+          type="button"
+          onClick={abrirPedidos}
+          className="mb-4 flex min-h-12 w-full items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 text-left text-sm font-semibold text-amber-950"
+        >
+          <span>
+            {pedidos!.length} {pedidos!.length === 1 ? 'pedido de aula para responder' : 'pedidos de aula para responder'}
+          </span>
+          <span aria-hidden>Ver →</span>
+        </button>
+      )}
+      <PedidosAgendaSheet open={pedidosAbertos} onClose={fecharPedidos} />
 
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
