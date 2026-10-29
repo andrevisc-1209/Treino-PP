@@ -54,6 +54,7 @@ function FolhaRelatorioMensal({ aluno }: { aluno: { id: string; name: string } }
       ajusteDescricao: null,
       total: 0,
       semFinanceiro: true,
+      mensal: true,
       avaliacao: avaliacaoDaFatura(colunasDaAvaliacao(texto)),
     }
     try {

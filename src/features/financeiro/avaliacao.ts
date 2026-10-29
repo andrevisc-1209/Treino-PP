@@ -10,9 +10,25 @@ export const AVALIACAO_VAZIA: AvaliacaoTextos = { conquistas: '', atencao: '', p
 
 type CamposFatura = { avaliacao_conquistas?: string | null; avaliacao_atencao?: string | null; avaliacao_proximos?: string | null }
 
+const SEM_ACENTO_ = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+const NADA = new Set(['nada', 'nenhum', 'nenhuma', 'nao', 'n/a', 'na', 'sem', 'sem pontos', 'sem pontos de atencao', 'nao tem', 'nao ha', '-', '--', '.', 'x'])
+
+/** Texto que o personal escreveu como "sem nada" ("nada", "nenhum", "-"…): tratado como vazio, o bloco não aparece. */
+export function ehTextoVazio(t: string | null | undefined): boolean {
+  const limpo = SEM_ACENTO_((t ?? '').trim()).replace(/[.!]+$/, '').trim()
+  return limpo === '' || NADA.has(limpo)
+}
+
+/** Apresentação do texto do personal: sem espaços nas pontas e com a primeira letra maiúscula (o resto fica como ele escreveu). */
+export function textoDoPersonal(t: string | null | undefined): string | null {
+  if (ehTextoVazio(t)) return null
+  const limpo = (t ?? '').trim()
+  return limpo.charAt(0).toLocaleUpperCase('pt-BR') + limpo.slice(1)
+}
+
 /** Colunas da fatura → avaliação; null quando nada foi escrito (nenhuma seção aparece no relatório). */
 export function avaliacaoDaFatura(f: CamposFatura): AvaliacaoPersonal | null {
-  const a = { conquistas: f.avaliacao_conquistas?.trim() || null, atencao: f.avaliacao_atencao?.trim() || null, proximos: f.avaliacao_proximos?.trim() || null }
+  const a = { conquistas: textoDoPersonal(f.avaliacao_conquistas), atencao: textoDoPersonal(f.avaliacao_atencao), proximos: textoDoPersonal(f.avaliacao_proximos) }
   return a.conquistas || a.atencao || a.proximos ? a : null
 }
 

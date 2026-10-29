@@ -1412,3 +1412,16 @@ Origem: análise do PDF do ciclo por Gemini e ChatGPT (aprovada em 28/10/2026: p
 - Arquivo: `relatorio-mensal-<aluno>-<mês>-<ano>.pdf`. Sem migration e sem deploy de função.
 - ⏳ Ideias futuras: salvar a avaliação por mês; envio do relatório por e-mail; relatório mensal automático sugerido no fim do mês.
 
+### 131. Relatório de acompanhamento (parte D: layout em página única, financeiro integrado e logo da marca) — ✅ PR aberta
+Origem: segunda rodada de análises (ChatGPT e Gemini) sobre o PDF do ciclo com Pix; aprovada em 28/10/2026 (cobrança ligada por padrão; copia e cola no PDF; assiduidade só com falta cobrada; resumo de cobrança em 1 página fica para depois).
+- ✅ **Logo da marca:** o PDF e o recibo na tela usam a logo completa (símbolo + "Personal Perto"). Antes o PDF usava o recorte do símbolo (`icon-mark.png`), que tem pedaços de letra cortados na borda. ⚠️ O `icon-mark.png` ainda é usado no Login, Hoje e Pós-treino: ver se o recorte deve ser refeito.
+- ✅ **Cabeçalho compacto** (36 mm em vez de 47) e **cartões de destaque**: aulas e um cartão por modalidade com o número grande (10,5 km, 27 séries…), até 4. Linha complementar com frequência média, treinos à distância, exercícios, séries e nota média; "dias treinados" some quando igual às aulas.
+- ✅ **Assiduidade:** "4 de 5 aulas" quando há falta ou cancelamento **cobrado** (falta não cobrada não entra). Pacote mostra "4 de 10".
+- ✅ **Avaliação do personal em destaque** (caixa verde, 3 blocos); "nada", "nenhum", "-", "n/a" e parecidos viram vazio e o bloco some; primeira letra em maiúscula.
+- ✅ **Resumo financeiro na primeira página**, antes da tabela: total, ajuste, "Pago em" ou "Em aberto · vencimento". Acabou a página 2 quase vazia só com o Pix. Opções na fatura: **"Incluir a cobrança no relatório"** (ligada) e **"Incluir o Pix"** (desligada).
+- ✅ **Pix:** QR Code desenhado em **vetor** (nítido em qualquer zoom e na impressão), com borda branca, nome do recebedor, aviso de conferir valor e recebedor no banco e o **copia e cola escrito** (para quem lê o PDF no próprio celular). A chave aparece dentro do código, por isso continua opcional.
+- ✅ **Nota do personal:** gráfico só com 5 treinos avaliados ou mais, com título e escala; com menos, a média aparece na linha de destaques.
+- ✅ PDF comprimido (de ~1,7 MB para ~0,3 MB) e rodapé com mais contraste.
+- ⏳ **Resumo de cobrança em 1 página** (PDF só de cobrança): PR futura.
+- ⚠️ Não testado ao vivo: conferir o layout em um PDF real, **escanear o QR com o app do banco** e abrir o recibo a 390px.
+

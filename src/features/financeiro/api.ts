@@ -419,6 +419,7 @@ export function useCancelarFatura() {
 
 type LinhaRecibo = {
   id: string
+  cobrar?: boolean | null
   execucao_id?: string | null
   status: ItemRecibo['status']
   valor: number | null
@@ -455,6 +456,7 @@ export function paraItemRecibo(l: LinhaRecibo): ItemRecibo | null {
     data_sessao: l.sessao?.session_date ?? null,
     modalidade,
     execucao_id: l.execucao_id ?? null,
+    cobrar: l.cobrar ?? true,
     cargas: l.sessao ? cargasSessao : cargasLink,
     pace_seg_km: paceEmSegundos(det?.resultado?.pace_medio ?? det?.resultado?.run_pace_medio),
     plano_nome: l.sessao?.plano?.name?.trim() || null,
@@ -472,7 +474,7 @@ export function useItensRecibo(faturaId: string | undefined, pacoteAberto?: { al
   return useQuery({
     queryKey: ['recibo', faturaId, pacoteAberto?.inicio ?? null],
     queryFn: async (): Promise<ItemRecibo[]> => {
-      const campos = `id, status, valor, execucao_id, aula:aulas${pacoteAberto ? '!inner' : ''}(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade, detalhes_execucao), ${SELECT_SESSAO_DETALHE}`
+      const campos = `id, status, valor, cobrar, execucao_id, aula:aulas${pacoteAberto ? '!inner' : ''}(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade, detalhes_execucao), ${SELECT_SESSAO_DETALHE}`
       // pacote ainda aberto: as aulas ainda não foram ligadas à fatura (isso acontece ao encerrar/renovar), então vêm das presenças do pacote
       const consulta = supabase.from('aula_participantes').select(campos)
       const { data, error } = pacoteAberto

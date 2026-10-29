@@ -18,7 +18,7 @@ export function useItensDoMes(alunoId: string | undefined, mes: string | undefin
       const fim = limitesDoDiaSP(ultimoDiaDoMesRelatorio(mes!)).fim.toISOString()
       const { data, error } = await supabase
         .from('aula_participantes')
-        .select(`id, status, valor, execucao_id, aula:aulas!inner(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade, detalhes_execucao), ${SELECT_SESSAO_DETALHE}`)
+        .select(`id, status, valor, cobrar, execucao_id, aula:aulas!inner(starts_at, duration_min, local, tipo), execucao:execucoes_assincrono(modalidade, detalhes_execucao), ${SELECT_SESSAO_DETALHE}`)
         .eq('aluno_id', alunoId!)
         .in('status', ['presente', 'falta', 'cancelou'])
         .gte('aula.starts_at', inicio)
