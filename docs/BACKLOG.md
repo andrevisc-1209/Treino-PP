@@ -1600,7 +1600,7 @@ Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/20
 - Teste SQL: `supabase/tests/agenda_publica_resumo.sql` (não grava nada).
 - Revisão jurídica das Políticas 1.11 a 1.13 segue pendente.
 
-### 150. Lista de espera da página pública (agenda, fase 3) — ✅ PR aberta
+### 150. Lista de espera da página pública (agenda, fase 3) — ✅ Mergeada (#274)
 
 **Rodar a migration `20261094000000_agenda_lista_de_espera.sql` no SQL Editor ANTES do merge**, depois o job `supabase/cron/lista_espera.sql` (UMA vez) e, após o merge, o deploy da função: `supabase functions deploy agenda-publica`. Registra a **Política de Privacidade 1.14**.
 
@@ -1612,3 +1612,12 @@ Decisões do dono: quem avisa é o personal, pelo WhatsApp (a plataforma não ma
 - ✅ **Canais revisados (/atualizacao_fluxoapp):** Política **1.14**; FAQ (artigo da página pública); landing, Termos e onboarding sem mudança.
 - Teste SQL: `supabase/tests/agenda_lista_de_espera.sql` (não grava nada).
 - ⏳ Opcionais: aviso ao personal quando alguém entra na espera, chamar automaticamente ao cancelar uma aula, totais da espera para o admin.
+
+### 151. Onboarding ensina a criar o link da agenda, e a landing anuncia a lista de espera — ✅ PR aberta
+
+Sem migration e sem deploy de função (a função e a migration da lista de espera já estão no ar).
+
+- ✅ **Onboarding (checklist "Comece por aqui"):** o passo do link deixou de ser opcional e aparece sempre, logo depois de "Defina os horários em que você atende": **"Crie o link da sua agenda e envie aos alunos"** (leva a Configurações → Página pública). Os dois passos ganharam uma linha de como fazer ("Marque os dias e horários. O que sobrar livre vira vaga na sua Agenda." / "Ligue 'Aceitar pedidos pelo link', copie o link e mande pelo WhatsApp. Você aprova cada pedido.").
+- ✅ **FAQ:** o artigo `primeiros-passos` cita o passo do link e ensina a criar (Configurações → Página pública da agenda → ligar → Copiar link ou Enviar no WhatsApp).
+- ✅ **Landing:** item "Vagas livres na agenda, link para o aluno pedir horário e lista de espera" e a pergunta "Meus alunos conseguem pedir horário sozinhos?" ganhou a lista de espera (quem chama é o personal, pelo WhatsApp).
+- ✅ **Canais:** Política (1.14 já cobre) e Termos (decisão do dono: sem mudança por ora) · Admin: não se aplica.

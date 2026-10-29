@@ -7,7 +7,7 @@ import { useModelos } from '@/features/modelos/api'
 import { ROTA_IMPORTAR_COM_IA } from '@/features/alunos/importar/via'
 import { useAtivacao } from './useAtivacao'
 
-type PassoOnboarding = { label: string; feito: boolean; to: string; /** não impede o checklist de sumir quando os outros passos acabam */ opcional?: boolean; /** outro jeito de cumprir o mesmo passo (linha logo abaixo) */ alternativa?: { label: string; to: string } }
+type PassoOnboarding = { label: string; feito: boolean; to: string; /** uma linha curta de como fazer, mostrada enquanto o passo não está feito */ dica?: string; /** não impede o checklist de sumir quando os outros passos acabam */ opcional?: boolean; /** outro jeito de cumprir o mesmo passo (linha logo abaixo) */ alternativa?: { label: string; to: string } }
 
 function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean } {
   const { data: config, isLoading: l1 } = useProfessionalConfig()
@@ -23,9 +23,18 @@ function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean
       to: '/alunos/novo',
       alternativa: { label: 'Importar vários alunos (ajuda de uma IA ou planilha)', to: ROTA_IMPORTAR_COM_IA },
     },
-    { label: 'Defina os horários em que você atende', feito: !!config?.agenda_ajustada_em, to: '/agenda/disponibilidade' },
-    // opcional e só depois dos horários: quem não quer divulgar a agenda não fica com o checklist para sempre
-    ...(config?.agenda_ajustada_em ? [{ label: 'Ative e compartilhe o link da sua agenda (opcional)', feito: !!config?.agenda_publica_ativa, to: '/configuracoes?secao=pagina', opcional: true }] : []),
+    {
+      label: 'Defina os horários em que você atende',
+      feito: !!config?.agenda_ajustada_em,
+      to: '/agenda/disponibilidade',
+      dica: 'Marque os dias e horários. O que sobrar livre vira vaga na sua Agenda.',
+    },
+    {
+      label: 'Crie o link da sua agenda e envie aos alunos',
+      feito: !!config?.agenda_publica_ativa,
+      to: '/configuracoes?secao=pagina',
+      dica: 'Ligue "Aceitar pedidos pelo link", copie o link e mande pelo WhatsApp. Você aprova cada pedido.',
+    },
     { label: 'Adicione um horário fixo', feito: (horarios?.length ?? 0) > 0, to: '/alunos' },
     { label: 'Monte seu primeiro treino planejado', feito: (modelos?.length ?? 0) > 0, to: '/meus-treinos/planejados' },
     { label: 'Configure sua chave Pix', feito: !!config?.pix_tipo, to: '/configuracoes' },
@@ -73,6 +82,7 @@ export function OnboardingChecklist() {
               </span>
               {!p.feito && <ChevronRight size={16} className="shrink-0 text-slate-400" />}
             </Link>
+            {!p.feito && p.dica && <p className="-mt-1 mb-1 ml-7 text-xs text-slate-600">{p.dica}</p>}
             {!p.feito && p.alternativa && (
               <Link to={p.alternativa.to} className="mb-1 ml-7 flex min-h-11 items-center gap-2 rounded-xl bg-brand-soft px-3 py-2 text-sm font-medium text-brand-hover active:bg-slate-100">
                 <Upload size={16} className="shrink-0" aria-hidden />

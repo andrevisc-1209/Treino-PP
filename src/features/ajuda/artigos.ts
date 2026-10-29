@@ -26,8 +26,9 @@ export const ARTIGOS: Artigo[] = [
     categoria: 'comecando',
     titulo: 'Por onde começar',
     passos: [
-      'Na tela Hoje, o card de primeiros passos mostra o que falta: cadastrar seus primeiros alunos, definir os horários em que você atende, adicionar um horário fixo, montar um treino planejado e configurar sua chave Pix.',
+      'Na tela Hoje, o card de primeiros passos mostra o que falta: cadastrar seus primeiros alunos, definir os horários em que você atende, criar o link da sua agenda, adicionar um horário fixo, montar um treino planejado e configurar sua chave Pix.',
       'Comece pelos alunos: com 3 cadastrados o app já fica útil. Os horários em que você atende viram vagas livres na Agenda e podem ser abertos aos alunos pelo link da sua agenda.',
+      'Para criar o link: depois de definir seus horários, vá em Configurações → Página pública da agenda, ligue "Aceitar pedidos pelo link", toque em "Copiar link" ou "Enviar no WhatsApp" e mande aos seus alunos. Nada é marcado sozinho: você aprova cada pedido na Agenda.',
       'Você pode fazer na ordem que quiser. Cada passo concluído some da lista.',
       'Dúvida em algum passo? Procure o assunto aqui na central ou fale com a gente pelo WhatsApp.',
     ],
