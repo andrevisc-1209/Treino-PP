@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     horizonteSemanas: cfg.horizonte_semanas ?? 4,
   }
   const ate = somarDiasISO(hoje, parametros.horizonteSemanas * 7 - 1)
-  const [{ data: janelas }, { data: aulas }, { data: bloqueios }] = await Promise.all([
+  const [{ data: janelas, error: errJanelas }, { data: aulas, error: errAulas }, { data: bloqueios, error: errBloqueios }] = await Promise.all([
     admin.from('disponibilidade_semanal').select('weekday, start_time, end_time').eq('professional_id', professionalId),
     admin
       .from('aulas')
@@ -105,6 +105,12 @@ Deno.serve(async (req) => {
       .lte('starts_at', `${somarDiasISO(ate, 1)}T00:00:00-03:00`),
     admin.from('agenda_bloqueios').select('data_inicio, data_fim').eq('professional_id', professionalId).gte('data_fim', hoje),
   ])
+  // Erro de leitura NÃO pode virar "sem horários" (o visitante acharia que o personal não atende): falha alto e deixa rastro no log.
+  const erroLeitura = errJanelas ?? errAulas ?? errBloqueios
+  if (erroLeitura) {
+    console.error('agenda-publica: falha ao ler a agenda do personal', erroLeitura.message)
+    return json(req, { error: 'Não foi possível carregar a agenda agora. Tente novamente.' }, 500)
+  }
   const vagas = calcularVagas({
     janelas: janelas ?? [],
     aulas: aulas ?? [],
