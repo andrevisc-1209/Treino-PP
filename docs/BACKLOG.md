@@ -1454,3 +1454,13 @@ Origem: auditoria de UX do painel admin (item 133); aprovada em 28/10/2026. Só 
 - ✅ **Largura do painel** de 1024 px para 1280 px (melhor uso de monitor largo); Suporte já mostra o contador de relatos em aberto na aba.
 - ⏳ PR 3 (Personais: situação comercial, próximo evento, última atividade e filtros de um clique) e PR 4 (registrar contato, com migration).
 - ⚠️ Não testado ao vivo no navegador (precisa da conta admin).
+
+### 135. Painel admin: lista de Personais mais clara (PR 3 da auditoria de UX) — ✅ PR aberta
+Origem: auditoria de UX do painel admin (itens 133 e 134); aprovada em 28/10/2026. Só tela; sem migration.
+- ✅ **Colunas novas:** Personal (nome e e-mail juntos) · **Situação** (Em trial, Pagante, Vencido, Cancelado, com o **próximo evento** colorido pela urgência: "Trial termina amanhã (29/10/2026)", "Plano vence em 23 dias", "Venceu há 3 dias") · Cidade · Alunos · **Uso recente** · Ações. O mês grátis continua sinalizado.
+- ✅ **Uso recente:** "N treinos em 30 dias" em destaque (ou "Sem treinos em 30 dias" em vermelho) e, abaixo, "montados · realizados"; o detalhe presencial/à distância fica no balão. Acabou a célula com cinco linhas.
+- ✅ **Filtros de um clique com contador:** Trial acabando (3 dias), Sem treinos em 30 dias, Sem alunos, Vencidos.
+- ✅ **Ordenação:** nome, acesso que acaba primeiro, menos treinos em 30 dias.
+- ✅ Funciona também nos cartões do celular. Testes novos para situação, uso, filtros e ordenação.
+- ⏳ **Última atividade** (data do último uso) por personal: precisa de uma migration (a função de métricas não devolve isso hoje); vai junto do PR 4 (registrar contato).
+- ⚠️ Não testado ao vivo no navegador (precisa da conta admin).
