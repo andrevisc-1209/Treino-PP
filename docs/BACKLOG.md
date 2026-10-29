@@ -1546,3 +1546,10 @@ Origem: primeiro teste ao vivo do link (29/10/2026): a página carregou, mas diz
 - ✅ **Correção:** `GRANT ALL ... TO service_role` nas três tabelas (padrão do projeto) e a função passa a **falhar alto** (erro 500 genérico e linha no log) quando a leitura da agenda dá erro, em vez de parecer "sem horários".
 - ✅ Teste que confere que as três tabelas têm o GRANT em alguma migration e consulta de conferência em `supabase/tests/agenda_grants_service_role.sql`.
 - ⚠️ Lição: toda tabela que uma Edge Function lê ou grava precisa de `GRANT ALL ON treino.<tabela> TO service_role` na própria migration.
+
+### 145. Pedidos de aula: vincular a um aluno que já existe — ✅ PR aberta
+Origem: primeiro teste ao vivo dos pedidos (29/10/2026): o app reconhece o aluno só pelo telefone; se o número for outro (fixo, sem o 9, aluno sem telefone), aprovar criava um cadastro duplicado. Só tela; sem migration e sem deploy de função.
+- ✅ Quando o telefone **não** bate com nenhum aluno, o pedido mostra **"Pode ser: …"** (até 3 alunos com nome parecido: mesmo primeiro nome ou nomes que se contêm, sem acento nem maiúsculas) e o botão **"É um aluno que já tenho"**, que abre uma **busca por nome** (com o telefone de cada um à vista).
+- ✅ Ao escolher, o pedido diz "A aula será marcada para o aluno X" (com "Trocar"). Se o aluno **não tem telefone**, aparece a opção ligada por padrão **"Guardar este telefone no cadastro dele"**, para o próximo pedido ser reconhecido sozinho; um telefone que já existe **nunca** é trocado.
+- ✅ Sem escolher ninguém, continua como antes: o cadastro rápido só com nome e telefone.
+- ⚠️ Não testado ao vivo no navegador.

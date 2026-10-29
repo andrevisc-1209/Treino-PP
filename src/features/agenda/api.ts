@@ -745,7 +745,7 @@ export function usePedidosPendentes() {
 export function useAprovarPedido() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (v: { pedido: PedidoAgenda; todos: PedidoAgenda[]; alunoId: string | null; local: string | null }): Promise<{ alunoId: string; novoAluno: boolean }> => {
+    mutationFn: async (v: { pedido: PedidoAgenda; todos: PedidoAgenda[]; alunoId: string | null; local: string | null; guardarTelefone?: boolean }): Promise<{ alunoId: string; novoAluno: boolean }> => {
       const { data: u } = await supabase.auth.getUser()
       if (!u.user) throw new Error('Sessão expirada')
       const inicio = new Date(v.pedido.inicio)
@@ -775,6 +775,12 @@ export function useAprovarPedido() {
       }
 
       await inserirAulaAvulsa({ alunoIds: [alunoId], startsAt: inicio, durationMin: v.pedido.duracao_min, local: v.local })
+
+      // aluno existente sem telefone: guarda o do pedido para o próximo reconhecer sozinho (nunca troca um telefone que já existe)
+      if (!novoAluno && v.guardarTelefone) {
+        const { error } = await supabase.from('alunos').update({ phone: telefoneDoPedido(v.pedido.visitante_telefone) }).eq('id', alunoId).is('phone', null)
+        if (error) console.error('pedidos: aula marcada, mas o telefone não foi guardado no cadastro', error.message)
+      }
 
       const agora = new Date().toISOString()
       const { error: errPedido } = await supabase.from('pedidos_agenda').update({ status: 'aprovado', aluno_id: alunoId, respondido_em: agora }).eq('id', v.pedido.id)

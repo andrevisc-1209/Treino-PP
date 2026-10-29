@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MessageCircle } from 'lucide-react'
-import { BottomSheet, Button } from '@/components/ui'
+import { BottomSheet, Button, Input } from '@/components/ui'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { useAlunos } from '@/features/alunos/api'
@@ -10,21 +10,31 @@ import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
 import { linkWhatsApp, linkWhatsAppComTexto } from '@/lib/whatsapp'
 import { useAprovarPedido, usePedidosPendentes, useRecusarPedido } from './api'
-import { alunoDoTelefone, mensagemDeAprovacao, mensagemDeRecusa, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
+import { alunoDoTelefone, alunosParecidos, buscarAlunosPorNome, mensagemDeAprovacao, mensagemDeRecusa, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
 
 type Resposta = { tipo: 'aprovado' | 'recusado'; link: string; pedido: PedidoAgenda }
 
-function CartaoPedido({ pedido, todos, aluno, personalNome, resposta, onResponder }: { pedido: PedidoAgenda; todos: PedidoAgenda[]; aluno: { id: string; name: string } | null; personalNome: string; resposta: Resposta | undefined; onResponder: (id: string, r: Resposta) => void }) {
+type AlunoLista = { id: string; name: string; phone: string | null }
+
+function CartaoPedido({ pedido, todos, aluno, alunos, personalNome, resposta, onResponder }: { pedido: PedidoAgenda; todos: PedidoAgenda[]; aluno: AlunoLista | null; alunos: AlunoLista[]; personalNome: string; resposta: Resposta | undefined; onResponder: (id: string, r: Resposta) => void }) {
   const { exigir } = useExigirAssinatura()
   const aprovar = useAprovarPedido()
   const recusar = useRecusarPedido()
+  // sem aluno pelo telefone, o personal pode vincular o pedido a um aluno que já existe (evita cadastro duplicado)
+  const [escolhido, setEscolhido] = useState<AlunoLista | null>(null)
+  const [buscando, setBuscando] = useState(false)
+  const [termo, setTermo] = useState('')
+  const [guardarTelefone, setGuardarTelefone] = useState(true)
+  const alunoFinal = aluno ?? escolhido
+  const parecidos = aluno || escolhido ? [] : alunosParecidos(alunos, pedido.visitante_nome)
+  const resultados = buscando ? buscarAlunosPorNome(alunos, termo).slice(0, 6) : []
   const ocupado = aprovar.isPending || recusar.isPending
   const dados = { visitanteNome: pedido.visitante_nome, personalNome, inicioISO: pedido.inicio }
   const conversa = linkWhatsApp(pedido.visitante_telefone)
 
   const fazerAprovar = async () => {
     try {
-      const r = await aprovar.mutateAsync({ pedido, todos, alunoId: aluno?.id ?? null, local: null })
+      const r = await aprovar.mutateAsync({ pedido, todos, alunoId: alunoFinal?.id ?? null, local: null, guardarTelefone: !aluno && !!escolhido && !escolhido.phone && guardarTelefone })
       mostrarInfoGlobal(r.novoAluno ? 'Aula marcada e aluno cadastrado. Complete a ficha dele depois.' : 'Aula marcada.')
       onResponder(pedido.id, { tipo: 'aprovado', pedido, link: linkWhatsAppComTexto(pedido.visitante_telefone, mensagemDeAprovacao(dados)) })
     } catch (e) {
@@ -47,7 +57,61 @@ function CartaoPedido({ pedido, todos, aluno, personalNome, resposta, onResponde
         <p className="text-sm text-slate-800">
           {pedido.visitante_nome} · {telefoneDoPedido(pedido.visitante_telefone)}
         </p>
-        {aluno ? <p className="text-xs text-brand-hover">Já é seu aluno: {aluno.name}</p> : <p className="text-xs text-slate-600">Ainda não é seu aluno: ao aprovar, o cadastro é criado só com nome e telefone.</p>}
+        {aluno && <p className="text-xs text-brand-hover">Já é seu aluno: {aluno.name}</p>}
+        {!aluno && escolhido && (
+          <div className="space-y-1">
+            <p className="text-xs text-brand-hover">
+              A aula será marcada para o aluno <strong>{escolhido.name}</strong>.{' '}
+              <button type="button" onClick={() => { setEscolhido(null); setBuscando(true) }} className="min-h-11 underline">
+                Trocar
+              </button>
+            </p>
+            {!escolhido.phone && (
+              <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-slate-700">
+                <input type="checkbox" checked={guardarTelefone} onChange={(e) => setGuardarTelefone(e.target.checked)} className="size-5 accent-[#367c39]" />
+                Guardar este telefone no cadastro dele
+              </label>
+            )}
+          </div>
+        )}
+        {!aluno && !escolhido && (
+          <div className="space-y-2">
+            <p className="text-xs text-slate-600">Ainda não é seu aluno: ao aprovar, o cadastro é criado só com nome e telefone.</p>
+            {parecidos.length > 0 && !buscando && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-slate-700">Pode ser:</span>
+                {parecidos.map((a) => (
+                  <button key={a.id} type="button" onClick={() => setEscolhido(a)} className="min-h-11 rounded-full border border-slate-300 px-3 text-xs font-medium text-slate-800 active:bg-slate-50">
+                    {a.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!buscando ? (
+              <button type="button" onClick={() => setBuscando(true)} className="min-h-11 text-sm font-medium text-brand-hover underline">
+                É um aluno que já tenho
+              </button>
+            ) : (
+              <div className="space-y-1">
+                <Input placeholder="Buscar aluno pelo nome" value={termo} onChange={(e) => setTermo(e.target.value)} aria-label="Buscar aluno pelo nome" autoFocus />
+                <ul className="divide-y divide-slate-100">
+                  {resultados.map((a) => (
+                    <li key={a.id}>
+                      <button type="button" onClick={() => { setEscolhido(a); setBuscando(false); setTermo('') }} className="flex min-h-11 w-full items-center justify-between gap-2 text-left text-sm active:bg-slate-50">
+                        <span className="font-medium">{a.name}</span>
+                        <span className="text-xs text-slate-600">{a.phone ? a.phone : 'sem telefone'}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {resultados.length === 0 && <li className="py-2 text-xs text-slate-600">Nenhum aluno com esse nome.</li>}
+                </ul>
+                <button type="button" onClick={() => { setBuscando(false); setTermo('') }} className="min-h-11 text-xs text-slate-700 underline">
+                  Cancelar: é uma pessoa nova
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {pedido.mensagem && <p className="mt-1 rounded-xl bg-slate-50 p-2 text-sm text-slate-700">“{pedido.mensagem}”</p>}
       </div>
       {resposta ? (
@@ -109,6 +173,7 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
               pedido={p}
               todos={lista}
               aluno={alunoDoTelefone(alunos ?? [], p.visitante_telefone)}
+              alunos={alunos ?? []}
               personalNome={perfil?.name ?? ''}
               resposta={respostas[p.id]}
               onResponder={(id, r) => setRespostas((x) => ({ ...x, [id]: r }))}
