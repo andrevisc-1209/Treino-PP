@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
-import { CalendarPlus, ChevronLeft, ChevronRight, TriangleAlert, Users } from 'lucide-react'
+import { CalendarClock, CalendarPlus, ChevronLeft, ChevronRight, TriangleAlert, Users } from 'lucide-react'
 import { EstadoVazio } from '@/components/EstadoVazio'
 import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
@@ -310,13 +310,17 @@ export function AgendaPage() {
     <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
     <div className="mx-auto max-w-2xl p-4 pb-24 md:max-w-4xl">
       <header className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Agenda</h1>
-          <Link to="/agenda/disponibilidade" className="inline-flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
-            Minha disponibilidade
+        <h1 className="text-2xl font-bold">Agenda</h1>
+        <div className="flex items-center gap-1">
+          <Link
+            to="/agenda/disponibilidade"
+            aria-label="Meus horários de atendimento"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+          >
+            <CalendarClock size={18} aria-hidden /> Horários
           </Link>
+          <LinkConfiguracoes />
         </div>
-        <LinkConfiguracoes />
       </header>
 
       {(pedidos?.length ?? 0) > 0 && (
