@@ -7,6 +7,8 @@ import {
   extrasDaFatura,
   fechamentoDaFatura,
   gerarRelatorioCompleto,
+  gerarResumoCobranca,
+  linhasAulasContabilizadas,
   localCurto,
   statusDoCiclo,
   linhasDaTabela,
@@ -199,6 +201,32 @@ describe('relatório completo do ciclo', () => {
     const conteudo = doc.output()
     expect(conteudo).not.toContain('R$')
     expect(conteudo).toContain('no ciclo')
+  })
+  it('resumo de cobrança: uma página, com o que está sendo cobrado, o valor e o Pix; sem avaliação nem evolução', async () => {
+    const payload = '00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-4266141740005204000053039865406200.005802BR5913ANDRE SCHERER6009SAO PAULO62070503***6304ABCD'
+    const d: DadosRelatorio = { ...dados, total: 200, ajuste: 0, ajusteDescricao: null, avaliacao: { conquistas: 'Ótima constância', atencao: null, proximos: null }, fechamento: { tipo: 'aberto', vencimento: '2026-10-31', pix: { payload, recebedor: 'André Scherer' } } }
+    const doc = await gerarResumoCobranca(d, null, { comprimir: false })
+    expect(doc.getNumberOfPages()).toBe(1)
+    const c = doc.output()
+    expect(c).toContain('RESUMO DE COBRAN')
+    expect(c).toContain('Aulas contabilizadas')
+    expect(c).toContain('br.gov.bcb.pix')
+    expect(c).toContain('vencimento 31/10/2026')
+    expect(c).not.toContain('Ótima constância')
+    expect(c).not.toContain('Evolução')
+  })
+  it('resumo de cobrança sem Pix configurado não leva QR nem código', async () => {
+    const doc = await gerarResumoCobranca({ ...dados, fechamento: { tipo: 'aberto', vencimento: null, pix: null } }, null, { comprimir: false })
+    expect(doc.output()).not.toContain('br.gov.bcb.pix')
+    expect(doc.output()).toContain('Em aberto')
+  })
+  it('linhas de aulas contabilizadas: por aula, pacote, mensal e falta cobrada', () => {
+    expect(norm(linhasAulasContabilizadas({ ...dados, itens: dados.itens.filter((i) => i.status === 'presente') })[0])).toBe('2 aulas × R$ 100,00')
+    expect(linhasAulasContabilizadas({ ...dados, modelo: 'pacote', aulasContratadas: 10 })[0]).toBe('Pacote de 10 aulas · 2 realizadas')
+    expect(linhasAulasContabilizadas({ ...dados, modelo: 'mensal' })[0]).toBe('Mensalidade do ciclo · 2 aulas realizadas')
+    const comFalta = linhasAulasContabilizadas({ ...dados, itens: [...dados.itens, item({ id: 'f', starts_at: '2026-10-09T15:30:00Z', status: 'falta', cobrar: true })] })
+    expect(comFalta).toContain('2 faltas ou cancelamentos cobrados') // a falta do exemplo base (sem marca de cobrança) vale como cobrada + a nova
+    expect(linhasAulasContabilizadas(dados).at(-1)).toMatch(/^Datas: Ter 06\/10 · Ter 13\/10$/)
   })
 })
 
