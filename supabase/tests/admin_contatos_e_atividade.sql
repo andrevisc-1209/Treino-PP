@@ -1,6 +1,6 @@
 -- Teste para o SQL Editor do Supabase. NÃO grava nada: termina de propósito com um erro que desfaz tudo. Rode DEPOIS da migration 20261085.
 --   (a) um personal comum NÃO consegue chamar nenhuma das 4 funções;
---   (b) a tabela admin_contatos tem RLS e o personal comum não escreve nem lê direto (INSERT negado, 0 linhas);
+--   (b) a tabela admin_contatos tem RLS e o personal comum não escreve nem lê direto (INSERT negado; leitura negada ou 0 linhas);
 --   (c) o admin registra um contato com "adiar 7 dias", o resumo mostra o adiamento e o histórico traz a linha
 --       (precisa de um admin com MFA: sem sessão aal2 este item vira AVISO, e é esperado no SQL Editor).
 -- Esperado: "(a) OK" e "(b) OK"; "(c)" OK ou AVISO; sem "FALHA".
@@ -37,8 +37,13 @@ BEGIN
     INSERT INTO treino.admin_contatos (professional_id, canal, resultado) VALUES (v_prof, 'whatsapp', 'respondeu');
     v_log := array_append(v_log, '(b) FALHA: personal comum inseriu direto na tabela');
   EXCEPTION WHEN insufficient_privilege THEN
-    SELECT count(*) INTO v_n FROM treino.admin_contatos;
-    v_log := array_append(v_log, CASE WHEN v_rls AND v_n = 0 THEN '(b) OK: RLS ligado, INSERT negado e 0 linhas visíveis' ELSE '(b) FALHA: rls=' || v_rls || ' linhas=' || v_n END);
+    -- a leitura direta também pode ser negada (sem GRANT de SELECT): isso é ainda mais restritivo e também vale como OK
+    BEGIN
+      SELECT count(*) INTO v_n FROM treino.admin_contatos;
+      v_log := array_append(v_log, CASE WHEN v_rls AND v_n = 0 THEN '(b) OK: RLS ligado, INSERT negado e 0 linhas visíveis' ELSE '(b) FALHA: rls=' || v_rls || ' linhas=' || v_n END);
+    EXCEPTION WHEN insufficient_privilege THEN
+      v_log := array_append(v_log, CASE WHEN v_rls THEN '(b) OK: RLS ligado, INSERT e leitura direta negados' ELSE '(b) FALHA: RLS desligado' END);
+    END;
   WHEN OTHERS THEN
     v_log := array_append(v_log, '(b) FALHA: ' || SQLERRM);
   END;
