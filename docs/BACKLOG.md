@@ -1498,3 +1498,14 @@ Origem: uso do contrato (29/10/2026). Só tela; sem migration.
 - ✅ **Endereço do aluno** passa a usar a busca de endereços do Google (só endereços; o campo fica com o endereço completo, sem o "nome —" na frente). Sem a chave `VITE_GOOGLE_MAPS_API_KEY`, continua campo de texto. Cortado em 200 caracteres (limite do banco).
 - ✅ **Cidade do foro e da assinatura:** campo novo no formulário, já preenchido com a cidade e a UF do perfil do personal e editável. A mesma cidade vale para a cláusula do foro e para a linha "Cidade, data" antes das assinaturas.
 - ⚠️ Não testado ao vivo no navegador.
+
+### 140. Agenda, fase 1: disponibilidade semanal do personal — ✅ PR aberta
+Origem: escuta ativa com um personal (28/10/2026); decisões do dono em 29/10/2026 (antecedência padrão de 3 horas e ajuste da agenda no onboarding; reservas por link aberto com aprovação do personal ficam para as fases 2 e 3). **Tem migration** (`20261087000000_agenda_disponibilidade.sql`): rodar no SQL Editor ANTES do merge.
+- ✅ **Tela "Disponibilidade"** (`/agenda/disponibilidade`; links na Agenda, em Configurações → Aulas e cobrança, no cartão de ativação e no checklist "Comece por aqui"): um cartão por dia com liga/desliga e até 4 horários "das … até …", "Copiar para segunda a sexta", modelo para começar (segunda a sexta, manhã e tarde) e **resumo em texto** ("Segunda: 07:00–09:00 e 14:00–18:00 · Terça a sábado: … · Domingo: indisponível").
+- ✅ **Regras das vagas:** duração da aula (a mesma de "Aulas e cobrança"), intervalo entre aulas, **antecedência mínima para marcar (padrão 3 horas, ajustável)** e quantas semanas à frente mostrar vagas (padrão 4).
+- ✅ Validação: fim depois do início, sem horários sobrepostos no mesmo dia, dia ligado precisa de horário; aviso quando o horário é mais curto que uma aula.
+- ✅ **Onboarding:** novo passo "Defina os horários em que você atende" no checklist e a linha "Horários em que atendo" em "Sua rotina" do cartão de ativação (que continua com um foco só: os 3 alunos).
+- ✅ Banco: tabela `disponibilidade_semanal` (RLS, sem gravar sem assinatura ativa) e a função `salvar_disponibilidade`, que troca janelas e regras numa transação só e recusa sobreposição. Teste em `supabase/tests/agenda_disponibilidade.sql`.
+- ⏳ Fase 1, parte 2: **vagas visíveis na agenda** (janela menos aulas marcadas, com antecedência e intervalo), **"Oferecer esta vaga"** ao cancelar uma aula (mensagem de WhatsApp para alunos escolhidos) e bloqueios pontuais (férias, feriado).
+- ⏳ Fase 2: página pública de pedido de reserva por link aberto, com verificação de telefone, anti-spam e a fila de aprovação do personal (atualiza a Política de Privacidade). Fase 3: lista de espera.
+- ⚠️ Não testado ao vivo (a migration ainda não foi aplicada).

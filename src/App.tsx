@@ -25,6 +25,7 @@ import { SessaoPage } from '@/features/sessoes/SessaoPage'
 import { FinalizarSessaoPage } from '@/features/sessoes/FinalizarSessaoPage'
 import { HojePage } from '@/features/agenda/HojePage'
 import { AgendaPage } from '@/features/agenda/AgendaPage'
+import { DisponibilidadePage } from '@/features/agenda/DisponibilidadePage'
 import { ConfiguracoesPage } from '@/features/agenda/ConfiguracoesPage'
 import { FinanceiroPage } from '@/features/financeiro/FinanceiroPage'
 import { FecharCicloPage } from '@/features/financeiro/FecharCicloPage'
@@ -57,6 +58,7 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route path="/" element={<HojePage />} />
           <Route path="/agenda" element={<AgendaPage />} />
+          <Route path="/agenda/disponibilidade" element={<DisponibilidadePage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
           <Route path="/configuracoes/excluir-conta" element={<ExcluirContaPage />} />
           <Route path="/ajuda" element={<AjudaPage />} />

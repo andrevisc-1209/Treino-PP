@@ -1,6 +1,6 @@
 import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, ChevronLeft, ChevronRight, TriangleAlert, Users } from 'lucide-react'
@@ -263,7 +263,12 @@ export function AgendaPage() {
     <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
     <div className="mx-auto max-w-2xl p-4 pb-24 md:max-w-4xl">
       <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Agenda</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Agenda</h1>
+          <Link to="/agenda/disponibilidade" className="inline-flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+            Minha disponibilidade
+          </Link>
+        </div>
         <LinkConfiguracoes />
       </header>
 

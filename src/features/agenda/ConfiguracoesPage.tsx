@@ -250,6 +250,10 @@ export function ConfiguracoesPage() {
           </Acordeao>
 
           <Acordeao titulo="Aulas e cobrança" aberto={estaAberta('aulas', false)} onAlternar={() => alternar('aulas', false)} alterado={aulasSujas}>
+            <Link to="/agenda/disponibilidade" className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 font-medium active:bg-slate-100">
+              <span>Disponibilidade de agenda</span>
+              <ChevronRight size={18} className="text-slate-400" aria-hidden />
+            </Link>
             <Field label="Duração padrão da aula (minutos)">
               <Input type="number" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value)} />
             </Field>
