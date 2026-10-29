@@ -29,6 +29,7 @@ export const ARTIGOS: Artigo[] = [
       'Na tela Hoje, o card de primeiros passos mostra o que falta: cadastrar seus primeiros alunos, definir os horários em que você atende, criar o link da sua agenda, adicionar um horário fixo, montar um treino planejado e configurar sua chave Pix.',
       'Comece pelos alunos: com 3 cadastrados o app já fica útil. Os horários em que você atende viram vagas livres na Agenda e podem ser abertos aos alunos pelo link da sua agenda.',
       'Para criar o link: depois de definir seus horários, vá em Configurações → Página pública da agenda, ligue "Aceitar pedidos pelo link", toque em "Copiar link" ou "Enviar no WhatsApp" e mande aos seus alunos. Nada é marcado sozinho: você aprova cada pedido na Agenda.',
+      'Depois dos primeiros alunos, escolha como cobrar cada um (por aula, mensal ou pacote) na ficha, em Cobrança, e, se quiser formalizar a combinação, gere o contrato em PDF no cartão "Contrato" da ficha.',
       'Você pode fazer na ordem que quiser. Cada passo concluído some da lista.',
       'Dúvida em algum passo? Procure o assunto aqui na central ou fale com a gente pelo WhatsApp.',
     ],
@@ -189,6 +190,20 @@ export const ARTIGOS: Artigo[] = [
       'Para parar, encerre o horário fixo: ele deixa de gerar novas aulas a partir de hoje.',
     ],
     sinonimos: ['recorrente', 'toda semana', 'repetir', 'fixo'],
+  },
+  {
+    id: 'tipos-de-cobranca',
+    categoria: 'financeiro',
+    titulo: 'Escolher como cobrar cada aluno: por aula, mensal ou pacote',
+    passos: [
+      'Na ficha do aluno, em Cobrança, escolha o modelo: "Por aula", "Mensal (a cada 30 dias)" ou "Pacote de aulas". Cada aluno pode ter o seu.',
+      'Por aula: informe o valor da aula. No fim do ciclo, as aulas com presença entram na fatura e você pode tirar itens ou mudar valores antes de fechar. Faltas e cancelamentos entram conforme o padrão que você definiu em Configurações ("Cobrar falta por padrão" e "Cobrar cancelamento do aluno por padrão"). Se quiser, ligue "Cobrar treinos à distância" e informe o valor deles.',
+      'Mensal: um valor fixo por ciclo, não importa quantas aulas o aluno fez. As aulas aparecem só para você conferir, e o treino à distância não é cobrado à parte.',
+      'Pacote de aulas: um valor por uma quantidade de aulas, com prazo para usar. O pagamento é registrado na venda e o app mostra o contador (veja "Vender um pacote de aulas e acompanhar o contador").',
+      'Nos modelos por aula e mensal, o ciclo começa no "Dia de início do ciclo" que você escolher (de 1 a 28). Quando ele termina, o aluno aparece para fechar e gerar a fatura (veja "Fechar o ciclo e gerar a fatura").',
+      'O app não cobra o aluno: ele organiza o ciclo, gera a fatura e deixa a mensagem pronta para você enviar pelo WhatsApp. O aluno paga direto a você, por exemplo por Pix.',
+    ],
+    sinonimos: ['cobranca', 'cobrar', 'modelo', 'mensal', 'mensalidade', 'por aula', 'pacote', 'avulso', 'valor', 'preco', 'ciclo'],
   },
   {
     id: 'fechar-ciclo',

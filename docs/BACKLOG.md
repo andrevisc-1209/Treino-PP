@@ -1613,7 +1613,7 @@ Decisões do dono: quem avisa é o personal, pelo WhatsApp (a plataforma não ma
 - Teste SQL: `supabase/tests/agenda_lista_de_espera.sql` (não grava nada).
 - ⏳ Opcionais: aviso ao personal quando alguém entra na espera, chamar automaticamente ao cancelar uma aula, totais da espera para o admin.
 
-### 151. Onboarding ensina a criar o link da agenda, e a landing anuncia a lista de espera — ✅ PR aberta
+### 151. Onboarding ensina a criar o link da agenda, e a landing anuncia a lista de espera — ✅ Mergeada (#275)
 
 Sem migration e sem deploy de função (a função e a migration da lista de espera já estão no ar).
 
@@ -1621,3 +1621,11 @@ Sem migration e sem deploy de função (a função e a migration da lista de esp
 - ✅ **FAQ:** o artigo `primeiros-passos` cita o passo do link e ensina a criar (Configurações → Página pública da agenda → ligar → Copiar link ou Enviar no WhatsApp).
 - ✅ **Landing:** item "Vagas livres na agenda, link para o aluno pedir horário e lista de espera" e a pergunta "Meus alunos conseguem pedir horário sozinhos?" ganhou a lista de espera (quem chama é o personal, pelo WhatsApp).
 - ✅ **Canais:** Política (1.14 já cobre) e Termos (decisão do dono: sem mudança por ora) · Admin: não se aplica.
+
+### 152. FAQ: tipos de cobrança, contrato e link da agenda em "Por onde começar" — ✅ PR aberta
+
+Só texto; sem migration e sem deploy de função.
+
+- ✅ **Central de ajuda:** artigo novo **"Escolher como cobrar cada aluno: por aula, mensal ou pacote"** (como cada modelo funciona, dia de início do ciclo, o app não cobra o aluno). O artigo "Por onde começar" passou a citar também a escolha da cobrança e o contrato em PDF (além do link da agenda). Os artigos de contrato, link da agenda, pacote e fechar ciclo já existiam e continuam.
+- ✅ **Landing:** pergunta nova "Como cobro cada aluno: por aula, mensal ou pacote?" no FAQ.
+- ✅ **Canais:** Onboarding sem mudança · Política e Termos: não se aplica (nenhum dado novo) · Admin: não se aplica.
