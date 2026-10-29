@@ -15,6 +15,10 @@ verify_jwt = false
 [functions.treino-publico]
 verify_jwt = false
 
+# Página pública /agenda/:slug: o visitante (sem conta) vê as vagas e pede uma aula. Captcha, limites e validação dentro da função.
+[functions.agenda-publica]
+verify_jwt = false
+
 # Login com CPF: pública (o personal ainda não tem sessão). Captcha, limites e resposta uniforme são feitos dentro da função.
 [functions.login-cpf]
 verify_jwt = false

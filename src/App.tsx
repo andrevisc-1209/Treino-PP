@@ -26,6 +26,7 @@ import { FinalizarSessaoPage } from '@/features/sessoes/FinalizarSessaoPage'
 import { HojePage } from '@/features/agenda/HojePage'
 import { AgendaPage } from '@/features/agenda/AgendaPage'
 import { DisponibilidadePage } from '@/features/agenda/DisponibilidadePage'
+import { AgendaPublicaPage } from '@/features/agenda/AgendaPublicaPage'
 import { ConfiguracoesPage } from '@/features/agenda/ConfiguracoesPage'
 import { FinanceiroPage } from '@/features/financeiro/FinanceiroPage'
 import { FecharCicloPage } from '@/features/financeiro/FecharCicloPage'
@@ -45,6 +46,8 @@ export default function App() {
         <Route path="/termo" element={<TermoPage />} />
         <Route path="/termos" element={<TermosPage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
+        {/* Pública (sem login): o visitante pede uma aula pelo link do personal. "/agenda/disponibilidade" (estática) tem prioridade sobre o :slug. */}
+        <Route path="/agenda/:slug" element={<AgendaPublicaPage />} />
         {/* Fora do RequireAuth de propósito: o admin não é um "personal" (sem
             trial/assinatura, sem bottom nav de agenda/alunos). A própria
             AdminPage faz o guard de sessão + is_admin. */}
