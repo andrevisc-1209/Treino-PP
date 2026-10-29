@@ -1509,3 +1509,12 @@ Origem: escuta ativa com um personal (28/10/2026); decisões do dono em 29/10/20
 - ⏳ Fase 1, parte 2: **vagas visíveis na agenda** (janela menos aulas marcadas, com antecedência e intervalo), **"Oferecer esta vaga"** ao cancelar uma aula (mensagem de WhatsApp para alunos escolhidos) e bloqueios pontuais (férias, feriado).
 - ⏳ Fase 2: página pública de pedido de reserva por link aberto, com verificação de telefone, anti-spam e a fila de aprovação do personal (atualiza a Política de Privacidade). Fase 3: lista de espera.
 - ⚠️ Não testado ao vivo (a migration ainda não foi aplicada).
+
+### 141. Agenda, fase 1 (parte 2): vagas livres, oferecer vaga e dias sem atendimento — ✅ PR aberta
+Origem: escuta ativa com um personal (28/10/2026); continuação do item 140. **Tem migration** (`20261088000000_agenda_bloqueios.sql`): rodar no SQL Editor ANTES do merge.
+- ✅ **Vagas livres na agenda do dia** ("Vagas livres (N)", recolhível): a disponibilidade do personal menos as aulas não canceladas (com o intervalo entre aulas de cada lado) e os dias bloqueados, fatiada em aulas da duração padrão. Cancelar uma aula devolve a vaga. Nada de vaga em horário que já passou. Sem disponibilidade cadastrada, a agenda mostra o convite para defini-la.
+- ✅ **Oferecer vaga:** botão em cada vaga e, **logo depois de cancelar uma aula futura**, a pergunta "Quer oferecer essa vaga a outros alunos?". Lista os alunos com telefone válido (menos quem estava na aula cancelada), com busca quando são muitos; cada um tem o seu botão de WhatsApp com a mensagem pronta ("Oi, Maria! Abriu uma vaga na minha agenda: sexta, 30 de outubro, às 07:00…"), só com o primeiro nome do aluno e nada de dado de saúde. O envio é manual, aluno a aluno; o app não manda mensagem sozinho.
+- ✅ **Dias sem atendimento** (férias, feriado, viagem): seção na tela de Disponibilidade, salva na hora, com motivo opcional (até 60 caracteres); nesses dias não aparece vaga. Não mexe nas aulas já marcadas.
+- ✅ Banco: tabela `agenda_bloqueios` com RLS e sem gravar sem assinatura ativa; teste em `supabase/tests/agenda_bloqueios.sql`. O cálculo das vagas é puro e testado (duração, intervalo, aulas fora do horário redondo, bloqueios, antecedência e horário passado).
+- ⏳ Fase 2: página pública de pedido de reserva por link aberto (verificação de telefone, anti-spam, fila de aprovação do personal; atualiza a Política de Privacidade). Fase 3: lista de espera. Ideia: mostrar as vagas na visão da semana.
+- ⚠️ Não testado ao vivo (a migration ainda não foi aplicada).

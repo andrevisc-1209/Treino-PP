@@ -7,7 +7,10 @@ import { Button, Switch } from '@/components/ui'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
 import { cn } from '@/lib/utils'
-import { useDisponibilidade, useProfessionalConfig, useSalvarDisponibilidade } from './api'
+import { formatarDataBR } from '@/lib/format'
+import { hojeSP } from '@/lib/datas'
+import { Input } from '@/components/ui'
+import { useAdicionarBloqueio, useBloqueios, useDisponibilidade, useProfessionalConfig, useRemoverBloqueio, useSalvarDisponibilidade } from './api'
 import {
   avisosDias,
   copiarDia,
@@ -180,6 +183,72 @@ function Formulario({ inicialDias, inicialParametros }: { inicialDias: DiaDispon
   )
 }
 
+/** Dias sem atendimento (férias, feriado, viagem): salvos na hora, sem passar pelo botão de salvar; nesses dias não aparece vaga. */
+function BloqueiosSecao() {
+  const { exigir } = useExigirAssinatura()
+  const { data: bloqueios } = useBloqueios()
+  const adicionar = useAdicionarBloqueio()
+  const remover = useRemoverBloqueio()
+  const [inicio, setInicio] = useState(hojeSP())
+  const [fim, setFim] = useState(hojeSP())
+  const [motivo, setMotivo] = useState('')
+  const invalido = !inicio || !fim || fim < inicio
+
+  const incluir = async () => {
+    try {
+      await adicionar.mutateAsync({ inicio, fim, motivo })
+      setMotivo('')
+      mostrarInfoGlobal('Bloqueio salvo. Nesses dias não aparecem vagas.')
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  return (
+    <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm" aria-label="Dias sem atendimento">
+      <div>
+        <h2 className="font-semibold">Dias sem atendimento</h2>
+        <p className="text-sm text-slate-600">Férias, feriado, viagem. Salvo na hora; as aulas já marcadas não mudam.</p>
+      </div>
+      <ul className="divide-y divide-slate-100">
+        {(bloqueios ?? []).map((b) => (
+          <li key={b.id} className="flex items-center gap-3 py-1.5">
+            <span className="min-w-0 flex-1 text-sm">
+              <span className="font-medium">{b.data_inicio === b.data_fim ? formatarDataBR(b.data_inicio) : `${formatarDataBR(b.data_inicio)} a ${formatarDataBR(b.data_fim)}`}</span>
+              {b.motivo && <span className="text-slate-600"> · {b.motivo}</span>}
+            </span>
+            <button
+              type="button"
+              onClick={() => remover.mutate(b.id, { onError: (e) => mostrarErroGlobal(mapearErroSupabase(e)) })}
+              aria-label={`Remover bloqueio de ${formatarDataBR(b.data_inicio)}`}
+              className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 active:bg-slate-100"
+            >
+              <Trash2 size={18} aria-hidden />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex-1 text-xs text-slate-600">
+          De
+          <Input type="date" value={inicio} min={hojeSP()} onChange={(e) => { setInicio(e.target.value); if (fim < e.target.value) setFim(e.target.value) }} />
+        </label>
+        <label className="flex-1 text-xs text-slate-600">
+          Até
+          <Input type="date" value={fim} min={inicio} onChange={(e) => setFim(e.target.value)} />
+        </label>
+      </div>
+      <label className="block text-xs text-slate-600">
+        Motivo (opcional)
+        <Input value={motivo} maxLength={60} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: férias" />
+      </label>
+      <Button variant="outline" className="w-full" onClick={exigir(incluir)} disabled={invalido || adicionar.isPending}>
+        Bloquear estes dias
+      </Button>
+    </section>
+  )
+}
+
 /** Quando o personal atende: janelas por dia da semana e as regras das vagas (antecedência mínima padrão: 3 horas). */
 export function DisponibilidadePage() {
   const janelas = useDisponibilidade()
@@ -200,6 +269,7 @@ export function DisponibilidadePage() {
       {carregando && <ListaSkeleton linhas={4} />}
       {(janelas.error || config.error) && <p className="py-4 text-sm text-red-600">{mapearErroSupabase(janelas.error ?? config.error)}</p>}
       {!carregando && !janelas.error && !config.error && <Formulario inicialDias={diasDasJanelas(janelas.data ?? [])} inicialParametros={parametrosDaConfig(config.data)} />}
+      {!carregando && !janelas.error && !config.error && <BloqueiosSecao />}
     </div>
   )
 }

@@ -6,10 +6,11 @@ import { dividirValor } from '@/features/financeiro/calc'
 import { formatarBRL } from '@/lib/moeda'
 import { dataSP, horaSP, montarDataHoraSP } from '@/lib/datas'
 import { descreverMenuAula } from './menuAula'
+import { OfertaDeVaga } from './OferecerVaga'
 import { useGuardaCheckIn } from '@/features/pacotes/useGuardaCheckIn'
 import { useCancelarAula, useCheckIn, useMarcarFalta, useProfessionalConfig, useRemarcarAula, valorPorAulaDoAluno, type Aula } from './api'
 
-type Passo = 'menu' | 'iniciar' | 'checkin' | 'falta' | 'cancelar' | 'remarcar'
+type Passo = 'menu' | 'iniciar' | 'checkin' | 'falta' | 'cancelar' | 'remarcar' | 'oferecer'
 
 export function AulaAcoesSheet({
   aula,
@@ -94,7 +95,8 @@ export function AulaAcoesSheet({
   }
 
   const confirmarCancelar = () => {
-    cancelarAula.mutate({ aulaId: aula.id, canceladoPor, cobrar: cobrarCancel }, { onSuccess: fechar })
+    // horário que ainda não passou vira vaga: oferece a outros alunos antes de fechar
+    cancelarAula.mutate({ aulaId: aula.id, canceladoPor, cobrar: cobrarCancel }, { onSuccess: () => (new Date(aula.starts_at) > new Date() ? setPasso('oferecer') : fechar()) })
   }
 
   const abrirRemarcar = () => {
@@ -146,7 +148,9 @@ export function AulaAcoesSheet({
               : 'Falta de quem?'
             : passo === 'cancelar'
               ? 'Cancelar aula'
-              : 'Remarcar aula'
+              : passo === 'oferecer'
+                ? 'Aula cancelada'
+                : 'Remarcar aula'
 
   return (
     <BottomSheet open={!!aula} onClose={fechar} title={titulo}>
@@ -327,6 +331,19 @@ export function AulaAcoesSheet({
           )}
           <Button onClick={confirmarCancelar} className="w-full" disabled={cancelarAula.isPending}>
             Confirmar cancelamento
+          </Button>
+        </div>
+      )}
+
+      {passo === 'oferecer' && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-700">O horário ficou livre. Quer oferecer essa vaga a outros alunos?</p>
+          <OfertaDeVaga
+            vaga={{ dataISO: dataSP(aula.starts_at), inicio: horaSP(aula.starts_at), fim: horaSP(new Date(new Date(aula.starts_at).getTime() + aula.duration_min * 60_000)) }}
+            excluirAlunoIds={aula.aula_participantes.map((p) => p.aluno_id)}
+          />
+          <Button variant="ghost" onClick={fechar} className="w-full text-slate-600">
+            Agora não
           </Button>
         </div>
       )}
