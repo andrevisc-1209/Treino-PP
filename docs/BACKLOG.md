@@ -1565,7 +1565,7 @@ Origem: pedido do dono (29/10/2026): o link da página pública deve aparecer na
 - ⏳ **Revisão jurídica** das Políticas 1.11 e 1.12 (CPF e endereço do aluno; visitantes da página pública).
 - ⚠️ Não testado ao vivo no navegador.
 
-### 147. Página pública da agenda e fila de pedidos redesenhadas (PR 1 da auditoria de UX) — ✅ PR aberta
+### 147. Página pública da agenda e fila de pedidos redesenhadas (PR 1 da auditoria de UX) — ✅ Mergeada (#271)
 Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/2026); os mockups do ChatGPT foram a base. Só tela; sem migration e sem deploy. Decisões do dono: manter o Turnstile; WhatsApp do personal na página fica para uma etapa futura (opção dele); nada de expirar pedido sozinho (só alertar).
 - ✅ **Página pública (`/agenda/<link>`):** cabeçalho com avatar de iniciais, cidade e duração da aula; faixa "Você escolhe. [Nome] confirma. Nenhuma aula é marcada sem aprovação"; **faixa de dias** deslizável com "2 vagas" por dia (o primeiro dia já vem aberto) e os horários do dia **separados em Manhã, Tarde e Noite** (botões de 48 px); ao escolher, o formulário abre logo abaixo com o horário escolhido no topo e "Trocar".
 - ✅ **Formulário:** rótulos fixos (não só placeholder), erro embaixo de cada campo (que some ao corrigir), consentimento **desmarcado** e específico, aviso de privacidade e retenção, "Enviar o pedido não confirma a aula." Os dados continuam preenchidos em qualquer falha.
@@ -1574,5 +1574,16 @@ Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/20
 - ✅ **Fila de pedidos do personal:** abas **Pendentes / Aprovados / Recusados** (últimos 30 dias), do mais antigo para o mais novo, com **"Pedido recebido há 2 h"**; passando de 24 h o pedido e a faixa da Agenda ficam vermelhos ("Tem pedido esperando há mais de 24 h").
 - ✅ **Onboarding:** passo opcional "Ative e compartilhe o link da sua agenda" no checklist (aparece depois dos horários e não impede o checklist de sumir). Em Configurações, **"Ver como visitante"**.
 - ✅ **Canais revisados (/atualizacao_fluxoapp):** FAQ atualizado (artigo dos pedidos); landing, Política e Termos: sem mudança nesta PR (nenhum dado novo).
-- ⏳ **PR 2 (migration):** aprovação do pedido numa transação só (hoje o app faz em etapas e duas aprovações simultâneas podem duplicar a vaga), apresentação curta do personal e vínculo do pedido com a aula. **PR 3 (migration):** cartão "Sua agenda pública" (pedidos da semana, pendentes, tempo mediano de resposta, aulas realizadas pelo link) e contadores agregados para o admin; essa vai pedir revisão da Política.
+- ✅ **PR 2:** ver item 148. ⏳ (era) aprovação do pedido numa transação só (hoje o app faz em etapas e duas aprovações simultâneas podem duplicar a vaga), apresentação curta do personal e vínculo do pedido com a aula. **PR 3 (migration):** cartão "Sua agenda pública" (pedidos da semana, pendentes, tempo mediano de resposta, aulas realizadas pelo link) e contadores agregados para o admin; essa vai pedir revisão da Política.
 - ⚠️ Conferido a 390 px com a resposta da função simulada (o envio real depende do captcha, que não roda em localhost). Falta ver ao vivo: o envio de um pedido e a tela "Pedido enviado!".
+
+### 148. Aprovação atômica, apresentação do personal e vínculo pedido→aula (PR 2 da auditoria de UX) — ✅ PR aberta
+
+**Rodar a migration `20261092000000_agenda_aprovacao_atomica.sql` no SQL Editor ANTES do merge** (e fazer o deploy da função `agenda-publica` DEPOIS dela: a função passa a ler a coluna nova).
+
+- ✅ **Aprovação numa transação só** (`treino.aprovar_pedido_agenda`, SECURITY INVOKER, RLS vale): trava por personal (advisory lock), confere o conflito de horário, cria o aluno se preciso, a aula e o participante, guarda o telefone (só se o aluno não tinha) e marca como "indisponível" os outros pedidos que se sobrepõem. Se algo falha, nada fica pela metade. Duas aprovações ao mesmo tempo: a segunda vê a aula da primeira e recebe "Esse horário já foi ocupado…". Pedido já respondido: "Esse pedido já foi respondido."
+- ✅ **`pedidos_agenda.aula_id`**: a aula criada pelo pedido (base para "aulas realizadas pelo link" na PR 3).
+- ✅ **Apresentação** (`professional_config.apresentacao`, até 160 caracteres, opcional): campo em Configurações → Página pública, mostrado no topo da página do visitante.
+- ✅ **Canais:** FAQ atualizado (apresentação). Política/Termos/landing sem mudança: a apresentação é texto que o próprio personal escolhe publicar; não há dado novo de terceiros.
+- Teste SQL: `supabase/tests/agenda_aprovacao_atomica.sql` (não grava nada).
+- ⏳ **PR 3 (migration):** cartão "Sua agenda pública" + contadores agregados para o admin (pede revisão da Política).

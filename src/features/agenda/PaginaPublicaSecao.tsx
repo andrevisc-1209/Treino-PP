@@ -1,12 +1,57 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
-import { Switch } from '@/components/ui'
+import { Button, Switch } from '@/components/ui'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
-import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig } from './api'
+import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig, useSalvarProfessionalConfig } from './api'
 import { BotoesDoLink } from './LinkDaAgenda'
 import { linkDaAgendaPublica } from './publica'
+
+const LIMITE_APRESENTACAO = 160
+
+/** Texto curto que aparece no topo da página pública; só é gravado ao tocar em Salvar. */
+function ApresentacaoCampo({ salva }: { salva: string }) {
+  const { exigir } = useExigirAssinatura()
+  const salvar = useSalvarProfessionalConfig()
+  const [rascunho, setRascunho] = useState<string | null>(null)
+  const texto = rascunho ?? salva
+  const alterado = texto.trim() !== salva.trim()
+
+  const gravar = async () => {
+    try {
+      await salvar.mutateAsync({ apresentacao: texto.trim() || null })
+      setRascunho(null)
+      mostrarInfoGlobal('Apresentação salva.')
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <label htmlFor="apresentacao-agenda" className="block text-sm font-medium">
+        Apresentação <span className="font-normal text-slate-600">(opcional)</span>
+      </label>
+      <textarea
+        id="apresentacao-agenda"
+        value={texto}
+        maxLength={LIMITE_APRESENTACAO}
+        rows={3}
+        placeholder="Ex.: Personal trainer há 8 anos. Aulas de musculação e funcional na Barra."
+        onChange={(e) => setRascunho(e.target.value)}
+        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base"
+      />
+      <p className="text-xs text-slate-600">{texto.length}/{LIMITE_APRESENTACAO}. Aparece no topo da página, para qualquer visitante. Não escreva telefone nem dados de saúde.</p>
+      {alterado && (
+        <Button type="button" onClick={exigir(() => void gravar())} disabled={salvar.isPending}>
+          Salvar apresentação
+        </Button>
+      )}
+    </div>
+  )
+}
 
 /** Configurações: liga a página pública da agenda, mostra o link para divulgar e permite trocá-lo. Desligada por padrão. */
 export function PaginaPublicaSecao() {
@@ -58,6 +103,7 @@ export function PaginaPublicaSecao() {
           Você ainda não definiu seus horários, então ninguém verá vagas. <Link to="/agenda/disponibilidade" className="font-medium underline">Definir disponibilidade</Link>.
         </p>
       )}
+      {ativa && <ApresentacaoCampo salva={config?.apresentacao ?? ''} />}
       {ativa && link && (
         <div className="space-y-2">
           <p className="break-all rounded-xl bg-slate-50 p-3 text-sm text-slate-800">{link}</p>

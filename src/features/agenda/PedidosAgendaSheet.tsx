@@ -18,7 +18,7 @@ type Resposta = { tipo: 'aprovado' | 'recusado'; link: string; pedido: PedidoAge
 
 type AlunoLista = { id: string; name: string; phone: string | null }
 
-function CartaoPedido({ pedido, todos, aluno, alunos, personalNome, resposta, onResponder }: { pedido: PedidoAgenda; todos: PedidoAgenda[]; aluno: AlunoLista | null; alunos: AlunoLista[]; personalNome: string; resposta: Resposta | undefined; onResponder: (id: string, r: Resposta) => void }) {
+function CartaoPedido({ pedido, aluno, alunos, personalNome, resposta, onResponder }: { pedido: PedidoAgenda; aluno: AlunoLista | null; alunos: AlunoLista[]; personalNome: string; resposta: Resposta | undefined; onResponder: (id: string, r: Resposta) => void }) {
   const { exigir } = useExigirAssinatura()
   const aprovar = useAprovarPedido()
   const recusar = useRecusarPedido()
@@ -36,7 +36,7 @@ function CartaoPedido({ pedido, todos, aluno, alunos, personalNome, resposta, on
 
   const fazerAprovar = async () => {
     try {
-      const r = await aprovar.mutateAsync({ pedido, todos, alunoId: alunoFinal?.id ?? null, local: null, guardarTelefone: !aluno && !!escolhido && !escolhido.phone && guardarTelefone })
+      const r = await aprovar.mutateAsync({ pedido, alunoId: alunoFinal?.id ?? null, local: null, guardarTelefone: !aluno && !!escolhido && !escolhido.phone && guardarTelefone })
       mostrarInfoGlobal(r.novoAluno ? 'Aula marcada e aluno cadastrado. Complete a ficha dele depois.' : 'Aula marcada.')
       onResponder(pedido.id, { tipo: 'aprovado', pedido, link: linkWhatsAppComTexto(pedido.visitante_telefone, mensagemDeAprovacao(dados)) })
     } catch (e) {
@@ -198,7 +198,6 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
                 <CartaoPedido
                   key={p.id}
                   pedido={p}
-                  todos={lista}
                   aluno={alunoDoTelefone(alunos ?? [], p.visitante_telefone)}
                   alunos={alunos ?? []}
                   personalNome={perfil?.name ?? ''}
