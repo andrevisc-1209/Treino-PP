@@ -1,22 +1,12 @@
 import { Link } from 'react-router-dom'
-import { Copy, MessageCircle } from 'lucide-react'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { Switch } from '@/components/ui'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
-import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig } from './api'
+import { BotoesDoLink } from './LinkDaAgenda'
 import { linkDaAgendaPublica } from './publica'
-
-async function copiar(texto: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(texto)
-    return true
-  } catch {
-    return false
-  }
-}
 
 /** Configurações: liga a página pública da agenda, mostra o link para divulgar e permite trocá-lo. Desligada por padrão. */
 export function PaginaPublicaSecao() {
@@ -71,23 +61,7 @@ export function PaginaPublicaSecao() {
       {ativa && link && (
         <div className="space-y-2">
           <p className="break-all rounded-xl bg-slate-50 p-3 text-sm text-slate-800">{link}</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={async () => mostrarInfoGlobal((await copiar(link)) ? 'Link copiado.' : 'Não consegui copiar. Selecione o link acima e copie.')}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
-            >
-              <Copy size={16} aria-hidden /> Copiar link
-            </button>
-            <a
-              href={linkWhatsAppComTexto(null, `Quer marcar uma aula comigo? Veja meus horários livres e peça o seu: ${link}`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 active:bg-emerald-50"
-            >
-              <MessageCircle size={16} aria-hidden /> Enviar no WhatsApp
-            </a>
-          </div>
+          <BotoesDoLink link={link} />
           <button type="button" onClick={exigir(() => void trocar())} disabled={configurar.isPending} className="min-h-11 text-sm font-medium text-slate-700 underline">
             Trocar o link
           </button>

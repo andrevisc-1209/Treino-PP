@@ -32,6 +32,7 @@ import { decidirComecar } from './comecarAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { OferecerVagaSheet } from './OferecerVaga'
 import { PedidosAgendaSheet } from './PedidosAgendaSheet'
+import { LinkDaAgendaCard } from './LinkDaAgenda'
 import { useVagasDoDia } from './useVagasDoDia'
 import type { Vaga } from './vagas'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, usePedidosPendentes, type Aula } from './api'
@@ -326,6 +327,7 @@ export function AgendaPage() {
         </button>
       )}
       <PedidosAgendaSheet open={pedidosAbertos} onClose={fecharPedidos} />
+      <LinkDaAgendaCard />
 
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">

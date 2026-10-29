@@ -1553,3 +1553,14 @@ Origem: primeiro teste ao vivo dos pedidos (29/10/2026): o app reconhece o aluno
 - ✅ Ao escolher, o pedido diz "A aula será marcada para o aluno X" (com "Trocar"). Se o aluno **não tem telefone**, aparece a opção ligada por padrão **"Guardar este telefone no cadastro dele"**, para o próximo pedido ser reconhecido sozinho; um telefone que já existe **nunca** é trocado.
 - ✅ Sem escolher ninguém, continua como antes: o cadastro rápido só com nome e telefone.
 - ⚠️ Não testado ao vivo no navegador.
+
+### 146. Link da agenda na própria Agenda e revisão dos canais (FAQ, onboarding, landing) — ✅ PR aberta
+Origem: pedido do dono (29/10/2026): o link da página pública deve aparecer na Agenda, não só em Configurações; e toda mudança de fluxo tem que ser refletida no FAQ, no onboarding, na landing e nos textos legais. Só texto e tela; sem migration e sem deploy.
+- ✅ **Cartão "Seu link de agenda"** no alto da Agenda (com a página ligada): o link, **Copiar link** e **Enviar no WhatsApp**, e "Ajustes" que leva à seção em Configurações. Com a página desligada e os horários já definidos, aparece só um convite discreto ("Deixe seus alunos pedirem horário pelo seu link de agenda"). Os botões são os mesmos da seção de Configurações.
+- ✅ **Skill do projeto `/atualizacao_fluxoapp`** (`.claude/skills/atualizacao_fluxoapp/SKILL.md`) e uma linha no `CLAUDE.md`: ao concluir qualquer mudança visível, revisar Central de ajuda, onboarding, landing, Política de Privacidade e Termos e listar os "Canais revisados" na PR.
+- ✅ **Central de ajuda:** 5 artigos novos (definir horários e ver vagas; oferecer uma vaga; receber pedidos pelo link; vender pacote de aulas; relatórios em PDF) e o do contrato do aluno; o artigo "Por onde começar" agora cita os horários de atendimento.
+- ✅ **Landing:** quatro perguntas frequentes novas (pedir horário sozinho, aluno que cancela, pacote de aulas, contrato e relatório em PDF), a resposta "o aluno precisa de app?" atualizada e itens novos na comparação "O que você usa hoje × o Treino".
+- ✅ **Onboarding:** o checklist e o cartão de ativação já têm o passo "horários em que atendo" (item 140); o link da agenda agora também aparece na Agenda.
+- ⏳ **Termos de Uso (1.7):** ainda sem cláusulas sobre o modelo de contrato (o personal é responsável por revisar e usar) e sobre a página pública (responsabilidade pelo uso do link e pelos pedidos). Proposta de texto na descrição da PR; depende de revisão do dono/advogado e de uma versão nova registrada por migration.
+- ⏳ **Revisão jurídica** das Políticas 1.11 e 1.12 (CPF e endereço do aluno; visitantes da página pública).
+- ⚠️ Não testado ao vivo no navegador.

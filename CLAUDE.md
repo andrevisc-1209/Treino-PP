@@ -57,3 +57,4 @@
 
 ## Backlog
 - Ao final de cada tarefa, atualizar o status dos itens em docs/BACKLOG.md na mesma PR.
+- Ao final de toda mudança que o personal, o aluno ou um visitante percebam (funcionalidade, fluxo, tela, dado coletado), rodar /atualizacao_fluxoapp: revisar Central de ajuda (FAQ), onboarding, landing page, Política de Privacidade e Termos, e registrar na PR os "Canais revisados".
