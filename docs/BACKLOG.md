@@ -1462,5 +1462,15 @@ Origem: auditoria de UX do painel admin (itens 133 e 134); aprovada em 28/10/202
 - ✅ **Filtros de um clique com contador:** Trial acabando (3 dias), Sem treinos em 30 dias, Sem alunos, Vencidos.
 - ✅ **Ordenação:** nome, acesso que acaba primeiro, menos treinos em 30 dias.
 - ✅ Funciona também nos cartões do celular. Testes novos para situação, uso, filtros e ordenação.
-- ⏳ **Última atividade** (data do último uso) por personal: precisa de uma migration (a função de métricas não devolve isso hoje); vai junto do PR 4 (registrar contato).
+- ✅ **Última atividade** por personal entrou no item 136 (precisava de migration).
 - ⚠️ Não testado ao vivo no navegador (precisa da conta admin).
+
+### 136. Painel admin: registrar contato, adiar alerta e última atividade (PR 4 da auditoria de UX) — ✅ PR aberta
+Origem: auditoria de UX do painel admin (itens 133 a 135); aprovada em 28/10/2026. **Tem migration** (`20261085000000_admin_contatos_e_atividade.sql`): rodar no SQL Editor ANTES do merge.
+- ✅ **Registrar contato** (botão ao lado do WhatsApp em "Quem precisa de ação agora" e no menu ⋮ de cada personal): canal (WhatsApp, telefone, e-mail, outro), resultado (sem resposta, respondeu, combinou retorno, resolvido, não quer continuar), anotação de até 300 caracteres (aviso: só sobre o personal, nada de aluno nem saúde) e **"esconder este alerta por 3, 7 ou 14 dias"**.
+- ✅ Quem teve o alerta adiado sai da lista e vai para "Adiados depois de um contato" (recolhido), com a data em que volta. O contador do cartão só conta quem ainda pede ação.
+- ✅ O **último contato** ("WhatsApp · respondeu · há 3 dias") aparece na lista de Personais e no alerta; o histórico dos contatos aparece dentro da própria janela de registro.
+- ✅ **Última atividade:** "Último uso do app: hoje / ontem / há N dias / sem uso ainda" na coluna Uso recente, e nova ordenação **"Mais tempo sem usar o app"** (quem nunca usou vem primeiro).
+- ✅ Banco: tabela `admin_contatos` com RLS e leitura só do admin (escrita só pelas funções); funções `admin_registrar_contato`, `admin_contatos_resumo`, `admin_contatos_do_personal` e `admin_personais_atividade`, todas exigindo admin com MFA. Teste em `supabase/tests/admin_contatos_e_atividade.sql`.
+- ⏳ Depois: medir se contatar trial no fim converte mais (cruzar contatos com conversão); coortes e churn quando houver cerca de 20 pagantes.
+- ⚠️ Não testado ao vivo (precisa da conta admin com MFA e da migration aplicada): registrar um contato com "adiar 7 dias" e ver o alerta sair da Visão geral.

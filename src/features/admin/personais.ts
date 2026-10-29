@@ -145,11 +145,12 @@ export function passaFiltroRapido(
   return p.status === 'trial' && dias !== null && dias <= 3
 }
 
-export type OrdemPersonais = 'nome' | 'vence_primeiro' | 'menos_uso'
+export type OrdemPersonais = 'nome' | 'vence_primeiro' | 'menos_uso' | 'sem_atividade'
 export const ORDENS_PERSONAIS: { id: OrdemPersonais; rotulo: string }[] = [
   { id: 'nome', rotulo: 'Nome (A–Z)' },
   { id: 'vence_primeiro', rotulo: 'Acesso que acaba primeiro' },
   { id: 'menos_uso', rotulo: 'Menos treinos em 30 dias' },
+  { id: 'sem_atividade', rotulo: 'Mais tempo sem usar o app' },
 ]
 
 /** Ordena sem alterar a lista original; sem dado (data ou métrica) vai para o fim. */
@@ -158,6 +159,7 @@ export function ordenarPersonais<T extends PersonalComStatus & { id: string; nam
   ordem: OrdemPersonais,
   bonus: Map<string, string> | undefined,
   metricas: Map<string, MetricasPersonal> | undefined,
+  atividade?: Map<string, string | null>,
 ): T[] {
   const nome = (a: T, b: T) => (a.name || '').localeCompare(b.name || '', 'pt-BR')
   const copia = [...lista]
@@ -167,6 +169,14 @@ export function ordenarPersonais<T extends PersonalComStatus & { id: string; nam
       return d ? new Date(d).getTime() : Infinity
     }
     return copia.sort((a, b) => fim(a) - fim(b) || nome(a, b))
+  }
+  if (ordem === 'sem_atividade') {
+    // quem nunca usou (null) vem primeiro; depois o uso mais antigo; sem dado vai para o fim
+    const parado = (p: T) => {
+      const v = atividade?.get(p.id)
+      return v === undefined ? -Infinity : v === null ? Infinity : -new Date(v).getTime()
+    }
+    return copia.sort((a, b) => parado(b) - parado(a) || nome(a, b))
   }
   if (ordem === 'menos_uso') {
     const uso = (p: T) => metricas?.get(p.id)?.exec_30d ?? Infinity

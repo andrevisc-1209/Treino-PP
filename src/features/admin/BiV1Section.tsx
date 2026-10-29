@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageCircle, Target } from 'lucide-react'
+import { ClipboardPen, MessageCircle, Target } from 'lucide-react'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { mapearErroSupabase } from '@/lib/erros'
 import { hojeSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 import { formatarMoeda } from './financeiro'
+import { formatarDataBR } from '@/lib/format'
+import { rotuloUltimoContato, separarAdiados, type ResumoContato } from './contatos'
 import { useAdminBIv1, useAdminListaAcao, useAdminRegioes } from './api'
 import {
   conversaoParaPagante,
@@ -25,6 +27,7 @@ import {
   SITUACOES_BI,
   type FiltrosBI,
   type FunilBI,
+  type ItemAcao,
   type MetaBI,
   type SituacaoBI,
 } from './biV1'
@@ -89,45 +92,78 @@ export function BlocoMeta({ meta }: { meta: MetaBI }) {
   )
 }
 
-/** "Quem precisa de ação agora": personais com trial acabando sem ativação, pagantes sem uso e planos vencendo, com atalho de WhatsApp. */
-export function CartaoAcao({ lista }: { lista: ReturnType<typeof useAdminListaAcao> }) {
+/**
+ * "Quem precisa de ação agora": trial acabando sem ativação, pagante sem uso e plano vencendo, com WhatsApp e registro de contato.
+ * Quem já foi contatado e teve o alerta adiado sai da lista e fica numa linha recolhida ("Adiados").
+ */
+export function CartaoAcao({
+  lista,
+  resumo,
+  onRegistrar,
+}: {
+  lista: ReturnType<typeof useAdminListaAcao>
+  resumo?: Map<string, ResumoContato>
+  onRegistrar?: (i: ItemAcao) => void
+}) {
+  const { ativos, adiados } = separarAdiados(lista.data ?? [], resumo, hojeSP())
+
+  const linha = (i: ItemAcao, adiado: boolean) => {
+    const whats = linkContatoPersonal(i.telefone)
+    const ultimo = rotuloUltimoContato(resumo?.get(i.professional_id))
+    return (
+      <li key={`${i.professional_id}-${i.motivo}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5">
+        <div className="min-w-0 flex-1 basis-48">
+          <p className="truncate text-sm font-medium text-slate-800">
+            {i.nome || '—'} <span className="font-normal text-slate-500">· {i.cidade ?? 'Não informado'}</span>
+          </p>
+          <p className="text-xs text-slate-600">
+            <span
+              className={cn(
+                'mr-1 inline-block rounded-full px-2 py-0.5 font-medium',
+                i.motivo === 'trial_sem_ativacao' ? 'bg-amber-100 text-amber-900' : i.motivo === 'pagante_sem_uso' ? 'bg-red-100 text-red-900' : 'bg-brand-soft text-brand-hover',
+              )}
+            >
+              {ROTULO_MOTIVO[i.motivo]}
+            </span>
+            {detalheDoMotivo(i)}
+          </p>
+          {ultimo && (
+            <p className="text-xs text-slate-600">
+              Último contato: {ultimo}
+              {adiado && resumo?.get(i.professional_id)?.adiar_ate ? ` · alerta adiado até ${formatarDataBR(resumo.get(i.professional_id)!.adiar_ate!)}` : ''}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {whats ? (
+            <a href={whats} target="_blank" rel="noopener noreferrer" aria-label={`Chamar ${i.nome} no WhatsApp`} className="flex min-h-11 items-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 active:bg-emerald-50">
+              <MessageCircle size={16} aria-hidden /> WhatsApp
+            </a>
+          ) : (
+            <span className="text-xs text-slate-500">sem telefone</span>
+          )}
+          {onRegistrar && (
+            <button type="button" onClick={() => onRegistrar(i)} aria-label={`Registrar contato com ${i.nome}`} className="flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-700 active:bg-slate-50">
+              <ClipboardPen size={16} aria-hidden /> Registrar contato
+            </button>
+          )}
+        </div>
+      </li>
+    )
+  }
+
   return (
-    <Cartao id="bi1-acao" titulo={`Quem precisa de ação agora${lista.data ? ` (${lista.data.length})` : ''}`}>
+    <Cartao id="bi1-acao" titulo={`Quem precisa de ação agora${lista.data ? ` (${ativos.length})` : ''}`}>
       {lista.isLoading && <ListaSkeleton linhas={2} />}
       {lista.error && <p className="text-sm text-red-600">{mapearErroSupabase(lista.error)}</p>}
-      {lista.data && lista.data.length === 0 && <p className="text-sm text-slate-600">Ninguém pede ação agora. 👏</p>}
-      <ul className="divide-y divide-slate-100">
-        {(lista.data ?? []).map((i) => {
-          const whats = linkContatoPersonal(i.telefone)
-          return (
-            <li key={`${i.professional_id}-${i.motivo}`} className="flex items-center gap-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-800">
-                  {i.nome || '—'} <span className="font-normal text-slate-500">· {i.cidade ?? 'Não informado'}</span>
-                </p>
-                <p className="text-xs text-slate-600">
-                  <span
-                    className={cn(
-                      'mr-1 inline-block rounded-full px-2 py-0.5 font-medium',
-                      i.motivo === 'trial_sem_ativacao' ? 'bg-amber-100 text-amber-900' : i.motivo === 'pagante_sem_uso' ? 'bg-red-100 text-red-900' : 'bg-brand-soft text-brand-hover',
-                    )}
-                  >
-                    {ROTULO_MOTIVO[i.motivo]}
-                  </span>
-                  {detalheDoMotivo(i)}
-                </p>
-              </div>
-              {whats ? (
-                <a href={whats} target="_blank" rel="noopener noreferrer" aria-label={`Chamar ${i.nome} no WhatsApp`} className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 active:bg-emerald-50">
-                  <MessageCircle size={16} aria-hidden /> WhatsApp
-                </a>
-              ) : (
-                <span className="shrink-0 text-xs text-slate-500">sem telefone</span>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+      {lista.data && ativos.length === 0 && <p className="text-sm text-slate-600">Ninguém pede ação agora. 👏</p>}
+      <ul className="divide-y divide-slate-100">{ativos.map((i) => linha(i, false))}</ul>
+      {adiados.length > 0 && (
+        <details className="mt-2 border-t border-slate-100 pt-1">
+          <summary className="min-h-11 cursor-pointer content-center text-sm font-medium text-slate-700">Adiados depois de um contato ({adiados.length})</summary>
+          <ul className="divide-y divide-slate-100">{adiados.map((i) => linha(i, true))}</ul>
+        </details>
+      )}
     </Cartao>
   )
 }

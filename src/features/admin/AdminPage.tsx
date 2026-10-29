@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   CircleCheck,
+  ClipboardPen,
   CreditCard,
   GraduationCap,
   Hourglass,
@@ -57,6 +58,9 @@ import {
 import { HistoricoSection } from './HistoricoSection'
 import { FinanceiroSection } from './FinanceiroSection'
 import { IndicadoresSection } from './IndicadoresSection'
+import { ModalBase } from './ModalBase'
+import { ContatoModal } from './ContatoModal'
+import { rotuloUltimaAtividade, rotuloUltimoContato, type ResumoContato } from './contatos'
 import { BlocoMeta, CartaoAcao, FunilCompacto } from './BiV1Section'
 import { SEM_FILTROS } from './biV1'
 import { confirmarAcao } from '@/components/ConfirmSheet'
@@ -68,6 +72,8 @@ import {
   useAdminRegioes,
   useAdminBonus,
   useAdminBIv1,
+  useAdminAtividade,
+  useAdminContatosResumo,
   useAdminListaAcao,
   useAdminPersonaisMetricas,
   useAdminRelatos,
@@ -161,6 +167,8 @@ function AdminDashboard() {
   const limparCidade = () => setParams({ aba: 'personais' }, { replace: true })
   const bi = useAdminBIv1(30, SEM_FILTROS)
   const listaAcao = useAdminListaAcao()
+  const contatos = useAdminContatosResumo()
+  const atividade = useAdminAtividade()
   const relatos = useAdminRelatos()
   const relatosEmAberto = (relatos.data ?? []).filter((r) => r.status !== 'resolvido').length
   // a busca vive na URL (?busca=), para o "Ver cadastro" dos relatos abrir a lista já filtrada
@@ -174,7 +182,7 @@ function AdminDashboard() {
     }, { replace: true })
   const [menuPersonal, setMenuPersonal] = useState<PersonalAdmin | null>(null)
   const [filtroStatus, setFiltroStatus] = useState<'' | StatusAssinatura>('')
-  const [acao, setAcao] = useState<{ tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin } | null>(null)
+  const [acao, setAcao] = useState<{ tipo: 'reset' | 'trial' | 'plano' | 'cpf' | 'contato'; personal: PersonalAdmin; motivo?: string } | null>(null)
 
   const [filtroRapido, setFiltroRapido] = useState<'' | FiltroRapido>('')
   const [ordem, setOrdem] = useState<OrdemPersonais>('nome')
@@ -196,8 +204,13 @@ function AdminDashboard() {
 
   const listaFiltrada = useMemo(() => {
     const filtrada = filtroRapido ? baseFiltrada.filter((p) => passaFiltroRapido(filtroRapido, p, bonus.data?.get(p.id), metricas.data?.get(p.id))) : baseFiltrada
-    return ordenarPersonais(filtrada, ordem, bonus.data, metricas.data)
-  }, [baseFiltrada, filtroRapido, ordem, bonus.data, metricas.data])
+    return ordenarPersonais(filtrada, ordem, bonus.data, metricas.data, atividade.data)
+  }, [baseFiltrada, filtroRapido, ordem, bonus.data, metricas.data, atividade.data])
+
+  const abrirContato = (professionalId: string, motivo: string) => {
+    const personal = personais.data?.find((x) => x.id === professionalId)
+    if (personal) setAcao({ tipo: 'contato', personal, motivo })
+  }
 
   const visaoGeral = useMemo(() => {
     const lista = personais.data ?? []
@@ -236,7 +249,7 @@ function AdminDashboard() {
         <div className="grid gap-4 lg:grid-cols-2">
           {bi.data && <BlocoMeta meta={bi.data.meta} />}
           <div className="space-y-4">
-            <CartaoAcao lista={listaAcao} />
+            <CartaoAcao lista={listaAcao} resumo={contatos.data} onRegistrar={(i) => abrirContato(i.professional_id, i.motivo)} />
             {relatosEmAberto > 0 && (
               <button
                 type="button"
@@ -383,6 +396,7 @@ function AdminDashboard() {
                     <td className="py-2.5 pr-3">
                       <p className="font-medium text-slate-800">{p.name || '—'}</p>
                       <p className="text-xs text-slate-600">{p.email ?? '—'}</p>
+                      <UltimoContato resumo={contatos.data?.get(p.id)} />
                     </td>
                     <td className="py-2.5 pr-3">
                       <SituacaoDoPersonal p={p} bonusAte={bonus.data?.get(p.id)} />
@@ -392,7 +406,7 @@ function AdminDashboard() {
                     </td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.qtd_alunos}</td>
                     <td className="py-2.5 pr-3">
-                      <UsoDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
+                      <UsoDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} atividade={atividade.data?.get(p.id)} />
                     </td>
                     <td className="py-2.5 pr-3">
                       <BotaoMenuPersonal personal={p} onAbrir={() => setMenuPersonal(p)} />
@@ -417,6 +431,7 @@ function AdminDashboard() {
                   <div className="min-w-0">
                     <p className="truncate font-medium text-slate-800">{p.name || '—'}</p>
                     <p className="truncate text-xs text-slate-500">{p.email ?? '—'}</p>
+                    <UltimoContato resumo={contatos.data?.get(p.id)} />
                   </div>
                   <SituacaoDoPersonal p={p} bonusAte={bonus.data?.get(p.id)} />
                 </div>
@@ -434,7 +449,7 @@ function AdminDashboard() {
                   <div className="col-span-2">
                     <dt className="mb-0.5">Uso recente</dt>
                     <dd className="text-slate-700">
-                      <UsoDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
+                      <UsoDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} atividade={atividade.data?.get(p.id)} />
                     </dd>
                   </div>
                 </dl>
@@ -484,7 +499,7 @@ function AdminDashboard() {
         )}
       </BottomSheet>
 
-      {acao && <ModalAcao tipo={acao.tipo} personal={acao.personal} onFechar={() => setAcao(null)} />}
+      {acao && <ModalAcao tipo={acao.tipo} personal={acao.personal} motivo={acao.motivo} onFechar={() => setAcao(null)} />}
     </div>
   )
 }
@@ -511,13 +526,19 @@ function CidadeComMaps({ cidade, onFiltrar }: { cidade: string | null; onFiltrar
 }
 
 /** Quantidades de treinos do personal (só números; nada de dados de alunos). */
-function UsoDoPersonal({ metricas, carregando }: { metricas: MetricasPersonal | undefined; carregando: boolean }) {
+function UltimoContato({ resumo }: { resumo: ResumoContato | undefined }) {
+  const r = rotuloUltimoContato(resumo)
+  return r ? <p className="text-xs text-slate-600">Último contato: {r}</p> : null
+}
+
+function UsoDoPersonal({ metricas, carregando, atividade }: { metricas: MetricasPersonal | undefined; carregando: boolean; atividade: string | null | undefined }) {
   if (carregando) return <span className="text-slate-500">…</span>
   const u = usoDoPersonal(metricas)
   return (
     <span className="block" title={u.detalhe}>
       <span className={`block text-sm font-medium ${u.semUso ? 'text-red-700' : 'text-slate-800'}`}>{u.principal}</span>
       {u.secundario && <span className="block text-xs text-slate-600">{u.secundario}</span>}
+      <span className="block text-xs text-slate-600">Último uso do app: {rotuloUltimaAtividade(atividade)}</span>
     </span>
   )
 }
@@ -684,9 +705,10 @@ function BotaoMenuPersonal({ personal, onAbrir, rotulo }: { personal: PersonalAd
   )
 }
 
-function AcoesPersonal({ personal, onEscolher }: { personal: PersonalAdmin; onEscolher: (tipo: 'reset' | 'trial' | 'plano' | 'cpf') => void }) {
+function AcoesPersonal({ personal, onEscolher }: { personal: PersonalAdmin; onEscolher: (tipo: 'reset' | 'trial' | 'plano' | 'cpf' | 'contato') => void }) {
   return (
     <div className="space-y-1" aria-label={`Ações para ${personal.name}`}>
+      <BotaoAcao icone={<ClipboardPen size={16} />} label="Registrar contato" onClick={() => onEscolher('contato')} />
       <BotaoAcao icone={<KeyRound size={16} />} label="Reset de senha" onClick={() => onEscolher('reset')} />
       <BotaoAcao icone={<CalendarClock size={16} />} label="Ajustar trial" onClick={() => onEscolher('trial')} />
       <BotaoAcao icone={<CreditCard size={16} />} label="Ajustar plano" onClick={() => onEscolher('plano')} />
@@ -708,44 +730,8 @@ function BotaoAcao({ icone, label, onClick }: { icone: ReactNode; label: string;
 }
 
 /** Container padrão de modal de ação: título, conteúdo e Cancelar/Confirmar com loading. */
-function ModalBase({
-  titulo,
-  children,
-  onCancelar,
-  onConfirmar,
-  confirmando,
-  confirmarDesabilitado,
-  textoConfirmar = 'Confirmar',
-}: {
-  titulo: string
-  children: ReactNode
-  onCancelar: () => void
-  onConfirmar?: () => void
-  confirmando: boolean
-  confirmarDesabilitado?: boolean
-  textoConfirmar?: string
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancelar}>
-      <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-lg" onClick={(e) => e.stopPropagation()}>
-        <h2 className="font-heading text-lg font-semibold text-accent">{titulo}</h2>
-        <div className="space-y-3">{children}</div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancelar} className="flex-1" disabled={confirmando}>
-            Cancelar
-          </Button>
-          {onConfirmar && (
-            <Button onClick={onConfirmar} className="flex-1" disabled={confirmando || confirmarDesabilitado}>
-              {confirmando ? 'Salvando…' : textoConfirmar}
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ModalAcao({ tipo, personal, onFechar }: { tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin; onFechar: () => void }) {
+function ModalAcao({ tipo, personal, motivo, onFechar }: { tipo: 'reset' | 'trial' | 'plano' | 'cpf' | 'contato'; personal: PersonalAdmin; motivo?: string; onFechar: () => void }) {
+  if (tipo === 'contato') return <ContatoModal personal={{ id: personal.id, nome: personal.name || personal.email || 'Personal' }} motivo={motivo ?? 'manual'} onFechar={onFechar} />
   if (tipo === 'reset') return <ModalResetSenha personal={personal} onFechar={onFechar} />
   if (tipo === 'trial') return <ModalAjustarTrial personal={personal} onFechar={onFechar} />
   if (tipo === 'plano') return <ModalAjustarPlano personal={personal} onFechar={onFechar} />

@@ -119,4 +119,9 @@ describe('uso recente e filtros rápidos', () => {
     expect(ids(ordenarPersonais(lista, 'menos_uso', undefined, met))).toEqual(['2', '1', '3'])
     expect(ids(lista)).toEqual(['1', '2', '3'])
   })
+  it('ordenação por mais tempo sem usar: quem nunca usou primeiro, depois o uso mais antigo, sem dado no fim', () => {
+    const lista = [pers({ id: '1', name: 'A' }), pers({ id: '2', name: 'B' }), pers({ id: '3', name: 'C' }), pers({ id: '4', name: 'D' })]
+    const at = new Map<string, string | null>([['1', '2026-10-27T00:00:00Z'], ['2', '2026-10-01T00:00:00Z'], ['3', null]])
+    expect(ordenarPersonais(lista, 'sem_atividade', undefined, undefined, at).map((x) => x.id)).toEqual(['3', '2', '1', '4'])
+  })
 })
