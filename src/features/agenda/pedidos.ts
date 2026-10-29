@@ -32,6 +32,37 @@ export function alunoDoTelefone<T extends { phone: string | null }>(alunos: T[],
   return alunos.find((a) => digitosNacionais(a.phone) === alvo) ?? null
 }
 
+const semAcento = (t: string): string => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+const partes = (nome: string): string[] => semAcento(nome).split(/\s+/).filter((p) => p.length > 1)
+
+/** Alunos cujo nome contém o que foi digitado (sem acento nem maiúsculas); vazio = todos, em ordem alfabética. */
+export function buscarAlunosPorNome<T extends { name: string }>(alunos: T[], termo: string): T[] {
+  const alvo = semAcento(termo)
+  return alunos.filter((a) => !alvo || semAcento(a.name).includes(alvo)).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+}
+
+/**
+ * Alunos que PODEM ser a pessoa do pedido pelo nome (mesmo primeiro nome ou nomes que se contêm), do mais provável ao menos, no máximo 3.
+ * É só uma dica para o personal escolher: quem decide é ele.
+ */
+export function alunosParecidos<T extends { name: string }>(alunos: T[], nomeVisitante: string): T[] {
+  const v = partes(nomeVisitante)
+  if (v.length === 0) return []
+  const pontuar = (a: T): number => {
+    const n = partes(a.name)
+    if (n.length === 0) return 0
+    const iguais = v.filter((p) => n.includes(p)).length
+    const incluso = semAcento(a.name).includes(v.join(' ')) || v.join(' ').includes(semAcento(a.name))
+    return iguais * 2 + (incluso ? 3 : 0) + (n[0] === v[0] ? 2 : 0)
+  }
+  return alunos
+    .map((a) => ({ a, p: pontuar(a) }))
+    .filter((x) => x.p >= 4)
+    .sort((x, y) => y.p - x.p || x.a.name.localeCompare(y.a.name, 'pt-BR'))
+    .slice(0, 3)
+    .map((x) => x.a)
+}
+
 /** "Sexta, 30 de outubro, às 07:00" */
 export const textoDoHorario = (inicioISO: string): string => `${formatarDataCompleta(dataSP(inicioISO))}, às ${horaSP(inicioISO)}`
 

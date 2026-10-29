@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { alunoDoTelefone, digitosNacionais, mensagemDeAprovacao, mensagemDeRecusa, normalizarPedidos, outrosDoMesmoHorario, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
+import { alunoDoTelefone, alunosParecidos, buscarAlunosPorNome, digitosNacionais, mensagemDeAprovacao, mensagemDeRecusa, normalizarPedidos, outrosDoMesmoHorario, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
 
 const pedido = (o: Partial<PedidoAgenda> = {}): PedidoAgenda => ({
   id: 'p1', visitante_nome: 'Maria Souza', visitante_telefone: '5521999990000', mensagem: null, inicio: '2026-10-30T10:00:00Z', duracao_min: 60, status: 'pendente', aluno_id: null, created_at: '2026-10-29T12:00:00Z', ...o,
@@ -18,6 +18,24 @@ describe('telefone do pedido', () => {
     expect(alunoDoTelefone(alunos, '5511977770000')).toBeNull()
     expect(alunoDoTelefone(alunos, '123')).toBeNull()
     expect(alunoDoTelefone([], '5521999990000')).toBeNull()
+  })
+})
+
+describe('achar o aluno pelo nome', () => {
+  const alunos = [{ name: 'André Scherer' }, { name: 'Andrea Lima' }, { name: 'Maria Souza' }, { name: 'João André Costa' }, { name: 'Ana' }]
+  it('busca sem acento nem maiúsculas, em ordem alfabética', () => {
+    expect(buscarAlunosPorNome(alunos, 'andre').map((a) => a.name)).toEqual(['André Scherer', 'Andrea Lima', 'João André Costa'])
+    expect(buscarAlunosPorNome(alunos, 'andré s').map((a) => a.name)).toEqual(['André Scherer'])
+    expect(buscarAlunosPorNome(alunos, 'SOUZA').map((a) => a.name)).toEqual(['Maria Souza'])
+    expect(buscarAlunosPorNome(alunos, '').map((a) => a.name)).toEqual(['Ana', 'André Scherer', 'Andrea Lima', 'João André Costa', 'Maria Souza'])
+    expect(buscarAlunosPorNome(alunos, 'zzz')).toEqual([])
+  })
+  it('sugere parecidos pelo nome: o mais provável primeiro, no máximo 3, e nada para nome sem relação', () => {
+    expect(alunosParecidos(alunos, 'Andre Scherer').map((a) => a.name)[0]).toBe('André Scherer')
+    expect(alunosParecidos(alunos, 'maria').map((a) => a.name)).toEqual(['Maria Souza'])
+    expect(alunosParecidos(alunos, 'Carlos Oliveira')).toEqual([])
+    expect(alunosParecidos(alunos, '')).toEqual([])
+    expect(alunosParecidos([...alunos, { name: 'André Dias' }, { name: 'André Neto' }], 'André').length).toBeLessThanOrEqual(3)
   })
 })
 
