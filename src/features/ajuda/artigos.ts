@@ -142,7 +142,7 @@ export const ARTIGOS: Artigo[] = [
     categoria: 'agenda',
     titulo: 'Definir seus horários de atendimento e ver as vagas livres',
     passos: [
-      'Na Agenda, toque em "Minha disponibilidade" (ou vá em Configurações → Aulas e cobrança → Disponibilidade de agenda).',
+      'Na Agenda, toque em "Horários", no alto da tela (ou vá em Configurações → Aulas e cobrança → Disponibilidade de agenda).',
       'Ligue os dias em que você atende e informe os horários "das … até …". Dá para ter mais de um horário no dia, por exemplo de manhã e à tarde. "Copiar para segunda a sexta" repete o horário, e há um modelo pronto para começar.',
       'Em "Regras das vagas" ajuste a duração da aula, o intervalo entre aulas, a antecedência mínima para marcar (o padrão é 3 horas) e quantas semanas à frente mostrar as vagas.',
       'Em "Dias sem atendimento" bloqueie férias, feriados e viagens. As aulas que já estão marcadas não mudam.',
