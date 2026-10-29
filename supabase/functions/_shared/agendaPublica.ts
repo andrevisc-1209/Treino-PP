@@ -114,6 +114,30 @@ export function validarPedido(corpo: Record<string, unknown>): { ok: true; pedid
   return { ok: true, pedido: { nome, telefone, mensagem: mensagem || null, dataISO, hora } }
 }
 
+export const TURNOS_ESPERA = ['manha', 'tarde', 'noite', 'qualquer'] as const
+export type TurnoEspera = (typeof TURNOS_ESPERA)[number]
+export type EsperaValida = { nome: string; telefone: string; dataISO: string; turno: TurnoEspera }
+/** Quantos dias à frente o visitante pode pedir para ser avisado. */
+export const MAX_DIAS_ESPERA = 28
+
+/** Valida o corpo da entrada na lista de espera: nome, telefone, consentimento, um dia de hoje até daqui a 28 dias e um turno. */
+export function validarEspera(corpo: Record<string, unknown>, hojeISO: string): { ok: true; espera: EsperaValida } | { ok: false; erro: string } {
+  const nome = typeof corpo.nome === 'string' ? limpa(corpo.nome) : ''
+  if (nome.length < 2 || nome.length > 80) return { ok: false, erro: 'Informe seu nome.' }
+  const telefone = normalizarTelefone(corpo.telefone)
+  if (!telefone) return { ok: false, erro: 'Informe um telefone com DDD, de preferência com WhatsApp.' }
+  if (corpo.consentimento !== true) return { ok: false, erro: 'Confirme que o personal pode chamar você pelo WhatsApp.' }
+  const dataISO = corpo.data
+  if (typeof dataISO !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dataISO) || dataISO < hojeISO || dataISO > somarDiasISO(hojeISO, MAX_DIAS_ESPERA)) {
+    return { ok: false, erro: 'Escolha um dia nas próximas semanas.' }
+  }
+  const turno = TURNOS_ESPERA.find((t) => t === corpo.turno)
+  if (!turno) return { ok: false, erro: 'Escolha o turno.' }
+  return { ok: true, espera: { nome, telefone, dataISO, turno } }
+}
+
+export const MAX_ESPERA_POR_PERSONAL = 40
+
 export const primeiroNome = (nome: string | null | undefined): string => (nome ?? '').trim().split(/\s+/)[0] ?? ''
 
 /** O horário pedido ainda é uma das vagas abertas? (o visitante pode estar com a página velha). */

@@ -36,7 +36,7 @@ import { LinkDaAgendaCard } from './LinkDaAgenda'
 import { useVagasDoDia } from './useVagasDoDia'
 import type { Vaga } from './vagas'
 import { esperaLonga } from './publica'
-import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, usePedidosPendentes, type Aula } from './api'
+import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, useListaEspera, usePedidosPendentes, type Aula } from './api'
 
 type Modo = 'dia' | 'semana'
 
@@ -276,9 +276,13 @@ export function AgendaPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const { data: pedidos } = usePedidosPendentes()
+  const { data: espera } = useListaEspera(true)
   // "?pedidos=1" (aviso do sino e do WhatsApp) abre a lista de pedidos de aula
-  const pedidosAbertos = params.get('pedidos') === '1'
+  const pedidosParam = params.get('pedidos')
+  const pedidosAbertos = pedidosParam === '1' || pedidosParam === 'espera'
   const abrirPedidos = () => setParams({ pedidos: '1' }, { replace: true })
+  const abrirEspera = () => setParams({ pedidos: 'espera' }, { replace: true })
+  const jaChamadas = (espera ?? []).filter((e) => e.chamado_em).length
   const fecharPedidos = () => setParams({}, { replace: true })
 
   const abrirMenu = (a: Aula) => {
@@ -328,7 +332,12 @@ export function AgendaPage() {
           <span aria-hidden>Ver →</span>
         </button>
       )}
-      <PedidosAgendaSheet open={pedidosAbertos} onClose={fecharPedidos} />
+      {(espera?.length ?? 0) > 0 && (
+        <button type="button" onClick={abrirEspera} className="mb-4 flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+          Lista de espera: {espera!.length} {espera!.length === 1 ? 'pessoa' : 'pessoas'}{jaChamadas > 0 ? ` (${jaChamadas} já ${jaChamadas === 1 ? 'chamada' : 'chamadas'})` : ''}
+        </button>
+      )}
+      <PedidosAgendaSheet key={pedidosParam ?? 'fechado'} open={pedidosAbertos} onClose={fecharPedidos} abaInicial={pedidosParam === 'espera' ? 'espera' : 'pendentes'} />
       <LinkDaAgendaCard />
 
       <div className="mb-4 flex items-center justify-between gap-2">

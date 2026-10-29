@@ -9,7 +9,8 @@ import { usePerfilProfissional } from '@/features/auth/api'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
 import { linkWhatsApp, linkWhatsAppComTexto } from '@/lib/whatsapp'
-import { useAprovarPedido, usePedidosPendentes, usePedidosRespondidos, useRecusarPedido } from './api'
+import { useAprovarPedido, useListaEspera, usePedidosPendentes, usePedidosRespondidos, useRecusarPedido } from './api'
+import { ListaEspera } from './ListaEspera'
 import { esperaLonga, tempoDeEspera } from './publica'
 import { cn } from '@/lib/utils'
 import { alunoDoTelefone, alunosParecidos, buscarAlunosPorNome, mensagemDeAprovacao, mensagemDeRecusa, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
@@ -147,13 +148,16 @@ function CartaoPedido({ pedido, aluno, alunos, personalNome, resposta, onRespond
 }
 
 /** Pedidos de aula que chegaram pela página pública: aprovar marca a aula, recusar avisa por WhatsApp. O app não manda nada sozinho ao visitante. */
-export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export type AbaPedidos = 'pendentes' | 'aprovado' | 'recusado' | 'espera'
+
+export function PedidosAgendaSheet({ open, onClose, abaInicial = 'pendentes' }: { open: boolean; onClose: () => void; abaInicial?: AbaPedidos }) {
   const { session } = useAuth()
   const { data: perfil } = usePerfilProfissional(session?.user.id)
   const { data: pedidos, isLoading, error } = usePedidosPendentes()
   const { data: alunos } = useAlunos()
   const [respostas, setRespostas] = useState<Record<string, Resposta>>({})
-  const [aba, setAba] = useState<'pendentes' | 'aprovado' | 'recusado'>('pendentes')
+  const [aba, setAba] = useState<AbaPedidos>(abaInicial)
+  const espera = useListaEspera(open)
   const aprovados = usePedidosRespondidos('aprovado', open && aba === 'aprovado')
   const recusados = usePedidosRespondidos('recusado', open && aba === 'recusado')
 
@@ -165,7 +169,7 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
   const mostrar = [...lista, ...respondidos].sort((a, b) => a.inicio.localeCompare(b.inicio))
   const fechar = () => {
     setRespostas({})
-    setAba('pendentes')
+    setAba(abaInicial)
     onClose()
   }
 
@@ -173,7 +177,7 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
     <BottomSheet open={open} onClose={fechar} title="Pedidos de aula">
       <div className="space-y-3">
         <div className="flex gap-2" role="tablist" aria-label="Situação dos pedidos">
-          {([['pendentes', `Pendentes (${lista.length})`], ['aprovado', 'Aprovados'], ['recusado', 'Recusados']] as const).map(([id, rotulo]) => (
+          {([['pendentes', `Pendentes (${lista.length})`], ['espera', `Espera (${espera.data?.length ?? 0})`], ['aprovado', 'Aprovados'], ['recusado', 'Recusados']] as const).map(([id, rotulo]) => (
             <button
               key={id}
               type="button"
@@ -209,7 +213,9 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
           </>
         )}
 
-        {aba !== 'pendentes' && (
+        {aba === 'espera' && <ListaEspera ativo={open} />}
+
+        {(aba === 'aprovado' || aba === 'recusado') && (
           <>
             <p className="text-sm text-slate-600">{aba === 'aprovado' ? 'Pedidos aprovados nos últimos 30 dias.' : 'Pedidos recusados ou que ficaram indisponíveis nos últimos 30 dias.'}</p>
             {(aba === 'aprovado' ? aprovados : recusados).isLoading && <ListaSkeleton linhas={2} />}

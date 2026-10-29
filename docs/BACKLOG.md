@@ -1588,7 +1588,7 @@ Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/20
 - Teste SQL: `supabase/tests/agenda_aprovacao_atomica.sql` (não grava nada).
 - ✅ **PR 3:** ver item 149.
 
-### 149. Resultado da página pública para o personal e totais para o admin (PR 3 da auditoria de UX) — ✅ PR aberta
+### 149. Resultado da página pública para o personal e totais para o admin (PR 3 da auditoria de UX) — ✅ Mergeada (#273)
 
 **Rodar a migration `20261093000000_agenda_publica_resumo.sql` no SQL Editor ANTES do merge** (sem deploy de função). Registra também a **Política de Privacidade 1.13**.
 
@@ -1599,3 +1599,16 @@ Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/20
 - Limites conhecidos: "aulas realizadas pelo link" só conta pedidos aprovados depois da migration 20261092 (os anteriores não têm `aula_id`); pedidos não aprovados somem em 30 dias, por isso as janelas.
 - Teste SQL: `supabase/tests/agenda_publica_resumo.sql` (não grava nada).
 - Revisão jurídica das Políticas 1.11 a 1.13 segue pendente.
+
+### 150. Lista de espera da página pública (agenda, fase 3) — ✅ PR aberta
+
+**Rodar a migration `20261094000000_agenda_lista_de_espera.sql` no SQL Editor ANTES do merge**, depois o job `supabase/cron/lista_espera.sql` (UMA vez) e, após o merge, o deploy da função: `supabase functions deploy agenda-publica`. Registra a **Política de Privacidade 1.14**.
+
+Decisões do dono: quem avisa é o personal, pelo WhatsApp (a plataforma não manda mensagem ao visitante); o visitante escolhe **dia e turno**; a espera some em **14 dias**.
+
+- ✅ **Visitante:** "Não achou um horário? Avisar se abrir uma vaga" (também quando não há nenhuma vaga). Escolhe dia (próximos 14), turno (manhã, tarde, noite ou qualquer), nome, telefone e o consentimento; mesmo captcha e mesmos limites dos pedidos (10/h por IP, 3/dia por telefone, até 40 na espera por personal). Tela final: "Você está na lista de espera… Isso não é uma aula marcada."
+- ✅ **Personal:** aba **Espera** na fila de pedidos (e atalho "Lista de espera: N pessoas" na Agenda). Cada pessoa mostra dia, turno e há quanto tempo entrou; se há vaga livre que serve (mesmo dia e turno), aparece "Tem vaga: 07:00, 08:00" e o botão **Chamar no WhatsApp** (mensagem pronta, só o primeiro nome); "Tirar" remove da lista. Quem foi chamado fica marcado ("chamado há…"). A aprovação segue pelo fluxo de pedidos de sempre.
+- ✅ **Dados:** `treino.lista_espera_agenda` (RLS, GRANT só `chamado_em` para update, `GRANT ALL` ao `service_role`), apagada em 14 dias ou quando o dia pedido passa (cron). A administração não lê esta tabela (nem totais).
+- ✅ **Canais revisados (/atualizacao_fluxoapp):** Política **1.14**; FAQ (artigo da página pública); landing, Termos e onboarding sem mudança.
+- Teste SQL: `supabase/tests/agenda_lista_de_espera.sql` (não grava nada).
+- ⏳ Opcionais: aviso ao personal quando alguém entra na espera, chamar automaticamente ao cancelar uma aula, totais da espera para o admin.

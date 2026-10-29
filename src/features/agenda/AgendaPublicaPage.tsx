@@ -7,21 +7,9 @@ import { Button } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
 import { formatarDataCompleta } from '@/lib/datas'
 import { cn, formatarTelefone } from '@/lib/utils'
-import { agruparPorDia, agruparPorTurno, cartaoDoDia, iniciais, lerConsulta, mensagemDeErroDoPedido, tituloDoDia, validarPedidoNoCliente, type ErrosDoPedido, type RespostaConsulta } from './publica'
+import { agruparPorDia, corpoDoErro, agruparPorTurno, cartaoDoDia, iniciais, lerConsulta, mensagemDeErroDoPedido, tituloDoDia, validarPedidoNoCliente, type ErrosDoPedido, type RespostaConsulta } from './publica'
+import { EsperaPublica } from './EsperaPublica'
 import type { Vaga } from './vagas'
-
-async function corpoDoErro(error: unknown): Promise<{ status: number | undefined; mensagem: string | null }> {
-  const contexto = (error as { context?: Response } | null)?.context
-  if (!contexto || typeof contexto.status !== 'number') return { status: undefined, mensagem: null }
-  let mensagem: string | null = null
-  try {
-    const corpo = await contexto.json()
-    if (typeof corpo?.error === 'string') mensagem = corpo.error
-  } catch {
-    /* corpo ausente ou não-JSON */
-  }
-  return { status: contexto.status, mensagem }
-}
 
 const campo = 'min-h-12 w-full rounded-xl border bg-white px-3 text-base'
 
@@ -220,7 +208,7 @@ export function AgendaPublicaPage() {
                 {dias.length === 0 ? (
                   <section className="space-y-1 rounded-2xl bg-white p-5 shadow-sm">
                     <h2 className="font-semibold">Nenhum horário livre no momento</h2>
-                    <p className="text-sm text-slate-600">A agenda está sem vagas para pedir agora. Volte mais tarde ou fale diretamente com {ok.nome_personal || 'o personal'}.</p>
+                    <p className="text-sm text-slate-600">A agenda está sem vagas para pedir agora. Entre na lista de espera abaixo ou fale diretamente com {ok.nome_personal || 'o personal'}.</p>
                   </section>
                 ) : (
                   <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm" aria-label="Escolha do horário">
@@ -291,6 +279,8 @@ export function AgendaPublicaPage() {
                     {erros.horario && <Erro id="erro-horario" texto={erros.horario} />}
                   </section>
                 )}
+
+                <EsperaPublica slug={slug} personal={ok.nome_personal || 'O personal'} diaInicial={diaAtual?.dataISO ?? null} />
 
                 {escolhida && (
                   <section ref={formRef} className="space-y-4 rounded-2xl bg-white p-4 shadow-sm" aria-label="Solicitar esta aula">

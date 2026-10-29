@@ -172,10 +172,11 @@ export const ARTIGOS: Artigo[] = [
       'Com a página ligada, o cartão do link na Agenda mostra os pedidos dos últimos 7 dias, quantos esperam sua resposta, o seu tempo típico de resposta e quantas aulas já foram feitas pelo link.',
       'Você é avisado no sino do app e, se as notificações por WhatsApp estiverem ligadas, por WhatsApp (só com o dia e a hora).',
       'Na Agenda, toque na faixa "pedidos de aula para responder" (ela fica vermelha se algum pedido espera há mais de 24 horas). Os pedidos aparecem do mais antigo para o mais novo, com o tempo de espera, e as abas Aprovados e Recusados guardam os últimos 30 dias. "Aprovar" marca a aula: se o telefone for de um aluno seu, a aula vai para ele; se for uma pessoa nova, o app cria um cadastro rápido com nome e telefone, ou você vincula a um aluno que já tem. "Recusar" abre o WhatsApp com uma mensagem pronta.',
+      'Lista de espera: quem não achou horário toca em "Avisar se abrir uma vaga" e deixa nome, telefone, o dia e o turno que prefere. Na Agenda, a aba "Espera" (em "Lista de espera") mostra essas pessoas e, quando há vaga livre que serve a alguém, o botão "Chamar no WhatsApp" com a mensagem pronta. Quem avisa é você: o app não manda nada sozinho. A espera some em 14 dias.',
       'Para parar de receber pedidos, desligue a chave. "Trocar o link" faz o link antigo deixar de funcionar.',
-      'Privacidade: o nome, o telefone e a mensagem de quem pediu só você vê. Pedidos que não viram aula são apagados em 30 dias. A administração da plataforma vê só totais (quantos pedidos), nunca quem pediu. Peça para ninguém escrever dados de saúde na mensagem.',
+      'Privacidade: o nome, o telefone e a mensagem de quem pediu só você vê. Pedidos que não viram aula são apagados em 30 dias. Quem entra na lista de espera também só aparece para você e some em 14 dias. A administração da plataforma vê só totais (quantos pedidos), nunca quem pediu. Peça para ninguém escrever dados de saúde na mensagem.',
     ],
-    sinonimos: ['link', 'autoagendamento', 'agendar sozinho', 'calendly', 'pedido', 'reservar', 'pagina publica', 'aprovar'],
+    sinonimos: ['lista de espera', 'fila de espera', 'link', 'autoagendamento', 'agendar sozinho', 'calendly', 'pedido', 'reservar', 'pagina publica', 'aprovar'],
   },
   {
     id: 'horario-fixo',
