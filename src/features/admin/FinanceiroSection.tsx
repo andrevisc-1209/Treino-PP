@@ -36,14 +36,14 @@ export function FinanceiroSection() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Cartao titulo="Receita do mês" valor={formatarMoeda(f.receita_mes)} nota={`${f.pagamentos_mes} ${f.pagamentos_mes === 1 ? 'pagamento aprovado' : 'pagamentos aprovados'} no mês`} />
         <Cartao titulo="Receita registrada (total)" valor={formatarMoeda(f.receita_total)} nota={desde ? `Registrada desde ${desde}; pagamentos anteriores não estão no registro.` : 'Ainda sem pagamentos registrados.'} />
-        <Cartao titulo="Receita mensal recorrente" valor={formatarMoeda(f.mrr_estimado)} estimativa nota="Assinantes ativos × valor mensal do plano (R$ 15, R$ 13 e R$ 10)." />
+        <Cartao titulo="MRR (receita mensal recorrente)" valor={formatarMoeda(f.mrr_estimado)} estimativa nota="Assinantes ativos × valor mensal do plano (R$ 15, R$ 13 e R$ 10)." />
         <Cartao titulo="Assinantes ativos" valor={String(f.assinantes_ativos)} nota={`${f.trials_ativos} em trial agora`} />
         <Cartao
           titulo="Conversão de trial"
           valor={conversao === null ? '—' : `${conversao}%`}
           nota={conversao === null ? 'Nenhum trial terminou ainda.' : `${f.ja_pagaram} já pagaram ÷ ${f.trials_encerrados} trials encerrados`}
         />
-        <Cartao titulo="Não renovaram" valor={String(f.nao_renovaram)} nota="Plano pago que venceu e não foi renovado (pagamento avulso, sem renovação automática)." />
+        <Cartao titulo="Não renovaram" valor={String(f.nao_renovaram)} nota="Plano pago que venceu e não foi renovado (pagamento avulso, sem renovação automática). Zero quer dizer que nenhum plano pago venceu sem renovar; não é taxa de churn." />
       </div>
       <p className="text-xs text-slate-500">
         Valores do Treino PP (planos dos personais). O que o personal recebe dos alunos não aparece aqui: o app não cobra o aluno.

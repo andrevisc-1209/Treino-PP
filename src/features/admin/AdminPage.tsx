@@ -210,7 +210,7 @@ function AdminDashboard() {
         <div>
           <h2 className="mb-3 font-heading font-semibold text-accent">Visão geral</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <CardResumo icone={<UserCheck size={20} />} label="Profissionais ativos" valor={visaoGeral.ativos} />
+            <CardResumo icone={<UserCheck size={20} />} label="Com acesso (trial + pagantes)" valor={visaoGeral.ativos} />
             <CardResumo icone={<Hourglass size={20} />} label="Em trial" valor={visaoGeral.emTrial} />
             <CardResumo
               icone={<AlertTriangle size={20} />}

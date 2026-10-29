@@ -41,6 +41,12 @@ describe('funil', () => {
     expect(e[2].legenda).toBe('mediana: 30 h após o cadastro')
     expect(e[4].legenda).toBe('mediana: 6 dias após o cadastro')
   })
+  it('etapa com mais gente que a anterior não vira percentual acima de 100%', () => {
+    const e = etapasDoFunil({ ...f, tres_alunos: 1, pagou: 2 })
+    expect(e[4]).toMatchObject({ valor: 2, pctDoInicio: 10, pctDaAnterior: null, semPassarPelaAnterior: 1 })
+    expect(e[3].semPassarPelaAnterior).toBe(0)
+    expect(e.every((x) => x.pctDaAnterior === null || x.pctDaAnterior <= 100)).toBe(true)
+  })
   it('o gargalo é a etapa com a pior passagem', () => {
     expect(maiorGargalo(etapasDoFunil(f))?.chave).toBe('tres_alunos')
   })

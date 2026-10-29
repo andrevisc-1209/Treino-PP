@@ -1425,6 +1425,19 @@ Origem: segunda rodada de análises (ChatGPT e Gemini) sobre o PDF do ciclo com 
 - ✅ **Resumo de cobrança em 1 página:** item 132.
 - ⚠️ Não testado ao vivo: conferir o layout em um PDF real, **escanear o QR com o app do banco** e abrir o recibo a 390px.
 
+
+### 133. Painel admin: rótulos, funil e variações (PR 1 da auditoria de UX) — ✅ PR aberta
+Origem: auditoria de UX do painel admin (Gemini, ChatGPT e análise própria), aprovada em 28/10/2026. Só texto e cálculo no app; sem migration.
+- ✅ **Funil sem passar de 100%:** "Pagou" conta quem já pagou ou tem plano pago, mesmo sem passar por todas as etapas. Quando uma etapa tem mais gente que a anterior, some o "% da etapa anterior" e aparece "Inclui ao menos N que chegaram aqui sem passar pela etapa anterior". Texto explicativo no topo do funil.
+- ✅ **"Pagantes" com nome certo em cada lugar:** meta = "pagantes ativos hoje"; funil = "já pagaram alguma vez"; cartão = "Novos pagantes (1º pagamento)". Frase no topo dos Indicadores explica os três.
+- ✅ **Rótulos:** "Profissionais ativos" → "Com acesso (trial + pagantes)"; "Personais ativos" → "Personais que usaram o app"; "Faturas geradas pelos personais" → "Faturas de alunos emitidas" (não é receita do Treino PP); "Alunos cadastrados" → "Alunos novos no período"; MRR e "Não renovaram" com explicação (zero não é churn).
+- ✅ **Período efetivo visível** (dd/mm/aaaa a dd/mm/aaaa, e o período de comparação).
+- ✅ **Ritmo da meta:** "nos últimos 7 dias entraram N (abaixo do ritmo necessário)".
+- ✅ **Variação com base pequena** (anterior abaixo de 10; R$ 100 em dinheiro) mostra a diferença absoluta (+12) em vez de +1200%; "novo" vira "+6 (nada no período anterior)".
+- ✅ **Por origem:** enquanto todo cadastro é "direto", a tabela dá lugar a uma frase; volta sozinha com mais de uma origem. O campo de investimento continua.
+- ⏳ PR 2 (Visão geral como cockpit, contador no Suporte, mover blocos, largura), PR 3 (Personais), PR 4 (registrar contato, com migration) e coortes/churn (com ~20 pagantes): ver memória `admin-ux-pendente`.
+- ⚠️ Não testado ao vivo no navegador.
+
 ### 132. Resumo de cobrança em 1 página — ✅ PR aberta
 - ✅ Na fatura **em aberto ou enviada** há o botão **"Baixar resumo de cobrança"**: PDF de uma página só com o que o personal quer enviar para cobrar. Conteúdo: cabeçalho com a logo e o período; **"Aulas contabilizadas"** (por aula "4 aulas × R$ 50,00", pacote "Pacote de 10 aulas · 4 realizadas", mensal, falta ou cancelamento cobrado, uma linha por modalidade e as datas); **resumo financeiro** (total, ajuste, "Em aberto · vencimento dd/mm/aaaa") e, **sempre que o Pix está configurado**, o QR em vetor, o nome do recebedor e o copia e cola escrito. Sem avaliação, evolução nem gráficos.
 - ✅ Diferente do relatório de ciclo, aqui o Pix entra automaticamente (o documento existe para cobrar); fatura paga não mostra o botão. Arquivo `cobranca-<aluno>-<mês>-<ano>.pdf`.

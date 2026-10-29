@@ -97,7 +97,17 @@ export function ritmoSemanal(serie: { dia: string; acumulado: number }[]): numbe
   return Math.max(0, ultimo - base)
 }
 
-export type EtapaFunil = { chave: keyof Omit<FunilBI, `mediana_${string}`>; rotulo: string; valor: number; pctDoInicio: number; pctDaAnterior: number | null; legenda: string | null }
+export type EtapaFunil = {
+  chave: keyof Omit<FunilBI, `mediana_${string}`>
+  rotulo: string
+  valor: number
+  pctDoInicio: number
+  /** Passagem da etapa anterior; null na primeira etapa, sem etapa anterior ou quando a etapa tem mais gente que a anterior (não é funil sequencial). */
+  pctDaAnterior: number | null
+  /** Quantos chegaram à etapa sem passar pela anterior (ao menos): "Pagou" inclui quem pagou sem chegar a 3 alunos. */
+  semPassarPelaAnterior: number
+  legenda: string | null
+}
 
 export function formatarMediana(horas: number | null): string {
   if (horas === null) return 'sem dados'
@@ -115,11 +125,16 @@ export function etapasDoFunil(f: FunilBI): EtapaFunil[] {
     { chave: 'tres_alunos', rotulo: 'Chegou a 3 alunos', valor: f.tres_alunos, legenda: f.mediana_horas_tres_alunos === null ? null : `mediana: ${formatarMediana(f.mediana_horas_tres_alunos)} após o cadastro` },
     { chave: 'pagou', rotulo: 'Pagou', valor: f.pagou, legenda: f.mediana_dias_primeiro_pagamento === null ? null : `mediana: ${formatarMediana(f.mediana_dias_primeiro_pagamento * 24)} após o cadastro` },
   ]
-  return itens.map((e, i) => ({
-    ...e,
-    pctDoInicio: f.cadastrou === 0 ? 0 : Math.round((e.valor / f.cadastrou) * 100),
-    pctDaAnterior: i === 0 || itens[i - 1].valor === 0 ? null : Math.round((e.valor / itens[i - 1].valor) * 100),
-  }))
+  return itens.map((e, i) => {
+    const anterior = i === 0 ? 0 : itens[i - 1].valor
+    const sequencial = i > 0 && anterior > 0 && e.valor <= anterior
+    return {
+      ...e,
+      pctDoInicio: f.cadastrou === 0 ? 0 : Math.round((e.valor / f.cadastrou) * 100),
+      pctDaAnterior: sequencial ? Math.round((e.valor / anterior) * 100) : null,
+      semPassarPelaAnterior: i > 0 && e.valor > anterior ? e.valor - anterior : 0,
+    }
+  })
 }
 
 /** Etapa com a maior perda em relação à anterior (onde o personal mais trava); null se não há dados suficientes. */

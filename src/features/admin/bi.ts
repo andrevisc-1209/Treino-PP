@@ -67,10 +67,24 @@ export function normalizarBI(raw: unknown): DadosBI {
 
 export type Variacao = { rotulo: string; sentido: 'subiu' | 'caiu' | 'igual' | 'novo' | 'sem_dados' }
 
-/** Variação contra o período anterior. Anterior 0 e atual > 0 = "novo" (percentual não existe); ambos 0 = "sem dados". */
-export function variacao(atual: number, anterior: number): Variacao {
+export type OpcoesVariacao = {
+  /** Abaixo desta base o percentual engana (de 1 para 13 = +1200%): mostra a diferença absoluta. */
+  baseMinima?: number
+  formatar?: (n: number) => string
+}
+
+/**
+ * Variação contra o período anterior. Ambos 0 = "sem dados"; base pequena (padrão: menos de 10) mostra a diferença
+ * absoluta em vez de percentual; anterior 0 e atual > 0 = "novo".
+ */
+export function variacao(atual: number, anterior: number, { baseMinima = 10, formatar = String }: OpcoesVariacao = {}): Variacao {
   if (atual === 0 && anterior === 0) return { rotulo: 'sem dados no período', sentido: 'sem_dados' }
-  if (anterior === 0) return { rotulo: 'novo (sem base no período anterior)', sentido: 'novo' }
+  if (anterior === 0) return { rotulo: `+${formatar(atual)} (nada no período anterior)`, sentido: 'novo' }
+  if (anterior < baseMinima) {
+    const dif = atual - anterior
+    if (dif === 0) return { rotulo: 'igual ao período anterior', sentido: 'igual' }
+    return { rotulo: `${dif > 0 ? '+' : '-'}${formatar(Math.abs(dif))} vs. período anterior`, sentido: dif > 0 ? 'subiu' : 'caiu' }
+  }
   const pct = Math.round(((atual - anterior) / anterior) * 100)
   if (pct === 0) return { rotulo: 'igual ao período anterior', sentido: 'igual' }
   return { rotulo: `${pct > 0 ? '+' : ''}${pct}% vs. período anterior`, sentido: pct > 0 ? 'subiu' : 'caiu' }
