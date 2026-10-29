@@ -1539,3 +1539,10 @@ Origem: continuação do item 142. **Tem migration** (`20261090000000_agenda_ped
 - ✅ Banco: o sino aceita `pedido_aula` sem aluno (um aviso por pedido) e o log de WhatsApp aceita o tipo (por evento). Teste em `supabase/tests/agenda_pedidos_avisos.sql`.
 - ⏳ Ideias: QR Code do link, mostrar as vagas na visão da semana, lista de espera (fase 3) e histórico dos pedidos respondidos.
 - ⚠️ Não testado ao vivo (migration, redeploy da função e segredo do captcha ainda dependem de você).
+
+### 144. Correção: a página pública da agenda não via os horários (service_role sem acesso às tabelas novas) — ✅ PR aberta
+Origem: primeiro teste ao vivo do link (29/10/2026): a página carregou, mas dizia "Não há horários livres", embora a agenda do personal mostrasse vagas. **Tem migration** (`20261091000000_agenda_grants_service_role.sql`).
+- ✅ **Causa:** as migrations 20261087, 20261088 e 20261089 deram GRANT só ao `authenticated`. Tabelas novas do schema `treino` não herdam acesso do `service_role` (a 20261044 tirou os privilégios padrão), então a Edge Function `agenda-publica` levava "permission denied" ao ler a disponibilidade e os bloqueios, ignorava o erro e devolvia lista vazia. O envio do pedido (insert em `pedidos_agenda`) também falharia.
+- ✅ **Correção:** `GRANT ALL ... TO service_role` nas três tabelas (padrão do projeto) e a função passa a **falhar alto** (erro 500 genérico e linha no log) quando a leitura da agenda dá erro, em vez de parecer "sem horários".
+- ✅ Teste que confere que as três tabelas têm o GRANT em alguma migration e consulta de conferência em `supabase/tests/agenda_grants_service_role.sql`.
+- ⚠️ Lição: toda tabela que uma Edge Function lê ou grava precisa de `GRANT ALL ON treino.<tabela> TO service_role` na própria migration.
