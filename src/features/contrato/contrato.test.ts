@@ -17,6 +17,7 @@ const base: DadosContrato = {
   validadeDias: null,
   vencimentoDia: 10,
   regras: REGRAS_PADRAO,
+  foro: 'Rio de Janeiro/RJ',
   geradoEm: '2026-10-29',
 }
 const texto = (d: DadosContrato): string => {
@@ -100,6 +101,15 @@ describe('regras do personal (inspiradas no contrato de um professor)', () => {
   })
 })
 
+describe('foro e cidade da assinatura', () => {
+  it('usa a cidade informada no foro, que pode ser outra que a do personal', () => {
+    const t = montarContrato({ ...base, foro: 'Niterói/RJ' })
+    expect(t.clausulas[t.clausulas.length - 1].paragrafos[0]).toBe('9.1 Fica eleito o foro da comarca de Niterói/RJ para dirimir quaisquer dúvidas deste contrato.')
+    expect(t.localData).toBe('Niterói, 29 de outubro de 2026.')
+    expect(t.partes[0]).toContain('de Rio de Janeiro/RJ')
+  })
+})
+
 describe('por aula, pacote e menor de idade', () => {
   it('por aula: valor da aula e cobrança do mês', () => {
     const x = texto({ ...base, forma: 'por_aula', valorAula: 80, valorMensal: null, vencimentoDia: null })
@@ -120,10 +130,11 @@ describe('por aula, pacote e menor de idade', () => {
     expect(t.assinaturas[1]).toEqual({ rotulo: 'RESPONSÁVEL LEGAL', nome: 'Joana Souza' })
   })
   it('o que falta vira linha em branco (CPF, endereço, cidade)', () => {
-    const x = texto({ ...base, aluno: { ...base.aluno, cpf: null, endereco: null }, personal: { ...base.personal, cpf: null, cidade: null, uf: null } })
+    const x = texto({ ...base, aluno: { ...base.aluno, cpf: null, endereco: null }, personal: { ...base.personal, cpf: null, cidade: null, uf: null }, foro: '' })
     expect(x).toContain('CPF ___.___.___-__')
     expect(x).toContain('residente em ________________')
     expect(x).toContain('comarca de ________________')
+    expect(montarContrato({ ...base, foro: '' }).localData).toBe('________________, 29 de outubro de 2026.')
   })
 })
 

@@ -68,6 +68,8 @@ export type DadosContrato = {
   validadeDias: number | null
   vencimentoDia: number | null
   regras: RegrasContrato
+  /** cidade/UF do foro e da assinatura (padrão: a do perfil do personal) */
+  foro: string
   /** AAAA-MM-DD */
   geradoEm: string
 }
@@ -259,7 +261,7 @@ export function montarContrato(d: DadosContrato): TextoContrato {
     { titulo: 'DOS DADOS PESSOAIS', paragrafos: ['Os dados pessoais das partes serão tratados apenas para a execução deste contrato e a gestão dos treinos, conforme a Lei nº 13.709/2018 (LGPD).'] },
     {
       titulo: 'DO FORO',
-      paragrafos: [`Fica eleito o foro da comarca de ${d.personal.cidade ? `${d.personal.cidade}${d.personal.uf ? `/${d.personal.uf}` : ''}` : LINHA} para dirimir quaisquer dúvidas deste contrato.`],
+      paragrafos: [`Fica eleito o foro da comarca de ${ou(d.foro)} para dirimir quaisquer dúvidas deste contrato.`],
     },
   ]
   const clausulas = base
@@ -272,7 +274,7 @@ export function montarContrato(d: DadosContrato): TextoContrato {
     partes,
     clausulas,
     fecho: 'E, por estarem de acordo, as partes assinam este contrato em duas vias de igual teor.',
-    localData: `${ou(d.personal.cidade)}, ${dataPorExtenso(d.geradoEm)}.`,
+    localData: `${ou(d.foro.split('/')[0])}, ${dataPorExtenso(d.geradoEm)}.`,
     assinaturas: [
       { rotulo: 'CONTRATADO(A)', nome: d.personal.nome },
       d.responsavel ? { rotulo: 'RESPONSÁVEL LEGAL', nome: d.responsavel.nome ?? '' } : { rotulo: 'CONTRATANTE', nome: d.aluno.nome },
