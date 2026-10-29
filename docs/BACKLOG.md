@@ -1422,7 +1422,7 @@ Origem: segunda rodada de análises (ChatGPT e Gemini) sobre o PDF do ciclo com 
 - ✅ **Pix:** QR Code desenhado em **vetor** (nítido em qualquer zoom e na impressão), com borda branca, nome do recebedor, aviso de conferir valor e recebedor no banco e o **copia e cola escrito** (para quem lê o PDF no próprio celular). A chave aparece dentro do código, por isso continua opcional.
 - ✅ **Nota do personal:** gráfico só com 5 treinos avaliados ou mais, com título e escala; com menos, a média aparece na linha de destaques.
 - ✅ PDF comprimido (de ~1,7 MB para ~0,3 MB) e rodapé com mais contraste.
-- ⏳ **Resumo de cobrança em 1 página** (PDF só de cobrança): PR futura.
+- ✅ **Resumo de cobrança em 1 página:** item 132.
 - ⚠️ Não testado ao vivo: conferir o layout em um PDF real, **escanear o QR com o app do banco** e abrir o recibo a 390px.
 
 
@@ -1437,3 +1437,10 @@ Origem: auditoria de UX do painel admin (Gemini, ChatGPT e análise própria), a
 - ✅ **Por origem:** enquanto todo cadastro é "direto", a tabela dá lugar a uma frase; volta sozinha com mais de uma origem. O campo de investimento continua.
 - ⏳ PR 2 (Visão geral como cockpit, contador no Suporte, mover blocos, largura), PR 3 (Personais), PR 4 (registrar contato, com migration) e coortes/churn (com ~20 pagantes): ver memória `admin-ux-pendente`.
 - ⚠️ Não testado ao vivo no navegador.
+
+### 132. Resumo de cobrança em 1 página — ✅ PR aberta
+- ✅ Na fatura **em aberto ou enviada** há o botão **"Baixar resumo de cobrança"**: PDF de uma página só com o que o personal quer enviar para cobrar. Conteúdo: cabeçalho com a logo e o período; **"Aulas contabilizadas"** (por aula "4 aulas × R$ 50,00", pacote "Pacote de 10 aulas · 4 realizadas", mensal, falta ou cancelamento cobrado, uma linha por modalidade e as datas); **resumo financeiro** (total, ajuste, "Em aberto · vencimento dd/mm/aaaa") e, **sempre que o Pix está configurado**, o QR em vetor, o nome do recebedor e o copia e cola escrito. Sem avaliação, evolução nem gráficos.
+- ✅ Diferente do relatório de ciclo, aqui o Pix entra automaticamente (o documento existe para cobrar); fatura paga não mostra o botão. Arquivo `cobranca-<aluno>-<mês>-<ano>.pdf`.
+- Refatoração: cabeçalho, rodapé e cartão financeiro viraram funções compartilhadas com o relatório de ciclo. Sem migration.
+- ⚠️ Não testado ao vivo: gerar de uma fatura em aberto, conferir a página única e **escanear o QR com o app do banco**.
+
