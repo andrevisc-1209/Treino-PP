@@ -23,6 +23,7 @@ function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean
       to: '/alunos/novo',
       alternativa: { label: 'Importar vários alunos (ajuda de uma IA ou planilha)', to: ROTA_IMPORTAR_COM_IA },
     },
+    { label: 'Defina os horários em que você atende', feito: !!config?.agenda_ajustada_em, to: '/agenda/disponibilidade' },
     { label: 'Adicione um horário fixo', feito: (horarios?.length ?? 0) > 0, to: '/alunos' },
     { label: 'Monte seu primeiro treino planejado', feito: (modelos?.length ?? 0) > 0, to: '/meus-treinos/planejados' },
     { label: 'Configure sua chave Pix', feito: !!config?.pix_tipo, to: '/configuracoes' },

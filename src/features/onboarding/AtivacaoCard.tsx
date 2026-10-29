@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { CalendarDays, ChevronRight, ClipboardList, FileSpreadsheet, Sparkles, UserPlus, Users } from 'lucide-react'
+import { CalendarDays, ChevronRight, ClipboardList, Clock, FileSpreadsheet, Sparkles, UserPlus, Users } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { ROTA_IMPORTAR, ROTA_IMPORTAR_COM_IA, ROTA_IMPORTAR_COM_PLANILHA } from '@/features/alunos/importar/via'
-import { useAulasDoDia } from '@/features/agenda/api'
+import { useAulasDoDia, useProfessionalConfig } from '@/features/agenda/api'
 import { useModelos } from '@/features/modelos/api'
 import { hojeSP } from '@/lib/datas'
 import { percentualAtivacao, textoProgresso } from './ativacao'
@@ -21,6 +21,8 @@ export function AtivacaoCard() {
   const { exigir, somenteLeitura, abrirPlanos } = useExigirAssinatura()
   const { data: aulasHoje } = useAulasDoDia(hojeSP())
   const { data: modelos } = useModelos()
+  const { data: config } = useProfessionalConfig()
+  const agendaAjustada = !!config?.agenda_ajustada_em
   if (!emAtivacao || total === undefined) return null
 
   // em modo leitura (assinatura vencida) o servidor recusa gravações: abre os planos em vez de levar a uma tela que vai falhar
@@ -101,6 +103,11 @@ export function AtivacaoCard() {
             <CalendarDays size={18} className="shrink-0 text-slate-500" aria-hidden />
             <span className="flex-1 text-sm font-medium">Agenda</span>
             <span className="text-xs text-slate-600">{aulas === 0 ? 'Nenhuma aula hoje' : plural(aulas, 'aula hoje', 'aulas hoje')}</span>
+          </Link>
+          <Link to="/agenda/disponibilidade" className="flex min-h-12 items-center gap-3 px-3 py-2 active:bg-slate-50">
+            <Clock size={18} className="shrink-0 text-slate-500" aria-hidden />
+            <span className="flex-1 text-sm font-medium">Horários em que atendo</span>
+            <span className="text-xs text-slate-600">{agendaAjustada ? 'Definidos' : 'Definir (1 min)'}</span>
           </Link>
           <Link to="/meus-treinos/planejados" className="flex min-h-12 items-center gap-3 px-3 py-2 active:bg-slate-50">
             <ClipboardList size={18} className="shrink-0 text-slate-500" aria-hidden />

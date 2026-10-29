@@ -1,3 +1,4 @@
+import { janelasDosDias, type JanelaSemanal, type ParametrosAgenda } from './disponibilidade'
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -46,6 +47,11 @@ export type ProfessionalConfig = {
   pix_chave: string | null
   pix_tipo: string | null
   pix_nome: string | null
+  /** disponibilidade (migration 20261087): ausentes até a migration rodar; o app usa os padrões */
+  intervalo_min?: number | null
+  antecedencia_horas?: number | null
+  horizonte_semanas?: number | null
+  agenda_ajustada_em?: string | null
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
@@ -611,5 +617,41 @@ export function useSalvarProfessionalConfig() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['professional-config'] }),
+  })
+}
+
+// ============================================================
+// Disponibilidade semanal (janelas em que o personal atende)
+// ============================================================
+
+export function useDisponibilidade() {
+  return useQuery({
+    queryKey: ['disponibilidade'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('disponibilidade_semanal').select('weekday, start_time, end_time').order('weekday').order('start_time')
+      if (error) throw error
+      return data as JanelaSemanal[]
+    },
+  })
+}
+
+/** Troca todas as janelas e os parâmetros de uma vez (função no banco: ou grava tudo, ou nada). */
+export function useSalvarDisponibilidade() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { janelas: ReturnType<typeof janelasDosDias>; parametros: ParametrosAgenda }) => {
+      const { error } = await supabase.rpc('salvar_disponibilidade', {
+        p_janelas: v.janelas,
+        p_duracao_min: v.parametros.duracaoMin,
+        p_intervalo_min: v.parametros.intervaloMin,
+        p_antecedencia_horas: v.parametros.antecedenciaHoras,
+        p_horizonte_semanas: v.parametros.horizonteSemanas,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['disponibilidade'] })
+      void qc.invalidateQueries({ queryKey: ['professional-config'] })
+    },
   })
 }
