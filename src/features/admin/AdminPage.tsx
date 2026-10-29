@@ -36,7 +36,24 @@ import { ConsentimentosSection } from './ConsentimentosSection'
 import { IndicacoesSection } from './IndicacoesSection'
 import { fimDoAcesso } from './indicacoes'
 import { RelatosSection } from './RelatosSection'
-import { ABAS_ADMIN, abaDaUrl, cidadeDaUrl, descreverTreinos, filtrarPorCidade, linkMapsCidade, rotuloCidade, type AbaAdmin, type MetricasPersonal } from './personais'
+import {
+  ABAS_ADMIN,
+  abaDaUrl,
+  cidadeDaUrl,
+  filtrarPorCidade,
+  FILTROS_RAPIDOS,
+  linkMapsCidade,
+  ordenarPersonais,
+  ORDENS_PERSONAIS,
+  passaFiltroRapido,
+  rotuloCidade,
+  situacaoDoPersonal,
+  usoDoPersonal,
+  type AbaAdmin,
+  type FiltroRapido,
+  type MetricasPersonal,
+  type OrdemPersonais,
+} from './personais'
 import { HistoricoSection } from './HistoricoSection'
 import { FinanceiroSection } from './FinanceiroSection'
 import { IndicadoresSection } from './IndicadoresSection'
@@ -128,17 +145,6 @@ function AdminHeader() {
   )
 }
 
-/** Fim do acesso do personal; com mês grátis (indicação) mostra a data do bônus e uma etiqueta. */
-function FimDoAcesso({ p, bonusAte }: { p: PersonalAdmin; bonusAte: string | undefined }) {
-  const { data, comBonus } = fimDoAcesso(p, bonusAte)
-  return (
-    <>
-      {formatarDataHoraBR(data)}
-      {comBonus && <span className="ml-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-hover">mês grátis</span>}
-    </>
-  )
-}
-
 function AdminDashboard() {
   const resumo = useAdminResumo()
   const personais = useAdminPersonais()
@@ -170,7 +176,11 @@ function AdminDashboard() {
   const [filtroStatus, setFiltroStatus] = useState<'' | StatusAssinatura>('')
   const [acao, setAcao] = useState<{ tipo: 'reset' | 'trial' | 'plano' | 'cpf'; personal: PersonalAdmin } | null>(null)
 
-  const listaFiltrada = useMemo(() => {
+  const [filtroRapido, setFiltroRapido] = useState<'' | FiltroRapido>('')
+  const [ordem, setOrdem] = useState<OrdemPersonais>('nome')
+
+  // cidade, busca e status valem para tudo; os filtros rápidos contam em cima deles
+  const baseFiltrada = useMemo(() => {
     const termo = busca.trim().toLowerCase()
     return filtrarPorCidade(personais.data ?? [], cidade).filter((p) => {
       const bateBusca = !termo || p.name.toLowerCase().includes(termo) || (p.email ?? '').toLowerCase().includes(termo)
@@ -178,6 +188,16 @@ function AdminDashboard() {
       return bateBusca && bateStatus
     })
   }, [personais.data, busca, filtroStatus, cidade])
+
+  const contagemRapidos = useMemo(
+    () => Object.fromEntries(FILTROS_RAPIDOS.map((f) => [f.id, baseFiltrada.filter((p) => passaFiltroRapido(f.id, p, bonus.data?.get(p.id), metricas.data?.get(p.id))).length])) as Record<FiltroRapido, number>,
+    [baseFiltrada, bonus.data, metricas.data],
+  )
+
+  const listaFiltrada = useMemo(() => {
+    const filtrada = filtroRapido ? baseFiltrada.filter((p) => passaFiltroRapido(filtroRapido, p, bonus.data?.get(p.id), metricas.data?.get(p.id))) : baseFiltrada
+    return ordenarPersonais(filtrada, ordem, bonus.data, metricas.data)
+  }, [baseFiltrada, filtroRapido, ordem, bonus.data, metricas.data])
 
   const visaoGeral = useMemo(() => {
     const lista = personais.data ?? []
@@ -317,40 +337,62 @@ function AdminDashboard() {
               <option value="expirada">Expirada</option>
               <option value="cancelada">Cancelada</option>
             </select>
+            <select
+              aria-label="Ordenar por"
+              value={ordem}
+              onChange={(e) => setOrdem(e.target.value as OrdemPersonais)}
+              className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"
+            >
+              {ORDENS_PERSONAIS.map((o) => (
+                <option key={o.id} value={o.id}>
+                  Ordenar: {o.rotulo}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtros rápidos">
+            {FILTROS_RAPIDOS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={filtroRapido === f.id}
+                onClick={() => setFiltroRapido(filtroRapido === f.id ? '' : f.id)}
+                className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium ${filtroRapido === f.id ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+              >
+                {f.rotulo} ({contagemRapidos[f.id]})
+              </button>
+            ))}
           </div>
 
           {/* Desktop/tablet: tabela com zebra + hover. Mobile: cards empilhados (abaixo). */}
           <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="w-full min-w-[860px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500">
-                  <th className="py-2 pr-3">Nome</th>
-                  <th className="py-2 pr-3">E-mail</th>
+                  <th className="py-2 pr-3">Personal</th>
+                  <th className="py-2 pr-3">Situação</th>
                   <th className="py-2 pr-3">Cidade</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Trial/plano até</th>
                   <th className="py-2 pr-3">Alunos</th>
-                  <th className="py-2 pr-3">Treinos</th>
+                  <th className="py-2 pr-3">Uso recente</th>
                   <th className="py-2 pr-3">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {listaFiltrada.map((p, i) => (
                   <tr key={p.id} className={`border-b border-slate-100 transition-colors hover:bg-slate-50 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
-                    <td className="py-2.5 pr-3 font-medium text-slate-800">{p.name || '—'}</td>
-                    <td className="py-2.5 pr-3 text-slate-600">{p.email ?? '—'}</td>
+                    <td className="py-2.5 pr-3">
+                      <p className="font-medium text-slate-800">{p.name || '—'}</p>
+                      <p className="text-xs text-slate-600">{p.email ?? '—'}</p>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <SituacaoDoPersonal p={p} bonusAte={bonus.data?.get(p.id)} />
+                    </td>
                     <td className="py-2.5 pr-3 text-slate-600">
                       <CidadeComMaps cidade={p.cidade} onFiltrar={verPersonaisDaCidade} />
                     </td>
-                    <td className="py-2.5 pr-3">
-                      <StatusBadge status={p.status} />
-                    </td>
-                    <td className="py-2.5 pr-3 text-slate-600">
-                      <FimDoAcesso p={p} bonusAte={bonus.data?.get(p.id)} />
-                    </td>
                     <td className="py-2.5 pr-3 text-slate-600">{p.qtd_alunos}</td>
-                    <td className="py-2.5 pr-3 text-xs text-slate-600">
-                      <TreinosDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
+                    <td className="py-2.5 pr-3">
+                      <UsoDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
                     </td>
                     <td className="py-2.5 pr-3">
                       <BotaoMenuPersonal personal={p} onAbrir={() => setMenuPersonal(p)} />
@@ -359,7 +401,7 @@ function AdminDashboard() {
                 ))}
                 {listaFiltrada.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-slate-500">
+                    <td colSpan={6} className="py-6 text-center text-slate-500">
                       Nenhum personal encontrado.
                     </td>
                   </tr>
@@ -376,7 +418,7 @@ function AdminDashboard() {
                     <p className="truncate font-medium text-slate-800">{p.name || '—'}</p>
                     <p className="truncate text-xs text-slate-500">{p.email ?? '—'}</p>
                   </div>
-                  <StatusBadge status={p.status} />
+                  <SituacaoDoPersonal p={p} bonusAte={bonus.data?.get(p.id)} />
                 </div>
                 <dl className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-500">
                   <div>
@@ -390,15 +432,9 @@ function AdminDashboard() {
                     <dd className="inline text-slate-700">{p.qtd_alunos}</dd>
                   </div>
                   <div className="col-span-2">
-                    <dt className="mb-0.5">Treinos</dt>
+                    <dt className="mb-0.5">Uso recente</dt>
                     <dd className="text-slate-700">
-                      <TreinosDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
-                    </dd>
-                  </div>
-                  <div className="col-span-2">
-                    <dt className="inline">Trial/plano até: </dt>
-                    <dd className="inline text-slate-700">
-                      <FimDoAcesso p={p} bonusAte={bonus.data?.get(p.id)} />
+                      <UsoDoPersonal metricas={metricas.data?.get(p.id)} carregando={metricas.isLoading} />
                     </dd>
                   </div>
                 </dl>
@@ -475,21 +511,40 @@ function CidadeComMaps({ cidade, onFiltrar }: { cidade: string | null; onFiltrar
 }
 
 /** Quantidades de treinos do personal (só números; nada de dados de alunos). */
-function TreinosDoPersonal({ metricas, carregando }: { metricas: MetricasPersonal | undefined; carregando: boolean }) {
+function UsoDoPersonal({ metricas, carregando }: { metricas: MetricasPersonal | undefined; carregando: boolean }) {
   if (carregando) return <span className="text-slate-500">…</span>
-  const d = descreverTreinos(metricas)
+  const u = usoDoPersonal(metricas)
   return (
-    <span className="block space-y-0.5">
-      <span className="block">Montados: {d.montados}</span>
-      <span className="block">Realizados: {d.realizados}</span>
-      <span className="block">Últimos 30 dias: {d.ultimos30}</span>
+    <span className="block" title={u.detalhe}>
+      <span className={`block text-sm font-medium ${u.semUso ? 'text-red-700' : 'text-slate-800'}`}>{u.principal}</span>
+      {u.secundario && <span className="block text-xs text-slate-600">{u.secundario}</span>}
     </span>
   )
 }
 
-function StatusBadge({ status }: { status: StatusAssinatura | null }) {
-  if (!status) return <span className="text-slate-500">—</span>
-  return <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${BADGE_STATUS[status]}`}>{ROTULO_STATUS[status]}</span>
+const COR_URGENCIA = { alta: 'text-red-700', media: 'text-amber-800', nenhuma: 'text-slate-600' } as const
+
+/** Situação comercial do personal: selo do status e, embaixo, o próximo evento (fim do trial/plano) colorido pela urgência. */
+function SituacaoDoPersonal({ p, bonusAte }: { p: PersonalAdmin; bonusAte: string | undefined }) {
+  const sit = situacaoDoPersonal(p, bonusAte)
+  const { data, comBonus } = fimDoAcesso(p, bonusAte)
+  return (
+    <span className="block" title={data ? `Acesso até ${formatarDataHoraBR(data)}` : undefined}>
+      <StatusBadge status={p.status} rotulo={sit.rotulo} />
+      {sit.evento && (
+        <span className={`mt-1 block text-xs ${COR_URGENCIA[sit.urgencia]}`}>
+          {sit.evento}
+          {data && <span className="text-slate-600"> ({formatarDataHoraBR(data)})</span>}
+          {comBonus && <span className="ml-1 rounded-full bg-brand-soft px-2 py-0.5 font-medium text-brand-hover">mês grátis</span>}
+        </span>
+      )}
+    </span>
+  )
+}
+
+function StatusBadge({ status, rotulo }: { status: StatusAssinatura | null; rotulo?: string }) {
+  if (!status) return <span className="text-slate-500">{rotulo ?? '—'}</span>
+  return <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${BADGE_STATUS[status]}`}>{rotulo ?? ROTULO_STATUS[status]}</span>
 }
 
 const BORDA_ALERTA: Record<'laranja' | 'vermelho', string> = {

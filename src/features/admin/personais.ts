@@ -1,4 +1,6 @@
 /** Helpers puros da lista de personais do /admin (sem I/O). */
+import { dataSP, diasEntre } from '@/lib/datas'
+import { fimDoAcesso } from './indicacoes'
 
 export const NAO_INFORMADO = 'Não informado'
 
@@ -69,4 +71,106 @@ export const ABAS_ADMIN: { id: AbaAdmin; rotulo: string }[] = [
 /** Aba vinda da URL (?aba=); qualquer valor desconhecido cai em "Visão geral". */
 export function abaDaUrl(valor: string | null): AbaAdmin {
   return ABAS_ADMIN.some((a) => a.id === valor) ? (valor as AbaAdmin) : 'geral'
+}
+
+// ---------- situação comercial, uso e filtros rápidos da lista ----------
+type PersonalComStatus = { status: string | null; trial_fim: string | null; assinatura_fim: string | null; qtd_alunos: number }
+
+export type SituacaoComercial = { rotulo: string; evento: string | null; urgencia: 'alta' | 'media' | 'nenhuma' }
+
+function diasAteFim(fimISO: string | null, agora: Date): number | null {
+  return fimISO ? diasEntre(dataSP(agora), dataSP(fimISO)) : null
+}
+
+function quando(dias: number, antes: string, depois: string): string {
+  if (dias < 0) return `${depois} há ${-dias} ${-dias === 1 ? 'dia' : 'dias'}`
+  if (dias === 0) return `${antes} hoje`
+  if (dias === 1) return `${antes} amanhã`
+  return `${antes} em ${dias} dias`
+}
+
+/** Situação comercial do personal e o próximo evento (fim do trial ou do plano), com a urgência para ordenar a atenção. */
+export function situacaoDoPersonal(p: PersonalComStatus, bonusAte: string | null | undefined, agora: Date = new Date()): SituacaoComercial {
+  const dias = diasAteFim(fimDoAcesso(p, bonusAte, agora.getTime()).data, agora)
+  if (p.status === 'trial') {
+    if (dias === null) return { rotulo: 'Em trial', evento: null, urgencia: 'nenhuma' }
+    return { rotulo: 'Em trial', evento: quando(dias, 'Trial termina', 'Trial terminou'), urgencia: dias <= 3 ? 'alta' : dias <= 7 ? 'media' : 'nenhuma' }
+  }
+  if (p.status === 'ativa') {
+    if (dias === null) return { rotulo: 'Pagante', evento: 'Plano sem data de vencimento', urgencia: 'nenhuma' }
+    return { rotulo: 'Pagante', evento: quando(dias, 'Plano vence', 'Plano venceu'), urgencia: dias < 0 ? 'alta' : dias <= 7 ? 'media' : 'nenhuma' }
+  }
+  if (p.status === 'expirada') {
+    return { rotulo: 'Vencido', evento: dias === null ? null : quando(dias, 'Venceu', 'Venceu'), urgencia: 'alta' }
+  }
+  if (p.status === 'cancelada') return { rotulo: 'Cancelado', evento: null, urgencia: 'nenhuma' }
+  return { rotulo: 'Sem assinatura', evento: null, urgencia: 'nenhuma' }
+}
+
+/** Uso recente: treinos concluídos nos últimos 30 dias em destaque; totais (montados e realizados) em segundo plano. */
+export function usoDoPersonal(m: MetricasPersonal | undefined): { principal: string; secundario: string; detalhe: string; semUso: boolean } {
+  if (!m) return { principal: NAO_INFORMADO, secundario: '', detalhe: '', semUso: false }
+  const d = descreverTreinos(m)
+  const montados = m.treinos_presencial + m.treinos_distancia
+  const realizados = m.exec_presencial + m.exec_distancia
+  return {
+    principal: m.exec_30d === 0 ? 'Sem treinos em 30 dias' : `${m.exec_30d} ${m.exec_30d === 1 ? 'treino' : 'treinos'} em 30 dias`,
+    secundario: `${montados} montados · ${realizados} realizados`,
+    detalhe: `Montados: ${d.montados}. Realizados: ${d.realizados}.`,
+    semUso: m.exec_30d === 0,
+  }
+}
+
+export type FiltroRapido = 'trial_acabando' | 'sem_uso' | 'sem_alunos' | 'vencidos'
+export const FILTROS_RAPIDOS: { id: FiltroRapido; rotulo: string }[] = [
+  { id: 'trial_acabando', rotulo: 'Trial acabando (3 dias)' },
+  { id: 'sem_uso', rotulo: 'Sem treinos em 30 dias' },
+  { id: 'sem_alunos', rotulo: 'Sem alunos' },
+  { id: 'vencidos', rotulo: 'Vencidos' },
+]
+
+/** O personal cai no filtro rápido? "Sem uso" e "Sem alunos" só valem para quem tem acesso (trial ou pagante). */
+export function passaFiltroRapido(
+  f: FiltroRapido,
+  p: PersonalComStatus,
+  bonusAte: string | null | undefined,
+  metricas: MetricasPersonal | undefined,
+  agora: Date = new Date(),
+): boolean {
+  const temAcesso = p.status === 'trial' || p.status === 'ativa'
+  if (f === 'vencidos') return p.status === 'expirada'
+  if (f === 'sem_alunos') return temAcesso && p.qtd_alunos === 0
+  if (f === 'sem_uso') return temAcesso && !!metricas && metricas.exec_30d === 0
+  const dias = diasAteFim(fimDoAcesso(p, bonusAte, agora.getTime()).data, agora)
+  return p.status === 'trial' && dias !== null && dias <= 3
+}
+
+export type OrdemPersonais = 'nome' | 'vence_primeiro' | 'menos_uso'
+export const ORDENS_PERSONAIS: { id: OrdemPersonais; rotulo: string }[] = [
+  { id: 'nome', rotulo: 'Nome (A–Z)' },
+  { id: 'vence_primeiro', rotulo: 'Acesso que acaba primeiro' },
+  { id: 'menos_uso', rotulo: 'Menos treinos em 30 dias' },
+]
+
+/** Ordena sem alterar a lista original; sem dado (data ou métrica) vai para o fim. */
+export function ordenarPersonais<T extends PersonalComStatus & { id: string; name: string }>(
+  lista: T[],
+  ordem: OrdemPersonais,
+  bonus: Map<string, string> | undefined,
+  metricas: Map<string, MetricasPersonal> | undefined,
+): T[] {
+  const nome = (a: T, b: T) => (a.name || '').localeCompare(b.name || '', 'pt-BR')
+  const copia = [...lista]
+  if (ordem === 'vence_primeiro') {
+    const fim = (p: T) => {
+      const d = fimDoAcesso(p, bonus?.get(p.id)).data
+      return d ? new Date(d).getTime() : Infinity
+    }
+    return copia.sort((a, b) => fim(a) - fim(b) || nome(a, b))
+  }
+  if (ordem === 'menos_uso') {
+    const uso = (p: T) => metricas?.get(p.id)?.exec_30d ?? Infinity
+    return copia.sort((a, b) => uso(a) - uso(b) || nome(a, b))
+  }
+  return copia.sort(nome)
 }
