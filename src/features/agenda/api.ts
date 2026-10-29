@@ -1,6 +1,5 @@
 import { ErroAmigavel } from '@/lib/erroAmigavel'
-import { aulasSobrepoe } from './conflitos'
-import { normalizarPedidos, outrosDoMesmoHorario, telefoneDoPedido, type PedidoAgenda } from './pedidos'
+import { normalizarPedidos, type PedidoAgenda } from './pedidos'
 import { janelasDosDias, type JanelaSemanal, type ParametrosAgenda } from './disponibilidade'
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -58,6 +57,8 @@ export type ProfessionalConfig = {
   /** página pública (migration 20261089) */
   agenda_publica_ativa?: boolean
   agenda_publica_slug?: string | null
+  /** migration 20261092: texto curto mostrado na página pública */
+  apresentacao?: string | null
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
@@ -765,52 +766,20 @@ export function usePedidosRespondidos(status: 'aprovado' | 'recusado', ativo: bo
 export function useAprovarPedido() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (v: { pedido: PedidoAgenda; todos: PedidoAgenda[]; alunoId: string | null; local: string | null; guardarTelefone?: boolean }): Promise<{ alunoId: string; novoAluno: boolean }> => {
-      const { data: u } = await supabase.auth.getUser()
-      if (!u.user) throw new Error('Sessão expirada')
-      const inicio = new Date(v.pedido.inicio)
-      const fim = new Date(inicio.getTime() + v.pedido.duracao_min * 60_000)
-
-      const { data: vizinhas, error: errAulas } = await supabase
-        .from('aulas')
-        .select('starts_at, duration_min')
-        .neq('status', 'cancelada')
-        .gte('starts_at', new Date(inicio.getTime() - 12 * 3_600_000).toISOString())
-        .lt('starts_at', fim.toISOString())
-      if (errAulas) throw errAulas
-      if ((vizinhas ?? []).some((a) => aulasSobrepoe({ starts_at: inicio.toISOString(), duration_min: v.pedido.duracao_min }, a))) {
-        throw new ErroAmigavel('Esse horário já foi ocupado por outra aula. Recuse o pedido ou combine outro horário.')
+    mutationFn: async (v: { pedido: PedidoAgenda; alunoId: string | null; local: string | null; guardarTelefone?: boolean }): Promise<{ alunoId: string; novoAluno: boolean }> => {
+      // tudo numa transação no banco: conflito, aluno, aula, telefone e os outros pedidos do mesmo horário
+      const { data, error } = await supabase.rpc('aprovar_pedido_agenda', {
+        p_pedido_id: v.pedido.id,
+        p_aluno_id: v.alunoId,
+        p_local: v.local,
+        p_guardar_telefone: v.guardarTelefone ?? false,
+      })
+      if (error) {
+        if (error.code === 'P0001') throw new ErroAmigavel(error.message)
+        throw error
       }
-
-      let alunoId = v.alunoId
-      const novoAluno = !alunoId
-      if (!alunoId) {
-        const { data, error } = await supabase
-          .from('alunos')
-          .insert({ professional_id: u.user.id, name: v.pedido.visitante_nome, phone: telefoneDoPedido(v.pedido.visitante_telefone) })
-          .select('id')
-          .single()
-        if (error) throw error
-        alunoId = data.id as string
-      }
-
-      await inserirAulaAvulsa({ alunoIds: [alunoId], startsAt: inicio, durationMin: v.pedido.duracao_min, local: v.local })
-
-      // aluno existente sem telefone: guarda o do pedido para o próximo reconhecer sozinho (nunca troca um telefone que já existe)
-      if (!novoAluno && v.guardarTelefone) {
-        const { error } = await supabase.from('alunos').update({ phone: telefoneDoPedido(v.pedido.visitante_telefone) }).eq('id', alunoId).is('phone', null)
-        if (error) console.error('pedidos: aula marcada, mas o telefone não foi guardado no cadastro', error.message)
-      }
-
-      const agora = new Date().toISOString()
-      const { error: errPedido } = await supabase.from('pedidos_agenda').update({ status: 'aprovado', aluno_id: alunoId, respondido_em: agora }).eq('id', v.pedido.id)
-      if (errPedido) throw errPedido
-      const outros = outrosDoMesmoHorario(v.todos, v.pedido).map((p) => p.id)
-      if (outros.length > 0) {
-        const { error } = await supabase.from('pedidos_agenda').update({ status: 'indisponivel', respondido_em: agora }).in('id', outros)
-        if (error) console.error('pedidos: aula marcada, mas os outros pedidos do horário não foram marcados', error.message)
-      }
-      return { alunoId, novoAluno }
+      const r = data as { aluno_id: string; novo_aluno: boolean }
+      return { alunoId: r.aluno_id, novoAluno: r.novo_aluno }
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['pedidos-agenda'] })

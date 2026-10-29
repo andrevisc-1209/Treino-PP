@@ -19,9 +19,16 @@ describe('ler a resposta da função', () => {
       estado: 'ok',
       nome_personal: 'André',
       cidade: 'Rio/RJ',
+      apresentacao: null,
       duracao_min: 45,
       vagas: [{ dataISO: '2026-10-30', inicio: '07:00', fim: '07:45' }],
     })
+  })
+  it('apresentação: aparada e limitada a 160 caracteres; vazia vira nulo', () => {
+    const base = { estado: 'ok', vagas: [] }
+    expect(lerConsulta({ ...base, apresentacao: '  Personal há 8 anos  ' })).toMatchObject({ apresentacao: 'Personal há 8 anos' })
+    expect(lerConsulta({ ...base, apresentacao: 'x'.repeat(300) })).toMatchObject({ apresentacao: 'x'.repeat(160) })
+    expect(lerConsulta({ ...base, apresentacao: '   ' })).toMatchObject({ apresentacao: null })
   })
   it('qualquer coisa fora do formato vira indisponível; vagas malformadas são descartadas', () => {
     for (const ruim of [null, undefined, 'x', {}, { estado: 'indisponivel' }, { estado: 'ok' }, { estado: 'ok', vagas: 'x' }]) expect(lerConsulta(ruim)).toEqual({ estado: 'indisponivel' })

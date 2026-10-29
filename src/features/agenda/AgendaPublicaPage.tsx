@@ -175,6 +175,7 @@ export function AgendaPublicaPage() {
                     <Clock size={14} aria-hidden /> Aulas de {ok.duracao_min} minutos
                   </span>
                 </p>
+                {ok.apresentacao && <p className="mt-2 text-sm text-slate-700">{ok.apresentacao}</p>}
               </div>
             </header>
 

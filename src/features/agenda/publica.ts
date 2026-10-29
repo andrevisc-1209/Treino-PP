@@ -12,7 +12,7 @@ export function agruparPorDia(vagas: Vaga[]): DiaComVagas[] {
   return [...mapa.entries()].map(([dataISO, lista]) => ({ dataISO, vagas: lista }))
 }
 
-export type RespostaConsulta = { estado: 'ok'; nome_personal: string; cidade: string | null; duracao_min: number; vagas: Vaga[] } | { estado: 'indisponivel' }
+export type RespostaConsulta = { estado: 'ok'; nome_personal: string; cidade: string | null; apresentacao: string | null; duracao_min: number; vagas: Vaga[] } | { estado: 'indisponivel' }
 
 /** Aceita só o formato conhecido; qualquer outra coisa vira "indisponível" (a página nunca quebra com resposta estranha). */
 export function lerConsulta(bruto: unknown): RespostaConsulta {
@@ -21,7 +21,7 @@ export function lerConsulta(bruto: unknown): RespostaConsulta {
   const vagas = (o.vagas as Record<string, unknown>[])
     .filter((v) => typeof v?.dataISO === 'string' && typeof v?.inicio === 'string' && typeof v?.fim === 'string')
     .map((v) => ({ dataISO: String(v.dataISO), inicio: String(v.inicio), fim: String(v.fim) }))
-  return { estado: 'ok', nome_personal: typeof o.nome_personal === 'string' ? o.nome_personal : '', cidade: typeof o.cidade === 'string' ? o.cidade : null, duracao_min: Number(o.duracao_min) || 60, vagas }
+  return { estado: 'ok', nome_personal: typeof o.nome_personal === 'string' ? o.nome_personal : '', cidade: typeof o.cidade === 'string' ? o.cidade : null, apresentacao: typeof o.apresentacao === 'string' && o.apresentacao.trim() ? o.apresentacao.trim().slice(0, 160) : null, duracao_min: Number(o.duracao_min) || 60, vagas }
 }
 
 /** Link da página pública do personal. */

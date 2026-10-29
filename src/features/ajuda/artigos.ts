@@ -167,6 +167,7 @@ export const ARTIGOS: Artigo[] = [
     passos: [
       'Antes, defina seus horários de atendimento (veja "Definir seus horários de atendimento e ver as vagas livres").',
       'Vá em Configurações → Página pública da agenda e ligue "Aceitar pedidos pelo link". A página vem desligada.',
+      'Se quiser, escreva uma apresentação curta (até 160 caracteres) logo abaixo da chave: ela aparece no topo da página. Não coloque telefone nem dados de saúde.',
       'Copie o link ou envie pelo WhatsApp. Ele também fica no alto da Agenda, e "Ver como visitante" mostra a página como seus alunos a verão. Quem abrir vê só os seus horários livres, escolhe um e envia nome, telefone e uma mensagem curta. Nada é marcado sozinho: você aprova cada pedido.',
       'Você é avisado no sino do app e, se as notificações por WhatsApp estiverem ligadas, por WhatsApp (só com o dia e a hora).',
       'Na Agenda, toque na faixa "pedidos de aula para responder" (ela fica vermelha se algum pedido espera há mais de 24 horas). Os pedidos aparecem do mais antigo para o mais novo, com o tempo de espera, e as abas Aprovados e Recusados guardam os últimos 30 dias. "Aprovar" marca a aula: se o telefone for de um aluno seu, a aula vai para ele; se for uma pessoa nova, o app cria um cadastro rápido com nome e telefone, ou você vincula a um aluno que já tem. "Recusar" abre o WhatsApp com uma mensagem pronta.',
