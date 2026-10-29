@@ -1,3 +1,6 @@
+import { ErroAmigavel } from '@/lib/erroAmigavel'
+import { aulasSobrepoe } from './conflitos'
+import { normalizarPedidos, outrosDoMesmoHorario, telefoneDoPedido, type PedidoAgenda } from './pedidos'
 import { janelasDosDias, type JanelaSemanal, type ParametrosAgenda } from './disponibilidade'
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -52,6 +55,9 @@ export type ProfessionalConfig = {
   antecedencia_horas?: number | null
   horizonte_semanas?: number | null
   agenda_ajustada_em?: string | null
+  /** página pública (migration 20261089) */
+  agenda_publica_ativa?: boolean
+  agenda_publica_slug?: string | null
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
@@ -122,33 +128,35 @@ export function useAula(aulaId: string | undefined) {
   })
 }
 
+type NovaAulaAvulsa = { alunoIds: string[]; startsAt: Date; durationMin: number; local: string | null }
+
+async function inserirAulaAvulsa(input: NovaAulaAvulsa): Promise<string> {
+  const { data: u } = await supabase.auth.getUser()
+  if (!u.user) throw new Error('Sessão expirada')
+  const { data: aula, error } = await supabase
+    .from('aulas')
+    .insert({
+      professional_id: u.user.id,
+      horario_id: null,
+      starts_at: input.startsAt.toISOString(),
+      original_starts_at: null,
+      duration_min: input.durationMin,
+      local: input.local,
+    })
+    .select('id')
+    .single()
+  if (error) throw error
+
+  const { error: errPart } = await supabase.from('aula_participantes').insert(input.alunoIds.map((aluno_id) => ({ aula_id: aula.id, aluno_id })))
+  if (errPart) throw errPart
+
+  return aula.id as string
+}
+
 export function useCriarAulaAvulsa() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { alunoIds: string[]; startsAt: Date; durationMin: number; local: string | null }) => {
-      const { data: u } = await supabase.auth.getUser()
-      if (!u.user) throw new Error('Sessão expirada')
-      const { data: aula, error } = await supabase
-        .from('aulas')
-        .insert({
-          professional_id: u.user.id,
-          horario_id: null,
-          starts_at: input.startsAt.toISOString(),
-          original_starts_at: null,
-          duration_min: input.durationMin,
-          local: input.local,
-        })
-        .select('id')
-        .single()
-      if (error) throw error
-
-      const { error: errPart } = await supabase
-        .from('aula_participantes')
-        .insert(input.alunoIds.map((aluno_id) => ({ aula_id: aula.id, aluno_id })))
-      if (errPart) throw errPart
-
-      return aula.id as string
-    },
+    mutationFn: inserirAulaAvulsa,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['aulas'] }),
   })
 }
@@ -695,5 +703,104 @@ export function useRemoverBloqueio() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bloqueios'] }),
+  })
+}
+
+// ============================================================
+// Página pública: ligar/trocar o link e responder aos pedidos de aula
+// ============================================================
+
+/** Liga ou desliga a página pública e, se precisar, gera ou troca o link. Devolve o link atual (só a parte final). */
+export function useConfigurarAgendaPublica() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { ativa: boolean; trocarLink?: boolean }) => {
+      const { data, error } = await supabase.rpc('configurar_agenda_publica', { p_ativa: v.ativa, p_trocar_link: v.trocarLink ?? false })
+      if (error) throw error
+      return data as string
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['professional-config'] }),
+  })
+}
+
+export function usePedidosPendentes() {
+  return useQuery({
+    queryKey: ['pedidos-agenda'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pedidos_agenda')
+        .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at')
+        .eq('status', 'pendente')
+        .order('inicio')
+      if (error) throw error
+      return normalizarPedidos(data)
+    },
+  })
+}
+
+/**
+ * Aprova o pedido: marca a aula para o aluno (o que já tem esse telefone ou um cadastro rápido com nome e telefone), confere que o horário
+ * continua livre, e os outros pedidos do mesmo horário viram "indisponível".
+ */
+export function useAprovarPedido() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { pedido: PedidoAgenda; todos: PedidoAgenda[]; alunoId: string | null; local: string | null }): Promise<{ alunoId: string; novoAluno: boolean }> => {
+      const { data: u } = await supabase.auth.getUser()
+      if (!u.user) throw new Error('Sessão expirada')
+      const inicio = new Date(v.pedido.inicio)
+      const fim = new Date(inicio.getTime() + v.pedido.duracao_min * 60_000)
+
+      const { data: vizinhas, error: errAulas } = await supabase
+        .from('aulas')
+        .select('starts_at, duration_min')
+        .neq('status', 'cancelada')
+        .gte('starts_at', new Date(inicio.getTime() - 12 * 3_600_000).toISOString())
+        .lt('starts_at', fim.toISOString())
+      if (errAulas) throw errAulas
+      if ((vizinhas ?? []).some((a) => aulasSobrepoe({ starts_at: inicio.toISOString(), duration_min: v.pedido.duracao_min }, a))) {
+        throw new ErroAmigavel('Esse horário já foi ocupado por outra aula. Recuse o pedido ou combine outro horário.')
+      }
+
+      let alunoId = v.alunoId
+      const novoAluno = !alunoId
+      if (!alunoId) {
+        const { data, error } = await supabase
+          .from('alunos')
+          .insert({ professional_id: u.user.id, name: v.pedido.visitante_nome, phone: telefoneDoPedido(v.pedido.visitante_telefone) })
+          .select('id')
+          .single()
+        if (error) throw error
+        alunoId = data.id as string
+      }
+
+      await inserirAulaAvulsa({ alunoIds: [alunoId], startsAt: inicio, durationMin: v.pedido.duracao_min, local: v.local })
+
+      const agora = new Date().toISOString()
+      const { error: errPedido } = await supabase.from('pedidos_agenda').update({ status: 'aprovado', aluno_id: alunoId, respondido_em: agora }).eq('id', v.pedido.id)
+      if (errPedido) throw errPedido
+      const outros = outrosDoMesmoHorario(v.todos, v.pedido).map((p) => p.id)
+      if (outros.length > 0) {
+        const { error } = await supabase.from('pedidos_agenda').update({ status: 'indisponivel', respondido_em: agora }).in('id', outros)
+        if (error) console.error('pedidos: aula marcada, mas os outros pedidos do horário não foram marcados', error.message)
+      }
+      return { alunoId, novoAluno }
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['pedidos-agenda'] })
+      void qc.invalidateQueries({ queryKey: ['aulas'] })
+      void qc.invalidateQueries({ queryKey: ['alunos'] })
+    },
+  })
+}
+
+export function useRecusarPedido() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (pedidoId: string) => {
+      const { error } = await supabase.from('pedidos_agenda').update({ status: 'recusado', respondido_em: new Date().toISOString() }).eq('id', pedidoId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pedidos-agenda'] }),
   })
 }

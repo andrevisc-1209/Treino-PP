@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  alunosInativos, ehModalidadeRotulo, montarFaturasVencidas, montarRelatoNovo, montarTreinosConcluidos, brl, dataBR, dataSP, decidirEnvio, diaSemanaCurto, horaSP, inicioDaSemana, limitesDoDiaSP, montarAlunosInativos, montarBriefing,
+  alunosInativos, ehModalidadeRotulo, montarFaturasVencidas, montarPedidoAula, montarRelatoNovo, montarTreinosConcluidos, brl, dataBR, dataSP, decidirEnvio, diaSemanaCurto, horaSP, inicioDaSemana, limitesDoDiaSP, montarAlunosInativos, montarBriefing,
   montarPagamentoPlano, montarPlanoExpirando, montarResumoSemanal, segredoCronValido, somarDias,
 } from './notificacoes.ts'
 
@@ -167,6 +167,15 @@ describe('treino à distância concluído', () => {
     expect(ehModalidadeRotulo('natacao')).toBe('natação')
     expect(ehModalidadeRotulo('xyz')).toBeNull()
     expect(ehModalidadeRotulo(null)).toBeNull()
+  })
+})
+
+describe('montarPedidoAula', () => {
+  it('diz o dia e a hora pedidos e leva ao app, sem dado do visitante', () => {
+    const t = montarPedidoAula('2026-10-30', '07:00')
+    expect(t).toContain('30/10, às 07:00')
+    expect(t).toContain('/agenda?pedidos=1')
+    expect(t).not.toMatch(/nome|telefone|mensagem de/i)
   })
 })
 

@@ -20,6 +20,7 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarDadosPessoais, useSalvarLocalidade } from '@/features/auth/api'
 import { useTelefoneVerificadoEm } from '@/features/auth/verificacaoTelefone'
 import { VerificacaoTelefone } from './VerificacaoTelefone'
+import { PaginaPublicaSecao } from './PaginaPublicaSecao'
 import { useProfessionalConfig, useSalvarProfessionalConfig, type SalvarProfessionalConfigInput } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -30,10 +31,10 @@ const TIPOS_PIX: { value: PixTipo; label: string }[] = [
   { value: 'aleatoria', label: 'Chave aleatória' },
 ]
 
-type SecaoId = 'dados' | 'assinatura' | 'localizacao' | 'aulas' | 'pix' | 'notificacoes'
+type SecaoId = 'dados' | 'assinatura' | 'localizacao' | 'aulas' | 'pagina' | 'pix' | 'notificacoes'
 
 /** `?secao=assinatura` (links do e-mail e do WhatsApp de renovação) abre a seção já expandida. */
-const SECOES: SecaoId[] = ['dados', 'assinatura', 'localizacao', 'aulas', 'pix', 'notificacoes']
+const SECOES: SecaoId[] = ['dados', 'assinatura', 'localizacao', 'aulas', 'pagina', 'pix', 'notificacoes']
 
 // Valores quando o personal ainda não tem linha em professional_config.
 const PADRAO = { cobrarFalta: true, cobrarCancel: false, duracao: '60', pixTipo: 'cpf' as PixTipo, pixChave: '', pixNome: '' }
@@ -265,6 +266,10 @@ export function ConfiguracoesPage() {
               <span className="font-medium">Cobrar cancelamento do aluno por padrão</span>
               <input type="checkbox" checked={cobrarCancel} onChange={(e) => setCobrarCancel(e.target.checked)} className="size-6 accent-brand" />
             </label>
+          </Acordeao>
+
+          <Acordeao titulo="Página pública da agenda" aberto={estaAberta('pagina', false)} onAlternar={() => alternar('pagina', false)}>
+            <PaginaPublicaSecao />
           </Acordeao>
 
           <Acordeao titulo="Recebimento via Pix" aberto={estaAberta('pix', false)} onAlternar={() => alternar('pix', false)} alterado={pixSujo}>

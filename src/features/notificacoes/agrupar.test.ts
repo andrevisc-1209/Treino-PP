@@ -24,8 +24,9 @@ describe('agruparNotificacoes', () => {
 })
 
 describe('contarNaoLidas', () => {
-  it('só ciclo encerrado conta como ação', () => {
+  it('ciclo encerrado e pedido de aula contam como ação', () => {
     expect(contarNaoLidas(['treino_concluido', 'ciclo_encerrado', 'indicacao_concedida', 'treino_concluido'])).toEqual({ total: 4, acao: 1 })
+    expect(contarNaoLidas(['pedido_aula', 'ciclo_encerrado', 'treino_concluido'])).toEqual({ total: 3, acao: 2 })
     expect(contarNaoLidas([])).toEqual({ total: 0, acao: 0 })
   })
 })

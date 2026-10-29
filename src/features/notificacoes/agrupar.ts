@@ -1,12 +1,12 @@
-export type TipoNotificacao = 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida'
+export type TipoNotificacao = 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida' | 'pedido_aula'
 
 export interface NotificacaoAgrupavel {
   tipo: TipoNotificacao
   lida: boolean
 }
 
-/** Tipos que pedem uma ação do personal (encerrar o mês); o resto é informação. */
-export const TIPOS_QUE_EXIGEM_ACAO: TipoNotificacao[] = ['ciclo_encerrado']
+/** Tipos que pedem uma ação do personal (encerrar o mês, responder a um pedido de aula); o resto é informação. */
+export const TIPOS_QUE_EXIGEM_ACAO: TipoNotificacao[] = ['ciclo_encerrado', 'pedido_aula']
 
 export const exigeAcao = (tipo: TipoNotificacao): boolean => TIPOS_QUE_EXIGEM_ACAO.includes(tipo)
 

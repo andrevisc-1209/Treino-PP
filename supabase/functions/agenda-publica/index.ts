@@ -12,6 +12,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ipDoCliente } from '../_shared/consentimento.ts'
 import { limiteExcedido, resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 import { verificarTurnstile } from '../_shared/turnstile.ts'
+import { montarPedidoAula } from '../_shared/notificacoes.ts'
+import { enviarAoPersonal } from '../_shared/whatsappPersonal.ts'
 import {
   calcularVagas,
   dataEHoraSP,
@@ -148,18 +150,36 @@ Deno.serve(async (req) => {
     return json(req, { error: 'Este personal está com muitos pedidos em aberto. Tente de novo em alguns dias.' }, 429)
   }
 
-  const { error } = await admin.from('pedidos_agenda').insert({
-    professional_id: professionalId,
-    visitante_nome: v.pedido.nome,
-    visitante_telefone: v.pedido.telefone,
-    mensagem: v.pedido.mensagem,
-    inicio: new Date(`${vaga.dataISO}T${vaga.inicio}:00-03:00`).toISOString(),
-    duracao_min: parametros.duracaoMin,
-  })
+  const { data: criado, error } = await admin
+    .from('pedidos_agenda')
+    .insert({
+      professional_id: professionalId,
+      visitante_nome: v.pedido.nome,
+      visitante_telefone: v.pedido.telefone,
+      mensagem: v.pedido.mensagem,
+      inicio: new Date(`${vaga.dataISO}T${vaga.inicio}:00-03:00`).toISOString(),
+      duracao_min: parametros.duracaoMin,
+    })
+    .select('id')
+    .single()
   // 23505 = o mesmo telefone já pediu esse horário e o pedido está pendente: tratamos como enviado (idempotente)
   if (error && error.code !== '23505') {
     console.error('agenda-publica: falha ao gravar o pedido', error.message)
     return json(req, { error: 'Não foi possível enviar agora. Tente novamente.' }, 500)
+  }
+
+  // Avisa o personal (sino do app e WhatsApp da plataforma). Falha aqui NUNCA derruba o pedido, que já está gravado.
+  if (!error && criado) {
+    const texto = montarPedidoAula(vaga.dataISO, vaga.inicio)
+    try {
+      const { error: errAviso } = await admin
+        .from('notificacoes_professor')
+        .insert({ professional_id: professionalId, tipo: 'pedido_aula', payload: { pedido_id: criado.id, inicio: `${vaga.dataISO}T${vaga.inicio}` } })
+      if (errAviso && errAviso.code !== '23505') console.error('agenda-publica: pedido gravado, mas o aviso do sino falhou', errAviso.message)
+      await enviarAoPersonal(admin, professionalId, 'pedido_aula', texto, { umPorDia: false })
+    } catch (e) {
+      console.error('agenda-publica: pedido gravado, mas o aviso falhou', (e as Error).message)
+    }
   }
   return json(req, { estado: 'enviado', nome_personal: primeiroNome(personal.name) })
 })
