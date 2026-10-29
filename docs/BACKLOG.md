@@ -1486,3 +1486,9 @@ Origem: escuta ativa com um personal (28/10/2026): ele usa um contrato com regra
 - ✅ **Política de Privacidade 1.11** (CPF e endereço do aluno, para o contrato) registrada na migration junto com as colunas.
 - ⏳ **Antes de divulgar:** revisão do texto-base por um advogado. Etapa 2 (futura): guardar o contrato assinado (upload), com selo "contrato até…"; precisa de Storage, política de retenção e limites.
 - ⚠️ Não testado ao vivo (a migration ainda não foi aplicada) e o PDF não foi visto renderizado; conferir a 390 px e imprimir uma folha.
+
+### 138. Contrato: busca de endereço do Google e horários do aluno — ✅ PR aberta
+Origem: primeiro uso do contrato (29/10/2026). Só tela; sem migration.
+- ✅ **Local das aulas** usa a mesma busca de endereço do Google Places das telas de horário e de locais de treino do aluno (campo comum se a chave `VITE_GOOGLE_MAPS_API_KEY` não estiver configurada). Já vem preenchido com o local mais usado nos horários fixos do aluno ou, se não houver, com o primeiro local de treino cadastrado; continua editável.
+- ✅ **Dias e horários** já vêm dos horários fixos ativos do aluno, em texto ("segundas e quartas, às 07:00; sextas, às 18:30 (45 min)"), agrupando dias iguais; continuam editáveis. Horário inativo ou com data final vencida não entra.
+- ⚠️ Não testado ao vivo no navegador.

@@ -6,6 +6,9 @@ import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import type { Aluno } from '@/features/alunos/api'
+import { useHorariosDoAluno } from '@/features/agenda/api'
+import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
+import { useLocaisTreino } from '@/features/alunos/api'
 import { useAlunoCobranca } from '@/features/financeiro/api'
 import { usePacotesAtivos } from '@/features/pacotes/api'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
@@ -15,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { useGuardarDadosDoContrato } from './api'
 import { avisosDoContrato, ehMenorDeIdade, FORMAS_CONTRATO, LIMITE_MULTA, MODALIDADES_CONTRATO, problemasDoContrato, type FormaContrato, type RegrasContrato } from './contrato'
 import { CHAVE_REGRAS, dadosDoFormulario, formularioInicial, lerRegrasSalvas, mudouNoCadastro, type FormContrato } from './formulario'
+import { descreverHorarios, localDosHorarios } from './horarios'
 import { baixarContrato } from './pdf'
 
 const campo = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm'
@@ -126,11 +130,18 @@ function Formulario({ aluno, inicial, userId, contexto, onFechar }: { aluno: Alu
           <ChipsMultiSelect options={MODALIDADES_CONTRATO} value={f.modalidades} onChange={(v) => mudar('modalidades', v)} />
         </Field>
         <Field label="Local das aulas">
-          <Input value={f.local} onChange={(e) => mudar('local', e.target.value)} placeholder="Ex.: Academia Central, Rua X, 100" />
+          <GooglePlacesAutocomplete
+            defaultValue={f.local}
+            onChangeTexto={(texto) => mudar('local', texto)}
+            onSelecionar={() => {}}
+            limparAoSelecionar={false}
+            placeholder="Busque o endereço ou digite o local"
+          />
         </Field>
         <Field label="Dias e horários (opcional)">
           <Input value={f.diasHorarios} onChange={(e) => mudar('diasHorarios', e.target.value)} placeholder="Ex.: segundas e quartas, às 7h" />
         </Field>
+        <p className="text-xs text-slate-600">O local e os horários já vêm dos horários fixos e dos locais de treino do aluno, quando ele tem; você pode alterar.</p>
         <Field label="Início do contrato">
           <Input type="date" value={f.inicio} onChange={(e) => mudar('inicio', e.target.value)} />
         </Field>
@@ -255,8 +266,10 @@ function Folha({ aluno, onFechar }: { aluno: Aluno; onFechar: () => void }) {
   const perfil = usePerfilProfissional(userId)
   const cobranca = useAlunoCobranca(aluno.id)
   const pacotes = usePacotesAtivos()
+  const horarios = useHorariosDoAluno(aluno.id)
+  const locais = useLocaisTreino(aluno.id)
 
-  if (!userId || perfil.isLoading || cobranca.isLoading || pacotes.isLoading) return <ListaSkeleton linhas={3} />
+  if (!userId || perfil.isLoading || cobranca.isLoading || pacotes.isLoading || horarios.isLoading || locais.isLoading) return <ListaSkeleton linhas={3} />
   if (perfil.error || cobranca.error || pacotes.error) return <p className="py-4 text-sm text-red-600">{mapearErroSupabase(perfil.error ?? cobranca.error ?? pacotes.error)}</p>
 
   const hoje = hojeSP()
@@ -274,6 +287,9 @@ function Folha({ aluno, onFechar }: { aluno: Aluno; onFechar: () => void }) {
     hoje,
     menor: ehMenorDeIdade(aluno.birth_date, hoje),
     regrasSalvas: lerRegrasSalvas(guardado, userId),
+    // horários e locais são só sugestão: se a busca falhar, o formulário abre em branco e o personal digita
+    horariosTexto: descreverHorarios(horarios.data ?? [], hoje),
+    localSugerido: localDosHorarios(horarios.data ?? [], hoje) || (locais.data?.[0] ? `${locais.data[0].nome} — ${locais.data[0].endereco}` : ''),
   })
   return (
     <Formulario
