@@ -7,7 +7,7 @@ import { useModelos } from '@/features/modelos/api'
 import { ROTA_IMPORTAR_COM_IA } from '@/features/alunos/importar/via'
 import { useAtivacao } from './useAtivacao'
 
-type PassoOnboarding = { label: string; feito: boolean; to: string; /** outro jeito de cumprir o mesmo passo (linha logo abaixo) */ alternativa?: { label: string; to: string } }
+type PassoOnboarding = { label: string; feito: boolean; to: string; /** não impede o checklist de sumir quando os outros passos acabam */ opcional?: boolean; /** outro jeito de cumprir o mesmo passo (linha logo abaixo) */ alternativa?: { label: string; to: string } }
 
 function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean } {
   const { data: config, isLoading: l1 } = useProfessionalConfig()
@@ -24,6 +24,8 @@ function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean
       alternativa: { label: 'Importar vários alunos (ajuda de uma IA ou planilha)', to: ROTA_IMPORTAR_COM_IA },
     },
     { label: 'Defina os horários em que você atende', feito: !!config?.agenda_ajustada_em, to: '/agenda/disponibilidade' },
+    // opcional e só depois dos horários: quem não quer divulgar a agenda não fica com o checklist para sempre
+    ...(config?.agenda_ajustada_em ? [{ label: 'Ative e compartilhe o link da sua agenda (opcional)', feito: !!config?.agenda_publica_ativa, to: '/configuracoes?secao=pagina', opcional: true }] : []),
     { label: 'Adicione um horário fixo', feito: (horarios?.length ?? 0) > 0, to: '/alunos' },
     { label: 'Monte seu primeiro treino planejado', feito: (modelos?.length ?? 0) > 0, to: '/meus-treinos/planejados' },
     { label: 'Configure sua chave Pix', feito: !!config?.pix_tipo, to: '/configuracoes' },
@@ -39,7 +41,7 @@ export function OnboardingChecklist() {
   // enquanto o cartão de ativação (3 alunos) está na tela, o checklist de 4 itens só atrapalharia
   if (carregando || emAtivacao) return null
 
-  const restantes = passos.filter((p) => !p.feito)
+  const restantes = passos.filter((p) => !p.feito && !p.opcional)
   if (restantes.length === 0) return null
 
   return (

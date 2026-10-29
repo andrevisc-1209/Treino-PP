@@ -35,6 +35,7 @@ import { PedidosAgendaSheet } from './PedidosAgendaSheet'
 import { LinkDaAgendaCard } from './LinkDaAgenda'
 import { useVagasDoDia } from './useVagasDoDia'
 import type { Vaga } from './vagas'
+import { esperaLonga } from './publica'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, usePedidosPendentes, type Aula } from './api'
 
 type Modo = 'dia' | 'semana'
@@ -318,10 +319,11 @@ export function AgendaPage() {
         <button
           type="button"
           onClick={abrirPedidos}
-          className="mb-4 flex min-h-12 w-full items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 text-left text-sm font-semibold text-amber-950"
+          className={`mb-4 flex min-h-12 w-full items-center justify-between rounded-2xl border px-4 py-2 text-left text-sm font-semibold ${pedidos!.some((p) => esperaLonga(p.created_at)) ? 'border-red-200 bg-red-50 text-red-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}
         >
           <span>
             {pedidos!.length} {pedidos!.length === 1 ? 'pedido de aula para responder' : 'pedidos de aula para responder'}
+            {pedidos!.some((p) => esperaLonga(p.created_at)) && <span className="block text-xs font-medium">Tem pedido esperando há mais de 24 h</span>}
           </span>
           <span aria-hidden>Ver →</span>
         </button>

@@ -9,7 +9,9 @@ import { usePerfilProfissional } from '@/features/auth/api'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
 import { linkWhatsApp, linkWhatsAppComTexto } from '@/lib/whatsapp'
-import { useAprovarPedido, usePedidosPendentes, useRecusarPedido } from './api'
+import { useAprovarPedido, usePedidosPendentes, usePedidosRespondidos, useRecusarPedido } from './api'
+import { esperaLonga, tempoDeEspera } from './publica'
+import { cn } from '@/lib/utils'
 import { alunoDoTelefone, alunosParecidos, buscarAlunosPorNome, mensagemDeAprovacao, mensagemDeRecusa, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
 
 type Resposta = { tipo: 'aprovado' | 'recusado'; link: string; pedido: PedidoAgenda }
@@ -54,6 +56,10 @@ function CartaoPedido({ pedido, todos, aluno, alunos, personalNome, resposta, on
     <li className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
       <div>
         <p className="font-semibold">{textoDoHorario(pedido.inicio)}</p>
+        <p className={cn('text-xs', esperaLonga(pedido.created_at) ? 'font-semibold text-red-700' : 'text-slate-600')}>
+          Pedido recebido {tempoDeEspera(pedido.created_at)}
+          {esperaLonga(pedido.created_at) ? ' · responda para não perder essa pessoa' : ''}
+        </p>
         <p className="text-sm text-slate-800">
           {pedido.visitante_nome} · {telefoneDoPedido(pedido.visitante_telefone)}
         </p>
@@ -147,6 +153,9 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
   const { data: pedidos, isLoading, error } = usePedidosPendentes()
   const { data: alunos } = useAlunos()
   const [respostas, setRespostas] = useState<Record<string, Resposta>>({})
+  const [aba, setAba] = useState<'pendentes' | 'aprovado' | 'recusado'>('pendentes')
+  const aprovados = usePedidosRespondidos('aprovado', open && aba === 'aprovado')
+  const recusados = usePedidosRespondidos('recusado', open && aba === 'recusado')
 
   const lista = pedidos ?? []
   // quem acabou de ser respondido sai da lista de pendentes, mas continua na tela (com o botão do WhatsApp) até fechar a folha
@@ -156,30 +165,69 @@ export function PedidosAgendaSheet({ open, onClose }: { open: boolean; onClose: 
   const mostrar = [...lista, ...respondidos].sort((a, b) => a.inicio.localeCompare(b.inicio))
   const fechar = () => {
     setRespostas({})
+    setAba('pendentes')
     onClose()
   }
 
   return (
     <BottomSheet open={open} onClose={fechar} title="Pedidos de aula">
       <div className="space-y-3">
-        <p className="text-sm text-slate-600">Pedidos feitos pela sua página pública. Aprove para marcar a aula; os outros pedidos do mesmo horário ficam indisponíveis.</p>
-        {isLoading && <ListaSkeleton linhas={2} />}
-        {error && <p className="text-sm text-red-600">{mapearErroSupabase(error)}</p>}
-        {pedidos && mostrar.length === 0 && <p className="py-4 text-center text-sm text-slate-600">Nenhum pedido em aberto.</p>}
-        <ul className="space-y-3">
-          {mostrar.map((p) => (
-            <CartaoPedido
-              key={p.id}
-              pedido={p}
-              todos={lista}
-              aluno={alunoDoTelefone(alunos ?? [], p.visitante_telefone)}
-              alunos={alunos ?? []}
-              personalNome={perfil?.name ?? ''}
-              resposta={respostas[p.id]}
-              onResponder={(id, r) => setRespostas((x) => ({ ...x, [id]: r }))}
-            />
+        <div className="flex gap-2" role="tablist" aria-label="Situação dos pedidos">
+          {([['pendentes', `Pendentes (${lista.length})`], ['aprovado', 'Aprovados'], ['recusado', 'Recusados']] as const).map(([id, rotulo]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={aba === id}
+              onClick={() => setAba(id)}
+              className={cn('min-h-11 rounded-full border px-4 text-sm font-medium', aba === id ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+            >
+              {rotulo}
+            </button>
           ))}
-        </ul>
+        </div>
+
+        {aba === 'pendentes' && (
+          <>
+            <p className="text-sm text-slate-600">Pedidos feitos pela sua página pública, do mais antigo para o mais novo. Aprove para marcar a aula; os outros pedidos do mesmo horário ficam indisponíveis.</p>
+            {isLoading && <ListaSkeleton linhas={2} />}
+            {error && <p className="text-sm text-red-600">{mapearErroSupabase(error)}</p>}
+            {pedidos && mostrar.length === 0 && <p className="py-4 text-center text-sm text-slate-600">Nenhum pedido em aberto.</p>}
+            <ul className="space-y-3">
+              {mostrar.map((p) => (
+                <CartaoPedido
+                  key={p.id}
+                  pedido={p}
+                  todos={lista}
+                  aluno={alunoDoTelefone(alunos ?? [], p.visitante_telefone)}
+                  alunos={alunos ?? []}
+                  personalNome={perfil?.name ?? ''}
+                  resposta={respostas[p.id]}
+                  onResponder={(id, r) => setRespostas((x) => ({ ...x, [id]: r }))}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+
+        {aba !== 'pendentes' && (
+          <>
+            <p className="text-sm text-slate-600">{aba === 'aprovado' ? 'Pedidos aprovados nos últimos 30 dias.' : 'Pedidos recusados ou que ficaram indisponíveis nos últimos 30 dias.'}</p>
+            {(aba === 'aprovado' ? aprovados : recusados).isLoading && <ListaSkeleton linhas={2} />}
+            {(aba === 'aprovado' ? aprovados : recusados).data?.length === 0 && <p className="py-4 text-center text-sm text-slate-600">Nenhum pedido aqui.</p>}
+            <ul className="space-y-2">
+              {((aba === 'aprovado' ? aprovados : recusados).data ?? []).map((p) => (
+                <li key={p.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                  <p className="font-medium">{textoDoHorario(p.inicio)}</p>
+                  <p className="text-sm text-slate-700">
+                    {p.visitante_nome} · {telefoneDoPedido(p.visitante_telefone)}
+                  </p>
+                  <p className="text-xs text-slate-600">Pedido recebido {tempoDeEspera(p.created_at)}</p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </BottomSheet>
   )

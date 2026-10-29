@@ -62,6 +62,9 @@ export function PaginaPublicaSecao() {
         <div className="space-y-2">
           <p className="break-all rounded-xl bg-slate-50 p-3 text-sm text-slate-800">{link}</p>
           <BotoesDoLink link={link} />
+          <a href={link} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+            Ver como visitante
+          </a>
           <button type="button" onClick={exigir(() => void trocar())} disabled={configurar.isPending} className="min-h-11 text-sm font-medium text-slate-700 underline">
             Trocar o link
           </button>
