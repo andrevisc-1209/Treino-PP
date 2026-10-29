@@ -30,6 +30,10 @@ export type OrigemContrato = {
   hoje: string
   menor: boolean
   regrasSalvas: Partial<RegrasContrato> | null
+  /** horários fixos do aluno já descritos em texto (vazio se não tem) */
+  horariosTexto: string
+  /** local mais usado nos horários ou o primeiro local de treino do aluno */
+  localSugerido: string
 }
 
 const numeroTexto = (n: number | null | undefined): string => (n === null || n === undefined ? '' : String(n).replace('.', ','))
@@ -45,8 +49,8 @@ export function formularioInicial(o: OrigemContrato): FormContrato {
     respNome: '',
     respCpf: '',
     modalidades: [],
-    local: '',
-    diasHorarios: '',
+    local: o.localSugerido,
+    diasHorarios: o.horariosTexto,
     inicio: o.pacote?.inicio ?? o.hoje,
     forma,
     valorAula: numeroTexto(o.cobranca?.valor_aula),

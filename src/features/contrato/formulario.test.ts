@@ -9,6 +9,8 @@ const origem: OrigemContrato = {
   hoje: '2026-10-29',
   menor: false,
   regrasSalvas: null,
+  horariosTexto: '',
+  localSugerido: '',
 }
 const contexto = { personal: { nome: 'André', cpf: '52998224725', cidade: 'Rio', uf: 'RJ' }, aluno: { nome: 'Maria', telefone: '(21) 9', email: null }, hoje: '2026-10-29' }
 
@@ -20,6 +22,11 @@ describe('formulário inicial', () => {
   it('pacote ativo vale mais que a cobrança e traz quantidade, valor, validade e início', () => {
     const f = formularioInicial({ ...origem, pacote: { qtd_aulas: 10, valor: 800.5, validade_dias: 60, inicio: '2026-10-20' } })
     expect(f).toMatchObject({ forma: 'pacote', qtdAulas: '10', valorPacote: '800,5', validadeDias: '60', inicio: '2026-10-20' })
+  })
+  it('traz os horários fixos e o local do aluno, que continuam editáveis', () => {
+    const f = formularioInicial({ ...origem, horariosTexto: 'segundas e quartas, às 07:00', localSugerido: 'Academia X — Rua Y, 10' })
+    expect(f).toMatchObject({ diasHorarios: 'segundas e quartas, às 07:00', local: 'Academia X — Rua Y, 10' })
+    expect(dadosDoFormulario({ ...f, diasHorarios: 'terças, às 8h' }, contexto).diasHorarios).toBe('terças, às 8h')
   })
   it('sem cobrança nem pacote começa em mensal; aluno menor liga o responsável; regras salvas sobrepõem o padrão', () => {
     const f = formularioInicial({ ...origem, cobranca: null, menor: true, regrasSalvas: { antecedenciaHoras: 24 } })
