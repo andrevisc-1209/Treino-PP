@@ -40,7 +40,7 @@ BEGIN
   SET LOCAL ROLE authenticated;
 
   -- (a)
-  v_r := treino.aprovar_pedido_agenda(v_p1, NULL, NULL, FALSE);
+  v_r := treino.aprovar_pedido_agenda(v_p1, NULL::UUID, NULL::TEXT, FALSE);
   SELECT aula_id INTO v_aula FROM treino.pedidos_agenda WHERE id = v_p1;
   SELECT count(*) INTO v_n FROM treino.aula_participantes WHERE aula_id = v_aula AND aluno_id = (v_r->>'aluno_id')::UUID;
   v_log := array_append(v_log, CASE WHEN (v_r->>'novo_aluno')::BOOLEAN AND v_aula = (v_r->>'aula_id')::UUID AND v_n = 1
@@ -49,7 +49,7 @@ BEGIN
   -- (b)
   SELECT status INTO v_status FROM treino.pedidos_agenda WHERE id = v_p2;
   BEGIN
-    PERFORM treino.aprovar_pedido_agenda(v_p2, NULL, NULL, FALSE);
+    PERFORM treino.aprovar_pedido_agenda(v_p2, NULL::UUID, NULL::TEXT, FALSE);
     v_log := array_append(v_log, '(b) FALHA: aprovou pedido sobreposto');
   EXCEPTION WHEN OTHERS THEN
     v_log := array_append(v_log, CASE WHEN v_status = 'indisponivel' THEN '(b) OK: sobreposto virou indisponível e não foi aprovado' ELSE '(b) FALHA: status=' || v_status END);
@@ -57,7 +57,7 @@ BEGIN
 
   -- (c)
   BEGIN
-    PERFORM treino.aprovar_pedido_agenda(v_p1, NULL, NULL, FALSE);
+    PERFORM treino.aprovar_pedido_agenda(v_p1, NULL::UUID, NULL::TEXT, FALSE);
     v_log := array_append(v_log, '(c) FALHA: aprovou duas vezes');
   EXCEPTION WHEN OTHERS THEN v_log := array_append(v_log, '(c) OK: segunda aprovação recusada (' || SQLERRM || ')'); END;
 
@@ -71,7 +71,7 @@ BEGIN
     PERFORM set_config('request.jwt.claims', json_build_object('sub', v_outro, 'role', 'authenticated')::TEXT, TRUE);
     SET LOCAL ROLE authenticated;
     BEGIN
-      PERFORM treino.aprovar_pedido_agenda(v_p2, NULL, NULL, FALSE);
+      PERFORM treino.aprovar_pedido_agenda(v_p2, NULL::UUID, NULL::TEXT, FALSE);
       v_log := array_append(v_log, '(d) FALHA: outro personal aprovou pedido alheio');
     EXCEPTION WHEN OTHERS THEN v_log := array_append(v_log, '(d) OK: outro personal não aprova pedido alheio'); END;
   END IF;
