@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom'
 import { Copy, Link2, MessageCircle } from 'lucide-react'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { linkWhatsAppComTexto } from '@/lib/whatsapp'
-import { useProfessionalConfig } from './api'
+import { useProfessionalConfig, useResumoAgendaPublica } from './api'
 import { linkDaAgendaPublica } from './publica'
+import { rotuloTempo, semMovimento } from './resumoPublica'
 
 async function copiar(texto: string): Promise<boolean> {
   try {
@@ -37,6 +38,39 @@ export function BotoesDoLink({ link }: { link: string }) {
   )
 }
 
+function Numero({ valor, rotulo, destaque }: { valor: string; rotulo: string; destaque?: boolean }) {
+  return (
+    <div className={`rounded-xl px-3 py-2 ${destaque ? 'bg-amber-50' : 'bg-slate-50'}`}>
+      <p className="text-lg font-bold leading-tight text-slate-900">{valor}</p>
+      <p className="text-xs text-slate-600">{rotulo}</p>
+    </div>
+  )
+}
+
+/** Resultado da página pública: pedidos da semana, os que esperam resposta, o tempo de resposta e as aulas feitas pelo link. Some se não carregar. */
+function ResumoDaPagina() {
+  const { data } = useResumoAgendaPublica(true)
+  if (!data) return null
+  if (semMovimento(data)) {
+    return <p className="text-xs text-slate-600">Ainda não chegou nenhum pedido. Divulgue o link para seus alunos e contatos.</p>
+  }
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2">
+        <Numero valor={String(data.pedidos7d)} rotulo={data.pedidos7d === 1 ? 'pedido nos últimos 7 dias' : 'pedidos nos últimos 7 dias'} />
+        <Numero valor={String(data.pendentes)} rotulo="aguardando sua resposta" destaque={data.pendentes > 0} />
+        <Numero valor={rotuloTempo(data.medianaRespostaMin)} rotulo="seu tempo de resposta (típico)" />
+        <Numero valor={String(data.aulasRealizadas)} rotulo={data.aulasRealizadas === 1 ? 'aula feita pelo link' : 'aulas feitas pelo link'} />
+      </div>
+      {data.pendentes > 0 && (
+        <Link to="/agenda?pedidos=1" className="mt-2 flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+          Responder pedidos
+        </Link>
+      )}
+    </div>
+  )
+}
+
 /**
  * Cartão da Agenda com o link da página pública para divulgar (aparece só com a página ligada). Com a página desligada e os horários já definidos,
  * mostra só um convite discreto para ligá-la.
@@ -60,6 +94,7 @@ export function LinkDaAgendaCard() {
           </Link>
         </div>
         <BotoesDoLink link={link} />
+        <ResumoDaPagina />
       </section>
     )
   }

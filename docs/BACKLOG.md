@@ -1577,7 +1577,7 @@ Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/20
 - ✅ **PR 2:** ver item 148. ⏳ (era) aprovação do pedido numa transação só (hoje o app faz em etapas e duas aprovações simultâneas podem duplicar a vaga), apresentação curta do personal e vínculo do pedido com a aula. **PR 3 (migration):** cartão "Sua agenda pública" (pedidos da semana, pendentes, tempo mediano de resposta, aulas realizadas pelo link) e contadores agregados para o admin; essa vai pedir revisão da Política.
 - ⚠️ Conferido a 390 px com a resposta da função simulada (o envio real depende do captcha, que não roda em localhost). Falta ver ao vivo: o envio de um pedido e a tela "Pedido enviado!".
 
-### 148. Aprovação atômica, apresentação do personal e vínculo pedido→aula (PR 2 da auditoria de UX) — ✅ PR aberta
+### 148. Aprovação atômica, apresentação do personal e vínculo pedido→aula (PR 2 da auditoria de UX) — ✅ Mergeada (#272)
 
 **Rodar a migration `20261092000000_agenda_aprovacao_atomica.sql` no SQL Editor ANTES do merge** (e fazer o deploy da função `agenda-publica` DEPOIS dela: a função passa a ler a coluna nova).
 
@@ -1586,4 +1586,16 @@ Origem: análises de UX do Gemini e do ChatGPT sobre o fluxo de agenda (29/10/20
 - ✅ **Apresentação** (`professional_config.apresentacao`, até 160 caracteres, opcional): campo em Configurações → Página pública, mostrado no topo da página do visitante.
 - ✅ **Canais:** FAQ atualizado (apresentação). Política/Termos/landing sem mudança: a apresentação é texto que o próprio personal escolhe publicar; não há dado novo de terceiros.
 - Teste SQL: `supabase/tests/agenda_aprovacao_atomica.sql` (não grava nada).
-- ⏳ **PR 3 (migration):** cartão "Sua agenda pública" + contadores agregados para o admin (pede revisão da Política).
+- ✅ **PR 3:** ver item 149.
+
+### 149. Resultado da página pública para o personal e totais para o admin (PR 3 da auditoria de UX) — ✅ PR aberta
+
+**Rodar a migration `20261093000000_agenda_publica_resumo.sql` no SQL Editor ANTES do merge** (sem deploy de função). Registra também a **Política de Privacidade 1.13**.
+
+- ✅ **Cartão na Agenda (dentro do "Seu link de agenda")**: pedidos dos últimos 7 dias, aguardando resposta (destaque + "Responder pedidos"), tempo típico de resposta (mediana dos últimos 30 dias) e aulas realizadas vindas do link. Sem nenhum pedido ainda, mostra só um convite para divulgar o link. Se a migration não rodou, o cartão some (não quebra a Agenda).
+- ✅ **Função `treino.resumo_agenda_publica()`** (SECURITY INVOKER, só os pedidos do próprio personal).
+- ✅ **Admin → Indicadores → "Página pública da agenda"**: personais com a página ligada, personais que receberam pedido em 30 dias, pedidos em 7/30 dias, % de pedidos respondidos que viraram aula, tempo típico de resposta e aulas realizadas vindas do link. **Só totais**: função `treino.admin_agenda_publica_resumo()` (SECURITY DEFINER, exige `is_admin()` com MFA) não devolve nome, telefone, mensagem nem ids.
+- ✅ **Canais revisados (/atualizacao_fluxoapp):** Política **1.13** (a administração vê só totais dos pedidos, nunca quem pediu); FAQ (cartão de resultado + frase de privacidade); landing e Termos sem mudança (métrica interna).
+- Limites conhecidos: "aulas realizadas pelo link" só conta pedidos aprovados depois da migration 20261092 (os anteriores não têm `aula_id`); pedidos não aprovados somem em 30 dias, por isso as janelas.
+- Teste SQL: `supabase/tests/agenda_publica_resumo.sql` (não grava nada).
+- Revisão jurídica das Políticas 1.11 a 1.13 segue pendente.
