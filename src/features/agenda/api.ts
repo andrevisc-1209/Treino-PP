@@ -731,7 +731,27 @@ export function usePedidosPendentes() {
         .from('pedidos_agenda')
         .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at')
         .eq('status', 'pendente')
-        .order('inicio')
+        .order('created_at')
+      if (error) throw error
+      return normalizarPedidos(data)
+    },
+  })
+}
+
+/** Pedidos já respondidos (aprovados ou recusados) dos últimos 30 dias, os mais recentes primeiro. */
+export function usePedidosRespondidos(status: 'aprovado' | 'recusado', ativo: boolean) {
+  return useQuery({
+    queryKey: ['pedidos-agenda', status],
+    enabled: ativo,
+    queryFn: async () => {
+      const desde = new Date(Date.now() - 30 * 86_400_000).toISOString()
+      const { data, error } = await supabase
+        .from('pedidos_agenda')
+        .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at')
+        .in('status', status === 'recusado' ? ['recusado', 'indisponivel'] : ['aprovado'])
+        .gte('created_at', desde)
+        .order('created_at', { ascending: false })
+        .limit(30)
       if (error) throw error
       return normalizarPedidos(data)
     },
