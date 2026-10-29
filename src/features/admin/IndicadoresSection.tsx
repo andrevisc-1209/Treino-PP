@@ -23,20 +23,15 @@ import {
 
 type Cartao = { chave: ChaveBI | 'treinos_realizados'; titulo: string; ajuda?: string; moeda?: boolean }
 
-const GRUPOS: { titulo: string; cartoes: Cartao[] }[] = [
+type Grupo = { titulo: string; cartoes: Cartao[] }
+
+const GRUPOS: Grupo[] = [
   {
     titulo: 'Crescimento',
     cartoes: [
       { chave: 'cadastros', titulo: 'Novos cadastros', ajuda: 'Personais que criaram conta no período.' },
       { chave: 'personais_ativos', titulo: 'Personais que usaram o app', ajuda: 'Fizeram algo no app no período: treino, aula, aluno ou treino novo. Não é o mesmo que ter plano ativo.' },
       { chave: 'novos_pagantes', titulo: 'Novos pagantes (1º pagamento)', ajuda: 'Personais cujo primeiro pagamento aprovado caiu neste período (registro de pagamentos).' },
-    ],
-  },
-  {
-    titulo: 'Receita',
-    cartoes: [
-      { chave: 'receita', titulo: 'Receita registrada', moeda: true, ajuda: 'Soma dos pagamentos aprovados no registro.' },
-      { chave: 'pagamentos', titulo: 'Pagamentos aprovados' },
     ],
   },
   {
@@ -49,6 +44,18 @@ const GRUPOS: { titulo: string; cartoes: Cartao[] }[] = [
       { chave: 'faturas_geradas', titulo: 'Faturas de alunos emitidas', ajuda: 'Cobranças que os personais fizeram aos alunos. Não é receita do Treino PP.' },
     ],
   },
+  { titulo: 'Suporte', cartoes: [{ chave: 'relatos', titulo: 'Relatos recebidos' }] },
+]
+
+/** Receita e retenção do período: ficam na aba Financeiro. */
+const GRUPOS_FINANCEIRO: Grupo[] = [
+  {
+    titulo: 'Receita',
+    cartoes: [
+      { chave: 'receita', titulo: 'Receita registrada', moeda: true, ajuda: 'Soma dos pagamentos aprovados no registro.' },
+      { chave: 'pagamentos', titulo: 'Pagamentos aprovados' },
+    ],
+  },
   {
     titulo: 'Retenção',
     cartoes: [
@@ -57,7 +64,6 @@ const GRUPOS: { titulo: string; cartoes: Cartao[] }[] = [
       { chave: 'planos_vencidos', titulo: 'Planos vencidos', ajuda: 'Plano pago que chegou ao fim no período e não foi renovado. Zero não significa que ninguém cancelou: só conta plano pago vencido.' },
     ],
   },
-  { titulo: 'Suporte', cartoes: [{ chave: 'relatos', titulo: 'Relatos recebidos' }] },
 ]
 
 const SERIES: { chave: ChaveSerie; rotulo: string; moeda?: boolean }[] = [
@@ -82,6 +88,43 @@ function SeloVariacao({ chave, atual, anterior, moeda }: { chave: Cartao['chave'
     <p className={cn('mt-1 flex items-center gap-1 text-xs', bom === true && 'text-brand-hover', bom === false && 'text-red-700', bom === null && 'text-slate-600')}>
       <Icone size={12} aria-hidden /> {v.rotulo}
     </p>
+  )
+}
+
+function GruposDeCartoes({ dados, grupos }: { dados: DadosBI; grupos: Grupo[] }) {
+  return (
+    <>
+    {grupos.map((g) => (
+      <section key={g.titulo} aria-labelledby={`bi-${g.titulo}`}>
+        <h3 id={`bi-${g.titulo}`} className="mb-2 text-sm font-semibold text-slate-600">
+          {g.titulo}
+        </h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {g.cartoes.map((c) => {
+            const atual = valorDe(dados, 'atual', c.chave)
+            const anterior = valorDe(dados, 'anterior', c.chave)
+            return (
+              <div key={c.chave} className="rounded-2xl border border-slate-200 bg-white p-4" title={c.ajuda}>
+                <p className="text-xs text-slate-500">{c.titulo}</p>
+                <p className="mt-1 text-3xl font-bold text-accent">{c.moeda ? formatarMoeda(atual) : atual}</p>
+                {c.chave === 'treinos_realizados' && (
+                  <p className="text-xs text-slate-500">
+                    {dados.atual.treinos_presencial} presencial · {dados.atual.treinos_distancia} à distância
+                  </p>
+                )}
+                <SeloVariacao chave={c.chave} atual={atual} anterior={anterior} moeda={c.moeda} />
+                <p className="text-xs text-slate-500">
+                  Anterior: {c.moeda ? formatarMoeda(anterior) : anterior}
+                </p>
+                {c.ajuda && <p className="mt-1 text-xs text-slate-500">{c.ajuda}</p>}
+              </div>
+            )
+          })}
+        </div>
+      </section>
+    ))}
+
+    </>
   )
 }
 
@@ -183,20 +226,58 @@ function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => voi
   )
 }
 
-/** Indicadores do negócio por período, sempre comparados com o período anterior. Só agregados; nada de dados de alunos. */
-export function IndicadoresSection() {
+/** Período escolhido na URL (?periodo=) e a função de troca. */
+function usePeriodoDaUrl() {
   const [params, setParams] = useSearchParams()
   const periodo = periodoDaUrl(params.get('periodo'))
-  const { data, isLoading, error } = useAdminBI(periodo)
-  const [serie, setSerie] = useState<ChaveSerie>('cadastros')
-  const meta = PERIODOS_BI.find((p) => p.dias === periodo)!
-
   const escolher = (dias: number) =>
     setParams((atual) => {
       const novo = new URLSearchParams(atual)
       novo.set('periodo', String(dias))
       return novo
     }, { replace: true })
+  return { periodo, escolher }
+}
+
+function SeletorDePeriodo({ periodo, escolher }: { periodo: number; escolher: (dias: number) => void }) {
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Período">
+      {PERIODOS_BI.map((p) => (
+        <Chip key={p.dias} ativo={periodo === p.dias} onClick={() => escolher(p.dias)}>
+          {p.rotulo}
+        </Chip>
+      ))}
+    </div>
+  )
+}
+
+/** Receita e retenção do período (comparadas com o período anterior), na aba Financeiro. */
+export function ReceitaERetencaoSection() {
+  const { periodo, escolher } = usePeriodoDaUrl()
+  const { data, isLoading, error } = useAdminBI(periodo)
+  const meta = PERIODOS_BI.find((p) => p.dias === periodo)!
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="font-heading font-semibold text-accent">Receita e retenção no período</h2>
+        <p className="text-sm text-slate-500">
+          {meta.descricao}{data ? ` (${formatarDataBR(dataSP(data.inicio))} a ${formatarDataBR(dataSP(data.fim))})` : ''}, comparados com o período anterior de mesmo tamanho.
+        </p>
+      </div>
+      <SeletorDePeriodo periodo={periodo} escolher={escolher} />
+      {isLoading && <ListaSkeleton linhas={2} />}
+      {error && <p className="py-4 text-sm text-red-600">{mapearErroSupabase(error)}</p>}
+      {data && <GruposDeCartoes dados={data} grupos={GRUPOS_FINANCEIRO} />}
+    </div>
+  )
+}
+
+/** Indicadores do negócio por período, sempre comparados com o período anterior. Só agregados; nada de dados de alunos. */
+export function IndicadoresSection() {
+  const { periodo, escolher } = usePeriodoDaUrl()
+  const { data, isLoading, error } = useAdminBI(periodo)
+  const [serie, setSerie] = useState<ChaveSerie>('cadastros')
+  const meta = PERIODOS_BI.find((p) => p.dias === periodo)!
 
   return (
     <div className="space-y-4">
@@ -208,13 +289,7 @@ export function IndicadoresSection() {
         </p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Período">
-        {PERIODOS_BI.map((p) => (
-          <Chip key={p.dias} ativo={periodo === p.dias} onClick={() => escolher(p.dias)}>
-            {p.rotulo}
-          </Chip>
-        ))}
-      </div>
+      <SeletorDePeriodo periodo={periodo} escolher={escolher} />
 
       <BiV1Section dias={periodo} />
 
@@ -223,35 +298,7 @@ export function IndicadoresSection() {
 
       {data && (
         <>
-          {GRUPOS.map((g) => (
-            <section key={g.titulo} aria-labelledby={`bi-${g.titulo}`}>
-              <h3 id={`bi-${g.titulo}`} className="mb-2 text-sm font-semibold text-slate-600">
-                {g.titulo}
-              </h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {g.cartoes.map((c) => {
-                  const atual = valorDe(data, 'atual', c.chave)
-                  const anterior = valorDe(data, 'anterior', c.chave)
-                  return (
-                    <div key={c.chave} className="rounded-2xl border border-slate-200 bg-white p-4" title={c.ajuda}>
-                      <p className="text-xs text-slate-500">{c.titulo}</p>
-                      <p className="mt-1 text-3xl font-bold text-accent">{c.moeda ? formatarMoeda(atual) : atual}</p>
-                      {c.chave === 'treinos_realizados' && (
-                        <p className="text-xs text-slate-500">
-                          {data.atual.treinos_presencial} presencial · {data.atual.treinos_distancia} à distância
-                        </p>
-                      )}
-                      <SeloVariacao chave={c.chave} atual={atual} anterior={anterior} moeda={c.moeda} />
-                      <p className="text-xs text-slate-500">
-                        Anterior: {c.moeda ? formatarMoeda(anterior) : anterior}
-                      </p>
-                      {c.ajuda && <p className="mt-1 text-xs text-slate-500">{c.ajuda}</p>}
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
-          ))}
+          <GruposDeCartoes dados={data} grupos={GRUPOS} />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-4" aria-labelledby="bi-grafico">
             <h3 id="bi-grafico" className="mb-2 text-sm font-semibold text-slate-600">

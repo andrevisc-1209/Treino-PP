@@ -3,6 +3,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { formatarDataBR } from '@/lib/format'
 import { useAdminFinanceiro } from './api'
 import { formatarMoeda, taxaConversao } from './financeiro'
+import { ReceitaERetencaoSection } from './IndicadoresSection'
 
 function Cartao({ titulo, valor, nota, estimativa }: { titulo: string; valor: string; nota?: string; estimativa?: boolean }) {
   return (
@@ -48,6 +49,9 @@ export function FinanceiroSection() {
       <p className="text-xs text-slate-500">
         Valores do Treino PP (planos dos personais). O que o personal recebe dos alunos não aparece aqui: o app não cobra o aluno.
       </p>
+      <div className="pt-3">
+        <ReceitaERetencaoSection />
+      </div>
     </div>
   )
 }

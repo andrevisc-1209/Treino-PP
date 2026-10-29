@@ -40,6 +40,8 @@ import { ABAS_ADMIN, abaDaUrl, cidadeDaUrl, descreverTreinos, filtrarPorCidade, 
 import { HistoricoSection } from './HistoricoSection'
 import { FinanceiroSection } from './FinanceiroSection'
 import { IndicadoresSection } from './IndicadoresSection'
+import { BlocoMeta, CartaoAcao, FunilCompacto } from './BiV1Section'
+import { SEM_FILTROS } from './biV1'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import {
   useAdminAlterarCpf,
@@ -48,6 +50,8 @@ import {
   useAdminPersonais,
   useAdminRegioes,
   useAdminBonus,
+  useAdminBIv1,
+  useAdminListaAcao,
   useAdminPersonaisMetricas,
   useAdminRelatos,
   useAdminResetSenha,
@@ -149,6 +153,8 @@ function AdminDashboard() {
   const cidade = cidadeDaUrl(params.get('cidade'))
   const verPersonaisDaCidade = (c: string) => setParams({ aba: 'personais', cidade: c }, { replace: true })
   const limparCidade = () => setParams({ aba: 'personais' }, { replace: true })
+  const bi = useAdminBIv1(30, SEM_FILTROS)
+  const listaAcao = useAdminListaAcao()
   const relatos = useAdminRelatos()
   const relatosEmAberto = (relatos.data ?? []).filter((r) => r.status !== 'resolvido').length
   // a busca vive na URL (?busca=), para o "Ver cadastro" dos relatos abrir a lista já filtrada
@@ -189,7 +195,7 @@ function AdminDashboard() {
     <div className="min-h-full bg-slate-50 pb-10">
       <AdminHeader />
 
-      <div className="mx-auto max-w-5xl space-y-6 p-4">
+      <div className="mx-auto max-w-7xl space-y-6 p-4">
         <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Seções do painel">
           {ABAS_ADMIN.map((t) => (
             <button
@@ -207,8 +213,27 @@ function AdminDashboard() {
 
         {aba === 'geral' && (
           <>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {bi.data && <BlocoMeta meta={bi.data.meta} />}
+          <div className="space-y-4">
+            <CartaoAcao lista={listaAcao} />
+            {relatosEmAberto > 0 && (
+              <button
+                type="button"
+                onClick={() => irParaAba('suporte')}
+                className="flex min-h-11 w-full items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 text-left text-sm font-medium text-amber-950"
+              >
+                <span>
+                  Suporte: {relatosEmAberto} {relatosEmAberto === 1 ? 'relato em aberto' : 'relatos em aberto'}
+                </span>
+                <span aria-hidden>Ver →</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         <div>
-          <h2 className="mb-3 font-heading font-semibold text-accent">Visão geral</h2>
+          <h2 className="mb-3 font-heading font-semibold text-accent">Saúde do negócio</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <CardResumo icone={<UserCheck size={20} />} label="Com acesso (trial + pagantes)" valor={visaoGeral.ativos} />
             <CardResumo icone={<Hourglass size={20} />} label="Em trial" valor={visaoGeral.emTrial} />
@@ -225,8 +250,11 @@ function AdminDashboard() {
 
         <InadimplentesSection inadimplentes={inadimplentes} onAjustarTrial={(p) => setAcao({ tipo: 'trial', personal: p })} />
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 font-heading font-semibold text-accent">Cidades (por cadastro) — {resumo.data?.regioes_ativas ?? '—'}</h2>
+        {bi.data && <FunilCompacto funil={bi.data.funil} />}
+
+        <details className="rounded-2xl border border-slate-200 bg-white p-4">
+          <summary className="min-h-11 cursor-pointer content-center font-heading font-semibold text-accent">Cidades (por cadastro) — {resumo.data?.regioes_ativas ?? '—'}</summary>
+          <div className="mt-3">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[280px] text-left text-sm">
               <thead>
@@ -255,6 +283,7 @@ function AdminDashboard() {
             </table>
           </div>
         </div>
+        </details>
           </>
         )}
 

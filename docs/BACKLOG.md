@@ -1444,3 +1444,13 @@ Origem: auditoria de UX do painel admin (Gemini, ChatGPT e análise própria), a
 - Refatoração: cabeçalho, rodapé e cartão financeiro viraram funções compartilhadas com o relatório de ciclo. Sem migration.
 - ⚠️ Não testado ao vivo: gerar de uma fatura em aberto, conferir a página única e **escanear o QR com o app do banco**.
 
+
+### 134. Painel admin: Visão geral como cockpit e blocos no lugar certo (PR 2 da auditoria de UX) — ✅ PR aberta
+Origem: auditoria de UX do painel admin (item 133); aprovada em 28/10/2026. Só tela; sem migration.
+- ✅ **Visão geral** passa a abrir com: **meta de pagantes** (ritmo necessário × últimos 7 dias) ao lado de **"Quem precisa de ação agora"** (com WhatsApp) e, se houver, um aviso de **relatos de suporte em aberto** que leva à aba; depois **Saúde do negócio** (os cinco cartões), inadimplentes, **funil resumido** (com a maior perda no topo) e **Cidades** recolhidas.
+- ✅ **Indicadores** fica só com aquisição e uso (funil completo com filtros, cidades, origens, crescimento, uso do app, suporte e evolução); a meta e as ações saíram de lá.
+- ✅ Os blocos **Receita** e **Retenção** (com o seletor de período) foram para a aba **Financeiro**.
+- ✅ A **maior perda** do funil completo agora aparece **antes** das etapas.
+- ✅ **Largura do painel** de 1024 px para 1280 px (melhor uso de monitor largo); Suporte já mostra o contador de relatos em aberto na aba.
+- ⏳ PR 3 (Personais: situação comercial, próximo evento, última atividade e filtros de um clique) e PR 4 (registrar contato, com migration).
+- ⚠️ Não testado ao vivo no navegador (precisa da conta admin).
