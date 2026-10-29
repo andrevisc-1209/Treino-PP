@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, somarDiasISO, vagaDisponivel, validarPedido } from './agendaPublica'
+import { calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
 
 describe('horário de São Paulo', () => {
   it('data e hora de um instante e o caminho de volta', () => {
@@ -70,5 +70,23 @@ describe('vagas (mesmo cálculo da agenda do personal)', () => {
     const v = calcularVagas(base)
     expect(vagaDisponivel(v, '2026-10-30', '08:00')).toEqual({ dataISO: '2026-10-30', inicio: '08:00', fim: '09:00' })
     expect(vagaDisponivel(v, '2026-10-30', '08:30')).toBeNull()
+  })
+})
+
+describe('lista de espera: validação', () => {
+  const ok = { nome: ' Maria  Souza ', telefone: '(21) 99999-0001', consentimento: true, data: '2026-11-02', turno: 'manha' }
+  it('aceita e limpa', () => {
+    expect(validarEspera(ok, '2026-10-30')).toEqual({ ok: true, espera: { nome: 'Maria Souza', telefone: '5521999990001', dataISO: '2026-11-02', turno: 'manha' } })
+  })
+  it('recusa nome, telefone, consentimento, dia fora da janela e turno inválido', () => {
+    expect(validarEspera({ ...ok, nome: 'A' }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, telefone: '123' }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, consentimento: false }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, data: '2026-10-29' }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, data: '2026-11-27' }, '2026-10-30').ok).toBe(true)
+    expect(validarEspera({ ...ok, data: '2026-11-28' }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, data: '30/10/2026' }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, turno: 'madrugada' }, '2026-10-30').ok).toBe(false)
+    expect(validarEspera({ ...ok, turno: 'qualquer' }, '2026-10-30').ok).toBe(true)
   })
 })

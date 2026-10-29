@@ -1,10 +1,12 @@
 // Edge Function: agenda-publica  (pública: verify_jwt = false no config.toml)
 //
-// POST { slug, acao: 'consultar' | 'pedir', ... } — a página /agenda/:slug, em que um visitante (sem conta) pede uma aula.
+// POST { slug, acao: 'consultar' | 'pedir' | 'espera', ... } — a página /agenda/:slug, em que um visitante (sem conta) pede uma aula.
 // - consultar: devolve o primeiro nome do personal, a cidade, a duração e as VAGAS abertas das próximas semanas (só data e hora livres;
 //   nunca aulas, alunos ou qualquer dado de outra pessoa). Link desligado, inexistente ou de personal sem assinatura ativa = { estado: 'indisponivel' }.
 // - pedir: confere o captcha (Turnstile), valida o corpo, confere que o horário ainda é uma vaga e grava o pedido em treino.pedidos_agenda.
 //   Quem decide é o personal (aprovar vira aula no app). Limites com falha fechada: por IP, por telefone e pedidos pendentes por personal.
+// - espera: o visitante sem horário bom pede para ser avisado se abrir uma vaga (dia e turno). Mesmo captcha e limites; grava em
+//   treino.lista_espera_agenda. Quem avisa é o personal, pelo WhatsApp; a plataforma não manda nada ao visitante.
 // Tudo passa por service_role AQUI — as tabelas não têm acesso anônimo.
 // Segredos: TURNSTILE_SECRET_KEY (captcha). Resposta de erro sempre genérica: não ajuda quem testa.
 
@@ -18,12 +20,14 @@ import {
   calcularVagas,
   dataEHoraSP,
   MAX_PEDIDOS_POR_IP_HORA,
+  MAX_ESPERA_POR_PERSONAL,
   MAX_PEDIDOS_POR_TELEFONE_DIA,
   MAX_PENDENTES_POR_PERSONAL,
   primeiroNome,
   slugValido,
   somarDiasISO,
   vagaDisponivel,
+  validarEspera,
   validarPedido,
 } from '../_shared/agendaPublica.ts'
 
@@ -61,7 +65,7 @@ Deno.serve(async (req) => {
   } catch {
     return json(req, { error: 'Corpo da requisição inválido.' }, 400)
   }
-  const acao = body.acao === 'pedir' ? 'pedir' : 'consultar'
+  const acao = body.acao === 'pedir' ? 'pedir' : body.acao === 'espera' ? 'espera' : 'consultar'
   if (!slugValido(body.slug)) return json(req, INDISPONIVEL)
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
@@ -84,6 +88,47 @@ Deno.serve(async (req) => {
     ((assinatura.status === 'trial' && !!assinatura.trial_fim && new Date(assinatura.trial_fim) > agora) ||
       (assinatura.status === 'ativa' && (!assinatura.assinatura_fim || new Date(assinatura.assinatura_fim) > agora)))
   if (!assinaturaAtiva || !personal) return json(req, INDISPONIVEL)
+
+  // ---------- espera ----------
+  if (acao === 'espera') {
+    const e = validarEspera(body, dataEHoraSP(agora).data)
+    if (!e.ok) return json(req, { error: e.erro }, 400)
+
+    const captchaEspera = await verificarTurnstile(body.turnstile, ip, Deno.env.get('TURNSTILE_SECRET_KEY'))
+    if (captchaEspera === 'sem_segredo' || captchaEspera === 'erro') {
+      if (captchaEspera === 'sem_segredo') console.error('agenda-publica: falta o segredo TURNSTILE_SECRET_KEY')
+      return resposta503(cors(req))
+    }
+    if (captchaEspera === 'invalido') return json(req, { error: 'Não foi possível confirmar que você não é um robô. Tente de novo.' }, 400)
+
+    if (ip) {
+      const porIp = await verificarLimite(`agenda-publica:espera:ip:${ip}`, MAX_PEDIDOS_POR_IP_HORA, 3600)
+      if (porIp === 'erro') return resposta503(cors(req))
+      if (porIp === 'excedido') return resposta429(cors(req))
+    }
+    const porTelefone = await verificarLimite(`agenda-publica:espera:tel:${e.espera.telefone}`, MAX_PEDIDOS_POR_TELEFONE_DIA, 86400)
+    if (porTelefone === 'erro') return resposta503(cors(req))
+    if (porTelefone === 'excedido') return resposta429(cors(req))
+
+    const { count: naEspera } = await admin
+      .from('lista_espera_agenda')
+      .select('id', { count: 'exact', head: true })
+      .eq('professional_id', professionalId)
+      .gte('created_at', new Date(agora.getTime() - 14 * 86_400_000).toISOString())
+    if ((naEspera ?? 0) >= MAX_ESPERA_POR_PERSONAL) {
+      return json(req, { error: 'A lista de espera deste personal está cheia no momento. Tente de novo em alguns dias.' }, 429)
+    }
+
+    const { error: errEspera } = await admin
+      .from('lista_espera_agenda')
+      .insert({ professional_id: professionalId, visitante_nome: e.espera.nome, visitante_telefone: e.espera.telefone, data: e.espera.dataISO, turno: e.espera.turno })
+    // 23505 = o mesmo telefone já está na espera desse dia e turno: tratamos como enviado (idempotente)
+    if (errEspera && errEspera.code !== '23505') {
+      console.error('agenda-publica: falha ao gravar a espera', errEspera.message)
+      return json(req, { error: 'Não foi possível enviar agora. Tente novamente.' }, 500)
+    }
+    return json(req, { estado: 'enviado', nome_personal: primeiroNome(personal.name) })
+  }
 
   // Vagas: disponibilidade menos aulas e bloqueios, já com a antecedência mínima do personal.
   const hoje = dataEHoraSP(agora).data

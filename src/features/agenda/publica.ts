@@ -96,3 +96,17 @@ export const LIMITE_ESPERA_LONGA_H = 24
 
 /** O pedido está esperando resposta há mais de 24 horas? */
 export const esperaLonga = (desdeISO: string, agora: Date = new Date()): boolean => agora.getTime() - new Date(desdeISO).getTime() > LIMITE_ESPERA_LONGA_H * 3_600_000
+
+/** Status e mensagem `{ error }` que a função devolveu em caso de falha (FunctionsHttpError); status indefinido = sem conexão. */
+export async function corpoDoErro(error: unknown): Promise<{ status: number | undefined; mensagem: string | null }> {
+  const contexto = (error as { context?: Response } | null)?.context
+  if (!contexto || typeof contexto.status !== 'number') return { status: undefined, mensagem: null }
+  let mensagem: string | null = null
+  try {
+    const corpo = await contexto.json()
+    if (typeof corpo?.error === 'string') mensagem = corpo.error
+  } catch {
+    /* corpo ausente ou não-JSON */
+  }
+  return { status: contexto.status, mensagem }
+}

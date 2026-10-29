@@ -12,7 +12,7 @@ const sql = fs
   .join('\n')
 
 describe('tabelas da agenda pública × acesso do service_role', () => {
-  for (const tabela of ['disponibilidade_semanal', 'agenda_bloqueios', 'pedidos_agenda']) {
+  for (const tabela of ['disponibilidade_semanal', 'agenda_bloqueios', 'pedidos_agenda', 'lista_espera_agenda']) {
     it(`${tabela} tem GRANT ao service_role em alguma migration`, () => {
       expect(sql).toMatch(new RegExp(`GRANT\\s+ALL\\s+ON\\s+treino\\.${tabela}\\s+TO\\s+service_role`, 'i'))
     })

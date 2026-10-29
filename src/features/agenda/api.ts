@@ -1,6 +1,7 @@
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { normalizarPedidos, type PedidoAgenda } from './pedidos'
 import { normalizarResumo } from './resumoPublica'
+import { normalizarEspera } from './espera'
 import { janelasDosDias, type JanelaSemanal, type ParametrosAgenda } from './disponibilidade'
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -801,6 +802,48 @@ export function useResumoAgendaPublica(ativo: boolean) {
       if (error) throw error
       return normalizarResumo(data)
     },
+  })
+}
+
+/** Quem pediu para ser avisado se abrir vaga (14 dias, só dias que ainda não passaram). Erro (migration ainda não rodada) = lista vazia. */
+export function useListaEspera(ativo: boolean) {
+  return useQuery({
+    queryKey: ['lista-espera'],
+    enabled: ativo,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lista_espera_agenda')
+        .select('id, visitante_nome, visitante_telefone, data, turno, chamado_em, created_at')
+        .gte('data', hojeSP())
+        .gte('created_at', new Date(Date.now() - 14 * 86_400_000).toISOString())
+        .order('data')
+        .order('created_at')
+      if (error) throw error
+      return normalizarEspera(data)
+    },
+  })
+}
+
+export function useMarcarEsperaChamada() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('lista_espera_agenda').update({ chamado_em: new Date().toISOString() }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['lista-espera'] }),
+  })
+}
+
+export function useRemoverDaEspera() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('lista_espera_agenda').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['lista-espera'] }),
   })
 }
 
