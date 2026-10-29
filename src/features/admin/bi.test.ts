@@ -17,9 +17,19 @@ describe('variacao', () => {
     expect(variacao(10, 10).sentido).toBe('igual')
   })
   it('sem base não inventa percentual', () => {
-    expect(variacao(3, 0).sentido).toBe('novo')
+    expect(variacao(3, 0)).toEqual({ rotulo: '+3 (nada no período anterior)', sentido: 'novo' })
     expect(variacao(0, 0).sentido).toBe('sem_dados')
-    expect(variacao(0, 4)).toEqual({ rotulo: '-100% vs. período anterior', sentido: 'caiu' })
+  })
+  it('base pequena mostra a diferença absoluta, não percentual', () => {
+    expect(variacao(13, 1)).toEqual({ rotulo: '+12 vs. período anterior', sentido: 'subiu' })
+    expect(variacao(0, 4)).toEqual({ rotulo: '-4 vs. período anterior', sentido: 'caiu' })
+    expect(variacao(4, 4).sentido).toBe('igual')
+    expect(variacao(20, 10).rotulo).toBe('+100% vs. período anterior')
+  })
+  it('aceita formatador e base mínima próprios (dinheiro)', () => {
+    const r = (n: number) => `R$ ${n}`
+    expect(variacao(15, 0, { baseMinima: 100, formatar: r }).rotulo).toBe('+R$ 15 (nada no período anterior)')
+    expect(variacao(150, 30, { baseMinima: 100, formatar: r }).rotulo).toBe('+R$ 120 vs. período anterior')
   })
 })
 

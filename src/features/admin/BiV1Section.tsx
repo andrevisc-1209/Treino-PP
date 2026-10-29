@@ -56,7 +56,7 @@ function BlocoMeta({ meta }: { meta: MetaBI }) {
     <Cartao id="bi1-meta" titulo={`Meta: ${META_PAGANTES} pagantes até ${dia}/${mes}/${ano}`}>
       <div className="flex items-end justify-between gap-3">
         <p className="text-3xl font-bold text-accent">
-          {meta.pagantes_ativos} <span className="text-base font-medium text-slate-500">de {META_PAGANTES} ({p.percentual}%)</span>
+          {meta.pagantes_ativos} <span className="text-base font-medium text-slate-500">de {META_PAGANTES} ({p.percentual}%) · pagantes ativos hoje</span>
         </p>
         <p className="text-right text-xs text-slate-600">
           MRR estimado
@@ -72,7 +72,7 @@ function BlocoMeta({ meta }: { meta: MetaBI }) {
       ) : (
         <p className="mt-2 text-sm text-slate-700">
           Faltam <strong>{p.faltam}</strong>
-          {p.vencida ? ' e o prazo já passou.' : <>; restam {p.diasRestantes} dias (~{p.semanasRestantes} semanas): preciso de <strong>{p.porSemanaNecessario} novos pagantes por semana</strong>. Nos últimos 7 dias entraram <strong>{real}</strong>.</>}
+          {p.vencida ? ' e o prazo já passou.' : <>; restam {p.diasRestantes} dias (~{p.semanasRestantes} semanas): preciso de <strong>{p.porSemanaNecessario} novos pagantes por semana</strong>. Nos últimos 7 dias entraram <strong>{real}</strong>{real < p.porSemanaNecessario ? ' (abaixo do ritmo necessário)' : ' (no ritmo ou acima)'}.</>}
         </p>
       )}
       {meta.serie.length > 1 && (
@@ -81,7 +81,7 @@ function BlocoMeta({ meta }: { meta: MetaBI }) {
             <line x1="0" y1={H} x2={W} y2={H} stroke="#cbd5e1" strokeWidth="1" />
             <polyline points={pontos} fill="none" stroke="#367c39" strokeWidth="2.5" strokeLinejoin="round" />
           </svg>
-          <p className="text-xs text-slate-500">Curva: quem já fez um pagamento, acumulado (registro de pagamentos, desde que ele existe). {meta.ja_pagaram} já pagaram.</p>
+          <p className="text-xs text-slate-500">Curva: quem já fez um pagamento, acumulado (registro de pagamentos, desde que ele existe). {meta.ja_pagaram} já pagaram alguma vez; a meta conta só os pagantes ativos hoje.</p>
         </>
       )}
     </Cartao>
@@ -103,6 +103,9 @@ export function BiV1Section({ dias }: { dias: number }) {
   const investimento = lerInvestimento(investimentoTexto)
   const pagantesDoGrupo = data?.funil.pagou ?? 0
   const custo = custoPorPagante(investimento, pagantesDoGrupo)
+
+  const semOrigemRegistrada = !!data && data.origens.every((o) => o.origem === 'direto')
+  const totalCadastrosOrigem = data?.origens.reduce((t, o) => t + o.cadastros, 0) ?? 0
 
   const sel = 'min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm sm:w-auto'
 
@@ -191,6 +194,9 @@ export function BiV1Section({ dias }: { dias: number }) {
       {data && (
         <>
           <Cartao id="bi1-funil" titulo="Funil de ativação (quem se cadastrou no período)">
+            <p className="mb-3 text-xs text-slate-500">
+              Cada linha mostra quantos chegaram à etapa e a % do total de cadastros. “Pagou” conta quem já pagou ou tem plano pago, mesmo sem ter passado por todas as etapas (por exemplo, plano liberado por você).
+            </p>
             {data.funil.cadastrou === 0 ? (
               <p className="text-sm text-slate-600">Ninguém se cadastrou neste período com esses filtros.</p>
             ) : (
@@ -206,6 +212,11 @@ export function BiV1Section({ dias }: { dias: number }) {
                     <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-slate-100" aria-hidden>
                       <div className="h-full rounded-full bg-brand" style={{ width: `${e.pctDoInicio}%` }} />
                     </div>
+                    {e.semPassarPelaAnterior > 0 && (
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Inclui ao menos {e.semPassarPelaAnterior} {e.semPassarPelaAnterior === 1 ? 'personal que chegou' : 'personais que chegaram'} aqui sem passar pela etapa anterior.
+                      </p>
+                    )}
                     {e.legenda && <p className="mt-0.5 text-xs text-slate-500">{e.legenda}</p>}
                   </li>
                 ))}
@@ -257,37 +268,44 @@ export function BiV1Section({ dias }: { dias: number }) {
           </Cartao>
 
           <Cartao id="bi1-origens" titulo="Por origem do cadastro (cadastros do período)">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[420px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500">
-                    <th className="py-2 pr-3">Origem</th>
-                    <th className="py-2 pr-3">Cadastros</th>
-                    <th className="py-2 pr-3">Ativados (3+ alunos)</th>
-                    <th className="py-2 pr-3">Pagantes</th>
-                    <th className="py-2 pr-3">Conversão</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.origens.map((o) => (
-                    <tr key={o.origem} className="border-b border-slate-100">
-                      <td className="py-2 pr-3">{rotuloOrigem(o.origem)}</td>
-                      <td className="py-2 pr-3">{o.cadastros}</td>
-                      <td className="py-2 pr-3">{o.ativados}</td>
-                      <td className="py-2 pr-3">{o.pagantes}</td>
-                      <td className="py-2 pr-3">{conversaoParaPagante(o) ?? '—'}{conversaoParaPagante(o) !== null && '%'}</td>
+            {semOrigemRegistrada ? (
+              <p className="text-sm text-slate-700">
+                Todos os {totalCadastrosOrigem} {totalCadastrosOrigem === 1 ? 'cadastro aparece' : 'cadastros aparecem'} como direto: o app ainda não registra de onde cada personal veio. A tabela por origem volta sozinha quando houver mais de uma origem.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500">
+                      <th className="py-2 pr-3">Origem</th>
+                      <th className="py-2 pr-3">Cadastros</th>
+                      <th className="py-2 pr-3">Ativados (3+ alunos)</th>
+                      <th className="py-2 pr-3">Pagantes</th>
+                      <th className="py-2 pr-3">Conversão</th>
                     </tr>
-                  ))}
-                  {data.origens.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-4 text-center text-slate-500">
-                        Sem cadastros neste período.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {data.origens.map((o) => (
+                      <tr key={o.origem} className="border-b border-slate-100">
+                        <td className="py-2 pr-3">{rotuloOrigem(o.origem)}</td>
+                        <td className="py-2 pr-3">{o.cadastros}</td>
+                        <td className="py-2 pr-3">{o.ativados}</td>
+                        <td className="py-2 pr-3">{o.pagantes}</td>
+                        <td className="py-2 pr-3">{conversaoParaPagante(o) ?? '—'}{conversaoParaPagante(o) !== null && '%'}</td>
+                      </tr>
+                    ))}
+                    {data.origens.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-4 text-center text-slate-500">
+                          Sem cadastros neste período.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            
+            )}
             <label className="mt-3 flex flex-col gap-1 text-sm text-slate-700 sm:flex-row sm:items-center sm:gap-3">
               <span>Investimento em anúncios no período (R$):</span>
               <input
@@ -303,7 +321,7 @@ export function BiV1Section({ dias }: { dias: number }) {
                 {custo === null ? 'Sem pagantes no grupo filtrado: custo por pagante indisponível.' : <>Custo por pagante: <strong>{formatarMoeda(custo)}</strong> ({formatarMoeda(investimento ?? 0)} ÷ {pagantesDoGrupo} {pagantesDoGrupo === 1 ? 'pagante' : 'pagantes'}). Use o filtro de origem para ver um canal só.</>}
               </p>
             )}
-            <p className="mt-2 text-xs text-slate-500">Origem vem do link do cadastro (utm_source); sem origem = direto. Enquanto o app não registra a origem (depende da atualização da Política de Privacidade), todos aparecem como direto.</p>
+            <p className="mt-2 text-xs text-slate-500">Origem vem do link do cadastro (utm_source); sem origem = direto. O registro da origem depende da atualização da Política de Privacidade.</p>
           </Cartao>
         </>
       )}

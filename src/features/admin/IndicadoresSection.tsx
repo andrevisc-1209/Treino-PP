@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from 'react'
+import { dataSP, somarDias } from '@/lib/datas'
+import { formatarDataBR } from '@/lib/format'
 import { useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { ListaSkeleton } from '@/components/Skeleton'
@@ -26,8 +28,8 @@ const GRUPOS: { titulo: string; cartoes: Cartao[] }[] = [
     titulo: 'Crescimento',
     cartoes: [
       { chave: 'cadastros', titulo: 'Novos cadastros', ajuda: 'Personais que criaram conta no período.' },
-      { chave: 'personais_ativos', titulo: 'Personais ativos', ajuda: 'Fizeram algo no app: treino, aula, aluno ou treino novo.' },
-      { chave: 'novos_pagantes', titulo: 'Novos pagantes', ajuda: 'Primeiro pagamento aprovado no período (registro de pagamentos).' },
+      { chave: 'personais_ativos', titulo: 'Personais que usaram o app', ajuda: 'Fizeram algo no app no período: treino, aula, aluno ou treino novo. Não é o mesmo que ter plano ativo.' },
+      { chave: 'novos_pagantes', titulo: 'Novos pagantes (1º pagamento)', ajuda: 'Personais cujo primeiro pagamento aprovado caiu neste período (registro de pagamentos).' },
     ],
   },
   {
@@ -40,11 +42,11 @@ const GRUPOS: { titulo: string; cartoes: Cartao[] }[] = [
   {
     titulo: 'Uso do app',
     cartoes: [
-      { chave: 'alunos_novos', titulo: 'Alunos cadastrados', ajuda: 'Somente a contagem; o painel não mostra dados de alunos.' },
+      { chave: 'alunos_novos', titulo: 'Alunos novos no período', ajuda: 'Somente a contagem; o painel não mostra dados de alunos.' },
       { chave: 'treinos_montados', titulo: 'Treinos montados' },
       { chave: 'treinos_realizados', titulo: 'Treinos realizados', ajuda: 'Presencial + à distância concluídos.' },
       { chave: 'aulas_realizadas', titulo: 'Aulas realizadas' },
-      { chave: 'faturas_geradas', titulo: 'Faturas geradas pelos personais' },
+      { chave: 'faturas_geradas', titulo: 'Faturas de alunos emitidas', ajuda: 'Cobranças que os personais fizeram aos alunos. Não é receita do Treino PP.' },
     ],
   },
   {
@@ -52,7 +54,7 @@ const GRUPOS: { titulo: string; cartoes: Cartao[] }[] = [
     cartoes: [
       { chave: 'trials_encerrados', titulo: 'Trials encerrados' },
       { chave: 'trials_sem_conversao', titulo: 'Trials sem conversão', ajuda: 'Trial que acabou sem nenhum pagamento.' },
-      { chave: 'planos_vencidos', titulo: 'Planos vencidos', ajuda: 'Plano pago que chegou ao fim no período e não foi renovado.' },
+      { chave: 'planos_vencidos', titulo: 'Planos vencidos', ajuda: 'Plano pago que chegou ao fim no período e não foi renovado. Zero não significa que ninguém cancelou: só conta plano pago vencido.' },
     ],
   },
   { titulo: 'Suporte', cartoes: [{ chave: 'relatos', titulo: 'Relatos recebidos' }] },
@@ -71,8 +73,8 @@ function valorDe(d: DadosBI, que: 'atual' | 'anterior', chave: Cartao['chave']):
   return chave === 'treinos_realizados' ? m.treinos_presencial + m.treinos_distancia : m[chave]
 }
 
-function SeloVariacao({ chave, atual, anterior }: { chave: Cartao['chave']; atual: number; anterior: number }) {
-  const v = variacao(atual, anterior)
+function SeloVariacao({ chave, atual, anterior, moeda }: { chave: Cartao['chave']; atual: number; anterior: number; moeda?: boolean }) {
+  const v = moeda ? variacao(atual, anterior, { baseMinima: 100, formatar: formatarMoeda }) : variacao(atual, anterior)
   const ruim = chave !== 'treinos_realizados' && SUBIR_E_RUIM.includes(chave)
   const bom = v.sentido === 'subiu' ? !ruim : v.sentido === 'caiu' ? ruim : null
   const Icone = v.sentido === 'subiu' ? ArrowUp : v.sentido === 'caiu' ? ArrowDown : Minus
@@ -200,7 +202,10 @@ export function IndicadoresSection() {
     <div className="space-y-4">
       <div>
         <h2 className="font-heading font-semibold text-accent">Indicadores do negócio</h2>
-        <p className="text-sm text-slate-500">Janela móvel: {meta.descricao}, comparada com o período anterior de mesmo tamanho.</p>
+        <p className="text-sm text-slate-500">
+          Janela móvel: {meta.descricao}{data ? ` (${formatarDataBR(dataSP(data.inicio))} a ${formatarDataBR(dataSP(data.fim))})` : ''}, comparada com o período anterior de mesmo tamanho
+          {data ? ` (${formatarDataBR(somarDias(dataSP(data.inicio), -periodo))} a ${formatarDataBR(somarDias(dataSP(data.inicio), -1))})` : ''}. “Pagantes” aparece de três formas: ativos hoje (meta), já pagaram alguma vez (funil) e 1º pagamento no período (cartão).
+        </p>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Período">
@@ -236,7 +241,7 @@ export function IndicadoresSection() {
                           {data.atual.treinos_presencial} presencial · {data.atual.treinos_distancia} à distância
                         </p>
                       )}
-                      <SeloVariacao chave={c.chave} atual={atual} anterior={anterior} />
+                      <SeloVariacao chave={c.chave} atual={atual} anterior={anterior} moeda={c.moeda} />
                       <p className="text-xs text-slate-500">
                         Anterior: {c.moeda ? formatarMoeda(anterior) : anterior}
                       </p>
@@ -263,7 +268,7 @@ export function IndicadoresSection() {
           </section>
 
           <p className="text-xs text-slate-500">
-            Pagamentos e receita só existem no registro desde a criação dele (veja a aba Financeiro); períodos antes disso aparecem zerados.
+            Pagamentos e receita só existem no registro desde a criação dele (veja a aba Financeiro); períodos antes disso aparecem zerados. Variação com base abaixo de 10 aparece em número absoluto, não em porcentagem.
             Todos os números são agregados: nenhum dado de aluno é exibido.
           </p>
         </>
