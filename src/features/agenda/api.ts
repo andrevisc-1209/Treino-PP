@@ -655,3 +655,45 @@ export function useSalvarDisponibilidade() {
     },
   })
 }
+
+// ============================================================
+// Bloqueios pontuais (férias, feriado, viagem): dias sem vaga
+// ============================================================
+
+export type BloqueioAgenda = { id: string; data_inicio: string; data_fim: string; motivo: string | null }
+
+/** Só os bloqueios que ainda não acabaram. */
+export function useBloqueios() {
+  return useQuery({
+    queryKey: ['bloqueios'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('agenda_bloqueios').select('id, data_inicio, data_fim, motivo').gte('data_fim', hojeSP()).order('data_inicio')
+      if (error) throw error
+      return data as BloqueioAgenda[]
+    },
+  })
+}
+
+export function useAdicionarBloqueio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { inicio: string; fim: string; motivo: string }) => {
+      const { data: u } = await supabase.auth.getUser()
+      if (!u.user) throw new Error('Sessão expirada')
+      const { error } = await supabase.from('agenda_bloqueios').insert({ professional_id: u.user.id, data_inicio: v.inicio, data_fim: v.fim, motivo: v.motivo.trim() || null })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bloqueios'] }),
+  })
+}
+
+export function useRemoverBloqueio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('agenda_bloqueios').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bloqueios'] }),
+  })
+}

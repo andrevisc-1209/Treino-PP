@@ -30,6 +30,9 @@ import { direcaoDoDeslize, montarFaixa, rotuloAcessivelDoDia } from './faixaDeDi
 import { AulaCard } from './AulaCard'
 import { decidirComecar } from './comecarAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
+import { OferecerVagaSheet } from './OferecerVaga'
+import { useVagasDoDia } from './useVagasDoDia'
+import type { Vaga } from './vagas'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, type Aula } from './api'
 
 type Modo = 'dia' | 'semana'
@@ -40,6 +43,8 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
   const semAlunos = alunos?.length === 0
   const gruposDoDia = useMemo(() => agruparPorHorario(aulas ?? []), [aulas])
   const conflitos = useMemo(() => conflitosDeAluno(aulas ?? []), [aulas])
+  const { vagas, semDisponibilidade, carregando: carregandoVagas } = useVagasDoDia(dataISO, aulas)
+  const [vagaOferecida, setVagaOferecida] = useState<Vaga | null>(null)
 
   return (
     <div className="space-y-2">
@@ -68,6 +73,35 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
           ))}
         </div>
       ))}
+
+      {!carregandoVagas && semDisponibilidade && (aulas?.length ?? 0) > 0 && (
+        <Link to="/agenda/disponibilidade" className="flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
+          Defina seus horários de atendimento para ver as vagas livres
+        </Link>
+      )}
+      {vagas.length > 0 && (
+        <details className="rounded-2xl border border-dashed border-slate-300 bg-white p-3" open={vagas.length <= 4}>
+          <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-slate-700">Vagas livres ({vagas.length})</summary>
+          <ul className="divide-y divide-slate-100">
+            {vagas.map((v) => (
+              <li key={`${v.dataISO}-${v.inicio}`} className="flex items-center gap-3 py-1.5">
+                <span className="flex-1 text-sm font-medium text-slate-800">
+                  {v.inicio} – {v.fim}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVagaOferecida(v)}
+                  aria-label={`Oferecer a vaga das ${v.inicio} às ${v.fim}`}
+                  className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+                >
+                  Oferecer
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      <OferecerVagaSheet vaga={vagaOferecida} onClose={() => setVagaOferecida(null)} />
     </div>
   )
 }
