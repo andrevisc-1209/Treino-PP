@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agruparPorDia, agruparPorTurno, cartaoDoDia, esperaLonga, iniciais, linkDaAgendaPublica, lerConsulta, mensagemDeErroDoPedido, tempoDeEspera, textoDaFaixa, turnoDaHora, validarPedidoNoCliente } from './publica'
+import { agruparPorDia, agruparPorTurno, cartaoDoDia, esperaLonga, iniciais, lerPerfil, linhasDoPerfil, linkDaAgendaPublica, lerConsulta, mensagemDeErroDoPedido, tempoDeEspera, rotuloDoMes, textoDaFaixa, textoDoPreco, turnoDaHora, validarPedidoNoCliente } from './publica'
 
 describe('agrupar as vagas por dia', () => {
   it('ordena por data e hora e junta o mesmo dia', () => {
@@ -20,6 +20,8 @@ describe('ler a resposta da função', () => {
       nome_personal: 'André',
       cidade: 'Rio/RJ',
       apresentacao: null,
+      perfil: { cref: null, modalidades: null, locais: null, preco_aula: null },
+      antecedencia_horas: null,
       duracao_min: 45,
       vagas: [{ dataISO: '2026-10-30', inicio: '07:00', fim: '07:45' }],
     })
@@ -50,8 +52,8 @@ describe('turnos e cartões de dia', () => {
     expect(agruparPorTurno([])).toEqual([])
   })
   it('cartão do dia: sigla, número e quantidade de vagas', () => {
-    expect(cartaoDoDia({ dataISO: '2026-10-30', vagas: [{ dataISO: '2026-10-30', inicio: '08:00', fim: '09:00' }] })).toEqual({ sigla: 'SEX', numero: '30', vagas: '1 vaga' })
-    expect(cartaoDoDia({ dataISO: '2026-11-02', vagas: [1, 2].map((i) => ({ dataISO: '2026-11-02', inicio: `0${i}:00`, fim: '' })) })).toEqual({ sigla: 'SEG', numero: '2', vagas: '2 vagas' })
+    expect(cartaoDoDia({ dataISO: '2026-10-30', vagas: [{ dataISO: '2026-10-30', inicio: '08:00', fim: '09:00' }] })).toEqual({ sigla: 'SEX', numero: '30', vagas: '1 vaga', mes: 'out' })
+    expect(cartaoDoDia({ dataISO: '2026-11-02', vagas: [1, 2].map((i) => ({ dataISO: '2026-11-02', inicio: `0${i}:00`, fim: '' })) })).toEqual({ sigla: 'SEG', numero: '2', vagas: '2 vagas', mes: 'nov' })
   })
   it('iniciais do avatar', () => {
     expect(iniciais('André Scherer')).toBe('AS')
@@ -108,5 +110,39 @@ describe('faixa única de pedidos e espera', () => {
     expect(textoDaFaixa(1, 0)).toBe('1 pedido de aula para responder')
     expect(textoDaFaixa(0, 1)).toBe('1 pessoa na lista de espera')
     expect(textoDaFaixa(0, 0)).toBe('')
+  })
+})
+
+describe('cartão do dia: hoje, amanhã e mês', () => {
+  const dia = (dataISO: string) => ({ dataISO, vagas: [] })
+  it('hoje e amanhã têm nome próprio', () => {
+    expect(cartaoDoDia(dia('2026-11-11'), '2026-11-11').sigla).toBe('HOJE')
+    expect(cartaoDoDia(dia('2026-11-12'), '2026-11-11').sigla).toBe('AMANHÃ')
+    expect(cartaoDoDia(dia('2026-11-13'), '2026-11-11').sigla).toBe('SEX')
+  })
+  it('o mês aparece no primeiro dia e na virada, não nos demais', () => {
+    expect(cartaoDoDia(dia('2026-11-30'), '2026-11-11', undefined).mes).toBe('nov')
+    expect(cartaoDoDia(dia('2026-11-30'), '2026-11-11', '2026-11-27').mes).toBeNull()
+    expect(cartaoDoDia(dia('2026-12-01'), '2026-11-11', '2026-11-30').mes).toBe('dez')
+    expect(rotuloDoMes('2026-01-05')).toBe('jan')
+  })
+})
+
+describe('perfil da página', () => {
+  it('lê só o formato conhecido', () => {
+    expect(lerPerfil(null)).toEqual({ cref: null, modalidades: null, locais: null, preco_aula: null })
+    expect(lerPerfil({ cref: ' 012345-G/RJ ', preco_aula: '120', locais: 'x'.repeat(300) }).locais).toHaveLength(100)
+    expect(lerPerfil({ preco_aula: 0 }).preco_aula).toBeNull()
+    expect(lerPerfil({ preco_aula: 9999 }).preco_aula).toBeNull()
+  })
+  it('só mostra o que está preenchido, com o CREF sem repetir a sigla', () => {
+    expect(linhasDoPerfil({ cref: null, modalidades: null, locais: null, preco_aula: null })).toEqual([])
+    const l = linhasDoPerfil({ cref: 'CREF 012345-G/RJ', modalidades: 'Musculação', locais: null, preco_aula: 120 })
+    expect(l.map((x) => x.texto.replace(/\u00a0/g, ' '))).toEqual(['CREF 012345-G/RJ', 'Musculação', 'a partir de R$ 120,00 por aula'])
+    expect(textoDoPreco(null)).toBeNull()
+  })
+  it('lerConsulta traz o perfil e a antecedência', () => {
+    const r = lerConsulta({ estado: 'ok', vagas: [], perfil: { cref: '1-G/RJ' }, antecedencia_horas: 3 })
+    expect(r).toMatchObject({ perfil: { cref: '1-G/RJ' }, antecedencia_horas: 3 })
   })
 })

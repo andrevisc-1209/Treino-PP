@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { mostrarErroGlobal, mostrarInfoGlobal } from '@/components/Toast'
-import { Button, Switch } from '@/components/ui'
+import { Button, Field, Input, Switch } from '@/components/ui'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
-import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig, useSalvarProfessionalConfig } from './api'
+import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig, useSalvarProfessionalConfig, type ProfessionalConfig } from './api'
+import { LIMITES_PERFIL, perfilDigitadoDe, perfilParaSalvar, type PerfilDigitado } from './perfilPagina'
 import { BotoesDoLink } from './LinkDaAgenda'
 import { linkDaAgendaPublica } from './publica'
 
@@ -47,6 +48,64 @@ function ApresentacaoCampo({ salva }: { salva: string }) {
       {alterado && (
         <Button type="button" onClick={exigir(() => void gravar())} disabled={salvar.isPending}>
           Salvar apresentação
+        </Button>
+      )}
+    </div>
+  )
+}
+
+
+/**
+ * Perfil opcional da página: CREF, modalidades, onde atende e o valor "a partir de". Cada campo só aparece para o visitante se for
+ * preenchido, e nada é publicado sem o personal tocar em Salvar. Quem preenche é o próprio personal; nada vem de dado de aluno.
+ */
+function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefined }) {
+  const { exigir } = useExigirAssinatura()
+  const salvar = useSalvarProfessionalConfig()
+  const salvo = perfilDigitadoDe(config)
+  const [rascunho, setRascunho] = useState<PerfilDigitado | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const valor = rascunho ?? salvo
+  const alterado = (Object.keys(salvo) as (keyof PerfilDigitado)[]).some((k) => valor[k].trim() !== salvo[k].trim())
+  const mudar = (campo: keyof PerfilDigitado, texto: string) => {
+    setRascunho({ ...valor, [campo]: texto })
+    setErro(null)
+  }
+
+  const gravar = async () => {
+    const r = perfilParaSalvar(valor)
+    if (!r.ok) return setErro(r.erro)
+    try {
+      await salvar.mutateAsync(r.dados)
+      setRascunho(null)
+      mostrarInfoGlobal('Perfil da página salvo.')
+    } catch (e) {
+      mostrarErroGlobal(mapearErroSupabase(e))
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl bg-slate-50 p-3">
+      <div>
+        <p className="text-sm font-medium">Perfil na página (opcional)</p>
+        <p className="text-xs text-slate-600">Quem abre o seu link vê o que você preencher aqui, para saber com quem está falando. Campo vazio não aparece.</p>
+      </div>
+      <Field label="CREF">
+        <Input value={valor.cref} maxLength={LIMITES_PERFIL.cref} placeholder="Ex.: 012345-G/RJ" onChange={(e) => mudar('cref', e.target.value)} />
+      </Field>
+      <Field label="Modalidades">
+        <Input value={valor.modalidades} maxLength={LIMITES_PERFIL.modalidades} placeholder="Ex.: Musculação · Natação" onChange={(e) => mudar('modalidades', e.target.value)} />
+      </Field>
+      <Field label="Onde você atende">
+        <Input value={valor.locais} maxLength={LIMITES_PERFIL.locais} placeholder="Ex.: Laranjeiras · Catete" onChange={(e) => mudar('locais', e.target.value)} />
+      </Field>
+      <Field label="Valor por aula, a partir de (R$)" error={erro ?? undefined}>
+        <Input value={valor.preco} inputMode="decimal" placeholder="Ex.: 120,00" onChange={(e) => mudar('preco', e.target.value)} />
+      </Field>
+      <p className="text-xs text-slate-600">Tudo isto fica visível a qualquer pessoa com o link. Não escreva telefone nem dados de saúde.</p>
+      {alterado && (
+        <Button type="button" onClick={exigir(() => void gravar())} disabled={salvar.isPending}>
+          Salvar perfil
         </Button>
       )}
     </div>
@@ -104,6 +163,7 @@ export function PaginaPublicaSecao() {
         </p>
       )}
       {ativa && <ApresentacaoCampo salva={config?.apresentacao ?? ''} />}
+      {ativa && <PerfilCampos config={config} />}
       {ativa && link && (
         <div className="space-y-2">
           <p className="break-all rounded-xl bg-slate-50 p-3 text-sm text-slate-800">{link}</p>

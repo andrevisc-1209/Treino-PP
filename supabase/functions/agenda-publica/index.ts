@@ -23,6 +23,7 @@ import {
   MAX_ESPERA_POR_PERSONAL,
   MAX_PEDIDOS_POR_TELEFONE_DIA,
   MAX_PENDENTES_POR_PERSONAL,
+  perfilPublico,
   primeiroNome,
   slugValido,
   somarDiasISO,
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
 
   const { data: cfg } = await admin
     .from('professional_config')
-    .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao')
+    .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao, pagina_cref, pagina_modalidades, pagina_locais, pagina_preco_aula')
     .eq('agenda_publica_slug', body.slug)
     .maybeSingle()
   if (!cfg || !cfg.agenda_publica_ativa) return json(req, INDISPONIVEL)
@@ -169,7 +170,7 @@ Deno.serve(async (req) => {
 
   if (acao === 'consultar') {
     const cidade = [personal.cidade?.trim(), personal.uf?.trim()].filter(Boolean).join('/')
-    return json(req, { estado: 'ok', nome_personal: primeiroNome(personal.name), cidade: cidade || null, apresentacao: cfg.apresentacao?.trim() || null, duracao_min: parametros.duracaoMin, vagas: vagas.slice(0, 300) })
+    return json(req, { estado: 'ok', nome_personal: primeiroNome(personal.name), cidade: cidade || null, apresentacao: cfg.apresentacao?.trim() || null, perfil: perfilPublico(cfg), antecedencia_horas: parametros.antecedenciaHoras, duracao_min: parametros.duracaoMin, vagas: vagas.slice(0, 300) })
   }
 
   // ---------- pedir ----------

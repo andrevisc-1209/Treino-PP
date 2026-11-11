@@ -5,9 +5,9 @@ import logoPP from '@/assets/brand/logo-personal-perto-sm.png'
 import { Turnstile } from '@/components/Turnstile'
 import { Button } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
-import { formatarDataCompleta } from '@/lib/datas'
+import { formatarDataCompleta, hojeSP } from '@/lib/datas'
 import { cn, formatarTelefone } from '@/lib/utils'
-import { agruparPorDia, corpoDoErro, agruparPorTurno, cartaoDoDia, iniciais, lerConsulta, mensagemDeErroDoPedido, tituloDoDia, validarPedidoNoCliente, type ErrosDoPedido, type RespostaConsulta } from './publica'
+import { agruparPorDia, corpoDoErro, agruparPorTurno, cartaoDoDia, iniciais, lerConsulta, linhasDoPerfil, mensagemDeErroDoPedido, tituloDoDia, validarPedidoNoCliente, type ErrosDoPedido, type RespostaConsulta } from './publica'
 import { EsperaPublica } from './EsperaPublica'
 import type { Vaga } from './vagas'
 
@@ -84,6 +84,8 @@ export function AgendaPublicaPage() {
   const personal = ok?.nome_personal || 'o personal'
   const dias = ok ? agruparPorDia(ok.vagas) : []
   const diaAtual = dias.find((d) => d.dataISO === diaEscolhido) ?? dias[0] ?? null
+  const perfil = ok ? linhasDoPerfil(ok.perfil) : []
+  const hoje = hojeSP()
 
   const escolher = (v: Vaga) => {
     setEscolhida(v)
@@ -164,6 +166,15 @@ export function AgendaPublicaPage() {
                   </span>
                 </p>
                 {ok.apresentacao && <p className="mt-2 text-sm text-slate-700">{ok.apresentacao}</p>}
+                {perfil.length > 0 && (
+                  <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Sobre o profissional">
+                    {perfil.map((l) => (
+                      <li key={l.chave} className={cn('rounded-full px-2.5 py-1 text-xs font-medium', l.chave === 'preco' ? 'bg-brand-soft text-brand-hover' : 'bg-slate-100 text-slate-800')}>
+                        {l.texto}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </header>
 
@@ -196,7 +207,7 @@ export function AgendaPublicaPage() {
               </section>
             ) : (
               <>
-                <p className="text-slate-700">Escolha um horário disponível e envie seu pedido. {ok.nome_personal || 'O personal'} confirma antes de marcar a aula.</p>
+                <p className="text-slate-700">Escolha um horário disponível e envie seu pedido.</p>
                 <div className="flex items-start gap-3 rounded-2xl border border-brand/30 bg-brand-soft p-3">
                   <ShieldCheck size={20} className="mt-0.5 shrink-0 text-brand-hover" aria-hidden />
                   <div>
@@ -222,8 +233,8 @@ export function AgendaPublicaPage() {
                         <ChevronLeft size={20} aria-hidden />
                       </button>
                       <div ref={faixaRef} className="flex flex-1 snap-x gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Dias com horários livres">
-                        {dias.map((d) => {
-                          const c = cartaoDoDia(d)
+                        {dias.map((d, i) => {
+                          const c = cartaoDoDia(d, hoje, dias[i - 1]?.dataISO)
                           const marcado = diaAtual?.dataISO === d.dataISO
                           return (
                             <button
@@ -239,6 +250,7 @@ export function AgendaPublicaPage() {
                             >
                               <span className="text-xs font-medium tracking-wide">{c.sigla}</span>
                               <span className="text-2xl font-bold leading-tight">{c.numero}</span>
+                              {c.mes && <span className={cn('text-[0.7rem] font-semibold uppercase', marcado ? 'text-white/90' : 'text-slate-600')}>{c.mes}</span>}
                               <span className={cn('text-xs', marcado ? 'text-white/90' : 'text-slate-600')}>{c.vagas}</span>
                             </button>
                           )
@@ -273,14 +285,14 @@ export function AgendaPublicaPage() {
                             </div>
                           </div>
                         ))}
-                        <p className="text-xs text-slate-600">O horário só é reservado depois da confirmação de {ok.nome_personal || 'o personal'}.</p>
+                        {ok.antecedencia_horas && <p className="text-xs text-slate-600">Pedidos com pelo menos {ok.antecedencia_horas} h de antecedência.</p>}
                       </div>
                     )}
                     {erros.horario && <Erro id="erro-horario" texto={erros.horario} />}
                   </section>
                 )}
 
-                <EsperaPublica slug={slug} personal={ok.nome_personal || 'O personal'} diaInicial={diaAtual?.dataISO ?? null} />
+                {!escolhida && <EsperaPublica slug={slug} personal={ok.nome_personal || 'O personal'} diaInicial={diaAtual?.dataISO ?? null} />}
 
                 {escolhida && (
                   <section ref={formRef} className="space-y-4 rounded-2xl bg-white p-4 shadow-sm" aria-label="Solicitar esta aula">
