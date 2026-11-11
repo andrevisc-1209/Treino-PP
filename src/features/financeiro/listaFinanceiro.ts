@@ -33,6 +33,24 @@ export function acaoNecessaria(faturasEmAtraso: { total: number }[], ciclosParaF
   return { qtdAtraso: faturasEmAtraso.length, totalAtraso: faturasEmAtraso.reduce((a, f) => a + f.total, 0), qtdCiclosParaFechar: ciclosParaFechar }
 }
 
+export interface FaturaEmAtraso {
+  id: string
+  aluno_id: string
+  total: number
+  vencimento: string | null
+}
+
+/**
+ * Faturas vencidas que nenhuma linha da lista mostra (ex.: uma fatura antiga de um aluno que já tem outra mais nova, ou de aluno sem cobrança
+ * configurada). Sem elas, o aviso "N faturas em atraso" contava algo que o filtro "Em atraso" não listava. `idsJaMostrados` traz as faturas
+ * que as outras linhas já cobrem (a última fatura de cada aluno e as dos pacotes). Ordem: a mais antiga primeiro.
+ */
+export function faturasEmAtrasoSemLinha(faturasEmAtraso: FaturaEmAtraso[], idsJaMostrados: Set<string>): FaturaEmAtraso[] {
+  return faturasEmAtraso
+    .filter((f) => !idsJaMostrados.has(f.id))
+    .toSorted((a, b) => (a.vencimento ?? '').localeCompare(b.vencimento ?? ''))
+}
+
 export interface LinhaPacote {
   alunoId: string
   nome: string

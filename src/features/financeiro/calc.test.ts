@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cicloAtual, dividirValor, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
+import { cicloAnterior, cicloAtual, dividirValor, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
 
 describe('cicloAtual', () => {
   it('dia 10, hoje depois do início do ciclo: 10/set a 09/out', () => {
@@ -58,5 +58,16 @@ describe('dividirValor', () => {
   it('coloca a sobra de centavos no último participante', () => {
     expect(dividirValor(100, 3)).toEqual([33.33, 33.33, 33.34])
     expect(dividirValor(10, 3)).toEqual([3.33, 3.33, 3.34])
+  })
+})
+
+describe('cicloAnterior', () => {
+  it('é o ciclo logo antes do de hoje', () => {
+    expect(cicloAnterior(1, '2026-11-11')).toEqual({ inicio: '2026-10-01', fim: '2026-10-31' })
+    expect(cicloAnterior(10, '2026-11-11')).toEqual({ inicio: '2026-10-10', fim: '2026-11-09' })
+  })
+  it('vira o ano', () => {
+    expect(cicloAnterior(1, '2027-01-15')).toEqual({ inicio: '2026-12-01', fim: '2026-12-31' })
+    expect(cicloAnterior(20, '2027-01-05')).toEqual({ inicio: '2026-11-20', fim: '2026-12-19' })
   })
 })

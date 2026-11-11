@@ -1,8 +1,7 @@
 // Quais alunos têm um ciclo de cobrança JÁ ENCERRADO ainda sem fatura (o aviso de Hoje e a etiqueta "Ciclo encerrado" do Financeiro).
 // Diferente do filtro "A fechar" do Financeiro, que também inclui o ciclo em andamento: aqui só entra o que já passou da data.
 
-import { somarDias } from '@/lib/datas'
-import { cicloAtual, itensCobraveisDoCiclo, type ParticipacaoParaFechamento } from './calc'
+import { cicloAnterior, itensCobraveisDoCiclo, type ParticipacaoParaFechamento } from './calc'
 
 export type CobrancaParaCiclo = { aluno_id: string; modelo: 'por_aula' | 'mensal'; dia_ciclo: number }
 export type FaturaParaCiclo = { aluno_id: string; periodo_fim: string; status: string }
@@ -23,8 +22,7 @@ export function alunosComCicloParaFechar(args: {
   const { cobrancas, faturas, participacoes, hoje } = args
   const ids: string[] = []
   for (const c of cobrancas) {
-    const atual = cicloAtual(c.dia_ciclo, hoje)
-    const anterior = cicloAtual(c.dia_ciclo, somarDias(atual.inicio, -1))
+    const anterior = cicloAnterior(c.dia_ciclo, hoje)
     const faturasDoAluno = faturas.filter((f) => f.aluno_id === c.aluno_id && f.status !== 'cancelada')
     if (faturasDoAluno.some((f) => f.periodo_fim >= anterior.fim)) continue
     const pendente =

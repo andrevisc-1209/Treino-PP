@@ -1630,9 +1630,20 @@ Só texto; sem migration e sem deploy de função.
 - ✅ **Landing:** pergunta nova "Como cobro cada aluno: por aula, mensal ou pacote?" no FAQ.
 - ✅ **Canais:** Onboarding sem mudança · Política e Termos: não se aplica (nenhum dado novo) · Admin: não se aplica.
 
-### 153. Botão "Horários" no alto da Agenda — ✅ PR aberta
+### 153. Botão "Horários" no alto da Agenda — ✅ Mergeada (#277)
 
 Só tela; sem migration e sem deploy.
 
 - ✅ O link sublinhado "Minha disponibilidade" (embaixo do título) virou um **botão "Horários"** com ícone de calendário e relógio, 44 px, ao lado do sino e da engrenagem: é o mesmo grupo de ações do topo, fácil de achar com o polegar e sem competir com o título.
 - ✅ **Canais:** FAQ do artigo "Definir seus horários de atendimento" atualizado para o nome novo; landing, onboarding, Política e Termos: não se aplica.
+
+### 154. Financeiro: números que batem entre Hoje, sino e Financeiro (PR 1 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+
+Só front; sem migration e sem deploy. Origem: relatório de navegação do Claude no Chrome + leitura do código, que confirmou as causas abaixo.
+
+- ✅ **"N faturas em atraso · Ver" abria uma lista vazia.** O aviso contava todas as faturas vencidas; o filtro "Em atraso" só listava alunos cuja **última** fatura estava vencida (e só alunos com cobrança). Agora toda fatura vencida aparece: as que nenhuma linha cobre ganham uma linha própria ("Fatura vencida em dd/mm/aaaa"), em Todos e em Em atraso (`faturasEmAtrasoSemLinha`, com teste).
+- ✅ **Cartão "Ciclo encerrado" mostrava o ciclo em andamento** (R$ 0,00, 0 aulas, "fecha em 30/11"). Agora mostra o ciclo que terminou: período ("ciclo de 01/10 a 31/10"), aulas e valor dele, e o toque abre o fechamento daquele ciclo (`?ref=`). Novo `cicloAnterior` em `calc.ts`.
+- ✅ **O sino dizia 2 ciclos, Hoje e Financeiro diziam 1.** O aviso "Ciclo encerrado" é gravado uma vez e não se atualiza; agora, se o aluno já não tem ciclo esperando fatura, o sino o trata como lido (lista e selo), com a mesma conta de Hoje (`cicloJaResolvido`, `contagemSemResolvidos`, com testes).
+- ⚠️ Efeito colateral: o sino passa a carregar, em qualquer tela, as cobranças, faturas e participações que Hoje já carrega (o cache do TanStack divide a consulta). Se pesar em contas grandes, trocar por uma função no banco.
+- ✅ **Canais (/atualizacao_fluxoapp):** correção de número, sem funcionalidade nova: FAQ, onboarding, landing, Política, Termos e Admin não se aplicam.
+- Próximas PRs do plano: 2) Hoje "Para registrar" com "Dei a aula / Faltou"; 3) Agenda com o cartão do link em uma linha; 4) Ficha (5 abas mantidas, Resumo reordenado, Cobrança + Financeiro num cartão); 5) página pública com perfil; 6) alvos de 44 px e texto mínimo; 7) "aulas" no lugar de "treinos" no briefing e na landing, `/treinos` redireciona, rolagem por aba; 8) medir a taxa de registro e testar com 5 personais.
