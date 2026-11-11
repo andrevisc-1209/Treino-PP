@@ -240,6 +240,20 @@ export function useMarcarFalta() {
   })
 }
 
+/** Desfaz um registro rápido (presença ou falta): os participantes voltam a "previsto", sem cobrança, e a aula volta a "agendada". */
+export function useDesfazerRegistro() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ aulaId, participanteIds }: { aulaId: string; participanteIds: string[] }) => {
+      const { error } = await supabase.from('aula_participantes').update({ status: 'previsto', cobrar: null, valor: null }).in('id', participanteIds)
+      if (error) throw error
+      const { error: errAula } = await supabase.from('aulas').update({ status: 'agendada' }).eq('id', aulaId).eq('status', 'realizada')
+      if (errAula) throw errAula
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['aulas'] }),
+  })
+}
+
 /** Cancela a aula inteira: quem cancelou (aluno/personal) e, se foi o aluno, se cobra. Cancelamento do personal nunca cobra. */
 export function useCancelarAula() {
   const qc = useQueryClient()

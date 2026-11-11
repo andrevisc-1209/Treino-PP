@@ -24,15 +24,23 @@ describe('organizarAulasDoDia', () => {
     expect(r.destaque?.id).toBe('b')
     expect(r.encerradas.map((x) => x.id)).toEqual(['a'])
   })
-  it('aula que passou sem registro vira "atrasada" na lista, mas o destaque segue para a próxima por vir', () => {
+  it('aula que passou sem registro sai das próximas e vai para "para registrar"', () => {
     const r = organizarAulasDoDia(dia, agora('09:00'))
     expect(r.destaque?.id).toBe('b')
-    expect(r.seguintes.map((x) => x.id)).toEqual(['a', 'c'])
+    expect(r.seguintes.map((x) => x.id)).toEqual(['c'])
+    expect(r.paraRegistrar.map((x) => x.id)).toEqual(['a'])
   })
-  it('sem nenhuma por vir, o destaque é a atrasada mais antiga e isso fica explícito', () => {
+  it('sem nenhuma por vir, não há destaque: todas as passadas esperam registro, da mais antiga para a mais nova', () => {
     const r = organizarAulasDoDia(dia, agora('18:00'))
-    expect(r.destaque?.id).toBe('a')
-    expect(r.situacao).toBe('atrasada')
+    expect(r.destaque).toBeNull()
+    expect(r.situacao).toBeNull()
+    expect(r.seguintes).toEqual([])
+    expect(r.paraRegistrar.map((x) => x.id)).toEqual(['a', 'b', 'c'])
+  })
+  it('aula já registrada (realizada, falta ou cancelada) nunca fica em "para registrar"', () => {
+    const r = organizarAulasDoDia([aula('a', '07:00', 'realizada'), aula('b', '10:00', 'cancelada'), aula('c', '14:00')], agora('18:00'))
+    expect(r.paraRegistrar.map((x) => x.id)).toEqual(['c'])
+    expect(r.encerradas.map((x) => x.id)).toEqual(['a', 'b'])
   })
   it('sem pendentes não há destaque (a tela mostra o resumo do dia)', () => {
     const r = organizarAulasDoDia([aula('a', '07:00', 'realizada'), aula('b', '10:00', 'cancelada')], agora('11:00'))

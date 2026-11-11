@@ -36,6 +36,7 @@ import { LinkDaAgendaCard } from './LinkDaAgenda'
 import { useVagasDoDia } from './useVagasDoDia'
 import type { Vaga } from './vagas'
 import { esperaLonga } from './publica'
+import { estaAtrasada } from './proximaAula'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, useListaEspera, usePedidosPendentes, type Aula } from './api'
 
 type Modo = 'dia' | 'semana'
@@ -48,6 +49,7 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
   const conflitos = useMemo(() => conflitosDeAluno(aulas ?? []), [aulas])
   const { vagas, semDisponibilidade, carregando: carregandoVagas } = useVagasDoDia(dataISO, aulas)
   const [vagaOferecida, setVagaOferecida] = useState<Vaga | null>(null)
+  const [agora] = useState(() => Date.now())
 
   return (
     <div className="space-y-2">
@@ -72,7 +74,7 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
             </p>
           )}
           {g.aulas.map((a) => (
-            <AulaCard key={a.id} aula={a} localResumido conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} onComecar={() => onComecar(a)} />
+            <AulaCard key={a.id} aula={a} localResumido atrasada={estaAtrasada(a, agora)} conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} onComecar={() => onComecar(a)} />
           ))}
         </div>
       ))}
@@ -112,6 +114,7 @@ function VisaoDia({ dataISO, onAbrirAula, onComecar, onMarcarAula }: { dataISO: 
 function VisaoSemana({ inicioSemana, onAbrirAula, onAbrirDia }: { inicioSemana: string; onAbrirAula: (a: Aula) => void; onAbrirDia: (dataISO: string) => void }) {
   const { inicio, fim } = limitesDaSemanaSP(inicioSemana)
   const { data: aulas, isLoading, error, refetch } = useAulasNoIntervalo(inicio, fim)
+  const [agora] = useState(() => Date.now())
 
   const dias = useMemo(() => Array.from({ length: 7 }, (_, i) => somarDias(inicioSemana, i)), [inicioSemana])
 
@@ -155,7 +158,7 @@ function VisaoSemana({ inicioSemana, onAbrirAula, onAbrirDia }: { inicioSemana: 
               ) : (
                 <div className="space-y-2">
                   {doDia.map((a) => (
-                    <AulaCard key={a.id} aula={a} localResumido conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} />
+                    <AulaCard key={a.id} aula={a} localResumido atrasada={estaAtrasada(a, agora)} conflito={conflitos.get(a.id)} onClick={() => onAbrirAula(a)} />
                   ))}
                 </div>
               )}
