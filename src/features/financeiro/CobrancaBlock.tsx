@@ -8,6 +8,7 @@ import { useEncerrarPacote, usePacotesAtivos, useRenovarPacote, useSalvarPacote 
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { formularioDoPacote, pagamentoDoFormulario, payloadPacote } from '@/features/pacotes/formulario'
 import { situacaoDoPacote } from '@/features/pacotes/pacote'
+import { textoVencimento } from './vencimento'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { Pencil } from 'lucide-react'
 import { Button, BottomSheet } from '@/components/ui'
@@ -36,7 +37,8 @@ function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
   }
 }
 
-export function CobrancaBlock({ alunoId }: { alunoId: string }) {
+/** `semCartao`: dentro do cartão único "Cobrança" da ficha (junto das faturas), sem moldura própria. */
+export function CobrancaBlock({ alunoId, semCartao }: { alunoId: string; semCartao?: boolean }) {
   const { data: cobranca, isLoading } = useAlunoCobranca(alunoId)
   const salvar = useSalvarAlunoCobranca()
   const { data: pacotes, isLoading: carregandoPacote } = usePacotesAtivos()
@@ -165,7 +167,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
   }
 
   return (
-    <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+    <div className={semCartao ? 'space-y-3' : 'space-y-3 rounded-2xl bg-white p-4 shadow-sm'}>
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Cobrança</h2>
         <Button variant="ghost" onClick={() => setEditando(true)} aria-label="Editar cobrança">
@@ -230,7 +232,7 @@ export function CobrancaBlock({ alunoId }: { alunoId: string }) {
             )}
           </p>
           <p className="text-sm text-slate-600">
-            Ciclo a partir do dia {cobranca.dia_ciclo} · vence {cobranca.dias_vencimento} dias após fechar
+            Ciclo a partir do dia {cobranca.dia_ciclo} · {textoVencimento(cobranca.dias_vencimento)}
           </p>
         </div>
       )}

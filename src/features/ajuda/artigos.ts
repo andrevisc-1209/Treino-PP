@@ -76,7 +76,7 @@ export const ARTIGOS: Artigo[] = [
     categoria: 'alunos',
     titulo: 'Arquivar, apagar e restaurar um aluno',
     passos: [
-      'Para parar de atender um aluno sem perder nada, use "Arquivar". O histórico dele fica guardado.',
+      'Para parar de atender um aluno sem perder nada, use "Arquivar": na ficha do aluno, abra "Mais opções", no fim da aba Resumo, e toque em "Arquivar aluno". O histórico dele fica guardado.',
       'Para apagar, primeiro arquive o aluno. Depois, na aba Arquivados, escolha "Mover para a lixeira".',
       'Na aba Lixeira ele fica por 30 dias e você pode restaurar. Depois desse prazo, ou se você escolher "Apagar agora", ele e todo o histórico são apagados de vez, sem volta.',
       'Se tiver dúvida, deixe arquivado: nada se perde.',

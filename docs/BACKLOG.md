@@ -1658,7 +1658,7 @@ Só front; sem migration e sem deploy. Origem: relatório do Chrome (4 de 6 aula
 - ✅ **Canais (/atualizacao_fluxoapp):** FAQ: artigo novo "Registrar uma aula que já aconteceu"; onboarding, landing, Política, Termos e Admin: não se aplicam (nenhum dado novo).
 - ⏳ Medir a taxa de registro (aulas registradas ÷ aulas já passadas) é a PR 8 do plano.
 
-### 156. Agenda: topo enxuto, agenda primeiro (PR 3 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+### 156. Agenda: topo enxuto, agenda primeiro (PR 3 da auditoria de UX de 11/11/2026) — ✅ Mergeada (#280)
 
 Só front; sem migration e sem deploy. Origem: o cartão do link (URL, 2 botões e 4 números) ocupava quase metade da primeira tela antes da primeira aula.
 
@@ -1667,3 +1667,14 @@ Só front; sem migration e sem deploy. Origem: o cartão do link (URL, 2 botões
 - ✅ **Uma faixa só para pedidos e espera:** "2 pedidos de aula para responder · 3 pessoas na lista de espera" (vermelha se há pedido parado há mais de 24 h). Substitui a faixa de pedidos e o link "Lista de espera".
 - ✅ `NumeroComRotulo` compartilhado (cartão do link e painel admin; texto do rótulo em `slate-700`).
 - ✅ **Canais (/atualizacao_fluxoapp):** FAQ do artigo da página pública atualizado; onboarding, landing, Política, Termos e Admin: não se aplica.
+
+### 157. Ficha do aluno: Resumo começa pela situação (PR 4 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+
+Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): Resumo · Treinos · Histórico · Performance · Evolução.
+
+- ✅ **Abas de 44 px** (eram 36 px), sem barra de rolagem; a aba escolhida (inclusive a vinda da URL) rola para a vista, já que as 5 não cabem a 390 px.
+- ✅ **Topo do Resumo = "Situação do aluno":** próxima aula (Hoje, Amanhã ou dia da semana, com o local curto), último treino ("há 5 dias", amarelo depois de 7 dias ou se nunca treinou, a mesma regra da fila de Alunos) e cobrança (a frase de status + a ação, como no Financeiro). Antes o primeiro cartão eram os dados cadastrais.
+- ✅ **Cobrança e Financeiro num cartão só**, com as faturas sob o título "Faturas". "vence 0 dias após fechar" virou "vence no fechamento" (`textoVencimento`).
+- ✅ **Nova ordem do Resumo:** Situação · Horários fixos · Cobrança e faturas · Avaliações · Relatório mensal e Contrato · Dados cadastrais (recolhido) · Consentimento · "Mais opções" (recolhido, com Arquivar aluno).
+- ✅ **Canais (/atualizacao_fluxoapp):** FAQ do artigo "Arquivar, apagar e restaurar um aluno" atualizado (Mais opções); onboarding, landing, Política, Termos e Admin: não se aplica.
+- ⏳ Documentos (relatório e contrato) seguem como cartões soltos abaixo das avaliações; recolher num acordeão exige tirar a moldura própria de cada um.
