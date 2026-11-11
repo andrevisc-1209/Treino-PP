@@ -35,7 +35,7 @@ import { PedidosAgendaSheet } from './PedidosAgendaSheet'
 import { LinkDaAgendaCard } from './LinkDaAgenda'
 import { useVagasDoDia } from './useVagasDoDia'
 import type { Vaga } from './vagas'
-import { esperaLonga } from './publica'
+import { esperaLonga, textoDaFaixa } from './publica'
 import { estaAtrasada } from './proximaAula'
 import { useAulasDoDia, useAulasNoIntervalo, useGerarAulasDiarias, useListaEspera, usePedidosPendentes, type Aula } from './api'
 
@@ -285,7 +285,9 @@ export function AgendaPage() {
   const pedidosAbertos = pedidosParam === '1' || pedidosParam === 'espera'
   const abrirPedidos = () => setParams({ pedidos: '1' }, { replace: true })
   const abrirEspera = () => setParams({ pedidos: 'espera' }, { replace: true })
-  const jaChamadas = (espera ?? []).filter((e) => e.chamado_em).length
+  const qtdPedidos = pedidos?.length ?? 0
+  const qtdEspera = espera?.length ?? 0
+  const pedidoParado = (pedidos ?? []).some((p) => esperaLonga(p.created_at))
   const fecharPedidos = () => setParams({}, { replace: true })
 
   const abrirMenu = (a: Aula) => {
@@ -326,22 +328,17 @@ export function AgendaPage() {
         </div>
       </header>
 
-      {(pedidos?.length ?? 0) > 0 && (
+      {(qtdPedidos > 0 || qtdEspera > 0) && (
         <button
           type="button"
-          onClick={abrirPedidos}
-          className={`mb-4 flex min-h-12 w-full items-center justify-between rounded-2xl border px-4 py-2 text-left text-sm font-semibold ${pedidos!.some((p) => esperaLonga(p.created_at)) ? 'border-red-200 bg-red-50 text-red-900' : 'border-amber-200 bg-amber-50 text-amber-950'}`}
+          onClick={qtdPedidos > 0 ? abrirPedidos : abrirEspera}
+          className={`mb-4 flex min-h-12 w-full items-center justify-between gap-2 rounded-2xl border px-4 py-2 text-left text-sm font-semibold ${pedidoParado ? 'border-red-200 bg-red-50 text-red-900' : qtdPedidos > 0 ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-slate-200 bg-white text-slate-800'}`}
         >
           <span>
-            {pedidos!.length} {pedidos!.length === 1 ? 'pedido de aula para responder' : 'pedidos de aula para responder'}
-            {pedidos!.some((p) => esperaLonga(p.created_at)) && <span className="block text-xs font-medium">Tem pedido esperando há mais de 24 h</span>}
+            {textoDaFaixa(qtdPedidos, qtdEspera)}
+            {pedidoParado && <span className="block text-xs font-medium">Tem pedido esperando há mais de 24 h</span>}
           </span>
           <span aria-hidden>Ver →</span>
-        </button>
-      )}
-      {(espera?.length ?? 0) > 0 && (
-        <button type="button" onClick={abrirEspera} className="mb-4 flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
-          Lista de espera: {espera!.length} {espera!.length === 1 ? 'pessoa' : 'pessoas'}{jaChamadas > 0 ? ` (${jaChamadas} já ${jaChamadas === 1 ? 'chamada' : 'chamadas'})` : ''}
         </button>
       )}
       <PedidosAgendaSheet key={pedidosParam ?? 'fechado'} open={pedidosAbertos} onClose={fecharPedidos} abaInicial={pedidosParam === 'espera' ? 'espera' : 'pendentes'} />

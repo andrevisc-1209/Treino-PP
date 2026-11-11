@@ -110,3 +110,11 @@ export async function corpoDoErro(error: unknown): Promise<{ status: number | un
   }
   return { status: contexto.status, mensagem }
 }
+
+/** Texto da faixa única da Agenda: "2 pedidos para responder · 3 na lista de espera". */
+export function textoDaFaixa(pedidos: number, espera: number): string {
+  const partes: string[] = []
+  if (pedidos > 0) partes.push(`${pedidos} ${pedidos === 1 ? 'pedido de aula para responder' : 'pedidos de aula para responder'}`)
+  if (espera > 0) partes.push(`${espera} ${espera === 1 ? 'pessoa' : 'pessoas'} na lista de espera`)
+  return partes.join(' · ')
+}

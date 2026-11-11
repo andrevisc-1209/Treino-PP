@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agruparPorDia, agruparPorTurno, cartaoDoDia, esperaLonga, iniciais, linkDaAgendaPublica, lerConsulta, mensagemDeErroDoPedido, tempoDeEspera, turnoDaHora, validarPedidoNoCliente } from './publica'
+import { agruparPorDia, agruparPorTurno, cartaoDoDia, esperaLonga, iniciais, linkDaAgendaPublica, lerConsulta, mensagemDeErroDoPedido, tempoDeEspera, textoDaFaixa, turnoDaHora, validarPedidoNoCliente } from './publica'
 
 describe('agrupar as vagas por dia', () => {
   it('ordena por data e hora e junta o mesmo dia', () => {
@@ -99,5 +99,14 @@ describe('espera dos pedidos', () => {
   it('espera longa só passando de 24 horas', () => {
     expect(esperaLonga('2026-10-29T15:00:00Z', agora)).toBe(false)
     expect(esperaLonga('2026-10-29T14:59:00Z', agora)).toBe(true)
+  })
+})
+
+describe('faixa única de pedidos e espera', () => {
+  it('junta o que há, só o que há', () => {
+    expect(textoDaFaixa(2, 3)).toBe('2 pedidos de aula para responder · 3 pessoas na lista de espera')
+    expect(textoDaFaixa(1, 0)).toBe('1 pedido de aula para responder')
+    expect(textoDaFaixa(0, 1)).toBe('1 pessoa na lista de espera')
+    expect(textoDaFaixa(0, 0)).toBe('')
   })
 })

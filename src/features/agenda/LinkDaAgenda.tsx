@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Copy, Link2, MessageCircle } from 'lucide-react'
+import { ChevronDown, Copy, Link2, MessageCircle } from 'lucide-react'
+import { NumeroComRotulo } from '@/components/NumeroComRotulo'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import { useProfessionalConfig, useResumoAgendaPublica } from './api'
 import { linkDaAgendaPublica } from './publica'
-import { rotuloTempo, semMovimento } from './resumoPublica'
+import { linhaDoLink, medianaConfiavel, rotuloTempo, semMovimento } from './resumoPublica'
 
 async function copiar(texto: string): Promise<boolean> {
   try {
@@ -16,9 +18,10 @@ async function copiar(texto: string): Promise<boolean> {
 }
 
 /** Copiar e enviar por WhatsApp o link da página pública da agenda. */
-export function BotoesDoLink({ link }: { link: string }) {
+export function BotoesDoLink({ link, semCopiar }: { link: string; semCopiar?: boolean }) {
   return (
     <div className="flex flex-wrap gap-2">
+      {!semCopiar && (
       <button
         type="button"
         onClick={async () => mostrarInfoGlobal((await copiar(link)) ? 'Link copiado.' : 'Não consegui copiar. Selecione o link e copie.')}
@@ -26,6 +29,7 @@ export function BotoesDoLink({ link }: { link: string }) {
       >
         <Copy size={16} aria-hidden /> Copiar link
       </button>
+      )}
       <a
         href={linkWhatsAppComTexto(null, `Quer marcar uma aula comigo? Veja meus horários livres e peça o seu: ${link}`)}
         target="_blank"
@@ -34,15 +38,6 @@ export function BotoesDoLink({ link }: { link: string }) {
       >
         <MessageCircle size={16} aria-hidden /> Enviar no WhatsApp
       </a>
-    </div>
-  )
-}
-
-function Numero({ valor, rotulo, destaque }: { valor: string; rotulo: string; destaque?: boolean }) {
-  return (
-    <div className={`rounded-xl px-3 py-2 ${destaque ? 'bg-amber-50' : 'bg-slate-50'}`}>
-      <p className="text-lg font-bold leading-tight text-slate-900">{valor}</p>
-      <p className="text-xs text-slate-600">{rotulo}</p>
     </div>
   )
 }
@@ -57,10 +52,10 @@ function ResumoDaPagina() {
   return (
     <div>
       <div className="grid grid-cols-2 gap-2">
-        <Numero valor={String(data.pedidos7d)} rotulo={data.pedidos7d === 1 ? 'pedido nos últimos 7 dias' : 'pedidos nos últimos 7 dias'} />
-        <Numero valor={String(data.pendentes)} rotulo="aguardando sua resposta" destaque={data.pendentes > 0} />
-        <Numero valor={rotuloTempo(data.medianaRespostaMin)} rotulo="seu tempo de resposta (típico)" />
-        <Numero valor={String(data.aulasRealizadas)} rotulo={data.aulasRealizadas === 1 ? 'aula feita pelo link' : 'aulas feitas pelo link'} />
+        <NumeroComRotulo valor={String(data.pedidos7d)} rotulo={data.pedidos7d === 1 ? 'pedido nos últimos 7 dias' : 'pedidos nos últimos 7 dias'} />
+        <NumeroComRotulo valor={String(data.pendentes)} rotulo="aguardando sua resposta" destaque={data.pendentes > 0} />
+        <NumeroComRotulo valor={rotuloTempo(medianaConfiavel(data))} rotulo="seu tempo de resposta (típico)" />
+        <NumeroComRotulo valor={String(data.aulasRealizadas)} rotulo={data.aulasRealizadas === 1 ? 'aula feita pelo link' : 'aulas feitas pelo link'} />
       </div>
       {data.pendentes > 0 && (
         <Link to="/agenda?pedidos=1" className="mt-2 flex min-h-11 items-center text-sm font-medium text-brand-hover underline">
@@ -72,29 +67,47 @@ function ResumoDaPagina() {
 }
 
 /**
- * Cartão da Agenda com o link da página pública para divulgar (aparece só com a página ligada). Com a página desligada e os horários já definidos,
- * mostra só um convite discreto para ligá-la.
+ * Cartão da Agenda com o link da página pública (só com a página ligada). Fechado é uma linha: nome, um resumo curto e "Copiar". Aberto mostra
+ * o endereço, o WhatsApp, os números e os ajustes: o link se divulga de vez em quando, a agenda se consulta toda hora, então a agenda vem primeiro.
+ * Com a página desligada e os horários já definidos, mostra só um convite discreto para ligá-la.
  */
 export function LinkDaAgendaCard() {
   const { data: config } = useProfessionalConfig()
+  const { data: resumo } = useResumoAgendaPublica(!!config?.agenda_publica_ativa)
+  const [aberto, setAberto] = useState(false)
   if (!config) return null
   const slug = config.agenda_publica_slug
   if (config.agenda_publica_ativa && slug) {
     const link = linkDaAgendaPublica(slug)
     return (
-      <section className="mb-4 space-y-2 rounded-2xl bg-white p-3 shadow-sm" aria-label="Link da sua agenda">
-        <div className="flex items-start gap-2">
-          <Link2 size={18} className="mt-0.5 shrink-0 text-brand-hover" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Seu link de agenda</p>
-            <p className="break-all text-xs text-slate-600">{link}</p>
-          </div>
-          <Link to="/configuracoes?secao=pagina" className="flex min-h-11 shrink-0 items-center text-xs font-medium text-slate-700 underline">
-            Ajustes
-          </Link>
+      <section className="mb-4 rounded-2xl bg-white shadow-sm" aria-label="Link da sua agenda">
+        <div className="flex items-center gap-1 py-1 pl-3 pr-1">
+          <Link2 size={18} className="shrink-0 text-brand-hover" aria-hidden />
+          <button type="button" onClick={() => setAberto((v) => !v)} aria-expanded={aberto} className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center pl-1 text-left">
+            <span className="text-sm font-semibold">Link da agenda</span>
+            <span className="max-w-full truncate text-xs text-slate-600">{linhaDoLink(resumo)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={async () => mostrarInfoGlobal((await copiar(link)) ? 'Link copiado.' : 'Não consegui copiar. Selecione o link e copie.')}
+            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+          >
+            <Copy size={16} aria-hidden /> Copiar
+          </button>
+          <button type="button" onClick={() => setAberto((v) => !v)} aria-label={aberto ? 'Recolher detalhes do link' : 'Ver detalhes do link'} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-600 active:bg-slate-100">
+            <ChevronDown size={18} className={aberto ? 'rotate-180' : ''} aria-hidden />
+          </button>
         </div>
-        <BotoesDoLink link={link} />
-        <ResumoDaPagina />
+        {aberto && (
+          <div className="space-y-2 border-t border-slate-100 p-3">
+            <p className="break-all text-xs text-slate-700">{link}</p>
+            <BotoesDoLink link={link} semCopiar />
+            <ResumoDaPagina />
+            <Link to="/configuracoes?secao=pagina" className="flex min-h-11 items-center text-sm font-medium text-slate-700 underline">
+              Ajustes da página
+            </Link>
+          </div>
+        )}
       </section>
     )
   }
