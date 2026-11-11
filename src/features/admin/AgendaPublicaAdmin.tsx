@@ -1,16 +1,8 @@
 import { ListaSkeleton } from '@/components/Skeleton'
+import { NumeroComRotulo } from '@/components/NumeroComRotulo'
 import { mapearErroSupabase } from '@/lib/erros'
 import { rotuloTempo, taxaDeAprovacao } from '@/features/agenda/resumoPublica'
 import { useAdminAgendaPublica } from './api'
-
-function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
-  return (
-    <div className="rounded-xl bg-slate-50 px-3 py-2">
-      <p className="text-lg font-bold leading-tight text-slate-900">{valor}</p>
-      <p className="text-xs text-slate-600">{rotulo}</p>
-    </div>
-  )
-}
 
 /** Uso da página pública da agenda: só totais (quantos personais, quantos pedidos, aulas realizadas). Nada de visitante ou aluno. */
 export function AgendaPublicaAdmin() {
@@ -26,12 +18,12 @@ export function AgendaPublicaAdmin() {
       {error && <p className="text-sm text-red-600">{mapearErroSupabase(error)}</p>}
       {data && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Numero valor={String(data.personaisComPagina)} rotulo="personais com a página ligada" />
-          <Numero valor={String(data.personaisComPedidos30d)} rotulo="receberam pedido em 30 dias" />
-          <Numero valor={`${data.pedidos7d} / ${data.pedidos30d}`} rotulo="pedidos em 7 / 30 dias" />
-          <Numero valor={taxa === null ? '–' : `${taxa}%`} rotulo={`pedidos respondidos que viraram aula (${data.aprovados30d} de ${data.respondidos30d})`} />
-          <Numero valor={rotuloTempo(data.medianaRespostaMin)} rotulo="tempo típico de resposta" />
-          <Numero valor={String(data.aulasRealizadas)} rotulo="aulas realizadas vindas do link" />
+          <NumeroComRotulo valor={String(data.personaisComPagina)} rotulo="personais com a página ligada" />
+          <NumeroComRotulo valor={String(data.personaisComPedidos30d)} rotulo="receberam pedido em 30 dias" />
+          <NumeroComRotulo valor={`${data.pedidos7d} / ${data.pedidos30d}`} rotulo="pedidos em 7 / 30 dias" />
+          <NumeroComRotulo valor={taxa === null ? '–' : `${taxa}%`} rotulo={`pedidos respondidos que viraram aula (${data.aprovados30d} de ${data.respondidos30d})`} />
+          <NumeroComRotulo valor={rotuloTempo(data.medianaRespostaMin)} rotulo="tempo típico de resposta" />
+          <NumeroComRotulo valor={String(data.aulasRealizadas)} rotulo="aulas realizadas vindas do link" />
         </div>
       )}
     </section>

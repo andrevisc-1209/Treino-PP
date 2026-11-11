@@ -1648,7 +1648,7 @@ Só front; sem migration e sem deploy. Origem: relatório de navegação do Clau
 - ✅ **Canais (/atualizacao_fluxoapp):** correção de número, sem funcionalidade nova: FAQ, onboarding, landing, Política, Termos e Admin não se aplicam.
 - Próximas PRs do plano: 2) Hoje "Para registrar" com "Dei a aula / Faltou"; 3) Agenda com o cartão do link em uma linha; 4) Ficha (5 abas mantidas, Resumo reordenado, Cobrança + Financeiro num cartão); 5) página pública com perfil; 6) alvos de 44 px e texto mínimo; 7) "aulas" no lugar de "treinos" no briefing e na landing, `/treinos` redireciona, rolagem por aba; 8) medir a taxa de registro e testar com 5 personais.
 
-### 155. Hoje: "Para registrar" com um toque (PR 2 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+### 155. Hoje: "Para registrar" com um toque (PR 2 da auditoria de UX de 11/11/2026) — ✅ Mergeada (#279)
 
 Só front; sem migration e sem deploy. Origem: relatório do Chrome (4 de 6 aulas de hoje sem registro, todas com "Começar" verde) + a cadeia "aula não registrada → Financeiro R$ 0,00".
 
@@ -1657,3 +1657,13 @@ Só front; sem migration e sem deploy. Origem: relatório do Chrome (4 de 6 aula
 - ✅ **Agenda (Dia e Semana):** aula passada sem registro ganha o selo "Atrasada", igual a Hoje.
 - ✅ **Canais (/atualizacao_fluxoapp):** FAQ: artigo novo "Registrar uma aula que já aconteceu"; onboarding, landing, Política, Termos e Admin: não se aplicam (nenhum dado novo).
 - ⏳ Medir a taxa de registro (aulas registradas ÷ aulas já passadas) é a PR 8 do plano.
+
+### 156. Agenda: topo enxuto, agenda primeiro (PR 3 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+
+Só front; sem migration e sem deploy. Origem: o cartão do link (URL, 2 botões e 4 números) ocupava quase metade da primeira tela antes da primeira aula.
+
+- ✅ **Cartão do link em uma linha:** "Link da agenda", um resumo curto ("3 pedidos nos últimos 7 dias" ou "Pronto para divulgar") e **Copiar**. Tocar abre o endereço, o WhatsApp, os números e "Ajustes da página".
+- ✅ **"Tempo de resposta" só com amostra** (pelo menos 3 entre pedidos da semana e aprovados do mês; antes, 1 pedido mostrava "1 min").
+- ✅ **Uma faixa só para pedidos e espera:** "2 pedidos de aula para responder · 3 pessoas na lista de espera" (vermelha se há pedido parado há mais de 24 h). Substitui a faixa de pedidos e o link "Lista de espera".
+- ✅ `NumeroComRotulo` compartilhado (cartão do link e painel admin; texto do rótulo em `slate-700`).
+- ✅ **Canais (/atualizacao_fluxoapp):** FAQ do artigo da página pública atualizado; onboarding, landing, Política, Termos e Admin: não se aplica.

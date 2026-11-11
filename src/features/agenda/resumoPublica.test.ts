@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizarResumo, normalizarResumoAdmin, rotuloTempo, semMovimento, taxaDeAprovacao } from './resumoPublica'
+import { linhaDoLink, medianaConfiavel, normalizarResumo, normalizarResumoAdmin, rotuloTempo, semMovimento, taxaDeAprovacao } from './resumoPublica'
 
 describe('resumo da página pública', () => {
   it('normaliza o JSON do banco (ausente vira 0; mediana ausente vira nulo)', () => {
@@ -33,5 +33,19 @@ describe('resumo do admin', () => {
   it('taxa de aprovação', () => {
     expect(taxaDeAprovacao(6, 10)).toBe(60)
     expect(taxaDeAprovacao(0, 0)).toBeNull()
+  })
+})
+
+describe('cartão do link', () => {
+  it('o tempo de resposta só aparece com amostra mínima', () => {
+    expect(medianaConfiavel({ medianaRespostaMin: 1, pedidos7d: 1, aprovados30d: 0 })).toBeNull()
+    expect(medianaConfiavel({ medianaRespostaMin: 20, pedidos7d: 2, aprovados30d: 1 })).toBe(20)
+    expect(medianaConfiavel({ medianaRespostaMin: null, pedidos7d: 5, aprovados30d: 5 })).toBeNull()
+  })
+  it('linha do cartão fechado', () => {
+    expect(linhaDoLink(undefined)).toBe('Pronto para divulgar')
+    expect(linhaDoLink(normalizarResumo({}))).toBe('Pronto para divulgar')
+    expect(linhaDoLink(normalizarResumo({ pedidos_7d: 1 }))).toBe('1 pedido nos últimos 7 dias')
+    expect(linhaDoLink(normalizarResumo({ pedidos_7d: 4 }))).toBe('4 pedidos nos últimos 7 dias')
   })
 })

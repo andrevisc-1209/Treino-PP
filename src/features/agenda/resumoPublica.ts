@@ -66,3 +66,17 @@ export function normalizarResumoAdmin(raw: unknown): ResumoAdminAgendaPublica {
 
 /** Parte dos pedidos respondidos que virou aula, em %; null se ninguém foi respondido ainda. */
 export const taxaDeAprovacao = (aprovados: number, respondidos: number): number | null => (respondidos > 0 ? Math.round((aprovados / respondidos) * 100) : null)
+
+/** Pedidos mínimos para o "tempo de resposta" querer dizer alguma coisa: com 1 pedido, "1 min" é ruído, não indicador. */
+export const AMOSTRA_MINIMA_RESPOSTA = 3
+
+/** A mediana só aparece com amostra suficiente (pedidos recentes + aprovados); senão, null e a tela mostra "–". */
+export function medianaConfiavel(r: Pick<ResumoAgendaPublica, 'medianaRespostaMin' | 'pedidos7d' | 'aprovados30d'>): number | null {
+  return r.pedidos7d + r.aprovados30d >= AMOSTRA_MINIMA_RESPOSTA ? r.medianaRespostaMin : null
+}
+
+/** Uma linha para o cartão do link fechado: "3 pedidos nos últimos 7 dias" ou o convite a divulgar. */
+export function linhaDoLink(r: ResumoAgendaPublica | undefined): string {
+  if (!r || semMovimento(r)) return 'Pronto para divulgar'
+  return `${r.pedidos7d} ${r.pedidos7d === 1 ? 'pedido' : 'pedidos'} nos últimos 7 dias`
+}
