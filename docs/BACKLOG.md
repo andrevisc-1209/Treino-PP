@@ -1637,7 +1637,7 @@ Só tela; sem migration e sem deploy.
 - ✅ O link sublinhado "Minha disponibilidade" (embaixo do título) virou um **botão "Horários"** com ícone de calendário e relógio, 44 px, ao lado do sino e da engrenagem: é o mesmo grupo de ações do topo, fácil de achar com o polegar e sem competir com o título.
 - ✅ **Canais:** FAQ do artigo "Definir seus horários de atendimento" atualizado para o nome novo; landing, onboarding, Política e Termos: não se aplica.
 
-### 154. Financeiro: números que batem entre Hoje, sino e Financeiro (PR 1 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+### 154. Financeiro: números que batem entre Hoje, sino e Financeiro (PR 1 da auditoria de UX de 11/11/2026) — ✅ Mergeada (#278)
 
 Só front; sem migration e sem deploy. Origem: relatório de navegação do Claude no Chrome + leitura do código, que confirmou as causas abaixo.
 
@@ -1647,3 +1647,13 @@ Só front; sem migration e sem deploy. Origem: relatório de navegação do Clau
 - ⚠️ Efeito colateral: o sino passa a carregar, em qualquer tela, as cobranças, faturas e participações que Hoje já carrega (o cache do TanStack divide a consulta). Se pesar em contas grandes, trocar por uma função no banco.
 - ✅ **Canais (/atualizacao_fluxoapp):** correção de número, sem funcionalidade nova: FAQ, onboarding, landing, Política, Termos e Admin não se aplicam.
 - Próximas PRs do plano: 2) Hoje "Para registrar" com "Dei a aula / Faltou"; 3) Agenda com o cartão do link em uma linha; 4) Ficha (5 abas mantidas, Resumo reordenado, Cobrança + Financeiro num cartão); 5) página pública com perfil; 6) alvos de 44 px e texto mínimo; 7) "aulas" no lugar de "treinos" no briefing e na landing, `/treinos` redireciona, rolagem por aba; 8) medir a taxa de registro e testar com 5 personais.
+
+### 155. Hoje: "Para registrar" com um toque (PR 2 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+
+Só front; sem migration e sem deploy. Origem: relatório do Chrome (4 de 6 aulas de hoje sem registro, todas com "Começar" verde) + a cadeia "aula não registrada → Financeiro R$ 0,00".
+
+- ✅ **Aula que passou sem registro deixou de ser "próxima".** `organizarAulasDoDia` devolve `paraRegistrar` (da mais antiga para a mais nova); o destaque e "Próximas aulas" só têm aulas por vir ou em andamento. Sem nenhuma por vir, não há destaque e a tela diz "Não há mais aulas por vir hoje. Registre as que já passaram."
+- ✅ **Bloco "Para registrar (N)"** em Hoje, abaixo das próximas: por aula, horário, aluno e local, com **"Dei a aula"** (presença, respeitando a trava de pacote esgotado) e **"Faltou"** (segue "Cobrar falta por padrão" das Configurações e diz se cobrou), ambos com **"Desfazer"** (`useDesfazerRegistro`: volta o participante a "previsto" e a aula a "agendada"). Aula em grupo ou com participante já registrado mostra "Registrar" e abre a folha de ações. Mostra 3 e "Ver as outras N".
+- ✅ **Agenda (Dia e Semana):** aula passada sem registro ganha o selo "Atrasada", igual a Hoje.
+- ✅ **Canais (/atualizacao_fluxoapp):** FAQ: artigo novo "Registrar uma aula que já aconteceu"; onboarding, landing, Política, Termos e Admin: não se aplicam (nenhum dado novo).
+- ⏳ Medir a taxa de registro (aulas registradas ÷ aulas já passadas) é a PR 8 do plano.

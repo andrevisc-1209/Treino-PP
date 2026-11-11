@@ -8,7 +8,8 @@ import { AulaAcoesSheet } from './AulaAcoesSheet'
 import { ListaSkeleton } from '@/components/Skeleton'
 import { AulaCard } from './AulaCard'
 import { ProximaAulaCard } from './ProximaAulaCard'
-import { estaAtrasada, organizarAulasDoDia } from './proximaAula'
+import { organizarAulasDoDia } from './proximaAula'
+import { ParaRegistrar } from './ParaRegistrar'
 import { decidirComecar } from './comecarAula'
 import { NovaAulaAvulsaSheet } from './NovaAulaAvulsaSheet'
 import { useAulasDoDia, useGerarAulasDiarias, type Aula } from './api'
@@ -91,7 +92,9 @@ export function HojePage() {
 
       {organizadas && !organizadas.destaque && aulas && aulas.length > 0 && (
         <p className="mb-4 rounded-2xl bg-brand-soft p-4 text-sm font-medium text-brand-hover">
-          Sem mais aulas por fazer hoje: {concluidas} {concluidas === 1 ? 'concluída' : 'concluídas'}.
+          {organizadas.paraRegistrar.length > 0
+            ? 'Não há mais aulas por vir hoje. Registre as que já passaram.'
+            : `Sem mais aulas por fazer hoje: ${concluidas} ${concluidas === 1 ? 'concluída' : 'concluídas'}.`}
         </p>
       )}
 
@@ -107,11 +110,13 @@ export function HojePage() {
           </div>
           <div className="space-y-2">
             {[...organizadas.seguintes, ...organizadas.encerradas].map((a) => (
-              <AulaCard key={a.id} aula={a} localResumido atrasada={estaAtrasada(a, agora)} onClick={() => abrirMenu(a)} onComecar={() => comecar(a)} />
+              <AulaCard key={a.id} aula={a} localResumido onClick={() => abrirMenu(a)} onComecar={() => comecar(a)} />
             ))}
           </div>
         </section>
       )}
+
+      <ParaRegistrar aulas={organizadas?.paraRegistrar ?? []} onAbrir={abrirMenu} />
 
       <CiclosParaFecharCard />
       {!emAtivacao && <PixCard />}

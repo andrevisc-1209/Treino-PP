@@ -9,13 +9,15 @@ export interface AulaDoDia {
 export type SituacaoDaAula = 'proxima' | 'em_andamento' | 'atrasada'
 
 export interface AulasDoDiaOrganizadas<T extends AulaDoDia> {
-  /** a aula em foco: a que está rolando, a próxima ou, se só sobraram aulas passadas sem registro, a mais antiga delas */
+  /** a aula em foco: a que está rolando ou a próxima; aulas passadas sem registro nunca viram destaque (ficam em `paraRegistrar`) */
   destaque: T | null
   situacao: SituacaoDaAula | null
   /** outras aulas pendentes que começam no mesmo horário do destaque (aula em dupla/grupo ou alunos em paralelo) */
   outrasNoHorario: number
-  /** demais aulas pendentes (agendadas), por horário, sem o destaque */
+  /** demais aulas por vir (agendadas e ainda não terminadas), por horário, sem o destaque */
   seguintes: T[]
+  /** aulas que já terminaram e continuam sem registro (presença, falta ou cancelamento), da mais antiga para a mais nova */
+  paraRegistrar: T[]
   /** realizadas e canceladas, para consulta no fim da lista */
   encerradas: T[]
 }
@@ -31,20 +33,22 @@ export function situacaoDaAula(a: AulaDoDia, agora: number): SituacaoDaAula {
 }
 
 /**
- * Separa as aulas de hoje para a tela "Hoje": o destaque avança sozinho conforme as aulas são iniciadas, encerradas ou passam do horário.
- * Prefere a aula em andamento ou a próxima; só cai numa atrasada quando não sobrou nenhuma por vir.
+ * Separa as aulas de hoje para a tela "Hoje": o destaque avança sozinho conforme as aulas são iniciadas ou terminam. Aula que já passou
+ * sem registro não é "próxima": vai para `paraRegistrar`, onde o personal registra com um toque (é isso que alimenta a cobrança).
  */
 export function organizarAulasDoDia<T extends AulaDoDia>(aulas: T[], agora: number): AulasDoDiaOrganizadas<T> {
   const porHorario = (a: T, b: T) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
   const pendentes = aulas.filter((a) => a.status === 'agendada').sort(porHorario)
   const encerradas = aulas.filter((a) => a.status !== 'agendada').sort(porHorario)
+  const paraRegistrar = pendentes.filter((a) => estaAtrasada(a, agora))
+  const porVir = pendentes.filter((a) => !estaAtrasada(a, agora))
 
-  const destaque = pendentes.find((a) => !estaAtrasada(a, agora)) ?? pendentes[0] ?? null
-  if (!destaque) return { destaque: null, situacao: null, outrasNoHorario: 0, seguintes: [], encerradas }
+  const destaque = porVir[0] ?? null
+  if (!destaque) return { destaque: null, situacao: null, outrasNoHorario: 0, seguintes: [], paraRegistrar, encerradas }
 
-  const mesmoHorario = pendentes.filter((a) => a.id !== destaque.id && a.starts_at === destaque.starts_at)
-  const seguintes = pendentes.filter((a) => a.id !== destaque.id)
-  return { destaque, situacao: situacaoDaAula(destaque, agora), outrasNoHorario: mesmoHorario.length, seguintes, encerradas }
+  const mesmoHorario = porVir.filter((a) => a.id !== destaque.id && a.starts_at === destaque.starts_at)
+  const seguintes = porVir.filter((a) => a.id !== destaque.id)
+  return { destaque, situacao: situacaoDaAula(destaque, agora), outrasNoHorario: mesmoHorario.length, seguintes, paraRegistrar, encerradas }
 }
 
 /**

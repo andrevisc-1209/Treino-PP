@@ -127,6 +127,19 @@ export const ARTIGOS: Artigo[] = [
     sinonimos: ['bem-estar', 'questionario', 'antes do treino'],
   },
   {
+    id: 'registrar-aula',
+    categoria: 'agenda',
+    titulo: 'Registrar uma aula que já aconteceu',
+    passos: [
+      'Na tela Hoje, o bloco "Para registrar" lista as aulas que já passaram e ainda não foram registradas. É o registro que coloca a aula na cobrança e na evolução do aluno.',
+      'Toque em "Dei a aula" para registrar a presença, ou em "Faltou" para registrar a falta. A falta segue o padrão que você definiu em Configurações ("Cobrar falta por padrão"), e o aviso mostra se ela foi cobrada.',
+      'Errou? Toque em "Desfazer" no aviso que aparece por alguns segundos. A aula volta a ficar para registrar.',
+      'Aula em grupo, ou se você quiser remarcar ou cancelar: toque no nome da aula para abrir as opções.',
+      'Se o aluno tem pacote e as aulas acabaram, o app pede para renovar o pacote antes de registrar.',
+    ],
+    sinonimos: ['presenca', 'check-in', 'dei a aula', 'falta', 'faltou', 'atrasada', 'registrar', 'dar baixa'],
+  },
+  {
     id: 'marcar-aula',
     categoria: 'agenda',
     titulo: 'Marcar uma aula',
