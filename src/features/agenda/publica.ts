@@ -1,6 +1,7 @@
 /** Página pública de pedido de aula: agrupamento das vagas e leitura das respostas da função (puro, sem I/O). */
 import { normalizarTelefone } from '../../../supabase/functions/_shared/agendaPublica'
-import { formatarDataCompleta, nomeDiaCurto } from '@/lib/datas'
+import { formatarDataCompleta, nomeDiaCurto, somarDias } from '@/lib/datas'
+import { formatarBRL } from '@/lib/moeda'
 import type { Vaga } from './vagas'
 
 export type DiaComVagas = { dataISO: string; vagas: Vaga[] }
@@ -12,7 +13,21 @@ export function agruparPorDia(vagas: Vaga[]): DiaComVagas[] {
   return [...mapa.entries()].map(([dataISO, lista]) => ({ dataISO, vagas: lista }))
 }
 
-export type RespostaConsulta = { estado: 'ok'; nome_personal: string; cidade: string | null; apresentacao: string | null; duracao_min: number; vagas: Vaga[] } | { estado: 'indisponivel' }
+export type PerfilDaPagina = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null }
+export const PERFIL_VAZIO: PerfilDaPagina = { cref: null, modalidades: null, locais: null, preco_aula: null }
+
+export type RespostaConsulta =
+  | { estado: 'ok'; nome_personal: string; cidade: string | null; apresentacao: string | null; perfil: PerfilDaPagina; antecedencia_horas: number | null; duracao_min: number; vagas: Vaga[] }
+  | { estado: 'indisponivel' }
+
+const textoCurto = (t: unknown, max: number): string | null => (typeof t === 'string' && t.trim() ? t.trim().slice(0, max) : null)
+
+/** O perfil que veio da função, só com o formato conhecido (qualquer outra coisa vira campo vazio, que a página não mostra). */
+export function lerPerfil(bruto: unknown): PerfilDaPagina {
+  const o = (bruto ?? {}) as Record<string, unknown>
+  const preco = Number(o.preco_aula)
+  return { cref: textoCurto(o.cref, 30), modalidades: textoCurto(o.modalidades, 80), locais: textoCurto(o.locais, 100), preco_aula: Number.isFinite(preco) && preco >= 1 && preco <= 5000 ? preco : null }
+}
 
 /** Aceita só o formato conhecido; qualquer outra coisa vira "indisponível" (a página nunca quebra com resposta estranha). */
 export function lerConsulta(bruto: unknown): RespostaConsulta {
@@ -21,7 +36,7 @@ export function lerConsulta(bruto: unknown): RespostaConsulta {
   const vagas = (o.vagas as Record<string, unknown>[])
     .filter((v) => typeof v?.dataISO === 'string' && typeof v?.inicio === 'string' && typeof v?.fim === 'string')
     .map((v) => ({ dataISO: String(v.dataISO), inicio: String(v.inicio), fim: String(v.fim) }))
-  return { estado: 'ok', nome_personal: typeof o.nome_personal === 'string' ? o.nome_personal : '', cidade: typeof o.cidade === 'string' ? o.cidade : null, apresentacao: typeof o.apresentacao === 'string' && o.apresentacao.trim() ? o.apresentacao.trim().slice(0, 160) : null, duracao_min: Number(o.duracao_min) || 60, vagas }
+  return { estado: 'ok', nome_personal: typeof o.nome_personal === 'string' ? o.nome_personal : '', cidade: typeof o.cidade === 'string' ? o.cidade : null, apresentacao: typeof o.apresentacao === 'string' && o.apresentacao.trim() ? o.apresentacao.trim().slice(0, 160) : null, perfil: lerPerfil(o.perfil), antecedencia_horas: Number(o.antecedencia_horas) > 0 ? Number(o.antecedencia_horas) : null, duracao_min: Number(o.duracao_min) || 60, vagas }
 }
 
 /** Link da página pública do personal. */
@@ -44,9 +59,34 @@ export function agruparPorTurno(vagas: Vaga[]): { turno: Turno; rotulo: string; 
   return ordem.map((turno) => ({ turno, rotulo: ROTULO_TURNO[turno], vagas: ordenadas.filter((v) => turnoDaHora(v.inicio) === turno) })).filter((g) => g.vagas.length > 0)
 }
 
-/** Dados do cartão de um dia na faixa: "QUI", "29" e "2 vagas". */
-export function cartaoDoDia(d: DiaComVagas): { sigla: string; numero: string; vagas: string } {
-  return { sigla: nomeDiaCurto(d.dataISO).slice(0, 3).toUpperCase(), numero: String(Number(d.dataISO.slice(8, 10))), vagas: `${d.vagas.length} ${d.vagas.length === 1 ? 'vaga' : 'vagas'}` }
+const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+/** "nov" para 2026-11-12. */
+export const rotuloDoMes = (dataISO: string): string => MESES_CURTOS[Number(dataISO.slice(5, 7)) - 1] ?? ''
+
+/**
+ * Dados do cartão de um dia na faixa: "HOJE", "AMANHÃ" ou "QUI", o número e "2 vagas". O mês aparece no primeiro dia da faixa e na virada
+ * (quando o dia anterior é de outro mês), para o "30" seguido de "1" não confundir.
+ */
+export function cartaoDoDia(d: DiaComVagas, hojeISO?: string, diaAnteriorISO?: string): { sigla: string; numero: string; vagas: string; mes: string | null } {
+  const amanha = hojeISO ? somarDias(hojeISO, 1) : null
+  const sigla = hojeISO && d.dataISO === hojeISO ? 'HOJE' : amanha && d.dataISO === amanha ? 'AMANHÃ' : nomeDiaCurto(d.dataISO).slice(0, 3).toUpperCase()
+  const viraMes = !diaAnteriorISO || diaAnteriorISO.slice(5, 7) !== d.dataISO.slice(5, 7)
+  return { sigla, numero: String(Number(d.dataISO.slice(8, 10))), vagas: `${d.vagas.length} ${d.vagas.length === 1 ? 'vaga' : 'vagas'}`, mes: viraMes ? rotuloDoMes(d.dataISO) : null }
+}
+
+/** "a partir de R$ 120,00 por aula" (o valor é opcional e escolhido pelo personal). */
+export const textoDoPreco = (preco: number | null): string | null => (preco === null ? null : `a partir de ${formatarBRL(preco)} por aula`)
+
+/** Linhas do perfil que têm conteúdo, na ordem em que aparecem na página. Sem nada preenchido, lista vazia. */
+export function linhasDoPerfil(p: PerfilDaPagina): { chave: 'cref' | 'modalidades' | 'locais' | 'preco'; texto: string }[] {
+  const preco = textoDoPreco(p.preco_aula)
+  return [
+    p.cref ? { chave: 'cref' as const, texto: `CREF ${p.cref.replace(/^cref\s*/i, '')}` } : null,
+    p.modalidades ? { chave: 'modalidades' as const, texto: p.modalidades } : null,
+    p.locais ? { chave: 'locais' as const, texto: p.locais } : null,
+    preco ? { chave: 'preco' as const, texto: preco } : null,
+  ].filter((x): x is NonNullable<typeof x> => x !== null)
 }
 
 /** Título do dia escolhido: "Sexta, 30 de outubro". */

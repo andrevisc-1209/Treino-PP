@@ -114,6 +114,24 @@ export function validarPedido(corpo: Record<string, unknown>): { ok: true; pedid
   return { ok: true, pedido: { nome, telefone, mensagem: mensagem || null, dataISO, hora } }
 }
 
+export type PerfilPublico = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null }
+
+const textoOuNulo = (t: unknown, max: number): string | null => {
+  const v = typeof t === 'string' ? limpa(t).slice(0, max) : ''
+  return v || null
+}
+
+/** O que o personal escolheu mostrar na página: texto aparado e limitado, preço só entre R$ 1 e R$ 5.000. Vazio vira nulo (a página não mostra). */
+export function perfilPublico(cfg: Record<string, unknown>): PerfilPublico {
+  const preco = Number(cfg.pagina_preco_aula)
+  return {
+    cref: textoOuNulo(cfg.pagina_cref, 30),
+    modalidades: textoOuNulo(cfg.pagina_modalidades, 80),
+    locais: textoOuNulo(cfg.pagina_locais, 100),
+    preco_aula: Number.isFinite(preco) && preco >= 1 && preco <= 5000 ? Math.round(preco * 100) / 100 : null,
+  }
+}
+
 export const TURNOS_ESPERA = ['manha', 'tarde', 'noite', 'qualquer'] as const
 export type TurnoEspera = (typeof TURNOS_ESPERA)[number]
 export type EsperaValida = { nome: string; telefone: string; dataISO: string; turno: TurnoEspera }

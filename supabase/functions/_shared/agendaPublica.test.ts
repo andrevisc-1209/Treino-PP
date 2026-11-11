@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
+import { calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, perfilPublico, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
 
 describe('horário de São Paulo', () => {
   it('data e hora de um instante e o caminho de volta', () => {
@@ -88,5 +88,21 @@ describe('lista de espera: validação', () => {
     expect(validarEspera({ ...ok, data: '30/10/2026' }, '2026-10-30').ok).toBe(false)
     expect(validarEspera({ ...ok, turno: 'madrugada' }, '2026-10-30').ok).toBe(false)
     expect(validarEspera({ ...ok, turno: 'qualquer' }, '2026-10-30').ok).toBe(true)
+  })
+})
+
+describe('perfil público da página', () => {
+  it('apara, limita e transforma vazio em nulo', () => {
+    expect(perfilPublico({ pagina_cref: '  012345-G/RJ ', pagina_modalidades: 'Musculação · Natação', pagina_locais: '   ', pagina_preco_aula: '120.5' })).toEqual({
+      cref: '012345-G/RJ', modalidades: 'Musculação · Natação', locais: null, preco_aula: 120.5,
+    })
+    expect(perfilPublico({ pagina_cref: 'x'.repeat(50) }).cref).toHaveLength(30)
+  })
+  it('preço só entre 1 e 5.000; fora disso ou sem número, nulo', () => {
+    for (const ruim of [0, 0.5, 5001, -10, 'abc', null, undefined]) expect(perfilPublico({ pagina_preco_aula: ruim }).preco_aula).toBeNull()
+    expect(perfilPublico({ pagina_preco_aula: 5000 }).preco_aula).toBe(5000)
+  })
+  it('sem nada preenchido, tudo nulo', () => {
+    expect(perfilPublico({})).toEqual({ cref: null, modalidades: null, locais: null, preco_aula: null })
   })
 })

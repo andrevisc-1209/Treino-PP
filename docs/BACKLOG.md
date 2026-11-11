@@ -1668,7 +1668,7 @@ Só front; sem migration e sem deploy. Origem: o cartão do link (URL, 2 botões
 - ✅ `NumeroComRotulo` compartilhado (cartão do link e painel admin; texto do rótulo em `slate-700`).
 - ✅ **Canais (/atualizacao_fluxoapp):** FAQ do artigo da página pública atualizado; onboarding, landing, Política, Termos e Admin: não se aplica.
 
-### 157. Ficha do aluno: Resumo começa pela situação (PR 4 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+### 157. Ficha do aluno: Resumo começa pela situação (PR 4 da auditoria de UX de 11/11/2026) — ✅ Mergeada (#281)
 
 Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): Resumo · Treinos · Histórico · Performance · Evolução.
 
@@ -1678,3 +1678,15 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Nova ordem do Resumo:** Situação · Horários fixos · Cobrança e faturas · Avaliações · Relatório mensal e Contrato · Dados cadastrais (recolhido) · Consentimento · "Mais opções" (recolhido, com Arquivar aluno).
 - ✅ **Canais (/atualizacao_fluxoapp):** FAQ do artigo "Arquivar, apagar e restaurar um aluno" atualizado (Mais opções); onboarding, landing, Política, Termos e Admin: não se aplica.
 - ⏳ Documentos (relatório e contrato) seguem como cartões soltos abaixo das avaliações; recolher num acordeão exige tirar a moldura própria de cada um.
+
+### 158. Página pública com perfil, "Amanhã" e mês (PR 5 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+
+**Rodar a migration `20261095000000_agenda_publica_perfil.sql` no SQL Editor ANTES do merge** e, depois do merge, `supabase functions deploy agenda-publica` (a função passa a ler as colunas novas; sem a migration a página ficaria "indisponível"). Registra a **Política de Privacidade 1.15**.
+
+- ✅ **Perfil opcional na página** (`professional_config.pagina_cref`, `pagina_modalidades`, `pagina_locais`, `pagina_preco_aula`): quem chega pelo link vê CREF, modalidades, onde atende e "a partir de R$ X por aula", só o que o personal preencher, em Configurações → Página pública → "Perfil na página", com "Salvar perfil". Tudo digitado pelo próprio personal; nada de dado de aluno. Preço entre R$ 1 e R$ 5.000. A função devolve o perfil já aparado (`perfilPublico`, com teste).
+- ✅ **Carrossel de dias:** "HOJE" e "AMANHÃ" no lugar de "QUI"/"SEX", e o mês ("NOV", "DEZ") no primeiro dia e na virada, para "30" seguido de "1" não confundir.
+- ✅ **"Pedidos com pelo menos 3 h de antecedência"** sob os horários (a função devolve `antecedencia_horas`).
+- ✅ **Menos repetição de "confirma":** saíram o subtítulo e a nota sob os horários; ficam o cartão verde ("Você escolhe. X confirma.") e "Enviar o pedido não confirma a aula." sob o botão.
+- ✅ **"Avisar se abrir uma vaga" some enquanto há horário escolhido**, para não competir com "Enviar pedido de aula".
+- ✅ **Canais (/atualizacao_fluxoapp):** Política **1.15** (o Personal pode publicar, por sua conta, informações profissionais próprias na página); FAQ do artigo da página pública; onboarding, landing e Termos: não se aplica; Admin: não se aplica. **O texto da Política precisa de revisão de advogado**, como as versões 1.11 a 1.14.
+- ⏳ **Foto** fica de fora: exige Storage (bucket, políticas, limites e exclusão com a conta) e outra revisão de Política. Hoje o avatar é a inicial do nome.

@@ -61,6 +61,11 @@ export type ProfessionalConfig = {
   agenda_publica_slug?: string | null
   /** migration 20261092: texto curto mostrado na página pública */
   apresentacao?: string | null
+  /** migration 20261095: perfil opcional da página pública */
+  pagina_cref?: string | null
+  pagina_modalidades?: string | null
+  pagina_locais?: string | null
+  pagina_preco_aula?: number | null
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
