@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PaginaSkeleton } from '@/components/Skeleton'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Pencil, Play, Scale, TriangleAlert } from 'lucide-react'
 import { cn, idade } from '@/lib/utils'
 import { Button, Field, Input } from '@/components/ui'
+import { Acordeao } from '@/components/Acordeao'
+import { StatusDoAluno } from './StatusDoAluno'
 import { PlanosTab } from '@/features/planos/PlanosTab'
 import { HorariosFixosBlock } from '@/features/agenda/HorariosFixosBlock'
 import { usePacotesAtivos } from '@/features/pacotes/api'
@@ -202,6 +204,13 @@ export function AlunoFichaPage() {
   const tabDaUrl = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
+  const [dadosAbertos, setDadosAbertos] = useState(false)
+  const [maisAberto, setMaisAberto] = useState(false)
+  const faixaDeAbas = useRef<HTMLDivElement>(null)
+  // com 5 abas a faixa rola na horizontal: a aba escolhida (inclusive a vinda da URL) fica à vista
+  useEffect(() => {
+    faixaDeAbas.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+  }, [tab])
 
   if (!id) return <Navigate to="/alunos" replace />
   if (isLoading) return <PaginaSkeleton />
@@ -333,14 +342,15 @@ export function AlunoFichaPage() {
         </div>
       </div>
 
-      <div className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+      <div ref={faixaDeAbas} role="group" aria-label="Seções da ficha" className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((t) => (
           <button type="button"
             key={t}
             onClick={() => setTab(t)}
+            aria-pressed={tab === t}
             className={cn(
-              'min-h-9 flex-1 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition',
-              tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
+              'min-h-11 flex-1 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition',
+              tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600',
             )}
           >
             {t}
@@ -350,52 +360,14 @@ export function AlunoFichaPage() {
 
       {tab === 'Resumo' && (
         <div className="space-y-4">
-          <div className="space-y-2 rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="font-semibold">Dados</h2>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              {/* só o que está preenchido: linha com "—" é ruído */}
-              {aluno.birth_date && (
-                <>
-                  <dt className="text-slate-500">Nascimento</dt>
-                  <dd>{formatarDataBR(aluno.birth_date)}</dd>
-                </>
-              )}
-              {aluno.phone && (
-                <>
-                  <dt className="text-slate-500">Telefone</dt>
-                  <dd>{aluno.phone}</dd>
-                </>
-              )}
-              {aluno.email && (
-                <>
-                  <dt className="text-slate-500">E-mail</dt>
-                  <dd className="truncate">{aluno.email}</dd>
-                </>
-              )}
-              {aluno.medications && (
-                <>
-                  <dt className="text-slate-500">Medicamentos</dt>
-                  <dd>{aluno.medications}</dd>
-                </>
-              )}
-              {(aluno.modalidade_foco || aluno.data_prova) && (
-                <>
-                  <dt className="text-slate-500">Objetivo esportivo</dt>
-                  <dd>{[rotuloFoco(aluno.modalidade_foco), rotuloProva(aluno.prova_alvo), aluno.nome_prova?.trim() || null, aluno.data_prova ? formatarDataBR(aluno.data_prova) : null].filter(Boolean).join(' · ') || '—'}</dd>
-                </>
-              )}
-            </dl>
-          </div>
+          <StatusDoAluno alunoId={aluno.id} />
 
           <HorariosFixosBlock alunoId={aluno.id} />
 
-          <CobrancaBlock alunoId={aluno.id} />
-
-          <FinanceiroBlock alunoId={aluno.id} />
-
-          <RelatorioMensalCard aluno={{ id: aluno.id, name: aluno.name }} />
-
-          <ContratoCard aluno={aluno} />
+          <section className="rounded-2xl bg-white p-4 shadow-sm [&>*+*]:mt-4 [&>*+*]:border-t [&>*+*]:border-slate-100 [&>*+*]:pt-4" aria-label="Cobrança do aluno">
+            <CobrancaBlock alunoId={aluno.id} semCartao />
+            <FinanceiroBlock alunoId={aluno.id} semCartao />
+          </section>
 
           <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
@@ -433,6 +405,48 @@ export function AlunoFichaPage() {
             )}
           </div>
 
+          <RelatorioMensalCard aluno={{ id: aluno.id, name: aluno.name }} />
+
+          <ContratoCard aluno={aluno} />
+
+          <Acordeao titulo="Dados cadastrais" aberto={dadosAbertos} onAlternar={() => setDadosAbertos((v) => !v)}>
+          <div className="space-y-2">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {/* só o que está preenchido: linha com "—" é ruído */}
+              {aluno.birth_date && (
+                <>
+                  <dt className="text-slate-500">Nascimento</dt>
+                  <dd>{formatarDataBR(aluno.birth_date)}</dd>
+                </>
+              )}
+              {aluno.phone && (
+                <>
+                  <dt className="text-slate-500">Telefone</dt>
+                  <dd>{aluno.phone}</dd>
+                </>
+              )}
+              {aluno.email && (
+                <>
+                  <dt className="text-slate-500">E-mail</dt>
+                  <dd className="truncate">{aluno.email}</dd>
+                </>
+              )}
+              {aluno.medications && (
+                <>
+                  <dt className="text-slate-500">Medicamentos</dt>
+                  <dd>{aluno.medications}</dd>
+                </>
+              )}
+              {(aluno.modalidade_foco || aluno.data_prova) && (
+                <>
+                  <dt className="text-slate-500">Objetivo esportivo</dt>
+                  <dd>{[rotuloFoco(aluno.modalidade_foco), rotuloProva(aluno.prova_alvo), aluno.nome_prova?.trim() || null, aluno.data_prova ? formatarDataBR(aluno.data_prova) : null].filter(Boolean).join(' · ') || '—'}</dd>
+                </>
+              )}
+            </dl>
+          </div>
+          </Acordeao>
+
           {consentimento && (
             <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
               <p className="text-sm text-slate-600">
@@ -446,12 +460,14 @@ export function AlunoFichaPage() {
           )}
 
           {aluno.active ? (
-            <div className="space-y-1">
-              <Button variant="ghost" className="w-full text-slate-600" onClick={handleArquivar} disabled={arquivar.isPending}>
-                Arquivar aluno
-              </Button>
-              <p className="text-center text-xs text-slate-500">Arquivar guarda todo o histórico. Para apagar, arquive primeiro e mande para a lixeira.</p>
-            </div>
+            <Acordeao titulo="Mais opções" aberto={maisAberto} onAlternar={() => setMaisAberto((v) => !v)}>
+              <div className="space-y-1">
+                <Button variant="ghost" className="w-full text-slate-600" onClick={handleArquivar} disabled={arquivar.isPending}>
+                  Arquivar aluno
+                </Button>
+                <p className="text-center text-xs text-slate-600">Arquivar guarda todo o histórico. Para apagar, arquive primeiro e mande para a lixeira.</p>
+              </div>
+            </Acordeao>
           ) : aluno.apagado_em ? (
             <div className="space-y-2">
               <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">

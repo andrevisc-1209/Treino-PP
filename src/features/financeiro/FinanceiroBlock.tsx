@@ -7,7 +7,10 @@ import { SeloFatura, rotuloModelo } from './rotulos'
 import { statusFinanceiroDoAluno } from './statusAluno'
 import { cn } from '@/lib/utils'
 
-export function FinanceiroBlock({ alunoId }: { alunoId: string }) {
+/** `semCartao`: dentro do cartão único "Cobrança" da ficha; o título vira "Faturas". */
+export function FinanceiroBlock({ alunoId, semCartao }: { alunoId: string; semCartao?: boolean }) {
+  const moldura = semCartao ? 'space-y-3' : 'space-y-3 rounded-2xl bg-white p-4 shadow-sm'
+  const titulo = semCartao ? 'Faturas' : 'Financeiro'
   const { data: cobranca } = useAlunoCobranca(alunoId)
   const { data: faturas } = useFaturasDoAluno(alunoId)
 
@@ -17,8 +20,8 @@ export function FinanceiroBlock({ alunoId }: { alunoId: string }) {
   if (!cobranca?.ativo) {
     if (ultimas.length === 0) return null
     return (
-      <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-        <h2 className="font-semibold">Financeiro</h2>
+      <div className={moldura}>
+        <h2 className="font-semibold">{titulo}</h2>
         <ul className="divide-y divide-slate-100">
           {ultimas.map((f) => (
             <li key={f.id}>
@@ -42,8 +45,8 @@ export function FinanceiroBlock({ alunoId }: { alunoId: string }) {
   const status = statusFinanceiroDoAluno(faturas ?? [], ciclo.fim, hojeSP(), formatarBRL)
 
   return (
-    <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-      <h2 className="font-semibold">Financeiro</h2>
+    <div className={moldura}>
+      <h2 className="font-semibold">{titulo}</h2>
 
       <div
         className={cn(
