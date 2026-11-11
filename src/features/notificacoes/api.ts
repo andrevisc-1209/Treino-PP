@@ -41,10 +41,11 @@ export function useNaoLidas() {
     queryKey: ['notificacoes-nao-lidas'],
     queryFn: async () => {
       // só o tipo de cada uma (leve); o total vem do count exato, caso haja mais do que o limite
-      const { data, count, error } = await supabase.from('notificacoes_professor').select('tipo', { count: 'exact' }).eq('lida', false).limit(500)
+      const { data, count, error } = await supabase.from('notificacoes_professor').select('tipo, aluno_id', { count: 'exact' }).eq('lida', false).limit(500)
       if (error) throw error
       const { acao } = contarNaoLidas((data ?? []).map((r) => r.tipo as TipoNotificacao))
-      return { total: count ?? data?.length ?? 0, acao }
+      const ciclos = (data ?? []).filter((r) => r.tipo === 'ciclo_encerrado').map((r) => (r.aluno_id as string | null) ?? null)
+      return { total: count ?? data?.length ?? 0, acao, ciclos }
     },
   })
 }

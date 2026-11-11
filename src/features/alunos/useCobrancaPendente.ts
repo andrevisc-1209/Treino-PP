@@ -17,3 +17,14 @@ export function useAlunosComCobrancaPendente(): Set<string> {
     return ids
   }, [cobrancas, faturas, participacoes])
 }
+
+/** Alunos cujo ciclo de cobrança já encerrou e ainda espera fatura (a mesma conta do aviso de Hoje); nulo enquanto os dados carregam. */
+export function useAlunosComCicloParaFechar(): Set<string> | null {
+  const { data: cobrancas } = useAlunosComCobranca()
+  const { data: faturas } = useFaturasTodas()
+  const { data: participacoes } = useParticipacoesCobraveisTodas()
+  return useMemo(() => {
+    if (!cobrancas || !faturas || !participacoes) return null
+    return new Set(alunosComCicloParaFechar({ cobrancas, faturas, participacoes, hoje: hojeSP() }))
+  }, [cobrancas, faturas, participacoes])
+}

@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 import { tempoRelativo } from "@/features/execucoes/metricas";
 import { MODALIDADES_CONFIG } from "@/types/modalidades";
 import { agruparNotificacoes } from "./agrupar";
-import { linkEncerrarMes, textoCicloEncerrado } from "./ciclo";
+import { cicloJaResolvido, contagemSemResolvidos, linkEncerrarMes, textoCicloEncerrado } from "./ciclo";
+import { useAlunosComCicloParaFechar } from "@/features/alunos/useCobrancaPendente";
 import { textoAvisoIndicacao } from "@/features/indicacao/indicacao";
 import {
   useMarcarLida,
@@ -32,10 +33,17 @@ function Nota({ execucaoId }: { execucaoId: string }) {
 /** Sino do personal: contagem de não lidas e lista das últimas notificações (treinos concluídos pelos alunos). */
 export function SinoNotificacoes() {
   const navigate = useNavigate();
-  const { data: contagem } = useNaoLidas();
+  const { data: contagemBruta } = useNaoLidas();
+  // "Ciclo encerrado" que já foi resolvido (fatura gerada) não pode contar como pendente: o sino bate com Hoje e Financeiro
+  const ciclosPendentes = useAlunosComCicloParaFechar();
+  const contagem = useMemo(
+    () => (contagemBruta ? contagemSemResolvidos({ total: contagemBruta.total, acao: contagemBruta.acao }, contagemBruta.ciclos, ciclosPendentes) : undefined),
+    [contagemBruta, ciclosPendentes],
+  );
   const naoLidas = contagem?.total ?? 0;
   const pedemAcao = (contagem?.acao ?? 0) > 0;
-  const { data: lista } = useNotificacoes();
+  const { data: listaBruta } = useNotificacoes();
+  const lista = useMemo(() => listaBruta?.map((n) => (cicloJaResolvido(n, ciclosPendentes) ? { ...n, lida: true } : n)), [listaBruta, ciclosPendentes]);
   const marcar = useMarcarLida();
   const marcarTodas = useMarcarTodasLidas();
   const marcarTreinos = useMarcarLidasPorTipo();

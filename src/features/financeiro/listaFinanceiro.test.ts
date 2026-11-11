@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { acaoNecessaria, ehSemValor, linhasDePacote, prioridadeDaLinha, type LinhaFinanceiro } from './listaFinanceiro'
+import { acaoNecessaria, ehSemValor, faturasEmAtrasoSemLinha, linhasDePacote, prioridadeDaLinha, type LinhaFinanceiro } from './listaFinanceiro'
 
 const linha = (estado: LinhaFinanceiro['estado'], totalCiclo: number): LinhaFinanceiro => ({ alunoId: 'x', estado, totalCiclo })
 
@@ -59,5 +59,23 @@ describe('linhasDePacote', () => {
   })
   it('fatura cancelada não gera linha', () => {
     expect(linhasDePacote([{ aluno_id: 'a1', fatura_id: 'f1' }], [{ id: 'f1', total: 1, status: 'cancelada', vencimento: null }], nomes, '2026-10-28')).toEqual([])
+  })
+})
+
+describe('faturasEmAtrasoSemLinha', () => {
+  const f = (id: string, vencimento: string | null) => ({ id, aluno_id: `a-${id}`, total: 100, vencimento })
+  it('só devolve as vencidas que nenhuma linha mostra, a mais antiga primeiro', () => {
+    const r = faturasEmAtrasoSemLinha([f('1', '2026-10-20'), f('2', '2026-09-10'), f('3', '2026-10-05')], new Set(['1']))
+    expect(r.map((x) => x.id)).toEqual(['2', '3'])
+  })
+  it('o aviso e a lista batem: tudo o que está vencido aparece em alguma linha', () => {
+    const vencidas = [f('1', '2026-10-20'), f('2', '2026-09-10')]
+    expect(faturasEmAtrasoSemLinha(vencidas, new Set(['1', '2']))).toEqual([])
+    expect(faturasEmAtrasoSemLinha(vencidas, new Set())).toHaveLength(vencidas.length)
+  })
+  it('sem vencimento vai para o começo e a lista de entrada não é alterada', () => {
+    const entrada = [f('1', '2026-10-20'), f('2', null)]
+    expect(faturasEmAtrasoSemLinha(entrada, new Set()).map((x) => x.id)).toEqual(['2', '1'])
+    expect(entrada.map((x) => x.id)).toEqual(['1', '2'])
   })
 })

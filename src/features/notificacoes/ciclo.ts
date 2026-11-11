@@ -19,3 +19,21 @@ export function textoCicloEncerrado(p: PayloadCiclo): string {
 export function linkEncerrarMes(alunoId: string, p: PayloadCiclo): string {
   return `/alunos/${alunoId}/fechar-ciclo${p.periodo_inicio ? `?ref=${p.periodo_inicio}` : ''}`
 }
+
+/**
+ * O aviso "Ciclo encerrado" é gravado uma vez e não se atualiza sozinho. Se o aluno já não tem ciclo esperando fatura (a fatura foi gerada,
+ * por exemplo), o aviso está resolvido: o sino o trata como lido, para bater com Hoje e Financeiro. `pendentes` nulo = ainda carregando.
+ */
+export function cicloJaResolvido(n: { tipo: string; aluno_id: string | null }, pendentes: Set<string> | null): boolean {
+  return n.tipo === 'ciclo_encerrado' && !!n.aluno_id && !!pendentes && !pendentes.has(n.aluno_id)
+}
+
+/** Selo do sino sem os avisos de ciclo já resolvidos. `ciclos` são os alunos dos avisos de ciclo ainda não lidos. */
+export function contagemSemResolvidos(
+  contagem: { total: number; acao: number },
+  ciclos: (string | null)[],
+  pendentes: Set<string> | null,
+): { total: number; acao: number } {
+  const resolvidos = ciclos.filter((id) => cicloJaResolvido({ tipo: 'ciclo_encerrado', aluno_id: id }, pendentes)).length
+  return { total: Math.max(0, contagem.total - resolvidos), acao: Math.max(0, contagem.acao - resolvidos) }
+}

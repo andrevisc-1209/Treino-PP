@@ -12,13 +12,14 @@ import { EstadoVazio } from '@/components/EstadoVazio'
 import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 import { formatarBRL } from '@/lib/moeda'
+import { formatarDataBR } from '@/lib/format'
 import { hojeSP, limitesDoDiaSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
-import { cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
+import { cicloAnterior, cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
 import { alunosComCicloParaFechar } from './cicloPendente'
 import { estaVencida, rotuloModelo, SeloFatura } from './rotulos'
 import { recebidoPorMes } from './desempenho'
-import { acaoNecessaria, ehSemValor, linhasDePacote, prioridadeDaLinha } from './listaFinanceiro'
+import { acaoNecessaria, ehSemValor, faturasEmAtrasoSemLinha, linhasDePacote, prioridadeDaLinha } from './listaFinanceiro'
 import { usePacotesAtivos } from '@/features/pacotes/api'
 import { previsaoDoMes, ultimoDiaDoMes } from './previsaoDoMes'
 import { useAulasNoIntervalo } from '@/features/agenda/api'
@@ -73,6 +74,12 @@ export function FinanceiroPage() {
     [faturas, hoje],
   )
 
+  // ciclo encerrado sem fatura: o cartão mostra o ciclo que terminou (período e valor dele), não o que está em andamento
+  const idsCicloEncerrado = useMemo(
+    () => new Set(alunosComCicloParaFechar({ cobrancas: alunosCobranca ?? [], faturas: faturas ?? [], participacoes: participacoes ?? [], hoje })),
+    [alunosCobranca, faturas, participacoes, hoje],
+  )
+
   const linhas = useMemo(() => {
     return (alunosCobranca ?? []).map((ac) => {
       const ciclo = cicloAtual(ac.dia_ciclo, hoje)
@@ -86,11 +93,13 @@ export function FinanceiroPage() {
       else if (ultimaFatura.status === 'enviada') estado = 'enviada'
       else estado = 'a_fechar'
 
+      const encerrado = idsCicloEncerrado.has(ac.aluno_id)
+      const cicloMostrado = encerrado ? cicloAnterior(ac.dia_ciclo, hoje) : ciclo
       const itensDoCiclo = itensCobraveisDoCiclo(
         (participacoes ?? [])
           .filter((p) => p.aluno_id === ac.aluno_id)
           .map((p) => ({ ...p, aula_starts_at: p.aula?.starts_at ?? '' })),
-        ciclo,
+        cicloMostrado,
       )
       const totalCiclo = ac.modelo === 'mensal' ? (ac.valor_mensal ?? 0) : totalPorAula(itensDoCiclo, 0)
 
@@ -99,25 +108,38 @@ export function FinanceiroPage() {
         nome: ac.aluno?.name ?? '—',
         modelo: ac.modelo,
         ciclo,
+        cicloMostrado,
+        encerrado,
         qtdAulasCiclo: itensDoCiclo.length,
         totalCiclo,
         ultimaFatura,
         estado,
       }
     })
-  }, [alunosCobranca, faturas, participacoes, hoje])
+  }, [alunosCobranca, faturas, participacoes, hoje, idsCicloEncerrado])
 
   // alunos de pacote: a cobrança nasce na venda e entra nos filtros pela situação da fatura (paga, a receber, em atraso)
-  const linhasPacote = useMemo(
+  const linhasPacoteTodas = useMemo(
     () =>
       linhasDePacote(
         [...(pacotesAtivos?.values() ?? [])].map((x) => x.pacote),
         faturas ?? [],
         new Map((alunos ?? []).map((a) => [a.id, a.name] as const)),
         hoje,
-      ).filter((l) => filtro === 'todos' || l.estado === filtro),
-    [pacotesAtivos, faturas, alunos, hoje, filtro],
+      ),
+    [pacotesAtivos, faturas, alunos, hoje],
   )
+  const linhasPacote = useMemo(() => linhasPacoteTodas.filter((l) => filtro === 'todos' || l.estado === filtro), [linhasPacoteTodas, filtro])
+  // toda fatura vencida do aviso "N em atraso" precisa aparecer na lista: as que nenhuma linha cobre ganham uma linha própria
+  const atrasoAvulso = useMemo(() => {
+    const jaMostrados = new Set<string>([
+      ...linhasPacoteTodas.filter((l) => l.estado === 'atraso').map((l) => l.faturaId),
+      ...linhas.filter((l) => l.estado === 'atraso' && l.ultimaFatura).map((l) => l.ultimaFatura!.id),
+    ])
+    return faturasEmAtrasoSemLinha(faturasEmAtraso, jaMostrados)
+  }, [faturasEmAtraso, linhasPacoteTodas, linhas])
+  const atrasoAvulsoVisivel = filtro === 'todos' || filtro === 'atraso' ? atrasoAvulso : []
+  const nomeDoAluno = useMemo(() => new Map((alunos ?? []).map((a) => [a.id, a.name] as const)), [alunos])
   const previsao = useMemo(
     () =>
       previsaoDoMes({
@@ -132,10 +154,6 @@ export function FinanceiroPage() {
     [hoje, faturas, alunosCobranca, participacoes, aulasAteFimDoMes, alunos, pacotesAtivos],
   )
   const recebimentos = useMemo(() => recebidoPorMes(faturas ?? [], hoje, 6), [faturas, hoje])
-  const idsCicloEncerrado = useMemo(
-    () => new Set(alunosComCicloParaFechar({ cobrancas: alunosCobranca ?? [], faturas: faturas ?? [], participacoes: participacoes ?? [], hoje })),
-    [alunosCobranca, faturas, participacoes, hoje],
-  )
   // por padrão a lista mostra o que tem valor: ciclo em aberto sem aula (R$ 0,00) fica atrás do botão "Mostrar sem valor"
   const doFiltro = filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)
   const qtdSemValor = doFiltro.filter((l) => ehSemValor(l, idsCicloEncerrado.has(l.alunoId))).length
@@ -289,11 +307,25 @@ export function FinanceiroPage() {
             ))}
           </RolagemHorizontal>
 
-          {linhasFiltradas.length === 0 && linhasPacote.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
+          {linhasFiltradas.length === 0 && linhasPacote.length === 0 && atrasoAvulsoVisivel.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
             <p className="text-sm text-slate-600">{qtdSemValor > 0 ? 'Nenhuma cobrança com valor neste filtro.' : 'Nenhum aluno neste filtro.'}</p>
           )}
 
           <ul className="space-y-2">
+            {atrasoAvulsoVisivel.map((f) => (
+              <li key={`atraso-${f.id}`}>
+                <Link to={`/financeiro/${f.id}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="min-w-0 truncate font-medium">{nomeDoAluno.get(f.aluno_id) ?? 'Aluno'}</p>
+                    <p className="shrink-0 text-lg font-bold">{formatarBRL(f.total)}</p>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="min-w-0 text-sm text-slate-500">{f.vencimento ? `Fatura vencida em ${formatarDataBR(f.vencimento)}` : 'Fatura vencida'}</p>
+                    <SeloFatura status="aberta" vencida />
+                  </div>
+                </Link>
+              </li>
+            ))}
             {linhasPacote.map((l) => (
               <li key={`pacote-${l.alunoId}`}>
                 <Link to={`/financeiro/${l.faturaId}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
@@ -310,14 +342,15 @@ export function FinanceiroPage() {
             ))}
             {linhasFiltradas.map((l) => (
               <li key={l.alunoId}>
-                <Link to={`/alunos/${l.alunoId}/fechar-ciclo`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
+                <Link to={`/alunos/${l.alunoId}/fechar-ciclo${l.encerrado ? `?ref=${l.cicloMostrado.inicio}` : ''}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
                   <div className="flex items-center justify-between gap-2">
                     <p className="min-w-0 truncate font-medium">{l.nome}</p>
                     <p className="shrink-0 text-lg font-bold">{formatarBRL(l.totalCiclo)}</p>
                   </div>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <p className="min-w-0 text-sm text-slate-500">
-                      {rotuloModelo(l.modelo)} · {l.qtdAulasCiclo} aula{l.qtdAulasCiclo === 1 ? '' : 's'} · fecha em {l.ciclo.fim.slice(8, 10)}/{l.ciclo.fim.slice(5, 7)}
+                      {rotuloModelo(l.modelo)} · {l.qtdAulasCiclo} aula{l.qtdAulasCiclo === 1 ? '' : 's'} ·{' '}
+                      {l.encerrado ? `ciclo de ${l.cicloMostrado.inicio.slice(8, 10)}/${l.cicloMostrado.inicio.slice(5, 7)} a ${l.cicloMostrado.fim.slice(8, 10)}/${l.cicloMostrado.fim.slice(5, 7)}` : `fecha em ${l.ciclo.fim.slice(8, 10)}/${l.ciclo.fim.slice(5, 7)}`}
                     </p>
                     {l.ultimaFatura && l.estado !== 'a_fechar' ? (
                       <SeloFatura status={l.ultimaFatura.status as FaturaStatus} vencida={l.estado === 'atraso'} />

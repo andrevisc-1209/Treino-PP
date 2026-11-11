@@ -35,6 +35,11 @@ export function cicloAtual(diaCiclo: number, hojeISO: string): Ciclo {
   return { inicio, fim }
 }
 
+/** O ciclo imediatamente anterior ao de hoje: é o que está "encerrado" e pode estar esperando fatura. */
+export function cicloAnterior(diaCiclo: number, hojeISO: string): Ciclo {
+  return cicloAtual(diaCiclo, somarDias(cicloAtual(diaCiclo, hojeISO).inicio, -1))
+}
+
 export type ParticipacaoParaFechamento = {
   id: string
   cobrar: boolean | null
