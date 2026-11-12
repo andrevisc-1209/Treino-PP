@@ -246,6 +246,18 @@ export const ARTIGOS: Artigo[] = [
     sinonimos: ['cobrar', 'cobranca', 'mensalidade', 'fatura', 'fechamento'],
   },
   {
+    id: 'historico-pagamentos',
+    categoria: 'financeiro',
+    titulo: 'Ver o histórico de pagamentos recebidos',
+    passos: [
+      'No Financeiro, toque no filtro "Pagas". A lista mostra cada pagamento recebido no mês: aluno, valor, a data em que foi pago e a forma (Pix, dinheiro…). Toque num pagamento para abrir a fatura.',
+      'Use as setas no alto da lista para voltar a meses anteriores e ver o histórico. O valor e a quantidade ali são os mesmos do cartão "Recebido no mês".',
+      'O filtro "Enviadas" lista todas as faturas enviadas que ainda aguardam pagamento, de qualquer ciclo. As vencidas ficam em "Em atraso".',
+      'Faturas de R$ 0,00 não contam como recebimento e não aparecem na lista.',
+    ],
+    sinonimos: ['pagamentos', 'recebido', 'recebimentos', 'pagas', 'historico', 'faturas pagas', 'quem pagou'],
+  },
+  {
     id: 'pacote-de-aulas',
     categoria: 'financeiro',
     titulo: 'Vender um pacote de aulas e acompanhar o contador',

@@ -1786,9 +1786,18 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Migration `20261102…`, teste `supabase/tests/seguranca_agenda_publica.sql`, cron `expirar_pedidos_agenda.sql`. **Redeploy de `agenda-publica`.**
 - ⏳ Lote 3: captcha no "já tem conta?" do cadastro.
 
-### 172. Segurança, lote 3 da revisão manual (captcha no "já tem conta?" do cadastro) — ✅ PR aberta
+### 172. Segurança, lote 3 da revisão manual (captcha no "já tem conta?" do cadastro) — ✅ Mergeada (#297)
 - ✅ **`verificar-cadastro` exige captcha (Turnstile) em toda consulta**, conferido no servidor (falha fechada); limite de 40/hora por IP mantido.
 - ✅ **Token próprio da verificação** (um widget invisível por campo: CPF e e-mail no cadastro, CPF no "Complete seu perfil"), para não gastar o token de uso único do cadastro. Sem token, o aviso "já tem conta" não aparece e o cadastro segue normalmente.
 - ✅ Teste de `captchaDoCorpo`. **Redeploy de `verificar-cadastro`.**
 - ⏳ **Só dá para validar em produção** (a chave do captcha não vale em localhost): digitar um CPF e um e-mail já cadastrados no cadastro e ver o aviso; depois criar uma conta de teste e confirmar que o cadastro ainda funciona.
+
+### 173. Financeiro: aba Pagas com o histórico de pagamentos (faturas, mês a mês) e Enviadas de qualquer ciclo — ✅ PR aberta
+- **Problema (achado nos dados reais do personal):** a aba "Pagas" listava ALUNOS pela última fatura em relação ao ciclo atual; ao virar o ciclo, a fatura paga do ciclo anterior sumia da lista (o aluno voltava para "A fechar"). Havia 5 faturas pagas em novembro e a lista mostrava 1 (a de pacote). Não existia histórico de pagamentos na tela.
+- ✅ **"Pagas" passa a listar faturas pagas** (aluno, valor, "Paga em dd/mm · forma", ciclo), da mais recente para a mais antiga, com **setas para navegar pelos meses** e total e quantidade do mês no topo. Vira o histórico de pagamentos.
+- ✅ O cartão **"Recebido no mês"** e a aba usam a **mesma conta** (`pagamentos.ts`); fatura de R$ 0,00 paga não conta como recebimento (nem na lista nem no cartão).
+- ✅ **"Enviadas" lista todas as faturas enviadas e não pagas**, de qualquer ciclo (as vencidas seguem em "Em atraso").
+- ✅ "A fechar", "Em atraso" e "Todos" não mudam. Sem migration.
+- ✅ Testes com os dados reais que mostraram o erro; artigo "Ver o histórico de pagamentos recebidos" na Central de ajuda.
+- ⏳ Validar no celular logado (390px, claro e escuro).
 
