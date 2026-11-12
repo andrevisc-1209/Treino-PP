@@ -67,7 +67,7 @@ export function HorariosFixosBlock({ alunoId }: { alunoId: string }) {
             <div className="flex shrink-0 gap-1">
               <button type="button"
                 onClick={() => setEditando(g)}
-                className="flex size-9 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
+                className="flex size-11 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100"
                 aria-label="Editar horário"
               >
                 <Pencil size={16} />

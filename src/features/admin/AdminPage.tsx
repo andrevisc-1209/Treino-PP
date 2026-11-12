@@ -513,11 +513,11 @@ function CidadeComMaps({ cidade, onFiltrar }: { cidade: string | null; onFiltrar
   const rotulo = rotuloCidade(cidade)
   return (
     <span className="inline-flex items-center gap-1">
-      <button type="button" onClick={() => onFiltrar(rotulo)} className="min-h-8 text-left text-brand-hover underline" aria-label={`Ver personais de ${rotulo}`}>
+      <button type="button" onClick={() => onFiltrar(rotulo)} className="min-h-11 text-left text-brand-hover underline" aria-label={`Ver personais de ${rotulo}`}>
         {rotulo}
       </button>
       {link && (
-        <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex size-8 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100" aria-label={`${rotulo} no Google Maps`}>
+        <a href={link} target="_blank" rel="noopener noreferrer" className="inline-flex size-11 items-center justify-center rounded-lg text-slate-500 active:bg-slate-100" aria-label={`${rotulo} no Google Maps`}>
           <MapPin size={14} aria-hidden />
         </a>
       )}
@@ -664,7 +664,7 @@ function InadimplentesSection({ inadimplentes, onAjustarTrial }: { inadimplentes
                       type="button"
                       onClick={() => estenderRapido(item)}
                       disabled={estenderTrial.isPending}
-                      className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 active:bg-slate-100 disabled:opacity-50"
+                      className="whitespace-nowrap rounded-lg border border-slate-300 bg-white min-h-11 px-3 text-sm font-medium text-slate-700 active:bg-slate-100 disabled:opacity-50"
                     >
                       + 7 dias de trial
                     </button>

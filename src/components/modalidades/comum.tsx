@@ -13,7 +13,7 @@ export function Chips({ valores, atual, unidade, onEscolher }: { valores: number
           type="button"
           aria-pressed={atual === v}
           onClick={() => onEscolher(v)}
-          className={cn('min-h-9 rounded-full border px-3 text-xs font-medium', atual === v ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+          className={cn('min-h-11 rounded-full border px-3 text-sm font-medium', atual === v ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
         >
           {v}
           {unidade}

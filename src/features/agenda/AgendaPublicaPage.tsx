@@ -250,7 +250,7 @@ export function AgendaPublicaPage() {
                             >
                               <span className="text-xs font-medium tracking-wide">{c.sigla}</span>
                               <span className="text-2xl font-bold leading-tight">{c.numero}</span>
-                              {c.mes && <span className={cn('text-[0.7rem] font-semibold uppercase', marcado ? 'text-white/90' : 'text-slate-600')}>{c.mes}</span>}
+                              {c.mes && <span className={cn('text-xs font-semibold uppercase', marcado ? 'text-white/90' : 'text-slate-600')}>{c.mes}</span>}
                               <span className={cn('text-xs', marcado ? 'text-white/90' : 'text-slate-600')}>{c.vagas}</span>
                             </button>
                           )

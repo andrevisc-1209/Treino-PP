@@ -1679,7 +1679,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Canais (/atualizacao_fluxoapp):** FAQ do artigo "Arquivar, apagar e restaurar um aluno" atualizado (Mais opções); onboarding, landing, Política, Termos e Admin: não se aplica.
 - ⏳ Documentos (relatório e contrato) seguem como cartões soltos abaixo das avaliações; recolher num acordeão exige tirar a moldura própria de cada um.
 
-### 158. Página pública com perfil, "Amanhã" e mês (PR 5 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+### 158. Página pública com perfil, "Amanhã" e mês (PR 5 da auditoria de UX de 11/11/2026) — ✅ mesclada
 
 **Rodar a migration `20261095000000_agenda_publica_perfil.sql` no SQL Editor ANTES do merge** e, depois do merge, `supabase functions deploy agenda-publica` (a função passa a ler as colunas novas; sem a migration a página ficaria "indisponível"). Registra a **Política de Privacidade 1.15**.
 
@@ -1690,3 +1690,9 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **"Avisar se abrir uma vaga" some enquanto há horário escolhido**, para não competir com "Enviar pedido de aula".
 - ✅ **Canais (/atualizacao_fluxoapp):** Política **1.15** (o Personal pode publicar, por sua conta, informações profissionais próprias na página); FAQ do artigo da página pública; onboarding, landing e Termos: não se aplica; Admin: não se aplica. **O texto da Política precisa de revisão de advogado**, como as versões 1.11 a 1.14.
 - ⏳ **Foto** fica de fora: exige Storage (bucket, políticas, limites e exclusão com a conta) e outra revisão de Política. Hoje o avatar é a inicial do nome.
+
+### 159. Alvos de toque de 44 px e texto mínimo de 13 px (PR 6 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+- ✅ **Chips e botões que tinham 32 a 40 px agora têm 44 px (`min-h-11`)**: filtros da Fatura, chips de horário e de aula avulsa, chips de exercício, abas de Evolução e de natação, chips de modalidade, botão de remover horário fixo, botão do banner de teste, links de fatura na ficha do aluno e botões da área de admin.
+- ✅ **`text-xs` passa de 12 para 13 px no app inteiro** (token `--text-xs` em `src/index.css`); `text-sm` segue em 14 px, então a hierarquia se mantém. Chips que estavam em 12 px foram para 14 px.
+- ✅ **Guardas em `tamanhoTexto.test.ts`**: o tema precisa manter `text-xs` em 13 px e nenhum controle novo pode nascer com `min-h`/`size` de 32 a 40 px.
+- ⏳ Falta medir na prática: abas e chips com rolagem horizontal em telas de 360 px.

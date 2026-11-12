@@ -184,7 +184,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
             key={p.value}
             onClick={() => setPeriodo(p.value)}
             className={cn(
-              'min-h-9 flex-1 rounded-lg text-sm font-medium transition',
+              'min-h-11 flex-1 rounded-lg text-sm font-medium transition',
               periodo === p.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
             )}
           >
@@ -359,7 +359,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
               key={m.value}
               onClick={() => setMetricaAvaliacao(m.value)}
               className={cn(
-                'min-h-9 flex-1 rounded-lg text-xs font-medium transition',
+                'min-h-11 flex-1 rounded-lg text-sm font-medium transition',
                 metricaAvaliacao === m.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500',
               )}
             >
