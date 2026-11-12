@@ -21,16 +21,16 @@ export function AvisoAnalytics({ reabrir = 0 }: { reabrir?: number }) {
   if (!aberto) return null
 
   return (
-    <div role="dialog" aria-label="Aviso de análise de uso" className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-md rounded-2xl bg-white p-4 text-slate-900 shadow-2xl ring-1 ring-slate-200">
-      <p className="text-sm leading-relaxed">
-        Usamos o PostHog para entender em que etapa do cadastro e do primeiro uso as pessoas travam, e assim melhorar o app. Só começa depois do seu aceite, não grava a sua
-        sessão, não usa cookies e não registra seu nome, e-mail, CPF nem dados de alunos. Veja a{' '}
+    <div role="dialog" aria-label="Aviso de análise de uso" className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-md rounded-2xl bg-white p-3 text-slate-900 shadow-2xl ring-1 ring-slate-200">
+      {/* compacto de propósito: no celular o aviso longo cobria um quarto da primeira tela. Mantém as promessas da Política (seção 3). */}
+      <p className="text-xs leading-snug">
+        Medimos em que etapa do cadastro e do primeiro uso as pessoas travam, só se você aceitar. Sem cookies, sem gravar sua sessão e sem seu nome, e-mail, CPF ou dados de alunos.{' '}
         <a href={`${import.meta.env.BASE_URL}privacidade`} target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">
           Política de Privacidade
         </a>
         .
       </p>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2 flex gap-2">
         <button
           type="button"
           className="min-h-11 flex-1 rounded-full border border-slate-400 px-4 text-sm font-semibold active:bg-slate-50"
