@@ -17,8 +17,14 @@ DECLARE
   v_futuro TIMESTAMPTZ := now() + interval '3 days';
   v_log TEXT[] := ARRAY[]::TEXT[];
 BEGIN
-  SELECT p.id INTO v_dono FROM treino.professionals p WHERE p.is_admin = FALSE ORDER BY p.id LIMIT 1;
-  IF v_dono IS NULL THEN RAISE EXCEPTION 'RESULTADO: AVISO - nenhum personal; teste não executado'; END IF;
+  -- precisa ser um personal com assinatura ativa: a RLS de professional_config (usada no teste (a)) exige
+  SELECT p.id INTO v_dono
+  FROM treino.professionals p
+  JOIN treino.assinaturas a ON a.professional_id = p.id
+  WHERE p.is_admin = FALSE
+    AND ((a.status = 'trial' AND a.trial_fim > now()) OR (a.status = 'ativa' AND (a.assinatura_fim IS NULL OR a.assinatura_fim > now())))
+  ORDER BY p.id LIMIT 1;
+  IF v_dono IS NULL THEN RAISE EXCEPTION 'RESULTADO: AVISO - nenhum personal com assinatura ativa; teste não executado'; END IF;
 
   -- (b) feito como dono do banco: a RPC do contador é service_role
   PERFORM treino.upsert_rate_limit('teste:seg-agenda', 3, 3600);
