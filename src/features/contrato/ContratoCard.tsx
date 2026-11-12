@@ -319,10 +319,10 @@ function Folha({ aluno, onFechar }: { aluno: Aluno; onFechar: () => void }) {
 }
 
 /** Cartão "Contrato" da ficha do aluno: abre o formulário e baixa a minuta em PDF, já preenchida. */
-export function ContratoCard({ aluno }: { aluno: Aluno }) {
+export function ContratoCard({ aluno, semCartao = false }: { aluno: Aluno; semCartao?: boolean }) {
   const [aberto, setAberto] = useState(false)
   return (
-    <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+    <div className={semCartao ? 'space-y-3' : 'space-y-3 rounded-2xl bg-white p-4 shadow-sm'}>
       <h2 className="flex items-center gap-2 font-semibold">
         <FileSignature size={18} /> Contrato
       </h2>

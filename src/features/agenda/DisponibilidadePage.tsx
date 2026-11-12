@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { ListaSkeleton } from '@/components/Skeleton'
@@ -64,6 +64,14 @@ function Formulario({ inicialDias, inicialParametros }: { inicialDias: DiaDispon
     mudarDia(d.weekday, { intervalos: [...d.intervalos, ultimo ? { inicio: ultimo.fim, fim: ultimo.fim >= '17:00' ? '23:00' : '18:00' } : intervaloVazio()] })
   }
   const num = <K extends keyof ParametrosAgenda>(k: K, v: number) => setParametros((p) => ({ ...p, [k]: v }))
+
+  const alterado = JSON.stringify({ dias, parametros }) !== JSON.stringify({ dias: inicialDias, parametros: inicialParametros })
+  useEffect(() => {
+    if (!alterado) return
+    const avisar = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', avisar)
+    return () => window.removeEventListener('beforeunload', avisar)
+  }, [alterado])
 
   const nenhumDia = dias.every((d) => !d.ativo)
   const resumo = resumoDisponibilidade(dias)
@@ -176,6 +184,11 @@ function Formulario({ inicialDias, inicialParametros }: { inicialDias: DiaDispon
         </ul>
       )}
 
+      {alterado && (
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900" role="status">
+          Você mudou os horários. Toque em Salvar para valer. Os dias sem atendimento, mais abaixo, já são salvos na hora.
+        </p>
+      )}
       <Button className="w-full" onClick={exigir(gravar)} disabled={salvar.isPending}>
         {salvar.isPending ? 'Salvando…' : 'Salvar disponibilidade'}
       </Button>

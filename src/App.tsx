@@ -32,6 +32,7 @@ import { FinanceiroPage } from '@/features/financeiro/FinanceiroPage'
 import { FecharCicloPage } from '@/features/financeiro/FecharCicloPage'
 import { FaturaPage } from '@/features/financeiro/FaturaPage'
 import { AjudaPage } from '@/features/ajuda/AjudaPage'
+import { RestauraRolagem } from '@/components/RestauraRolagem'
 import { PwaUpdatePrompt } from '@/components/PwaUpdatePrompt'
 import { AdminPage } from '@/features/admin/AdminPage'
 import { AdminSegurancaPage } from '@/features/admin/AdminSegurancaPage'
@@ -39,6 +40,7 @@ import { AdminSegurancaPage } from '@/features/admin/AdminSegurancaPage'
 export default function App() {
   return (
     <>
+      <RestauraRolagem />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/definir-senha" element={<DefinirSenhaPage />} />
@@ -78,6 +80,7 @@ export default function App() {
           <Route path="/alunos/:id/fechar-ciclo" element={<FecharCicloPage />} />
           <Route path="/financeiro" element={<FinanceiroPage />} />
           <Route path="/financeiro/:faturaId" element={<FaturaPage />} />
+          <Route path="/treinos" element={<Navigate to="/meus-treinos/planejados" replace />} />
           <Route path="/meus-treinos" element={<Navigate to="/meus-treinos/planejados" replace />} />
           <Route path="/meus-treinos/exercicios" element={<ExerciciosPage />} />
           <Route path="/meus-treinos/planejados" element={<ModelosPage />} />

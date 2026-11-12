@@ -29,6 +29,9 @@ function ehIOS(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent)
 }
 
+const PASSOS_IOS = ['Toque em Compartilhar (o quadrado com uma seta para cima).', 'Role e toque em Adicionar à Tela de Início.', 'Toque em Adicionar.']
+const PASSOS_ANDROID = ['Toque nos três pontinhos (⋮) no canto do navegador.', 'Toque em Instalar app ou Adicionar à tela inicial.', 'Confirme em Instalar.']
+
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
@@ -78,10 +81,15 @@ export function InstallBanner() {
         <Button onClick={instalar} className="mt-2 w-full">
           <Download size={16} /> Instalar
         </Button>
-      ) : ehIOS() ? (
-        <p className="mt-1 text-sm text-slate-500">Toque em Compartilhar → Adicionar à Tela de Início.</p>
       ) : (
-        <p className="mt-1 text-sm text-slate-500">Use o menu do navegador para instalar o app.</p>
+        <div className="mt-2 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+          <p className="font-medium">{ehIOS() ? 'No iPhone, pelo Safari:' : 'No Android, pelo Chrome:'}</p>
+          <ol className="mt-1 list-decimal space-y-1 pl-5">
+            {(ehIOS() ? PASSOS_IOS : PASSOS_ANDROID).map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ol>
+        </div>
       )}
     </div>
   )

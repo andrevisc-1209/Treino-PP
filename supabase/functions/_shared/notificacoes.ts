@@ -99,9 +99,9 @@ export function montarBriefing(args: { nome: string | null; aulas: AulaDoDia[]; 
   const partes = [`Bom dia${nome ? `, ${nome}` : ''}! 👋`, '']
   if (aulas.length === 1) {
     const a = aulas[0]
-    partes.push(`Você tem 1 treino hoje — ${primeiroDoAluno(a)} às ${a.horario}${a.local?.trim() ? ` na ${a.local.trim()}` : ''}.`)
+    partes.push(`Você tem 1 aula hoje — ${primeiroDoAluno(a)} às ${a.horario}${a.local?.trim() ? ` na ${a.local.trim()}` : ''}.`)
   } else {
-    partes.push(`Você tem ${aulas.length} treinos hoje:`, ...aulas.map((a) => `• ${primeiroDoAluno(a)} — ${a.horario}${a.local?.trim() ? ` @ ${a.local.trim()}` : ''}`))
+    partes.push(`Você tem ${aulas.length} aulas hoje:`, ...aulas.map((a) => `• ${primeiroDoAluno(a)} — ${a.horario}${a.local?.trim() ? ` @ ${a.local.trim()}` : ''}`))
   }
   if (args.clima && args.clima.chuvaProb >= LIMITE_AVISO_CHUVA) {
     const mm = rotuloChuvaMm(args.clima.chuvaMm)

@@ -1691,8 +1691,18 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Canais (/atualizacao_fluxoapp):** Política **1.15** (o Personal pode publicar, por sua conta, informações profissionais próprias na página); FAQ do artigo da página pública; onboarding, landing e Termos: não se aplica; Admin: não se aplica. **O texto da Política precisa de revisão de advogado**, como as versões 1.11 a 1.14.
 - ⏳ **Foto** fica de fora: exige Storage (bucket, políticas, limites e exclusão com a conta) e outra revisão de Política. Hoje o avatar é a inicial do nome.
 
-### 159. Alvos de toque de 44 px e texto mínimo de 13 px (PR 6 da auditoria de UX de 11/11/2026) — ✅ PR aberta
+### 159. Alvos de toque de 44 px e texto mínimo de 13 px (PR 6 da auditoria de UX de 11/11/2026) — ✅ mesclada
 - ✅ **Chips e botões que tinham 32 a 40 px agora têm 44 px (`min-h-11`)**: filtros da Fatura, chips de horário e de aula avulsa, chips de exercício, abas de Evolução e de natação, chips de modalidade, botão de remover horário fixo, botão do banner de teste, links de fatura na ficha do aluno e botões da área de admin.
 - ✅ **`text-xs` passa de 12 para 13 px no app inteiro** (token `--text-xs` em `src/index.css`); `text-sm` segue em 14 px, então a hierarquia se mantém. Chips que estavam em 12 px foram para 14 px.
 - ✅ **Guardas em `tamanhoTexto.test.ts`**: o tema precisa manter `text-xs` em 13 px e nenhum controle novo pode nascer com `min-h`/`size` de 32 a 40 px.
 - ⏳ Falta medir na prática: abas e chips com rolagem horizontal em telas de 360 px.
+
+### 160. Itens pequenos da auditoria de UX (PR 7, 11/11/2026) — ✅ PR aberta
+- ✅ **"Aula", não "treino", no resumo do dia do WhatsApp e no exemplo da landing** ("Você tem 3 aulas hoje"). A Edge Function que envia o resumo (`notificacoes`) usa `_shared/notificacoes.ts`: **redeploy da função** para valer.
+- ✅ **`/treinos` leva a Meus treinos** (antes caía em Hoje).
+- ✅ **Voltar restaura a rolagem** (`RestauraRolagem`): ao voltar, a tela volta onde estava; tela nova abre no topo. Mudar filtro ou aba pela URL não pula a página.
+- ✅ **Banner de instalação com passos numerados** para iPhone (Safari) e Android (Chrome).
+- ✅ **Disponibilidade:** aviso "Você mudou os horários. Toque em Salvar" enquanto há alteração, e o navegador avisa ao fechar a aba com mudança pendente. Dias sem atendimento seguem salvos na hora e o texto diz isso.
+- ✅ **Clima do Hoje em uma linha** (temperatura, chuva, UV); a dica só aparece com chuva a partir de 40%.
+- ✅ **Ficha do aluno: Contrato e Relatório mensal num acordeão "Documentos"**, fechado por padrão.
+- ⏳ Medir taxa de registro e teste de usabilidade com 5 personais (PR 8).
