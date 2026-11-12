@@ -1698,7 +1698,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ⏳ Falta medir na prática: abas e chips com rolagem horizontal em telas de 360 px.
 
 ### 160. Itens pequenos da auditoria de UX (PR 7, 11/11/2026) — ✅ PR aberta
-- ✅ **"Aula", não "treino", no resumo do dia do WhatsApp e no exemplo da landing** ("Você tem 3 aulas hoje"). A Edge Function que envia o resumo (`notificacoes`) usa `_shared/notificacoes.ts`: **redeploy da função** para valer.
+- ✅ **"Aula", não "treino", no resumo do dia do WhatsApp e no exemplo da landing** ("Você tem 3 aulas hoje"). A função `daily-briefing` usa `_shared/notificacoes.ts`: **redeploy dela** para valer.
 - ✅ **`/treinos` leva a Meus treinos** (antes caía em Hoje).
 - ✅ **Voltar restaura a rolagem** (`RestauraRolagem`): ao voltar, a tela volta onde estava; tela nova abre no topo. Mudar filtro ou aba pela URL não pula a página.
 - ✅ **Banner de instalação com passos numerados** para iPhone (Safari) e Android (Chrome).
