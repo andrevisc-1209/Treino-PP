@@ -1707,9 +1707,13 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Ficha do aluno: Contrato e Relatório mensal num acordeão "Documentos"**, fechado por padrão.
 - ⏳ Medir taxa de registro e teste de usabilidade com 5 personais (PR 8).
 
-### 161. Taxa de registro das aulas e roteiro de teste de usabilidade (PR 8 da auditoria de UX, 11/11/2026) — ✅ PR aberta
+### 161. Taxa de registro das aulas e roteiro de teste de usabilidade (PR 8 da auditoria de UX, 11/11/2026) — ✅ Mergeada (#285)
 - ✅ **Admin > Indicadores: "Registro das aulas".** Das aulas dos últimos 30 dias que terminaram há mais de 12 horas (canceladas e contas de admin ficam de fora), quantas tiveram baixa. Mostra a taxa, quantos personais têm aulas e quantos dão baixa em 80% ou mais. **Só totais**: nenhum personal, aluno, local ou horário sai da função (`treino.admin_taxa_registro()`, SECURITY DEFINER com `is_admin()`).
 - ✅ Migration `20261096000000_admin_taxa_de_registro.sql` (só uma função, sem tabela nem dado novo) e teste `supabase/tests/admin_taxa_registro.sql`.
 - ✅ Aviso na tela quando há menos de 5 personais: o número é pista, não conclusão.
 - ✅ **Roteiro do teste com 5 personais:** `docs/ux-audit/ROTEIRO_TESTE_USABILIDADE.md` (5 tarefas, critério "4 de 5 sozinhos em menos de 2 minutos", perguntas finais, como fechar).
 - ⏳ Rodar os testes com personais de verdade e transformar o que aparecer em 3 ou mais sessões em itens do backlog.
+
+### 162. Briefing e relatório da auditoria de UX de 11/11/2026 no repositório — ✅ PR aberta
+- ✅ `docs/ux-audit/BRIEFING.md`: descritivo do produto para quem vai analisar UX (corrigido: **15 dias de teste e R$ 15/mês**, não 30 dias).
+- ✅ `docs/ux-audit/RELATORIO-2026-11.md`: crítica por heurísticas, relatório do Chrome, o que o código confirmou, o insight central (aula não registrada → número errado → perda de confiança) e **tabela de status** do que foi feito (#278 a #285) e do que segue em aberto.
