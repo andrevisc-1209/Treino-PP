@@ -262,7 +262,7 @@ export function ModelosPage() {
             <Input placeholder="Buscar por nome ou exercício" aria-label="Buscar treino planejado" value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
           </div>
           {modalidadesPresentes.length > 1 && (
-            <RolagemHorizontal className="py-1" corFundo="#f8fafc">
+            <RolagemHorizontal className="py-1" corFundo="var(--color-slate-50)">
               {[{ modalidade: null, qtd: modelos?.length ?? 0 }, ...modalidadesPresentes].map((x) => (
                 <button
                   key={x.modalidade ?? 'todas'}

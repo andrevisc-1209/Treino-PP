@@ -47,6 +47,17 @@ export const ARTIGOS: Artigo[] = [
     sinonimos: ['pwa', 'icone', 'atalho', 'baixar'],
   },
   {
+    id: 'modo-escuro',
+    categoria: 'comecando',
+    titulo: 'Modo escuro',
+    passos: [
+      'O app acompanha o tema do seu celular: se o aparelho está no modo escuro, o app também fica escuro. Não há chave dentro do app.',
+      'Para mudar, troque o tema nos ajustes do celular (Tela e brilho, no iPhone; Tela, no Android).',
+      'O recibo do ciclo, o PDF do contrato e o relatório continuam claros, porque são feitos para imprimir ou enviar.',
+    ],
+    sinonimos: ['escuro', 'dark', 'tema', 'noite', 'cores', 'brilho'],
+  },
+  {
     id: 'cadastrar-aluno',
     categoria: 'alunos',
     titulo: 'Cadastrar um aluno',

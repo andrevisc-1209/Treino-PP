@@ -378,7 +378,7 @@ export function AgendaPublicaPage() {
         )}
 
         <footer className="flex items-center justify-center gap-2 pt-4 text-xs text-slate-600">
-          <img src={logoPP} alt="" className="h-5 w-auto" aria-hidden />
+          <img src={logoPP} alt="" className="logo-marca h-5 w-auto" aria-hidden />
           <span>Feito com Treino · Personal Perto</span>
         </footer>
       </div>

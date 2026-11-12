@@ -51,7 +51,7 @@ export function RetornoCheckoutPage({ resultado }: { resultado: ResultadoCheckou
   return (
     <main className="flex min-h-dvh items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-sm space-y-5 rounded-2xl bg-white p-6 text-center shadow-sm">
-        <img src={logoPP} alt="Personal Perto" className="mx-auto h-10 w-auto" />
+        <img src={logoPP} alt="Personal Perto" className="logo-marca mx-auto h-10 w-auto" />
         <div className="flex justify-center" aria-hidden>
           {conteudo.icone}
         </div>

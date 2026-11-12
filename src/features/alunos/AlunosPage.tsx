@@ -345,7 +345,7 @@ export function AlunosPage() {
           (alunosAtivos?.length ?? 0) > 0 && (
             <div className="mb-3 space-y-2">
               {contagemFaixas.alerta > 0 && (
-                <RolagemHorizontal className="py-1" corFundo="#f8fafc">
+                <RolagemHorizontal className="py-1" corFundo="var(--color-slate-50)">
                   {(
                     [
                       "todos",

@@ -1732,9 +1732,19 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **QR code do link da agenda** ("Mostrar QR code" no cartão do link): gerado no aparelho com a lib `qrcode` já usada no Pix, sem serviço externo; abre numa folha, com "Baixar imagem" (PNG).
 - ✅ FAQ "Receber pedidos de aula pelo link da sua agenda": QR code e aviso agrupado. Política sem mudança (nenhum dado novo coletado; o aviso não tem dado do visitante).
 
-### 165. Foto do personal na página pública e medição de uso no app, com Política 1.16 (plano pós-auditoria, PR 3) — ✅ PR aberta
+### 165. Foto do personal na página pública e medição de uso no app, com Política 1.16 (plano pós-auditoria, PR 3) — ✅ Mergeada (#289)
 - ✅ **Foto opcional na página pública** (Configurações → Página pública → "Escolher foto"). Reduzida **no aparelho** para 256 × 256 (recorte quadrado central, respeita a orientação do celular), WebP ou JPEG, **até 60.000 caracteres (~45 KB)**. Salva na hora, com "Trocar" e "Remover" (confirmação). Aparece no topo da página pública no lugar da inicial. **Sem Storage:** fica em `professional_config.pagina_foto` (data URL), então **some junto com a conta** na exclusão e não deixa arquivo órfão. A função `agenda-publica` valida o formato antes de devolver (`fotoPublica`). Migration `20261099…` + teste `supabase/tests/foto_do_perfil.sql`. **Redeploy de `agenda-publica`.**
 - ✅ **Três eventos novos de uso no app** (só com o aceite do PostHog que já existe; sem identify, sem sessão, sem dado de aluno ou de saúde): `aula_registrada`, `primeira_serie_registrada` (uma vez por navegador) e `checklist_concluido` (só de quem viu o checklist com pendências e terminou). `aula_registrada` leva uma única propriedade, `barra` (`padrao` ou `centro`), para comparar as duas barras inferiores no teste. O "tempo até a primeira série" sai do intervalo entre o cadastro e esse evento no PostHog, que já tem o horário.
 - ✅ **Política de Privacidade 1.16** (foto opcional e sete etapas medidas) + versão registrada na migration. O teste `landingAnalytics.test.ts` agora trava os sete eventos e a única propriedade permitida.
 - ✅ FAQ da página pública cita a foto.
 - ⏳ Revisão jurídica da Política 1.16 junto com as 1.11 a 1.15.
+
+### 166. Modo escuro (plano pós-auditoria, PR 4) — ✅ PR aberta
+- ✅ **O app acompanha o tema do celular** (`prefers-color-scheme: dark`), sem chave dentro do app. Técnica: `scripts/gerar-tema-escuro.mjs` gera `src/tema-escuro.css`, que **espelha as escalas de cor do Tailwind** (50↔950, 100↔900...) e define à mão as superfícies (fundo `#0b1220`, cartão `#131c2e`) e o texto cinza. Nenhum componente precisou mudar de classe. Texto de marca vira verde claro; o toast escuro continua escuro.
+- ✅ **Recibo, relatório e documentos ficam claros** (`.tema-claro` volta às cores originais): são feitos para imprimir e enviar.
+- ✅ Gráficos, degradês de rolagem e eixos usam as variáveis de cor (`var(--color-slate-*)`) em vez de hex fixo; logos aparecem sobre um selo branco (`.logo-marca`).
+- ✅ `color-scheme` e `theme-color` para claro e escuro (barra do navegador e controles nativos).
+- ✅ **Teste de contraste AA do modo escuro** em `contraste.test.ts` (texto, cinza, marca, selos coloridos de 11 escalas, toast).
+- ✅ FAQ "Modo escuro".
+- ⏳ **Validação visual logada em modo escuro** (Hoje, Agenda, Financeiro, ficha, gráficos): login com captcha; conferir no celular depois do deploy.
+- ⏳ Botão branco do banner de teste (`bg-white` sobre faixa azul) fica escuro no modo escuro: legível, mas vale olhar.

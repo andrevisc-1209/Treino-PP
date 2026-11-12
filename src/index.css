@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./tema-escuro.css";
 
 /* Fontes carregadas via <link> no index.html (preconnect + display=swap) —
    um @import aqui ficaria depois da expansão do Tailwind no CSS final, o

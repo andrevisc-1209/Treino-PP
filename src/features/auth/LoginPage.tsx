@@ -180,7 +180,7 @@ export function LoginPage() {
     return (
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 text-center shadow">
-          <img src={iconMark} alt="Personal Perto" className="mx-auto h-12 w-auto" />
+          <img src={iconMark} alt="Personal Perto" className="logo-marca mx-auto h-12 w-auto" />
           <h1 className="text-xl font-bold">Confirme seu e-mail</h1>
           <p className="text-sm text-slate-600">
             {emailPendenteOrigem === 'login'
@@ -363,7 +363,7 @@ export function LoginPage() {
     <div className="flex min-h-full items-center justify-center p-4">
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
         <div className="text-center">
-          <img src={iconMark} alt="Personal Perto" className="mx-auto h-12 w-auto" />
+          <img src={iconMark} alt="Personal Perto" className="logo-marca mx-auto h-12 w-auto" />
           <h1 className="mt-2 text-xl font-bold">{APP_NAME}</h1>
           <p className="text-sm text-slate-500">Assistente do personal</p>
         </div>

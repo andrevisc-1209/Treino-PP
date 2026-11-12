@@ -325,7 +325,7 @@ function TreinoConcluidoResumo({
       </div>
 
       <div className="flex items-center justify-center gap-1.5 pt-2 opacity-60">
-        <img src={iconMark} alt="Personal Perto" className="h-4 w-auto" />
+        <img src={iconMark} alt="Personal Perto" className="logo-marca h-4 w-auto" />
         <span className="text-xs text-slate-500">{APP_NAME}</span>
       </div>
     </div>

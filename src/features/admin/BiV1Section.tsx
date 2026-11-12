@@ -82,7 +82,7 @@ export function BlocoMeta({ meta }: { meta: MetaBI }) {
       {meta.serie.length > 1 && (
         <>
           <svg viewBox={`0 0 ${W} ${H + 4}`} className="mt-3 w-full" role="img" aria-label={`Quem já pagou, acumulado nos últimos ${meta.serie.length} dias: de ${meta.serie[0].acumulado} para ${meta.serie[meta.serie.length - 1].acumulado}`}>
-            <line x1="0" y1={H} x2={W} y2={H} stroke="#cbd5e1" strokeWidth="1" />
+            <line x1="0" y1={H} x2={W} y2={H} stroke="var(--color-slate-300)" strokeWidth="1" />
             <polyline points={pontos} fill="none" stroke="#367c39" strokeWidth="2.5" strokeLinejoin="round" />
           </svg>
           <p className="text-xs text-slate-500">Curva: quem já fez um pagamento, acumulado (registro de pagamentos, desde que ele existe). {meta.ja_pagaram} já pagaram alguma vez; a meta conta só os pagantes ativos hoje.</p>

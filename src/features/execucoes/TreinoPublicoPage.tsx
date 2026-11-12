@@ -171,7 +171,7 @@ export function TreinoPublicoPage() {
   const casca = (filho: React.ReactNode) => (
     <main className="min-h-dvh bg-slate-50 p-4 pb-28">
       <div className="mx-auto max-w-md space-y-5">
-        <img src={logoPP} alt="Personal Perto" className="mx-auto h-10 w-auto" />
+        <img src={logoPP} alt="Personal Perto" className="logo-marca mx-auto h-10 w-auto" />
         {filho}
       </div>
     </main>
