@@ -72,6 +72,8 @@ export type ProfessionalConfig = {
   pagina_foto?: string | null
   /** migration 20261100: até 5 locais de atendimento ({ nome, endereco, mapsLink }) */
   locais_atendimento?: unknown
+  /** migration 20261101: modalidades que o personal atende (chaves das 5 ativas) */
+  modalidades_atendimento?: string[]
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
@@ -763,7 +765,7 @@ export function usePedidosPendentes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pedidos_agenda')
-        .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at')
+        .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at, local_escolhido, modalidade')
         .eq('status', 'pendente')
         .order('created_at')
       if (error) throw error
@@ -781,7 +783,7 @@ export function usePedidosRespondidos(status: 'aprovado' | 'recusado', ativo: bo
       const desde = new Date(Date.now() - 30 * 86_400_000).toISOString()
       const { data, error } = await supabase
         .from('pedidos_agenda')
-        .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at')
+        .select('id, visitante_nome, visitante_telefone, mensagem, inicio, duracao_min, status, aluno_id, created_at, local_escolhido, modalidade')
         .in('status', status === 'recusado' ? ['recusado', 'indisponivel'] : ['aprovado'])
         .gte('created_at', desde)
         .order('created_at', { ascending: false })

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { alunoDoTelefone, alunosParecidos, buscarAlunosPorNome, digitosNacionais, mensagemDeAprovacao, mensagemDeRecusa, normalizarPedidos, outrosDoMesmoHorario, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
 
 const pedido = (o: Partial<PedidoAgenda> = {}): PedidoAgenda => ({
-  id: 'p1', visitante_nome: 'Maria Souza', visitante_telefone: '5521999990000', mensagem: null, inicio: '2026-10-30T10:00:00Z', duracao_min: 60, status: 'pendente', aluno_id: null, created_at: '2026-10-29T12:00:00Z', ...o,
+  id: 'p1', visitante_nome: 'Maria Souza', visitante_telefone: '5521999990000', mensagem: null, inicio: '2026-10-30T10:00:00Z', duracao_min: 60, status: 'pendente', aluno_id: null, created_at: '2026-10-29T12:00:00Z', local_escolhido: null, modalidade: null, ...o,
 })
 
 describe('telefone do pedido', () => {

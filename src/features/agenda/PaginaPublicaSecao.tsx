@@ -7,6 +7,10 @@ import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 import { mapearErroSupabase } from '@/lib/erros'
 import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig, useSalvarProfessionalConfig, type ProfessionalConfig } from './api'
 import { LIMITES_PERFIL, perfilDigitadoDe, perfilParaSalvar, type PerfilDigitado } from './perfilPagina'
+import { mascararCref } from './cref'
+import { lerModalidades, OPCOES_DE_MODALIDADE } from './modalidadesAtendimento'
+import type { ModalidadeTipo } from '@/types/modalidades'
+import { cn } from '@/lib/utils'
 import { BotoesDoLink } from './LinkDaAgenda'
 import { FotoDoPerfil } from './FotoDoPerfil'
 import { LocaisDoPersonal } from './LocaisDoPersonal'
@@ -70,17 +74,18 @@ function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefine
   const { data: perfilProf } = usePerfilProfissional(session?.user.id)
   const salvo = perfilDigitadoDe(config)
   const [rascunho, setRascunho] = useState<PerfilDigitado | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
+  const [erro, setErro] = useState<{ campo: 'cref' | 'preco'; texto: string } | null>(null)
   const valor = rascunho ?? salvo
-  const alterado = (Object.keys(salvo) as (keyof PerfilDigitado)[]).some((k) => valor[k].trim() !== salvo[k].trim())
-  const mudar = (campo: keyof PerfilDigitado, texto: string) => {
-    setRascunho({ ...valor, [campo]: texto })
+  const alterado = JSON.stringify({ ...valor, cref: valor.cref.trim(), preco: valor.preco.trim() }) !== JSON.stringify({ ...salvo, cref: salvo.cref.trim(), preco: salvo.preco.trim() })
+  const mudar = <K extends keyof PerfilDigitado>(campo: K, v: PerfilDigitado[K]) => {
+    setRascunho({ ...valor, [campo]: v })
     setErro(null)
   }
+  const alternarModalidade = (m: ModalidadeTipo) => mudar('modalidades', lerModalidades(valor.modalidades.includes(m) ? valor.modalidades.filter((x) => x !== m) : [...valor.modalidades, m]))
 
   const gravar = async () => {
     const r = perfilParaSalvar(valor)
-    if (!r.ok) return setErro(r.erro)
+    if (!r.ok) return setErro({ campo: r.campo, texto: r.erro })
     try {
       await salvar.mutateAsync(r.dados)
       setRascunho(null)
@@ -97,14 +102,31 @@ function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefine
         <p className="text-xs text-slate-600">Quem abre o seu link vê o que você preencher aqui, para saber com quem está falando. Campo vazio não aparece.</p>
       </div>
       <FotoDoPerfil foto={config?.pagina_foto} nome={perfilProf?.name ?? ''} />
-      <Field label="CREF">
-        <Input value={valor.cref} maxLength={LIMITES_PERFIL.cref} placeholder="Ex.: 012345-G/RJ" onChange={(e) => mudar('cref', e.target.value)} />
+      <Field label="CREF" error={erro?.campo === 'cref' ? erro.texto : undefined}>
+        <Input value={valor.cref} inputMode="text" autoCapitalize="characters" autoComplete="off" maxLength={LIMITES_PERFIL.cref} placeholder="012345-G/RJ" onChange={(e) => mudar('cref', mascararCref(e.target.value))} />
       </Field>
-      <Field label="Modalidades">
-        <Input value={valor.modalidades} maxLength={LIMITES_PERFIL.modalidades} placeholder="Ex.: Musculação · Natação" onChange={(e) => mudar('modalidades', e.target.value)} />
-      </Field>
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium">Modalidades que você atende</p>
+        <p className="text-xs text-slate-600">Quem pede aula pela página escolhe uma delas.</p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Modalidades que você atende">
+          {OPCOES_DE_MODALIDADE.map((o) => {
+            const marcada = valor.modalidades.includes(o.value)
+            return (
+              <button
+                key={o.value}
+                type="button"
+                aria-pressed={marcada}
+                onClick={() => alternarModalidade(o.value)}
+                className={cn('min-h-11 rounded-full border px-4 text-sm font-medium', marcada ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+              >
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
       <LocaisDoPersonal config={config} />
-      <Field label="Valor por aula, a partir de (R$)" error={erro ?? undefined}>
+      <Field label="Valor por aula, a partir de (R$)" error={erro?.campo === 'preco' ? erro.texto : undefined}>
         <Input value={valor.preco} inputMode="decimal" placeholder="Ex.: 120,00" onChange={(e) => mudar('preco', e.target.value)} />
       </Field>
       <p className="text-xs text-slate-600">Tudo isto, inclusive a foto, fica visível a qualquer pessoa com o link. Não escreva telefone nem dados de saúde.</p>

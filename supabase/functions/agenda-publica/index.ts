@@ -24,6 +24,7 @@ import {
   MAX_PEDIDOS_POR_TELEFONE_DIA,
   MAX_PENDENTES_POR_PERSONAL,
   perfilPublico,
+  opcoesDoPedido,
   primeiroNome,
   slugValido,
   somarDiasISO,
@@ -73,7 +74,7 @@ Deno.serve(async (req) => {
 
   const { data: cfg } = await admin
     .from('professional_config')
-    .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao, pagina_cref, pagina_modalidades, pagina_locais, pagina_preco_aula, pagina_foto')
+    .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao, pagina_cref, pagina_modalidades, pagina_locais, pagina_preco_aula, pagina_foto, locais_atendimento, modalidades_atendimento')
     .eq('agenda_publica_slug', body.slug)
     .maybeSingle()
   if (!cfg || !cfg.agenda_publica_ativa) return json(req, INDISPONIVEL)
@@ -180,11 +181,11 @@ Deno.serve(async (req) => {
 
   if (acao === 'consultar') {
     const cidade = [personal.cidade?.trim(), personal.uf?.trim()].filter(Boolean).join('/')
-    return json(req, { estado: 'ok', nome_personal: primeiroNome(personal.name), cidade: cidade || null, apresentacao: cfg.apresentacao?.trim() || null, perfil: perfilPublico(cfg), antecedencia_horas: parametros.antecedenciaHoras, duracao_min: parametros.duracaoMin, vagas: vagas.slice(0, 300) })
+    return json(req, { estado: 'ok', nome_personal: primeiroNome(personal.name), cidade: cidade || null, apresentacao: cfg.apresentacao?.trim() || null, perfil: perfilPublico(cfg), opcoes: opcoesDoPedido(cfg), antecedencia_horas: parametros.antecedenciaHoras, duracao_min: parametros.duracaoMin, vagas: vagas.slice(0, 300) })
   }
 
   // ---------- pedir ----------
-  const v = validarPedido(body)
+  const v = validarPedido(body, opcoesDoPedido(cfg))
   if (!v.ok) return json(req, { error: v.erro }, 400)
 
   const captcha = await verificarTurnstile(body.turnstile, ip, Deno.env.get('TURNSTILE_SECRET_KEY'))
@@ -219,6 +220,8 @@ Deno.serve(async (req) => {
       visitante_nome: v.pedido.nome,
       visitante_telefone: v.pedido.telefone,
       mensagem: v.pedido.mensagem,
+      local_escolhido: v.pedido.local,
+      modalidade: v.pedido.modalidade,
       inicio: new Date(`${vaga.dataISO}T${vaga.inicio}:00-03:00`).toISOString(),
       duracao_min: parametros.duracaoMin,
     })

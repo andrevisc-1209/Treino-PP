@@ -21,6 +21,7 @@ describe('ler a resposta da função', () => {
       cidade: 'Rio/RJ',
       apresentacao: null,
       perfil: { cref: null, modalidades: null, locais: null, preco_aula: null, foto: null },
+      opcoes: { locais: [], modalidades: [] },
       antecedencia_horas: null,
       duracao_min: 45,
       vagas: [{ dataISO: '2026-10-30', inicio: '07:00', fim: '07:45' }],
@@ -144,5 +145,22 @@ describe('perfil da página', () => {
   it('lerConsulta traz o perfil e a antecedência', () => {
     const r = lerConsulta({ estado: 'ok', vagas: [], perfil: { cref: '1-G/RJ' }, antecedencia_horas: 3 })
     expect(r).toMatchObject({ perfil: { cref: '1-G/RJ' }, antecedencia_horas: 3 })
+  })
+})
+
+describe('opções do pedido (local e modalidade)', () => {
+  it('lê só o formato conhecido', async () => {
+    const { lerOpcoes } = await import('./publica')
+    expect(lerOpcoes(null)).toEqual({ locais: [], modalidades: [] })
+    expect(lerOpcoes({ locais: ['  Smart Fit ', 3, ''], modalidades: [{ chave: 'natacao', label: 'Natação' }, { chave: 7 }] })).toEqual({ locais: ['Smart Fit'], modalidades: [{ chave: 'natacao', label: 'Natação' }] })
+  })
+  it('o cliente exige escolher local e modalidade só quando o personal cadastrou opções', async () => {
+    const { validarPedidoNoCliente } = await import('./publica')
+    const base = { nome: 'Maria', telefone: '(21) 99999-0000', consentimento: true, temHorario: true }
+    const opcoes = { locais: ['A', 'B'], modalidades: [{ chave: 'natacao', label: 'Natação' }] }
+    expect(validarPedidoNoCliente({ ...base, opcoes })).toEqual({ local: 'Escolha onde será a aula.', modalidade: 'Escolha a modalidade.' })
+    expect(validarPedidoNoCliente({ ...base, opcoes, local: 'A', modalidade: 'natacao' })).toEqual({})
+    expect(validarPedidoNoCliente({ ...base, opcoes: { locais: [], modalidades: [] } })).toEqual({})
+    expect(validarPedidoNoCliente(base)).toEqual({})
   })
 })
