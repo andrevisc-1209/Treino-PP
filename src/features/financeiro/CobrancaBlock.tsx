@@ -16,7 +16,8 @@ import { formatarBRL } from '@/lib/moeda'
 import { CobrancaForm, valorInicialCobranca, type CobrancaFormValor } from './CobrancaForm'
 import { payloadDistancia } from './distancia'
 import { validarCobranca } from './cobrancaValidacao'
-import { useAlunoCobranca, useFaturasDoAluno, useSalvarAlunoCobranca, type AlunoCobranca } from './api'
+import { useAlunoCobranca, useFaturasDoAluno, useParticipacoesAbertas, useSalvarAlunoCobranca, type AlunoCobranca } from './api'
+import { resumoNaoFaturado } from './semCobranca'
 import { mapearErroSupabase } from '@/lib/erros'
 
 function paraFormulario(c: AlunoCobranca): CobrancaFormValor {
@@ -46,6 +47,7 @@ export function CobrancaBlock({ alunoId, semCartao }: { alunoId: string; semCart
   const renovarPacote = useRenovarPacote()
   const encerrarPacote = useEncerrarPacote()
   const { data: faturas } = useFaturasDoAluno(alunoId)
+  const { data: participacoesAbertas } = useParticipacoesAbertas(alunoId)
   const [params, setParams] = useSearchParams()
   const atual = pacotes?.get(alunoId)
   const situacao = atual ? situacaoDoPacote(atual.pacote, atual.presencas, hojeSP()) : null
@@ -125,6 +127,20 @@ export function CobrancaBlock({ alunoId, semCartao }: { alunoId: string; semCart
       return
     }
     if (valor.modelo === 'pacote') {
+      // aluno com cobrança por aula que ainda tem aulas feitas sem fatura: ao vender o pacote a cobrança por aula é desligada e essas aulas
+      // não entrariam em nenhum fechamento de ciclo. Avisa antes (o Financeiro também mostra "Aulas feitas sem cobrança").
+      if (!atual && cobranca?.ativo && cobranca.modelo === 'por_aula') {
+        const pendentes = resumoNaoFaturado(participacoesAbertas ?? [])
+        if (pendentes.qtd > 0) {
+          const ok = await confirmarAcao({
+            titulo: 'Há aulas sem fatura',
+            mensagem: `Este aluno tem ${pendentes.qtd} aula${pendentes.qtd === 1 ? '' : 's'} feita${pendentes.qtd === 1 ? '' : 's'} e ainda sem fatura (${formatarBRL(pendentes.total)}). Ao vender o pacote, a cobrança por aula é desligada e ${pendentes.qtd === 1 ? 'ela não entra' : 'elas não entram'} em nenhum fechamento de ciclo. Feche o ciclo antes, se ele já terminou.`,
+            textoConfirmar: 'Vender o pacote mesmo assim',
+            textoCancelar: 'Voltar',
+          })
+          if (!ok) return
+        }
+      }
       setErro(null)
       salvarPacote.mutate(
         { dados: payloadPacote(valor, alunoId, atual?.presencas ?? 0), pagamento: pagamentoDoFormulario(valor), editando: atual?.pacote },

@@ -1,16 +1,18 @@
 // Quais alunos têm um ciclo de cobrança JÁ ENCERRADO ainda sem fatura (o aviso de Hoje e a etiqueta "Ciclo encerrado" do Financeiro).
 // Diferente do filtro "A fechar" do Financeiro, que também inclui o ciclo em andamento: aqui só entra o que já passou da data.
 
+import { dataSP } from '@/lib/datas'
 import { cicloAnterior, itensCobraveisDoCiclo, type ParticipacaoParaFechamento } from './calc'
 
-export type CobrancaParaCiclo = { aluno_id: string; modelo: 'por_aula' | 'mensal'; dia_ciclo: number }
+export type CobrancaParaCiclo = { aluno_id: string; modelo: 'por_aula' | 'mensal'; dia_ciclo: number; /** quando a cobrança foi criada (ISO): o primeiro ciclo de quem ainda não tem fatura só vale se começou depois disso */ created_at?: string }
 export type FaturaParaCiclo = { aluno_id: string; periodo_fim: string; status: string }
 export type ParticipacaoParaCiclo = Omit<ParticipacaoParaFechamento, 'aula_starts_at'> & { aluno_id: string; aula: { starts_at: string } | null }
 
 /**
  * Alunos (ids) com o ciclo anterior encerrado e sem fatura que o cubra:
  *  - por aula: só se houver aula cobrável ainda não faturada naquele ciclo (sem aula, nada a cobrar);
- *  - mensal: só se o aluno já tem alguma fatura (está na rotina de cobrança), para não avisar de ciclos anteriores ao cadastro.
+ *  - mensal: se o aluno já tem alguma fatura (está na rotina de cobrança) OU se a cobrança foi criada antes de o ciclo anterior COMEÇAR (o
+ *    primeiro ciclo inteiro depois do cadastro também espera fatura; ciclo anterior ao cadastro, ou em que ele entrou no meio, não avisa).
  * Fatura cancelada não conta como fechada.
  */
 export function alunosComCicloParaFechar(args: {
@@ -27,7 +29,7 @@ export function alunosComCicloParaFechar(args: {
     if (faturasDoAluno.some((f) => f.periodo_fim >= anterior.fim)) continue
     const pendente =
       c.modelo === 'mensal'
-        ? faturasDoAluno.length > 0
+        ? faturasDoAluno.length > 0 || (!!c.created_at && dataSP(c.created_at) <= anterior.inicio)
         : itensCobraveisDoCiclo(
             participacoes.filter((p) => p.aluno_id === c.aluno_id).map((p) => ({ ...p, aula_starts_at: p.aula?.starts_at ?? '' })),
             anterior,

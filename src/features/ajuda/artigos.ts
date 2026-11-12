@@ -261,6 +261,18 @@ export const ARTIGOS: Artigo[] = [
     sinonimos: ['pagamentos', 'recebido', 'recebimentos', 'pagas', 'historico', 'faturas pagas', 'quem pagou'],
   },
   {
+    id: 'aulas-sem-cobranca',
+    categoria: 'financeiro',
+    titulo: 'Aulas feitas sem cobrança',
+    passos: [
+      'Se um aluno não tem cobrança ativa (você desligou a cobrança, ou ele virou aluno de pacote) mas tem aulas por aula já feitas e nunca cobradas, o Financeiro mostra o aviso "Aulas feitas sem cobrança", com o valor e o aluno.',
+      'Essas aulas não entram em nenhum fechamento de ciclo. Para cobrá-las, abra a ficha do aluno e reative a cobrança por aula; depois feche o ciclo.',
+      'Ao vender um pacote para um aluno que ainda tem aulas por aula sem fatura, o app avisa antes: feche o ciclo dele primeiro, se o ciclo já terminou.',
+      'Aluno com cobrança mensal que ainda não tem nenhuma fatura também aparece como "ciclo para fechar" quando o primeiro ciclo inteiro dele termina.',
+    ],
+    sinonimos: ['sem cobranca', 'nao cobrado', 'aulas nao faturadas', 'cobranca desligada', 'perdi aulas', 'ciclo mensal'],
+  },
+  {
     id: 'pacote-de-aulas',
     categoria: 'financeiro',
     titulo: 'Vender um pacote de aulas e acompanhar o contador',

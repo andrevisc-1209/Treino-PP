@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { dataSP, hojeSP, limitesDoDiaSP } from '@/lib/datas'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
+import { buscarTodasAsPaginas } from '@/lib/paginar'
 import { cicloPodeSerFechado } from './calc'
 import { CicloJaFechadoError, CicloNaoTerminouError, traduzirErroFinanceiro } from './erroFinanceiro'
 import { validarDataPagamento } from './pagamentos'
@@ -24,6 +25,7 @@ export type AlunoCobranca = {
   dia_ciclo: number
   dias_vencimento: number
   ativo: boolean
+  created_at?: string
   cobrar_distancia?: boolean
   valor_distancia?: number | null
 }
@@ -150,15 +152,17 @@ export function useParticipacoesAbertas(alunoId: string | undefined) {
 export function useParticipacoesCobraveisTodas() {
   return useQuery({
     queryKey: ['participacoes-cobraveis-todas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('aula_participantes')
-        .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), sessao:sessoes(plano:planos(modalidade))')
-        .is('fatura_id', null)
-        .eq('cobrar', true)
-      if (error) throw error
-      return data as unknown as ParticipacaoAberta[]
-    },
+    // todas as páginas (o servidor corta em 1000 linhas): aulas não faturadas se acumulam e a lista não pode vir truncada
+    queryFn: async () =>
+      (await buscarTodasAsPaginas((de, ate) =>
+        supabase
+          .from('aula_participantes')
+          .select('id, aluno_id, status, cobrar, valor, fatura_id, aula:aulas(starts_at, duration_min, local), sessao:sessoes(plano:planos(modalidade))')
+          .is('fatura_id', null)
+          .eq('cobrar', true)
+          .order('id')
+          .range(de, ate),
+      )) as unknown as ParticipacaoAberta[],
   })
 }
 
@@ -210,14 +214,11 @@ export type Fatura = {
 export function useFaturasTodas() {
   return useQuery({
     queryKey: ['faturas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('faturas')
-        .select('*, aluno:alunos(name, phone)')
-        .order('periodo_inicio', { ascending: false })
-      if (error) throw error
-      return data as Fatura[]
-    },
+    // todas as páginas (o servidor corta em 1000 linhas): com a ordem estável (período e id) nenhuma fatura repete nem some
+    queryFn: async () =>
+      (await buscarTodasAsPaginas((de, ate) =>
+        supabase.from('faturas').select('*, aluno:alunos(name, phone)').order('periodo_inicio', { ascending: false }).order('id').range(de, ate),
+      )) as Fatura[],
   })
 }
 

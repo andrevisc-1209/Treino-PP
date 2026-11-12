@@ -1810,10 +1810,19 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Testes: regra de fechamento, vencimento e data do pagamento. Central de ajuda atualizada.
 - ⏳ PR B: funções SQL atômicas para fechar ciclo e cancelar fatura (hoje em duas etapas). Depois: aulas sem fatura ao desligar a cobrança, primeiro ciclo do aluno mensal e paginação.
 
-### 175. Financeiro, revisão total: PR B (fechar ciclo e cancelar fatura atômicos) — ✅ PR aberta
+### 175. Financeiro, revisão total: PR B (fechar ciclo e cancelar fatura atômicos) — ✅ Mergeada (#300)
 - **Problema:** fechar o ciclo (criar a fatura → ligar as aulas) e cancelar a fatura (marcar cancelada → soltar as aulas) eram feitos em duas etapas, do celular. Rede caindo no meio: fatura sem aulas (as aulas voltavam a parecer cobráveis e podiam ser cobradas de novo) ou aulas presas a uma fatura cancelada (nunca mais cobradas).
 - ✅ **`treino.fechar_ciclo(...)`**: uma transação cria a fatura, liga as aulas (gravando o valor editado de cada uma) e confere no banco: o ciclo já terminou (fuso de São Paulo), não há outra fatura do período (troca a cancelada), as aulas são do aluno, cobráveis e ainda sem fatura, e o total bate com as aulas + ajuste. Qualquer falha desfaz tudo.
 - ✅ **`treino.cancelar_fatura(id)`**: só aberta ou enviada (paga: desfaz o pagamento antes); cancela e solta as aulas na mesma transação.
 - ✅ SECURITY INVOKER (a RLS vale como no app), só `authenticated`. O app passou a chamar as duas funções. Migration `20261103…` e teste `supabase/tests/financeiro_atomico.sql`.
 - ⏳ Pacote (vender/encerrar) segue em etapas: fica para depois.
+
+### 176. Financeiro, revisão total: PR C (aulas sem cobrança, primeiro ciclo do aluno mensal e paginação) — ✅ PR aberta
+- ✅ **"Aulas feitas sem cobrança"** (Financeiro): aluno sem cobrança ativa (desligada, ou virou pacote) com aulas por aula já feitas e nunca faturadas aparece com a quantidade e o valor; essas aulas não entravam em nenhum fechamento e sumiam sem aviso. Presença de pacote (sem valor por aula) não entra.
+- ✅ **Confirmação ao vender pacote** para quem tem cobrança por aula com aulas sem fatura ("Feche o ciclo antes, se ele já terminou").
+- ✅ **Primeiro ciclo do aluno mensal sem nenhuma fatura** também avisa em Hoje/Financeiro quando o primeiro ciclo inteiro depois da criação da cobrança termina (antes só avisava quem já tinha alguma fatura). Ciclo parcial (cobrança criada no meio) não avisa.
+- ✅ **Paginação:** `useFaturasTodas` e `useParticipacoesCobraveisTodas` buscam todas as páginas (o servidor corta em 1000 linhas sem avisar); ordem estável para não repetir nem pular linhas (`buscarTodasAsPaginas`).
+- ✅ Testes e artigo "Aulas feitas sem cobrança" na Central de ajuda. Sem migration.
+- ⏳ Risco conhecido: cobrança desligada e reativada meses depois (created_at antigo) pode avisar de um ciclo mensal em que o aluno estava sem cobrança.
+- ⏳ PR D: pacote (vender, encerrar, renovar) atômico.
 
