@@ -14,6 +14,10 @@ export type PedidoAgenda = {
   status: StatusPedido
   aluno_id: string | null
   created_at: string
+  /** nome de um dos locais do personal, escolhido pelo visitante (migration 20261101) */
+  local_escolhido: string | null
+  /** chave de uma das modalidades do app, escolhida pelo visitante */
+  modalidade: string | null
 }
 
 /** Só os dígitos do telefone, sem o 55 do Brasil (para comparar "(21) 99999-0000" com "5521999990000"). */
@@ -92,5 +96,7 @@ export function normalizarPedidos(raw: unknown): PedidoAgenda[] {
     status: r.status as StatusPedido,
     aluno_id: (r.aluno_id as string | null) ?? null,
     created_at: String(r.created_at),
+    local_escolhido: typeof r.local_escolhido === 'string' && r.local_escolhido ? r.local_escolhido : null,
+    modalidade: typeof r.modalidade === 'string' && r.modalidade ? r.modalidade : null,
   }))
 }

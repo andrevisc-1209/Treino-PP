@@ -13,6 +13,7 @@ import { useAprovarPedido, useListaEspera, usePedidosPendentes, usePedidosRespon
 import { ListaEspera } from './ListaEspera'
 import { esperaLonga, tempoDeEspera } from './publica'
 import { cn } from '@/lib/utils'
+import { rotuloDaModalidade } from './modalidadesAtendimento'
 import { alunoDoTelefone, alunosParecidos, buscarAlunosPorNome, mensagemDeAprovacao, mensagemDeRecusa, telefoneDoPedido, textoDoHorario, type PedidoAgenda } from './pedidos'
 
 type Resposta = { tipo: 'aprovado' | 'recusado'; link: string; pedido: PedidoAgenda }
@@ -37,7 +38,7 @@ function CartaoPedido({ pedido, aluno, alunos, personalNome, resposta, onRespond
 
   const fazerAprovar = async () => {
     try {
-      const r = await aprovar.mutateAsync({ pedido, alunoId: alunoFinal?.id ?? null, local: null, guardarTelefone: !aluno && !!escolhido && !escolhido.phone && guardarTelefone })
+      const r = await aprovar.mutateAsync({ pedido, alunoId: alunoFinal?.id ?? null, local: pedido.local_escolhido, guardarTelefone: !aluno && !!escolhido && !escolhido.phone && guardarTelefone })
       mostrarInfoGlobal(r.novoAluno ? 'Aula marcada e aluno cadastrado. Complete a ficha dele depois.' : 'Aula marcada.')
       onResponder(pedido.id, { tipo: 'aprovado', pedido, link: linkWhatsAppComTexto(pedido.visitante_telefone, mensagemDeAprovacao(dados)) })
     } catch (e) {
@@ -118,6 +119,11 @@ function CartaoPedido({ pedido, aluno, alunos, personalNome, resposta, onRespond
               </div>
             )}
           </div>
+        )}
+        {(pedido.local_escolhido || pedido.modalidade) && (
+          <p className="mt-1 text-sm text-slate-700">
+            {[pedido.modalidade ? rotuloDaModalidade(pedido.modalidade) : null, pedido.local_escolhido].filter(Boolean).join(' · ')}
+          </p>
         )}
         {pedido.mensagem && <p className="mt-1 rounded-xl bg-slate-50 p-2 text-sm text-slate-700">“{pedido.mensagem}”</p>}
       </div>

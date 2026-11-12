@@ -1754,10 +1754,19 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ A barra antiga continua em `?barra=padrao` (a escolha fica guardada no aparelho), para o teste com os 5 personais comparar. O evento `aula_registrada` segue levando `barra` (`padrao` ou `centro`).
 - ⏳ Decidir com o teste: se a barra central não ajudar (hábito de quem usa há tempo), voltar ao padrão é uma linha.
 
-### 168. Busca de endereço do Google e até 5 locais de atendimento do personal — ✅ PR aberta
+### 168. Busca de endereço do Google e até 5 locais de atendimento do personal — ✅ Mergeada (#293)
 - ✅ **"Onde você atende" agora usa a busca do Google (Places) e aceita até 5 locais** (duas academias, um parque). Antes era um texto livre. A busca sugere **estabelecimentos** (não endereço residencial); quem não acha digita o nome e usa "Adicionar como está". Salva na hora, com remover. Migration `20261100…` (`professional_config.locais_atendimento`, JSONB, até 5) e teste `supabase/tests/locais_de_atendimento.sql`.
 - ✅ **A página pública mostra só os nomes** (resumo em `pagina_locais`, até 100 caracteres, sem cortar nome); o endereço completo fica só com o personal. Quem tinha o texto antigo continua vendo-o até adicionar um local. **Não precisa de redeploy da função** (a página já lê `pagina_locais`).
 - ✅ **Atalhos dos seus locais** nos campos "Local" do horário fixo e da aula avulsa (antes só havia os usados recentemente, e só na aula avulsa).
 - ✅ **Endereço do aluno no cadastro** ganhou a busca do Google (só endereços), como já tinha no contrato. O campo acompanha o cadastro carregado depois.
 - ✅ **Revisão dos campos de endereço:** com busca do Google: local de treino do aluno, endereço e local das aulas no contrato, local do horário fixo, local da aula avulsa, endereço do aluno (novo), onde você atende (novo). Sem busca, de propósito: Bairro e Cidade em Configurações (vêm do CEP) e "Cidade do foro" (só a cidade).
 - ⏳ A busca só funciona com `VITE_GOOGLE_MAPS_API_KEY` no build (secret do GitHub); sem ela, os campos viram texto livre.
+
+### 169. CREF com máscara, modalidades em lista e o visitante escolhe local e modalidade (Política 1.17) — ✅ PR aberta
+- ✅ **CREF com máscara** no formato padrão `012345-G/RJ` (6 números, G ou P, UF), que se monta enquanto digita e aceita colar com "CREF" ou pontuação. Preenchido fora do padrão, não salva e explica o formato (vazio continua permitido).
+- ✅ **"Modalidades que você atende"**: escolha entre as 5 modalidades ativas do app (musculação, corrida, natação, ciclismo, triathlon), em vez de texto livre. Coluna `professional_config.modalidades_atendimento`; o texto da página pública (`pagina_modalidades`) sai dos nomes.
+- ✅ **O visitante escolhe a modalidade e o local ao pedir a aula**, entre as opções do personal (nomes dos locais, nunca o endereço). **Obrigatório quando o personal cadastrou opções; já vem marcado quando há uma só; o campo some quando não há.** O servidor confere se a escolha pertence ao personal. Colunas `pedidos_agenda.local_escolhido` e `pedidos_agenda.modalidade`.
+- ✅ No pedido do personal aparece "Modalidade · Local"; ao **aprovar, o local vai direto para a aula**. (A aula não tem campo de modalidade: ela fica no pedido, que continua em "Aprovados".)
+- ✅ **Política 1.17** (o visitante também informa local e modalidade) + migration `20261101…` e teste `supabase/tests/pedido_local_modalidade.sql`. **Redeploy de `agenda-publica`.**
+- ✅ Teste que mantém as modalidades públicas iguais às 5 ativas do app.
+- ⏳ Revisão jurídica da Política 1.17 junto das 1.11 a 1.16 (acrescentar ao dossiê).

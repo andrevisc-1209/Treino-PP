@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fotoPublica, calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, perfilPublico, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
+import { opcoesDoPedido, MODALIDADES_PUBLICAS, fotoPublica, calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, perfilPublico, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
 
 describe('horário de São Paulo', () => {
   it('data e hora de um instante e o caminho de volta', () => {
@@ -29,7 +29,7 @@ describe('telefone', () => {
 describe('validação do pedido', () => {
   const ok = { nome: '  Maria   Souza ', telefone: '(21) 99999-0000', mensagem: ' Quero experimentar ', consentimento: true, data: '2026-10-30', hora: '07:00' }
   it('limpa os textos e devolve o pedido', () => {
-    expect(validarPedido(ok)).toEqual({ ok: true, pedido: { nome: 'Maria Souza', telefone: '5521999990000', mensagem: 'Quero experimentar', dataISO: '2026-10-30', hora: '07:00' } })
+    expect(validarPedido(ok)).toEqual({ ok: true, pedido: { nome: 'Maria Souza', telefone: '5521999990000', mensagem: 'Quero experimentar', dataISO: '2026-10-30', hora: '07:00', local: null, modalidade: null } })
     expect(validarPedido({ ...ok, mensagem: '' })).toMatchObject({ ok: true, pedido: { mensagem: null } })
     expect(validarPedido({ ...ok, nome: 'Ana\u0000\nLima' })).toMatchObject({ pedido: { nome: 'Ana Lima' } })
   })
@@ -116,6 +116,31 @@ describe('perfil público da página', () => {
     it('entra no perfil público', () => {
       expect(perfilPublico({ pagina_foto: 'data:image/webp;base64,AAAA' }).foto).toBe('data:image/webp;base64,AAAA')
       expect(perfilPublico({}).foto).toBeNull()
+    })
+  })
+
+  describe('local e modalidade do pedido', () => {
+    const ok = { nome: 'Maria Souza', telefone: '(21) 99999-0000', mensagem: '', consentimento: true, data: '2026-10-30', hora: '07:00' }
+    const opcoes = opcoesDoPedido({ locais_atendimento: [{ nome: 'Smart Fit Laranjeiras', endereco: 'Rua Secreta 100' }, { nome: 'Bodytech Botafogo' }, { nome: 'Smart Fit Laranjeiras' }], modalidades_atendimento: ['natacao', 'yoga', 'musculacao'] })
+    it('as opções trazem só os nomes dos locais (sem endereço, sem repetir) e as modalidades das 5 ativas na ordem do app', () => {
+      expect(opcoes.locais).toEqual(['Smart Fit Laranjeiras', 'Bodytech Botafogo'])
+      expect(opcoes.modalidades.map((m) => m.chave)).toEqual(['musculacao', 'natacao'])
+      expect(JSON.stringify(opcoes)).not.toContain('Secreta')
+      expect(opcoesDoPedido({})).toEqual({ locais: [], modalidades: [] })
+    })
+    it('com opções cadastradas, o visitante precisa escolher uma delas', () => {
+      expect(validarPedido(ok, opcoes)).toMatchObject({ ok: false, erro: 'Escolha onde será a aula.' })
+      expect(validarPedido({ ...ok, local: 'Outro lugar' }, opcoes)).toMatchObject({ ok: false, erro: 'Escolha onde será a aula.' })
+      expect(validarPedido({ ...ok, local: 'Bodytech Botafogo' }, opcoes)).toMatchObject({ ok: false, erro: 'Escolha a modalidade.' })
+      expect(validarPedido({ ...ok, local: 'Bodytech Botafogo', modalidade: 'yoga' }, opcoes)).toMatchObject({ ok: false, erro: 'Escolha a modalidade.' })
+      expect(validarPedido({ ...ok, local: 'Bodytech Botafogo', modalidade: 'natacao' }, opcoes)).toMatchObject({ ok: true, pedido: { local: 'Bodytech Botafogo', modalidade: 'natacao' } })
+    })
+    it('sem opções cadastradas, o que vier do visitante é ignorado', () => {
+      expect(validarPedido({ ...ok, local: 'x', modalidade: 'natacao' })).toMatchObject({ ok: true, pedido: { local: null, modalidade: null } })
+    })
+    it('as modalidades públicas são as mesmas 5 ativas do app', async () => {
+      const { MODALIDADES_ATIVAS } = await import('../../../src/types/modalidades')
+      expect(MODALIDADES_PUBLICAS.map((m) => m.chave)).toEqual([...MODALIDADES_ATIVAS])
     })
   })
 })

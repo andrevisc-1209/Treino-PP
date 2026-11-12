@@ -17,8 +17,23 @@ export function agruparPorDia(vagas: Vaga[]): DiaComVagas[] {
 export type PerfilDaPagina = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null; foto: string | null }
 export const PERFIL_VAZIO: PerfilDaPagina = { cref: null, modalidades: null, locais: null, preco_aula: null, foto: null }
 
+/** O que o visitante escolhe ao pedir: os NOMES dos locais do personal e as modalidades que ele atende. Lista vazia = o campo não aparece. */
+export type OpcoesDoPedido = { locais: string[]; modalidades: { chave: string; label: string }[] }
+export const SEM_OPCOES: OpcoesDoPedido = { locais: [], modalidades: [] }
+
+export function lerOpcoes(bruto: unknown): OpcoesDoPedido {
+  const o = (bruto ?? {}) as Record<string, unknown>
+  const locais = (Array.isArray(o.locais) ? o.locais : []).filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim().slice(0, 80)).slice(0, 5)
+  const modalidades = (Array.isArray(o.modalidades) ? o.modalidades : [])
+    .map((m) => (m ?? {}) as Record<string, unknown>)
+    .filter((m) => typeof m.chave === 'string' && typeof m.label === 'string')
+    .map((m) => ({ chave: String(m.chave), label: String(m.label).slice(0, 40) }))
+    .slice(0, 5)
+  return { locais, modalidades }
+}
+
 export type RespostaConsulta =
-  | { estado: 'ok'; nome_personal: string; cidade: string | null; apresentacao: string | null; perfil: PerfilDaPagina; antecedencia_horas: number | null; duracao_min: number; vagas: Vaga[] }
+  | { estado: 'ok'; nome_personal: string; cidade: string | null; apresentacao: string | null; perfil: PerfilDaPagina; opcoes: OpcoesDoPedido; antecedencia_horas: number | null; duracao_min: number; vagas: Vaga[] }
   | { estado: 'indisponivel' }
 
 const textoCurto = (t: unknown, max: number): string | null => (typeof t === 'string' && t.trim() ? t.trim().slice(0, max) : null)
@@ -37,7 +52,7 @@ export function lerConsulta(bruto: unknown): RespostaConsulta {
   const vagas = (o.vagas as Record<string, unknown>[])
     .filter((v) => typeof v?.dataISO === 'string' && typeof v?.inicio === 'string' && typeof v?.fim === 'string')
     .map((v) => ({ dataISO: String(v.dataISO), inicio: String(v.inicio), fim: String(v.fim) }))
-  return { estado: 'ok', nome_personal: typeof o.nome_personal === 'string' ? o.nome_personal : '', cidade: typeof o.cidade === 'string' ? o.cidade : null, apresentacao: typeof o.apresentacao === 'string' && o.apresentacao.trim() ? o.apresentacao.trim().slice(0, 160) : null, perfil: lerPerfil(o.perfil), antecedencia_horas: Number(o.antecedencia_horas) > 0 ? Number(o.antecedencia_horas) : null, duracao_min: Number(o.duracao_min) || 60, vagas }
+  return { estado: 'ok', nome_personal: typeof o.nome_personal === 'string' ? o.nome_personal : '', cidade: typeof o.cidade === 'string' ? o.cidade : null, apresentacao: typeof o.apresentacao === 'string' && o.apresentacao.trim() ? o.apresentacao.trim().slice(0, 160) : null, perfil: lerPerfil(o.perfil), opcoes: lerOpcoes(o.opcoes), antecedencia_horas: Number(o.antecedencia_horas) > 0 ? Number(o.antecedencia_horas) : null, duracao_min: Number(o.duracao_min) || 60, vagas }
 }
 
 /** Link da página pública do personal. */
@@ -99,11 +114,13 @@ export function iniciais(nome: string | null | undefined): string {
   return (partes[0]?.[0] ?? '').toUpperCase() + (partes.length > 1 ? (partes[partes.length - 1][0] ?? '').toUpperCase() : '')
 }
 
-export type ErrosDoPedido = { nome?: string; telefone?: string; consentimento?: string; horario?: string }
+export type ErrosDoPedido = { nome?: string; telefone?: string; consentimento?: string; horario?: string; local?: string; modalidade?: string }
 
 /** Confere o formulário antes de enviar (o servidor confere de novo): mensagens por campo, vazio = tudo certo. */
-export function validarPedidoNoCliente(v: { nome: string; telefone: string; consentimento: boolean; temHorario: boolean }): ErrosDoPedido {
+export function validarPedidoNoCliente(v: { nome: string; telefone: string; consentimento: boolean; temHorario: boolean; opcoes?: OpcoesDoPedido; local?: string; modalidade?: string }): ErrosDoPedido {
   const e: ErrosDoPedido = {}
+  if (v.opcoes && v.opcoes.locais.length > 0 && !v.opcoes.locais.includes(v.local ?? '')) e.local = 'Escolha onde será a aula.'
+  if (v.opcoes && v.opcoes.modalidades.length > 0 && !v.opcoes.modalidades.some((m) => m.chave === v.modalidade)) e.modalidade = 'Escolha a modalidade.'
   if (!v.temHorario) e.horario = 'Escolha um horário.'
   if (v.nome.trim().length < 2) e.nome = 'Informe seu nome.'
   if (!normalizarTelefone(v.telefone)) e.telefone = 'Informe um número de WhatsApp válido com DDD.'

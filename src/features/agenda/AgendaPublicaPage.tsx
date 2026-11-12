@@ -52,6 +52,8 @@ export function AgendaPublicaPage() {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [mensagem, setMensagem] = useState('')
+  const [localEscolhido, setLocalEscolhido] = useState('')
+  const [modalidadeEscolhida, setModalidadeEscolhida] = useState('')
   const [consentimento, setConsentimento] = useState(false)
   const [token, setToken] = useState('')
   const [reiniciarCaptcha, setReiniciarCaptcha] = useState(0)
@@ -81,6 +83,9 @@ export function AgendaPublicaPage() {
   }, [carregar])
 
   const ok = dados?.estado === 'ok' ? dados : null
+  // uma opção só: já vem escolhida; várias: a pessoa escolhe; nenhuma: o campo não aparece
+  const localFinal = ok?.opcoes.locais.length === 1 ? ok.opcoes.locais[0] : localEscolhido
+  const modalidadeFinal = ok?.opcoes.modalidades.length === 1 ? ok.opcoes.modalidades[0].chave : modalidadeEscolhida
   const personal = ok?.nome_personal || 'o personal'
   const dias = ok ? agruparPorDia(ok.vagas) : []
   const diaAtual = dias.find((d) => d.dataISO === diaEscolhido) ?? dias[0] ?? null
@@ -96,7 +101,7 @@ export function AgendaPublicaPage() {
 
   const enviar = async () => {
     setErroEnvio(null)
-    const e = validarPedidoNoCliente({ nome, telefone, consentimento, temHorario: !!escolhida })
+    const e = validarPedidoNoCliente({ nome, telefone, consentimento, temHorario: !!escolhida, opcoes: ok?.opcoes, local: localFinal, modalidade: modalidadeFinal })
     setErros(e)
     if (Object.keys(e).length > 0 || !escolhida) return
     if (temCaptcha && !token) {
@@ -105,7 +110,7 @@ export function AgendaPublicaPage() {
     }
     setEnviando(true)
     const { data, error } = await supabase.functions.invoke('agenda-publica', {
-      body: { slug, acao: 'pedir', data: escolhida.dataISO, hora: escolhida.inicio, nome, telefone, mensagem, consentimento, turnstile: token },
+      body: { slug, acao: 'pedir', data: escolhida.dataISO, hora: escolhida.inicio, nome, telefone, mensagem, consentimento, local: localFinal || undefined, modalidade: modalidadeFinal || undefined, turnstile: token },
     })
     setEnviando(false)
     if (error) {
@@ -312,6 +317,51 @@ export function AgendaPublicaPage() {
                         Trocar
                       </button>
                     </div>
+
+                    {ok.opcoes.modalidades.length > 0 && (
+                      <fieldset>
+                        <legend className="mb-1 text-sm font-medium">Modalidade</legend>
+                        <div className="flex flex-wrap gap-2">
+                          {ok.opcoes.modalidades.map((m) => (
+                            <button
+                              key={m.chave}
+                              type="button"
+                              aria-pressed={modalidadeFinal === m.chave}
+                              onClick={() => {
+                                setModalidadeEscolhida(m.chave)
+                                setErros((x) => ({ ...x, modalidade: undefined }))
+                              }}
+                              className={cn('min-h-11 rounded-full border px-4 text-sm font-medium', modalidadeFinal === m.chave ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-800')}
+                            >
+                              {m.label}
+                            </button>
+                          ))}
+                        </div>
+                        <Erro id="erro-modalidade" texto={erros.modalidade} />
+                      </fieldset>
+                    )}
+                    {ok.opcoes.locais.length > 0 && (
+                      <fieldset>
+                        <legend className="mb-1 text-sm font-medium">Onde será a aula</legend>
+                        <div className="flex flex-wrap gap-2">
+                          {ok.opcoes.locais.map((l) => (
+                            <button
+                              key={l}
+                              type="button"
+                              aria-pressed={localFinal === l}
+                              onClick={() => {
+                                setLocalEscolhido(l)
+                                setErros((x) => ({ ...x, local: undefined }))
+                              }}
+                              className={cn('min-h-11 max-w-full rounded-full border px-4 text-left text-sm font-medium', localFinal === l ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-800')}
+                            >
+                              {l}
+                            </button>
+                          ))}
+                        </div>
+                        <Erro id="erro-local" texto={erros.local} />
+                      </fieldset>
+                    )}
 
                     <div>
                       <label htmlFor="pedido-nome" className="mb-1 block text-sm font-medium">

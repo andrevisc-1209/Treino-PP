@@ -95,10 +95,34 @@ export function normalizarTelefone(bruto: unknown): string | null {
 
 const limpa = (t: string): string => t.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim()
 
-export type PedidoValido = { nome: string; telefone: string; mensagem: string | null; dataISO: string; hora: string }
+export type PedidoValido = { nome: string; telefone: string; mensagem: string | null; dataISO: string; hora: string; local: string | null; modalidade: string | null }
+
+/** As modalidades que o app oferece (as 5 ativas). Mantém em sincronia com MODALIDADES_ATIVAS em src/types/modalidades.ts (há teste). */
+export const MODALIDADES_PUBLICAS: { chave: string; label: string }[] = [
+  { chave: 'musculacao', label: 'Musculação' },
+  { chave: 'corrida', label: 'Corrida' },
+  { chave: 'natacao', label: 'Natação' },
+  { chave: 'ciclismo', label: 'Ciclismo' },
+  { chave: 'brick', label: 'Triathlon (bike + corrida)' },
+]
+
+export type OpcoesDoPedido = { locais: string[]; modalidades: { chave: string; label: string }[] }
+
+/** O que o visitante pode escolher: os NOMES dos locais do personal (nunca o endereço) e as modalidades que ele atende. */
+export function opcoesDoPedido(cfg: Record<string, unknown>): OpcoesDoPedido {
+  const locais: string[] = []
+  if (Array.isArray(cfg.locais_atendimento)) {
+    for (const x of cfg.locais_atendimento) {
+      const nome = textoOuNulo((x as Record<string, unknown> | null)?.nome, 80)
+      if (nome && !locais.includes(nome)) locais.push(nome)
+    }
+  }
+  const marcadas = Array.isArray(cfg.modalidades_atendimento) ? cfg.modalidades_atendimento : []
+  return { locais: locais.slice(0, 5), modalidades: MODALIDADES_PUBLICAS.filter((m) => marcadas.includes(m.chave)) }
+}
 
 /** Valida o corpo do pedido; devolve a mensagem de erro em português (genérica o bastante para não ajudar quem testa) ou o pedido limpo. */
-export function validarPedido(corpo: Record<string, unknown>): { ok: true; pedido: PedidoValido } | { ok: false; erro: string } {
+export function validarPedido(corpo: Record<string, unknown>, opcoes: OpcoesDoPedido = { locais: [], modalidades: [] }): { ok: true; pedido: PedidoValido } | { ok: false; erro: string } {
   const nome = typeof corpo.nome === 'string' ? limpa(corpo.nome) : ''
   if (nome.length < 2 || nome.length > 80) return { ok: false, erro: 'Informe seu nome.' }
   const telefone = normalizarTelefone(corpo.telefone)
@@ -111,7 +135,18 @@ export function validarPedido(corpo: Record<string, unknown>): { ok: true; pedid
   if (typeof dataISO !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dataISO) || typeof hora !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) {
     return { ok: false, erro: 'Escolha um horário.' }
   }
-  return { ok: true, pedido: { nome, telefone, mensagem: mensagem || null, dataISO, hora } }
+  // com opções cadastradas pelo personal, o visitante precisa escolher uma delas; sem opções, o campo não existe
+  let local: string | null = null
+  if (opcoes.locais.length > 0) {
+    local = typeof corpo.local === 'string' ? corpo.local : null
+    if (!local || !opcoes.locais.includes(local)) return { ok: false, erro: 'Escolha onde será a aula.' }
+  }
+  let modalidade: string | null = null
+  if (opcoes.modalidades.length > 0) {
+    modalidade = typeof corpo.modalidade === 'string' ? corpo.modalidade : null
+    if (!modalidade || !opcoes.modalidades.some((m) => m.chave === modalidade)) return { ok: false, erro: 'Escolha a modalidade.' }
+  }
+  return { ok: true, pedido: { nome, telefone, mensagem: mensagem || null, dataISO, hora, local, modalidade } }
 }
 
 export type PerfilPublico = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null; foto: string | null }
