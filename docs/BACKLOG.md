@@ -1817,7 +1817,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ SECURITY INVOKER (a RLS vale como no app), só `authenticated`. O app passou a chamar as duas funções. Migration `20261103…` e teste `supabase/tests/financeiro_atomico.sql`.
 - ⏳ Pacote (vender/encerrar) segue em etapas: fica para depois.
 
-### 176. Financeiro, revisão total: PR C (aulas sem cobrança, primeiro ciclo do aluno mensal e paginação) — ✅ PR aberta
+### 176. Financeiro, revisão total: PR C (aulas sem cobrança, primeiro ciclo do aluno mensal e paginação) — ✅ Mergeada (#301)
 - ✅ **"Aulas feitas sem cobrança"** (Financeiro): aluno sem cobrança ativa (desligada, ou virou pacote) com aulas por aula já feitas e nunca faturadas aparece com a quantidade e o valor; essas aulas não entravam em nenhum fechamento e sumiam sem aviso. Presença de pacote (sem valor por aula) não entra.
 - ✅ **Confirmação ao vender pacote** para quem tem cobrança por aula com aulas sem fatura ("Feche o ciclo antes, se ele já terminou").
 - ✅ **Primeiro ciclo do aluno mensal sem nenhuma fatura** também avisa em Hoje/Financeiro quando o primeiro ciclo inteiro depois da criação da cobrança termina (antes só avisava quem já tinha alguma fatura). Ciclo parcial (cobrança criada no meio) não avisa.
@@ -1825,4 +1825,10 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Testes e artigo "Aulas feitas sem cobrança" na Central de ajuda. Sem migration.
 - ⏳ Risco conhecido: cobrança desligada e reativada meses depois (created_at antigo) pode avisar de um ciclo mensal em que o aluno estava sem cobrança.
 - ⏳ PR D: pacote (vender, encerrar, renovar) atômico.
+
+### 177. Financeiro, revisão total: PR D (pacote atômico: vender, editar, encerrar e renovar) — ✅ PR aberta
+- **Problema:** vender (fatura → pacote → desligar a cobrança por aula), encerrar (ligar presenças à fatura → encurtar o prazo → encerrar) e renovar (encerrar + vender) eram feitos em várias etapas, do celular. Rede caindo no meio deixava estado pela metade: fatura sem pacote, pacote com a cobrança por aula ainda ligada (o aluno voltava ao fechamento de ciclo), pacote encerrado sem relatório, ou o pacote antigo encerrado e nenhum novo.
+- ✅ **`treino.vender_pacote`**, **`editar_pacote`** (a fatura aberta/enviada acompanha quantidade, valor e prazo; paga não muda), **`encerrar_pacote`** (liga só as presenças presenciais desde o início, encurta o prazo da fatura) e **`renovar_pacote`** (encerrar + vender na mesma transação: se a venda nova falha, o pacote antigo continua ativo). Cada uma numa transação, com as mesmas validações do banco e mensagens em português (um pacote ativo por aluno, recebimento não futuro, forma de pagamento obrigatória quando recebido, fatura que já começa hoje).
+- ✅ SECURITY INVOKER (a RLS vale como no app), só `authenticated`. O app chama as funções. Migration `20261104…` e teste `supabase/tests/pacote_atomico.sql`.
+- ⏳ Trocar o pacote por cobrança por aula/mensal (encerrar o pacote e depois salvar a cobrança) ainda são dois passos na tela.
 

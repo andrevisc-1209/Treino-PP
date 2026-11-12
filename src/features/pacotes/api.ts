@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { dataSP, hojeSP } from '@/lib/datas'
+import { dataSP } from '@/lib/datas'
 import type { FormaPagamento } from '@/features/financeiro/api'
-import { fimDoPacote, type Pacote } from './pacote'
+import { traduzirErroFinanceiro } from '@/features/financeiro/erroFinanceiro'
+import type { Pacote } from './pacote'
 
 export type PacoteComPresencas = { pacote: Pacote & { fatura_id: string | null }; presencas: number }
 
@@ -93,101 +94,52 @@ function invalidar(qc: QueryClient, alunoId: string) {
   qc.invalidateQueries({ queryKey: ['participacoes-cobraveis-todas'] })
 }
 
-/** A venda vira uma fatura: já paga (com data e forma) ou aberta com o vencimento escolhido. */
-async function criarFaturaDoPacote(profId: string, input: SalvarPacoteInput, inicio: string, pagamento: PagamentoPacote): Promise<string> {
-  const { data, error } = await supabase
-    .from('faturas')
-    .insert({
-      professional_id: profId,
-      aluno_id: input.aluno_id,
-      periodo_inicio: inicio,
-      periodo_fim: fimDoPacote({ inicio, validade_dias: input.validade_dias }),
-      modelo: 'pacote',
-      qtd_aulas: input.qtd_aulas,
-      valor_aulas: input.valor,
-      ajuste: 0,
-      total: input.valor,
-      vencimento: pagamento.recebido ? null : pagamento.data,
-      ...(pagamento.recebido ? { status: 'paga', paga_em: pagamento.data, forma_pagamento: pagamento.forma } : {}),
-    })
-    .select('id')
-    .single()
-  // UNIQUE (aluno, início): já existe cobrança começando neste mesmo dia
-  if (error?.code === '23505') throw new Error('Este aluno já tem uma cobrança que começa hoje. Cancele a fatura anterior ou renove amanhã.')
-  if (error) throw error
-  return data.id as string
-}
-
-/** Cria o pacote já com a fatura da venda. Se o pacote falhar depois da fatura, a fatura é desfeita. */
-async function venderPacote(input: SalvarPacoteInput, pagamento: PagamentoPacote): Promise<void> {
-  const { data: u } = await supabase.auth.getUser()
-  if (!u.user) throw new Error('Sessão expirada')
-  const inicio = hojeSP()
-  const faturaId = await criarFaturaDoPacote(u.user.id, input, inicio, pagamento)
-  const { error } = await supabase.from('aluno_pacotes').insert({ professional_id: u.user.id, ...input, inicio, fatura_id: faturaId })
-  if (error) {
-    await supabase.from('faturas').delete().eq('id', faturaId)
-    throw error
+/** Os dados da venda/renovação no formato das funções do banco (fatura da venda: já paga, com data e forma, ou aberta com o vencimento). */
+function paramsDaVenda(input: SalvarPacoteInput, pagamento: PagamentoPacote) {
+  return {
+    p_aluno_id: input.aluno_id,
+    p_qtd_aulas: input.qtd_aulas,
+    p_valor: input.valor,
+    p_validade_dias: input.validade_dias,
+    p_aulas_anteriores: input.aulas_anteriores,
+    p_conta_distancia: input.conta_distancia,
+    p_recebido: pagamento.recebido,
+    p_data: pagamento.data,
+    p_forma: pagamento.recebido ? pagamento.forma : null,
   }
-  // quem vira aluno de pacote deixa a cobrança por aula/mensal (senão entraria no fechamento de ciclo)
-  const { error: errCobranca } = await supabase.from('aluno_cobranca').update({ ativo: false }).eq('aluno_id', input.aluno_id)
-  if (errCobranca) throw errCobranca
 }
 
 /**
- * Encerra o pacote ativo e fecha o "ciclo" dele: as presenças do pacote são ligadas à fatura da venda, que passa a listar as
- * aulas no relatório. O período da fatura termina no dia do encerramento se ele vier antes do prazo.
+ * Cria o pacote já com a fatura da venda e desliga a cobrança por aula/mensal do aluno: tudo numa transação no banco (se a rede cair no
+ * meio, não sobra fatura sem pacote nem pacote com a cobrança por aula ainda ligada).
+ */
+async function venderPacote(input: SalvarPacoteInput, pagamento: PagamentoPacote): Promise<void> {
+  const { error } = await supabase.rpc('vender_pacote', paramsDaVenda(input, pagamento))
+  if (error) throw traduzirErroFinanceiro(error)
+}
+
+/**
+ * Encerra o pacote ativo e fecha o "ciclo" dele, numa transação: as presenças do pacote são ligadas à fatura da venda, que passa a listar
+ * as aulas no relatório, e o período da fatura termina no dia do encerramento se ele vier antes do prazo.
  */
 export async function encerrarPacoteComRelatorio(alunoId: string): Promise<void> {
-  const { data: pacote, error } = await supabase.from('aluno_pacotes').select(COLUNAS).eq('aluno_id', alunoId).eq('status', 'ativo').maybeSingle()
-  if (error) throw error
-  if (!pacote) return
-  const p = pacote as PacoteComPresencas['pacote']
-  if (p.fatura_id) {
-    const { data: linhas, error: errL } = await supabase
-      .from('aula_participantes')
-      .select('id, aula:aulas!inner(starts_at)')
-      .eq('aluno_id', alunoId)
-      .eq('status', 'presente')
-      .eq('aula.tipo', 'presencial')
-      .is('fatura_id', null)
-      .gte('aula.starts_at', `${p.inicio}T00:00:00-03:00`)
-    if (errL) throw errL
-    const ids = ((linhas ?? []) as unknown as { id: string; aula: { starts_at: string } | null }[]).filter((l) => l.aula && dataSP(l.aula.starts_at) >= p.inicio).map((l) => l.id)
-    if (ids.length > 0) {
-      const { error: errU } = await supabase.from('aula_participantes').update({ fatura_id: p.fatura_id }).in('id', ids)
-      if (errU) throw errU
-    }
-    const hoje = hojeSP()
-    const fim = fimDoPacote(p)
-    if (hoje < fim) {
-      const { error: errF } = await supabase.from('faturas').update({ periodo_fim: hoje < p.inicio ? p.inicio : hoje }).eq('id', p.fatura_id)
-      if (errF) throw errF
-    }
-  }
-  const { error: errE } = await supabase.from('aluno_pacotes').update({ status: 'encerrado', encerrado_em: new Date().toISOString() }).eq('id', p.id)
-  if (errE) throw errE
+  const { error } = await supabase.rpc('encerrar_pacote', { p_aluno_id: alunoId })
+  if (error) throw traduzirErroFinanceiro(error)
 }
 
 export type EditarPacoteInput = SalvarPacoteInput & { pacote: PacoteComPresencas['pacote'] }
 
-/** Atualiza o pacote ativo; enquanto a fatura não está paga, ela acompanha a quantidade, o valor e o prazo. */
+/** Atualiza o pacote ativo; enquanto a fatura não está paga, ela acompanha a quantidade, o valor e o prazo (tudo numa transação). */
 async function editarPacote({ pacote, ...input }: EditarPacoteInput): Promise<void> {
-  const { aluno_id: _aluno, ...alteravel } = input
-  void _aluno
-  if (pacote.fatura_id) {
-    const { data: f, error } = await supabase.from('faturas').select('status').eq('id', pacote.fatura_id).maybeSingle()
-    if (error) throw error
-    if (f && (f.status === 'aberta' || f.status === 'enviada')) {
-      const { error: errF } = await supabase
-        .from('faturas')
-        .update({ qtd_aulas: input.qtd_aulas, valor_aulas: input.valor, total: input.valor, periodo_fim: fimDoPacote({ inicio: pacote.inicio, validade_dias: input.validade_dias }) })
-        .eq('id', pacote.fatura_id)
-      if (errF) throw errF
-    }
-  }
-  const { error } = await supabase.from('aluno_pacotes').update(alteravel).eq('id', pacote.id)
-  if (error) throw error
+  const { error } = await supabase.rpc('editar_pacote', {
+    p_pacote_id: pacote.id,
+    p_qtd_aulas: input.qtd_aulas,
+    p_valor: input.valor,
+    p_validade_dias: input.validade_dias,
+    p_aulas_anteriores: input.aulas_anteriores,
+    p_conta_distancia: input.conta_distancia,
+  })
+  if (error) throw traduzirErroFinanceiro(error)
 }
 
 /** Pacote novo (com a fatura da venda) ou edição do ativo. Na venda o pagamento é obrigatório. */
@@ -208,8 +160,9 @@ export function useRenovarPacote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { dados: SalvarPacoteInput; pagamento: PagamentoPacote }) => {
-      await encerrarPacoteComRelatorio(input.dados.aluno_id)
-      await venderPacote(input.dados, input.pagamento)
+      // encerrar + vender na mesma transação: se a venda nova falhar, o pacote antigo continua ativo
+      const { error } = await supabase.rpc('renovar_pacote', paramsDaVenda(input.dados, input.pagamento))
+      if (error) throw traduzirErroFinanceiro(error)
     },
     onSuccess: (_d, vars) => invalidar(qc, vars.dados.aluno_id),
   })
