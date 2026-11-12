@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { faturasEnviadasPendentes, faturasPagasDoMes, mesDaData, rotuloDoMes, somarMeses, totalRecebidoDoMes, type FaturaDePagamento } from './pagamentos'
+import { faturasEnviadasPendentes, faturasPagasDoMes, mesDaData, rotuloDoMes, somarMeses, totalRecebidoDoMes, validarDataPagamento, type FaturaDePagamento } from './pagamentos'
 
 const f = (p: Partial<FaturaDePagamento> & { id: string }): FaturaDePagamento => ({
   aluno_id: 'a1',
@@ -67,5 +67,21 @@ describe('mês', () => {
     expect(somarMeses('2026-01', -1)).toBe('2025-12')
     expect(somarMeses('2026-12', 1)).toBe('2027-01')
     expect(rotuloDoMes('2026-03')).toBe('março de 2026')
+  })
+})
+
+describe('validarDataPagamento', () => {
+  const hoje = '2026-11-12'
+  it('aceita hoje e datas passadas', () => {
+    expect(validarDataPagamento('2026-11-12', hoje)).toBeNull()
+    expect(validarDataPagamento('2026-10-29', hoje)).toBeNull()
+  })
+  it('recusa vazia, mal formada, inexistente, antiga demais e futura', () => {
+    expect(validarDataPagamento('', hoje)).toMatch(/Informe/)
+    expect(validarDataPagamento('12/11/2026', hoje)).toMatch(/Informe/)
+    expect(validarDataPagamento('2026-02-30', hoje)).toMatch(/não existe/)
+    expect(validarDataPagamento('2019-12-31', hoje)).toMatch(/2020/)
+    expect(validarDataPagamento('2026-11-13', hoje)).toMatch(/futura/)
+    expect(validarDataPagamento('2027-01-01', hoje)).toMatch(/futura/)
   })
 })

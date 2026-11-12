@@ -40,6 +40,14 @@ export function cicloAnterior(diaCiclo: number, hojeISO: string): Ciclo {
   return cicloAtual(diaCiclo, somarDias(cicloAtual(diaCiclo, hojeISO).inicio, -1))
 }
 
+/**
+ * O ciclo só pode ser fechado DEPOIS do último dia dele. Fechar antes deixava as aulas feitas entre o fechamento e o fim do ciclo
+ * sem fatura para sempre (a fatura cobre o ciclo inteiro, só existe uma por ciclo, e o ciclo seguinte pega aulas pela data).
+ */
+export function cicloPodeSerFechado(ciclo: Ciclo, hojeISO: string): boolean {
+  return hojeISO > ciclo.fim
+}
+
 export type ParticipacaoParaFechamento = {
   id: string
   cobrar: boolean | null

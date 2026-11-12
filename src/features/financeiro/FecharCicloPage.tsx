@@ -7,11 +7,13 @@ import { hojeSP, somarDias } from '@/lib/datas'
 import { formatarBRL } from '@/lib/moeda'
 import { Button, Field, Input } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { cicloAtual, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
+import { cicloAnterior, cicloAtual, cicloPodeSerFechado, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
+import { alunosComCicloParaFechar } from './cicloPendente'
+import { vencimentoDaFatura } from './vencimento'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { mapearErroSupabase } from '@/lib/erros'
-import { CicloJaFechadoError, paraItemRecibo, useAlunoCobranca, useFaturaDoCiclo, useFecharCiclo, useParticipacoesAbertas, useTreinosADistanciaNoPeriodo } from './api'
+import { CicloJaFechadoError, CicloNaoTerminouError, paraItemRecibo, useAlunoCobranca, useFaturaDoCiclo, useFaturasDoAluno, useFecharCiclo, useParticipacoesAbertas, useTreinosADistanciaNoPeriodo } from './api'
 import type { ItemRecibo } from './recibo'
 import { BotaoRelatorio } from './BotaoRelatorio'
 import { rotuloAulaCiclo, rotuloModalidade, type DadosRelatorio } from './relatorio'
@@ -38,7 +40,20 @@ export function FecharCicloPage() {
   const hoje = hojeSP()
   // ?ref=aaaa-mm-dd (vindo da notificação "Ciclo encerrado") abre o ciclo que contém essa data; sem ele, o ciclo de hoje
   const refParam = searchParams.get('ref')
-  const referencia = refParam && /^\d{4}-\d{2}-\d{2}$/.test(refParam) && refParam <= hoje ? refParam : hoje
+  const refValida = !!refParam && /^\d{4}-\d{2}-\d{2}$/.test(refParam) && refParam <= hoje
+  const { data: faturasDoAluno } = useFaturasDoAluno(id)
+  // sem ?ref: se o ciclo que acabou de terminar ainda espera fatura, é ele que abre (o ciclo de hoje só pode ser fechado depois do fim)
+  const cicloEncerradoPendente = useMemo(() => {
+    if (!id || !cobranca?.ativo || !participacoes || !faturasDoAluno) return null
+    const pendente = alunosComCicloParaFechar({
+      cobrancas: [{ aluno_id: id, modelo: cobranca.modelo, dia_ciclo: cobranca.dia_ciclo }],
+      faturas: faturasDoAluno,
+      participacoes,
+      hoje,
+    })
+    return pendente.length > 0 ? cicloAnterior(cobranca.dia_ciclo, hoje) : null
+  }, [id, cobranca, participacoes, faturasDoAluno, hoje])
+  const referencia = refValida ? refParam! : (cicloEncerradoPendente?.inicio ?? hoje)
   const ciclo = useMemo(() => (cobranca ? cicloAtual(cobranca.dia_ciclo, referencia) : null), [cobranca, referencia])
 
   const { data: faturaExistente } = useFaturaDoCiclo(id, ciclo?.inicio)
@@ -76,7 +91,8 @@ export function FecharCicloPage() {
           ajuste,
         )
 
-  const cicloNaoTerminou = ciclo ? hoje < ciclo.fim : false
+  // só se fecha a partir do dia seguinte ao fim do ciclo (fechar antes deixava aulas sem fatura para sempre)
+  const cicloNaoTerminou = ciclo ? !cicloPodeSerFechado(ciclo, hoje) : false
 
   const itensDoRelatorio = (cobranca?.modelo === 'mensal' ? itensDoCiclo : itensIncluidos)
     .map((i) => paraItemRecibo({ id: i.id, status: i.status, valor: Number((valores[i.id] ?? '0').replace(',', '.')) || 0, aula: i.aula, execucao: i.execucao, sessao: i.sessao }))
@@ -101,7 +117,14 @@ export function FecharCicloPage() {
   const confirmar = () => {
     if (!cobranca || !ciclo) return
     setErro(null)
-    const vencimento = cobranca.dias_vencimento > 0 ? somarDias(ciclo.fim, cobranca.dias_vencimento) : ciclo.fim
+    // vence N dias depois do FECHAMENTO (hoje), não do fim do ciclo: fechado com atraso, a fatura não nasce vencida
+    const vencimento = vencimentoDaFatura(ciclo.fim, hoje, cobranca.dias_vencimento)
+    // itens cujo valor foi editado aqui: o valor novo também vai para a aula, senão o recibo mostraria o valor antigo e não bateria com o total
+    const valoresDosItens: Record<string, number> = {}
+    for (const i of itensIncluidos) {
+      const novo = Number((valores[i.id] ?? '0').replace(',', '.')) || 0
+      if (novo !== (i.valor ?? 0)) valoresDosItens[i.id] = novo
+    }
     fechar.mutate(
       {
         aluno_id: id,
@@ -118,10 +141,11 @@ export function FecharCicloPage() {
         total,
         vencimento,
         itemIds: itensIncluidos.map((i) => i.id),
+        valoresDosItens,
       },
       {
         onSuccess: (faturaId) => navigate(`/financeiro/${faturaId}?recibo=1`, { replace: true }),
-        onError: (e) => setErro(e instanceof CicloJaFechadoError ? e.message : mapearErroSupabase(e)),
+        onError: (e) => setErro(e instanceof CicloJaFechadoError || e instanceof CicloNaoTerminouError ? e.message : mapearErroSupabase(e)),
       },
     )
   }
@@ -158,9 +182,12 @@ export function FecharCicloPage() {
           )}
 
           {cicloNaoTerminou && (
-            <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+            <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800" role="status">
               <TriangleAlert size={18} className="mt-0.5 shrink-0" />
-              <span>O ciclo ainda não terminou. Fechar agora só considera as aulas já ocorridas até hoje.</span>
+              <span>
+                Este ciclo termina em {ciclo.fim.slice(8, 10)}/{ciclo.fim.slice(5, 7)}. Você poderá fechá-lo a partir de {somarDias(ciclo.fim, 1).slice(8, 10)}/{somarDias(ciclo.fim, 1).slice(5, 7)}, para
+                que as aulas que ainda vão acontecer entrem na fatura.
+              </span>
             </div>
           )}
 
@@ -240,14 +267,14 @@ export function FecharCicloPage() {
           className="fixed inset-x-0 bottom-14 z-30 border-t border-slate-200 bg-white p-3"
         >
           <div className="mx-auto max-w-2xl">
-            {total <= 0 && (
+            {total <= 0 && !cicloNaoTerminou && (
               <p className="mb-2 text-sm text-amber-800" role="status">
                 Não há nada a cobrar neste ciclo. Para cobrar, inclua aulas com valor ou ajuste o valor da cobrança do aluno.
               </p>
             )}
             <div className="flex gap-2">
               <BotaoRelatorio dados={dadosRelatorio} className="flex-1" />
-              <Button onClick={confirmar} className="flex-1" disabled={fechar.isPending || !!faturaExistente || total <= 0}>
+              <Button onClick={confirmar} className="flex-1" disabled={fechar.isPending || !!faturaExistente || total <= 0 || cicloNaoTerminou}>
                 {fechar.isPending ? 'Fechando…' : 'Fechar ciclo'}
               </Button>
             </div>
