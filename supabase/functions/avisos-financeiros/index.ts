@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
     .select('professional_id, vencimento, total, aluno:alunos!inner(name, apagado_em), professional:professionals(name)')
     .is('aluno.apagado_em', null) // aluno na lixeira não gera aviso de cobrança
     .in('status', ['aberta', 'enviada'])
+    .gt('total', 0) // fatura de R$ 0,00 não gera aviso de cobrança
     .in('vencimento', DIAS_DE_AVISO.map((d) => somarDias(hoje, -d)))
   if (error) {
     console.error('avisos-financeiros: falha ao ler faturas', error.message)

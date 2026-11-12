@@ -225,7 +225,7 @@ export const ARTIGOS: Artigo[] = [
     titulo: 'Fechar o ciclo e gerar a fatura',
     passos: [
       'Quando um aluno completa o ciclo de aulas, ele aparece para fechar. O aviso aparece na tela Hoje e no Financeiro; toque em "Fechar ciclo".',
-      'Confira as aulas incluídas e confirme. A fatura é criada.',
+      'Confira as aulas incluídas e confirme. A fatura é criada. Se o total for R$ 0,00 (sem aula com valor), o app não deixa fechar: defina o valor da aula na cobrança do aluno ou inclua aulas.',
       'A mensagem para o aluno fica pronta para você enviar pelo WhatsApp.',
     ],
     sinonimos: ['cobrar', 'cobranca', 'mensalidade', 'fatura', 'fechamento'],

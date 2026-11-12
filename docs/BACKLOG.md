@@ -1714,6 +1714,15 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Roteiro do teste com 5 personais:** `docs/ux-audit/ROTEIRO_TESTE_USABILIDADE.md` (5 tarefas, critério "4 de 5 sozinhos em menos de 2 minutos", perguntas finais, como fechar).
 - ⏳ Rodar os testes com personais de verdade e transformar o que aparecer em 3 ou mais sessões em itens do backlog.
 
-### 162. Briefing e relatório da auditoria de UX de 11/11/2026 no repositório — ✅ PR aberta
+### 162. Briefing e relatório da auditoria de UX de 11/11/2026 no repositório — ✅ Mergeada (#286)
 - ✅ `docs/ux-audit/BRIEFING.md`: descritivo do produto para quem vai analisar UX (corrigido: **15 dias de teste e R$ 15/mês**, não 30 dias).
 - ✅ `docs/ux-audit/RELATORIO-2026-11.md`: crítica por heurísticas, relatório do Chrome, o que o código confirmou, o insight central (aula não registrada → número errado → perda de confiança) e **tabela de status** do que foi feito (#278 a #285) e do que segue em aberto.
+
+### 163. Plano pós-auditoria, PR 1: faturas zeradas, foco visível, movimento, Hoje no centro e um alerta por vez — ✅ PR aberta
+- ✅ **Faturas de R$ 0,00 deixam de ser "em atraso".** Causa: o "Fechar ciclo" permitia criar fatura sem nada a cobrar; depois do vencimento ela aparecia como "Em atraso" no Financeiro, no aviso de Hoje e no sino, com R$ 0,00 (as linhas "Fatura vencida em…" que a PR #278 passou a listar). Agora: o ciclo sem valor não fecha (botão desativado com explicação); `estaVencida` ignora total ≤ 0; o aviso diário de cobrança (`avisos-financeiros`) não conta fatura zerada; aulas por aula sem valor ganham o aviso "Essas aulas estão sem valor".
+- ✅ **Migration `20261097…`** cancela as faturas zeradas abertas ou enviadas que já existem (não apaga nada; não mexe em paga nem em fatura com valor).
+- ✅ **Foco visível** (anel verde de 2 px, vence os `outline-none`) e **redução de movimento** global (`prefers-reduced-motion`).
+- ✅ **Barra inferior com Hoje no centro e destaque**, atrás de `?barra=centro` (fica guardada no aparelho; `?barra=padrao` volta). A barra atual segue como padrão, para comparar no teste com 5 personais.
+- ✅ **Hoje: um alerta de ação por vez** (`alertaDeAcao`): registrar aulas, depois fechar ciclos, depois convites (indicação).
+- ✅ `docs/DECISOES_ESTRATEGICAS.md`: memo de vocabulário, preço e comissão.
+- ⏳ **Validação visual logada a 390 px não foi feita:** o login passa por captcha. Fazer depois do merge, no navegador do app, com o personal de teste já logado.

@@ -70,7 +70,7 @@ export function FinanceiroPage() {
   const faturasAbertasEnviadas = useMemo(() => (faturas ?? []).filter((f) => f.status === 'aberta' || f.status === 'enviada'), [faturas])
   const faturasPagasNoMes = useMemo(() => (faturas ?? []).filter((f) => f.status === 'paga' && f.paga_em?.startsWith(mesAtual)), [faturas, mesAtual])
   const faturasEmAtraso = useMemo(
-    () => (faturas ?? []).filter((f) => estaVencida(f.vencimento, f.status, hoje)),
+    () => (faturas ?? []).filter((f) => estaVencida(f.vencimento, f.status, hoje, f.total)),
     [faturas, hoje],
   )
 
@@ -88,7 +88,7 @@ export function FinanceiroPage() {
 
       let estado: Filtro
       if (!ultimaFatura || ultimaFatura.periodo_fim < ciclo.fim) estado = 'a_fechar'
-      else if (estaVencida(ultimaFatura.vencimento, ultimaFatura.status, hoje)) estado = 'atraso'
+      else if (estaVencida(ultimaFatura.vencimento, ultimaFatura.status, hoje, ultimaFatura.total)) estado = 'atraso'
       else if (ultimaFatura.status === 'paga') estado = 'paga'
       else if (ultimaFatura.status === 'enviada') estado = 'enviada'
       else estado = 'a_fechar'
@@ -347,6 +347,9 @@ export function FinanceiroPage() {
                     <p className="min-w-0 truncate font-medium">{l.nome}</p>
                     <p className="shrink-0 text-lg font-bold">{formatarBRL(l.totalCiclo)}</p>
                   </div>
+                  {l.modelo === 'por_aula' && l.qtdAulasCiclo > 0 && l.totalCiclo <= 0 && (
+                    <p className="mt-1 text-sm font-medium text-amber-800">Essas aulas estão sem valor. Defina o valor da aula na cobrança do aluno.</p>
+                  )}
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <p className="min-w-0 text-sm text-slate-500">
                       {rotuloModelo(l.modelo)} · {l.qtdAulasCiclo} aula{l.qtdAulasCiclo === 1 ? '' : 's'} ·{' '}

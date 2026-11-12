@@ -26,8 +26,10 @@ export function rotuloModelo(modelo: ModeloFatura): string {
   return modelo === 'por_aula' ? 'Por aula' : modelo === 'pacote' ? 'Pacote de aulas' : 'Mensal'
 }
 
-export function estaVencida(vencimento: string | null, status: FaturaStatus, hojeISO: string): boolean {
+export function estaVencida(vencimento: string | null, status: FaturaStatus, hojeISO: string, total?: number): boolean {
   if (!vencimento) return false
+  // fatura de R$ 0,00 não tem nada a receber: nunca está "em atraso"
+  if (total !== undefined && total <= 0) return false
   if (status !== 'aberta' && status !== 'enviada') return false
   return vencimento < hojeISO
 }

@@ -143,7 +143,7 @@ export function FaturaPage() {
       ? dadosRelatorioDeFatura(fatura, itensFatura ?? [], aluno?.name ?? fatura.aluno?.name ?? 'Aluno', perfil?.name?.trim() || 'Personal', extrasDaFatura(fatura, pixPayload ? { payload: pixPayload, recebedor: config?.pix_nome ?? null } : null))
       : null
 
-  const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP())
+  const vencida = estaVencida(fatura.vencimento, fatura.status, hojeSP(), fatura.total)
   const linkBase = linkWhatsApp(aluno?.phone)
 
   const marcarEnviadaSeNecessario = () => {

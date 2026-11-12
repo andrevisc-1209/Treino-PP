@@ -22,6 +22,8 @@ import { PixCard } from './PixCard'
 import { ResumoSemAulas } from './ResumoSemAulas'
 import { ClimaCard } from '@/components/ClimaCard'
 import { AtividadeRecente } from '@/features/execucoes/AtividadeRecente'
+import { useAlunosComCicloParaFechar } from '@/features/alunos/useCobrancaPendente'
+import { alertaDeAcao } from './alertaDeAcao'
 
 export function HojePage() {
   useGerarAulasDiarias()
@@ -36,6 +38,9 @@ export function HojePage() {
   const [agora] = useState(() => Date.now())
   // o destaque avança conforme as aulas são iniciadas, encerradas ou passam do horário (recalcula a cada carga da lista)
   const organizadas = useMemo(() => (aulas ? organizarAulasDoDia(aulas, agora) : null), [aulas, agora])
+  const ciclosParaFechar = useAlunosComCicloParaFechar()
+  // um alerta de ação por vez: registrar as aulas vem antes de cobrar, e cobrar vem antes de qualquer convite
+  const alerta = alertaDeAcao({ paraRegistrar: organizadas?.paraRegistrar.length ?? 0, ciclosParaFechar: ciclosParaFechar?.size ?? 0 })
   const concluidas = aulas?.filter((a) => a.status === 'realizada').length ?? 0
 
   const abrirMenu = (a: Aula) => {
@@ -118,10 +123,10 @@ export function HojePage() {
 
       <ParaRegistrar aulas={organizadas?.paraRegistrar ?? []} onAbrir={abrirMenu} />
 
-      <CiclosParaFecharCard />
+      {alerta === 'ciclos' && <CiclosParaFecharCard />}
       {!emAtivacao && <PixCard />}
       <AtividadeRecente />
-      {!emAtivacao && (total ?? 0) >= 3 && (
+      {!emAtivacao && alerta === null && (total ?? 0) >= 3 && (
         <Link to="/configuracoes" className="mb-4 flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm active:bg-slate-50">
           <Gift size={20} className="shrink-0 text-brand-hover" aria-hidden />
           <span>
