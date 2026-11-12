@@ -13,6 +13,7 @@ import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 import { formatarBRL } from '@/lib/moeda'
 import { formatarDataBR } from '@/lib/format'
+import { aulasSemCobranca } from './semCobranca'
 import { faturasEnviadasPendentes, faturasPagasDoMes, rotuloDoMes, rotuloFormaPagamento, somarMeses } from './pagamentos'
 import { hojeSP, limitesDoDiaSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
@@ -169,6 +170,8 @@ export function FinanceiroPage() {
     .filter((l) => mostrarSemValor || !ehSemValor(l, idsCicloEncerrado.has(l.alunoId)))
     .toSorted((a, b) => prioridadeDaLinha(a, idsCicloEncerrado.has(a.alunoId)) - prioridadeDaLinha(b, idsCicloEncerrado.has(b.alunoId)))
   const acao = acaoNecessaria(faturasEmAtraso, idsCicloEncerrado.size)
+  // aulas por aula já feitas, de alunos SEM cobrança ativa (cobrança desligada ou aluno que virou pacote): não entram em nenhum fechamento
+  const semCobranca = useMemo(() => aulasSemCobranca(participacoes ?? [], new Set((alunosCobranca ?? []).map((a) => a.aluno_id))), [participacoes, alunosCobranca])
   const poucosMeses = recebimentos.filter((r) => r.total > 0).length <= 2
 
   return (
@@ -275,6 +278,31 @@ export function FinanceiroPage() {
                   </li>
                 )}
               </ul>
+            </section>
+          )}
+
+          {semCobranca.length > 0 && (
+            <section className="mb-4 rounded-2xl bg-amber-50 p-4 text-amber-950 ring-1 ring-amber-300" aria-label="Aulas feitas sem cobrança">
+              <h2 className="flex items-center gap-2 text-sm font-bold">
+                <TriangleAlert size={16} aria-hidden /> Aulas feitas sem cobrança · {formatarBRL(semCobranca.reduce((a, x) => a + x.total, 0))}
+              </h2>
+              <p className="mt-1 text-sm">
+                {semCobranca.length === 1 ? 'Este aluno não tem' : 'Estes alunos não têm'} cobrança ativa, então {semCobranca.length === 1 ? 'a aula feita' : 'as aulas feitas'} não {semCobranca.length === 1 ? 'entra' : 'entram'} em nenhuma
+                fatura. Reative a cobrança na ficha do aluno para fechá-las.
+              </p>
+              <ul className="mt-2 space-y-1">
+                {semCobranca.slice(0, 5).map((x) => (
+                  <li key={x.alunoId}>
+                    <Link to={`/alunos/${x.alunoId}`} className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white px-3 text-sm font-medium active:bg-slate-50">
+                      <span className="min-w-0 truncate">{nomeDoAluno.get(x.alunoId) ?? 'Aluno'}</span>
+                      <span className="shrink-0 text-slate-700">
+                        {x.qtd} aula{x.qtd === 1 ? '' : 's'} · {formatarBRL(x.total)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {semCobranca.length > 5 && <p className="mt-1 text-xs">e mais {semCobranca.length - 5}.</p>}
             </section>
           )}
 

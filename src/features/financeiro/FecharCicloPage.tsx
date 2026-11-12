@@ -46,7 +46,7 @@ export function FecharCicloPage() {
   const cicloEncerradoPendente = useMemo(() => {
     if (!id || !cobranca?.ativo || !participacoes || !faturasDoAluno) return null
     const pendente = alunosComCicloParaFechar({
-      cobrancas: [{ aluno_id: id, modelo: cobranca.modelo, dia_ciclo: cobranca.dia_ciclo }],
+      cobrancas: [{ aluno_id: id, modelo: cobranca.modelo, dia_ciclo: cobranca.dia_ciclo, created_at: cobranca.created_at }],
       faturas: faturasDoAluno,
       participacoes,
       hoje,

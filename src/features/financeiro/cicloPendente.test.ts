@@ -39,3 +39,22 @@ describe('alunosComCicloParaFechar', () => {
     expect(r).toEqual(['a'])
   })
 })
+
+describe('mensal sem nenhuma fatura (primeiro ciclo)', () => {
+  // hoje = 23/10/2026; ciclo anterior = 10/09 a 09/10
+  const mensalCriada = (aluno_id: string, created_at: string) => ({ ...mensal(aluno_id), created_at })
+  it('cobrança criada antes do ciclo anterior começar: o primeiro ciclo inteiro espera fatura → avisa', () => {
+    expect(alunosComCicloParaFechar({ cobrancas: [mensalCriada('m', '2026-08-20T12:00:00Z')], faturas: [], participacoes: [], hoje })).toEqual(['m'])
+    expect(alunosComCicloParaFechar({ cobrancas: [mensalCriada('m', '2026-09-10T15:00:00Z')], faturas: [], participacoes: [], hoje })).toEqual(['m'])
+  })
+  it('cobrança criada no meio do ciclo anterior ou depois: não avisa (ciclo parcial / futuro)', () => {
+    expect(alunosComCicloParaFechar({ cobrancas: [mensalCriada('m', '2026-09-25T12:00:00Z')], faturas: [], participacoes: [], hoje })).toEqual([])
+    expect(alunosComCicloParaFechar({ cobrancas: [mensalCriada('m', '2026-10-15T12:00:00Z')], faturas: [], participacoes: [], hoje })).toEqual([])
+  })
+  it('sem a data de criação (como antes): só avisa se já tem fatura', () => {
+    expect(alunosComCicloParaFechar({ cobrancas: [mensal('m')], faturas: [], participacoes: [], hoje })).toEqual([])
+  })
+  it('já fechado até o fim do ciclo anterior: não avisa', () => {
+    expect(alunosComCicloParaFechar({ cobrancas: [mensalCriada('m', '2026-08-20T12:00:00Z')], faturas: [faturaAte('m', '2026-10-09')], participacoes: [], hoje })).toEqual([])
+  })
+})
