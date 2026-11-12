@@ -2,7 +2,7 @@
 // na página inicial já chega aqui "aceito", e a origem da campanha (UTM) que a landing registrou acompanha os eventos abaixo.
 // Nada do PostHog é carregado antes do aceite. Sem gravação de sessão, sem cookies (localStorage), sem autocaptura, sem pageview,
 // sem identify (nunca liga ao nome, e-mail ou CPF): só os eventos nomeados abaixo, sem dado de aluno nem de saúde.
-// Texto correspondente: Política de Privacidade, seção 3 (versão 1.7). Mudou aqui? Mude lá, na mesma PR.
+// Texto correspondente: Política de Privacidade, seção 3 (versão 1.16). Mudou aqui? Mude lá, na mesma PR.
 
 export const CHAVE_CONSENTIMENTO = 'treino_cookie_consent' // a mesma da landing (public/landing.html)
 export const PROJETO_POSTHOG = 'phc_ADSqKHpnPUTMktbKN9MKDTCVfjM4AZ8ikor9N6ygMqt7' // chave pública de projeto (vai no navegador por desenho)
@@ -10,7 +10,17 @@ export const PROJETO_POSTHOG = 'phc_ADSqKHpnPUTMktbKN9MKDTCVfjM4AZ8ikor9N6ygMqt7
 export type Escolha = 'accepted' | 'declined' | null
 
 /** Eventos do funil do app. Só nomes fixos: nenhum recebe dado pessoal. */
-export type EventoFunil = 'cadastro_aberto' | 'cadastro_enviado' | 'perfil_concluido' | 'aluno_cadastrado'
+export type EventoFunil =
+  | 'cadastro_aberto'
+  | 'cadastro_enviado'
+  | 'perfil_concluido'
+  | 'aluno_cadastrado'
+  | 'aula_registrada'
+  | 'primeira_serie_registrada'
+  | 'checklist_concluido'
+
+/** Única propriedade permitida em um evento: qual barra inferior estava em uso (padrão ou Hoje no centro). Nunca dado pessoal. */
+export type PropriedadesEvento = { barra?: 'padrao' | 'centro' }
 
 export function lerEscolha(): Escolha {
   try {
@@ -57,10 +67,10 @@ export function iniciarSeAceito(): void {
 }
 
 /** Registra um evento do funil, se (e só se) houver aceite. Nunca lança erro: medir não pode atrapalhar o uso. */
-export function evento(nome: EventoFunil): void {
+export function evento(nome: EventoFunil, props?: PropriedadesEvento): void {
   if (!podeMedir(lerEscolha(), gpcAtivo())) return
   void carregar()
-    .then((ph) => ph.capture(nome))
+    .then((ph) => ph.capture(nome, props))
     .catch(() => {})
 }
 
@@ -93,4 +103,17 @@ export function recusar(): void {
   } catch {
     /* idem */
   }
+}
+
+/** Evento que só conta UMA vez por navegador (ex.: a primeira série registrada). Guarda a marca no localStorage; sem ele, não mede. */
+export function eventoUmaVez(nome: EventoFunil, props?: PropriedadesEvento): void {
+  const chave = `treino_evento_${nome}`
+  try {
+    if (localStorage.getItem(chave) === '1') return
+    if (!podeMedir(lerEscolha(), gpcAtivo())) return
+    localStorage.setItem(chave, '1')
+  } catch {
+    return
+  }
+  evento(nome, props)
 }

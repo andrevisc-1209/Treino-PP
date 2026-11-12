@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+import { eventoUmaVez } from '@/features/analytics/analytics'
 import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -47,6 +49,14 @@ function usePassosOnboarding(): { passos: PassoOnboarding[]; carregando: boolean
 export function OnboardingChecklist() {
   const { passos, carregando } = usePassosOnboarding()
   const { emAtivacao } = useAtivacao()
+  const apareceu = useRef(false)
+  const restantesAgora = passos.filter((p) => !p.feito && !p.opcional).length
+  // mede a conclusão só de quem viu o checklist com etapas pendentes e as terminou (não conta conta antiga já completa)
+  useEffect(() => {
+    if (carregando || emAtivacao) return
+    if (restantesAgora > 0) apareceu.current = true
+    else if (apareceu.current) eventoUmaVez('checklist_concluido')
+  }, [carregando, emAtivacao, restantesAgora])
   // enquanto o cartão de ativação (3 alunos) está na tela, o checklist de 4 itens só atrapalharia
   if (carregando || emAtivacao) return null
 

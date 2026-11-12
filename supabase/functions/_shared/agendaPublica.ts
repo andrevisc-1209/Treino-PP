@@ -114,7 +114,12 @@ export function validarPedido(corpo: Record<string, unknown>): { ok: true; pedid
   return { ok: true, pedido: { nome, telefone, mensagem: mensagem || null, dataISO, hora } }
 }
 
-export type PerfilPublico = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null }
+export type PerfilPublico = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null; foto: string | null }
+
+/** Mesma regra do banco e do app: só WebP ou JPEG em data URL, até 60.000 caracteres. */
+export function fotoPublica(v: unknown): string | null {
+  return typeof v === 'string' && v.length <= 60000 && /^data:image\/(?:webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(v) ? v : null
+}
 
 const textoOuNulo = (t: unknown, max: number): string | null => {
   const v = typeof t === 'string' ? limpa(t).slice(0, max) : ''
@@ -129,6 +134,7 @@ export function perfilPublico(cfg: Record<string, unknown>): PerfilPublico {
     modalidades: textoOuNulo(cfg.pagina_modalidades, 80),
     locais: textoOuNulo(cfg.pagina_locais, 100),
     preco_aula: Number.isFinite(preco) && preco >= 1 && preco <= 5000 ? Math.round(preco * 100) / 100 : null,
+    foto: fotoPublica(cfg.pagina_foto),
   }
 }
 

@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
   const { data: cfg } = await admin
     .from('professional_config')
-    .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao, pagina_cref, pagina_modalidades, pagina_locais, pagina_preco_aula')
+    .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao, pagina_cref, pagina_modalidades, pagina_locais, pagina_preco_aula, pagina_foto')
     .eq('agenda_publica_slug', body.slug)
     .maybeSingle()
   if (!cfg || !cfg.agenda_publica_ativa) return json(req, INDISPONIVEL)

@@ -1,3 +1,4 @@
+import { fotoValida } from './fotoPerfil'
 /** Página pública de pedido de aula: agrupamento das vagas e leitura das respostas da função (puro, sem I/O). */
 import { normalizarTelefone } from '../../../supabase/functions/_shared/agendaPublica'
 import { formatarDataCompleta, nomeDiaCurto, somarDias } from '@/lib/datas'
@@ -13,8 +14,8 @@ export function agruparPorDia(vagas: Vaga[]): DiaComVagas[] {
   return [...mapa.entries()].map(([dataISO, lista]) => ({ dataISO, vagas: lista }))
 }
 
-export type PerfilDaPagina = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null }
-export const PERFIL_VAZIO: PerfilDaPagina = { cref: null, modalidades: null, locais: null, preco_aula: null }
+export type PerfilDaPagina = { cref: string | null; modalidades: string | null; locais: string | null; preco_aula: number | null; foto: string | null }
+export const PERFIL_VAZIO: PerfilDaPagina = { cref: null, modalidades: null, locais: null, preco_aula: null, foto: null }
 
 export type RespostaConsulta =
   | { estado: 'ok'; nome_personal: string; cidade: string | null; apresentacao: string | null; perfil: PerfilDaPagina; antecedencia_horas: number | null; duracao_min: number; vagas: Vaga[] }
@@ -26,7 +27,7 @@ const textoCurto = (t: unknown, max: number): string | null => (typeof t === 'st
 export function lerPerfil(bruto: unknown): PerfilDaPagina {
   const o = (bruto ?? {}) as Record<string, unknown>
   const preco = Number(o.preco_aula)
-  return { cref: textoCurto(o.cref, 30), modalidades: textoCurto(o.modalidades, 80), locais: textoCurto(o.locais, 100), preco_aula: Number.isFinite(preco) && preco >= 1 && preco <= 5000 ? preco : null }
+  return { cref: textoCurto(o.cref, 30), modalidades: textoCurto(o.modalidades, 80), locais: textoCurto(o.locais, 100), preco_aula: Number.isFinite(preco) && preco >= 1 && preco <= 5000 ? preco : null, foto: fotoValida(o.foto) }
 }
 
 /** Aceita só o formato conhecido; qualquer outra coisa vira "indisponível" (a página nunca quebra com resposta estranha). */

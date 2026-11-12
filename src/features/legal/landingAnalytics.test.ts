@@ -36,7 +36,7 @@ describe('landing × Política de Privacidade (seção 3)', () => {
   })
 })
 
-// O app (cadastro e primeiro uso) usa o mesmo PostHog e a mesma escolha da landing. A política (seção 3, versão 1.7) promete o mesmo e lista os quatro eventos.
+// O app (cadastro e primeiro uso) usa o mesmo PostHog e a mesma escolha da landing. A política (seção 3, versão 1.16) promete o mesmo e lista os sete eventos.
 const app = fs.readFileSync(path.join(import.meta.dirname, '..', 'analytics', 'analytics.ts'), 'utf8')
 
 describe('app × Política de Privacidade (seção 3)', () => {
@@ -53,13 +53,15 @@ describe('app × Política de Privacidade (seção 3)', () => {
     expect(app).toContain("'treino_cookie_consent'")
     expect(app).toMatch(/globalPrivacyControl/)
   })
-  it('a política cita as quatro etapas medidas e a revogação em Configurações', () => {
-    for (const etapa of ['abrir o formulário de cadastro', 'enviar o cadastro', 'concluir o perfil', 'cadastrar um aluno']) expect(secao3).toContain(etapa)
+  it('a política cita as sete etapas medidas e a revogação em Configurações', () => {
+    for (const etapa of ['abrir o formulário de cadastro', 'enviar o cadastro', 'concluir o perfil', 'cadastrar um aluno', 'registrar uma aula', 'registrar a primeira série', 'concluir o checklist']) expect(secao3).toContain(etapa)
     expect(secao3).toMatch(/Configurações/)
     expect(secao3).toMatch(/nem dado de aluno ou de saúde/)
   })
-  it('os eventos do código são exatamente os quatro que a política descreve', () => {
-    const tipo = app.match(/export type EventoFunil =([^\n]+)/)![1]
-    expect([...tipo.matchAll(/'([a-z_]+)'/g)].map((m) => m[1])).toEqual(['cadastro_aberto', 'cadastro_enviado', 'perfil_concluido', 'aluno_cadastrado'])
+  it('os eventos do código são exatamente os sete que a política descreve', () => {
+    const tipo = app.match(/export type EventoFunil =([\s\S]*?)\n\n/)![1]
+    expect([...tipo.matchAll(/'([a-z_]+)'/g)].map((m) => m[1])).toEqual(['cadastro_aberto', 'cadastro_enviado', 'perfil_concluido', 'aluno_cadastrado', 'aula_registrada', 'primeira_serie_registrada', 'checklist_concluido'])
+    // a única propriedade de evento é a variante da barra: nenhuma outra pode entrar sem mudar a política
+    expect(app.match(/export type PropriedadesEvento = ([^\n]+)/)![1].replace(/\s+/g, ' ')).toBe("{ barra?: 'padrao' | 'centro' }")
   })
 })

@@ -150,9 +150,13 @@ export function AgendaPublicaPage() {
         {ok && (
           <>
             <header className="flex items-start gap-3">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-bold text-white" aria-hidden>
-                {iniciais(ok.nome_personal) || <CalendarCheck size={24} />}
-              </span>
+              {ok.perfil.foto ? (
+                <img src={ok.perfil.foto} alt={`Foto de ${personal}`} width={56} height={56} className="size-14 shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-bold text-white" aria-hidden>
+                  {iniciais(ok.nome_personal) || <CalendarCheck size={24} />}
+                </span>
+              )}
               <div className="min-w-0">
                 <h1 className="text-2xl font-bold leading-tight">Agende uma aula com {personal}</h1>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
