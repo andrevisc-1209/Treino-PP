@@ -1,36 +1,51 @@
-import { NavLink } from 'react-router-dom'
-import { CalendarDays, ClipboardList, DollarSign, Sun, Users } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { guardarVarianteDaBarra, lerVarianteDaBarra, ordemDaBarra, varianteGuardada } from './barraInferior'
 
-/** Ordem e rótulos da barra inferior (auditoria de UX de 28/10/2026): "Treinos" no lugar de "Meus treinos" (vocabulário fixo) e antes do Financeiro. */
-export const ITEMS = [
-  { to: '/', label: 'Hoje', icon: Sun, end: true },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays, end: false },
-  { to: '/alunos', label: 'Alunos', icon: Users, end: false },
-  { to: '/meus-treinos', label: 'Treinos', icon: ClipboardList, end: false },
-  { to: '/financeiro', label: 'Financeiro', icon: DollarSign, end: false },
-]
+export { ITEMS } from './barraInferior'
 
 export function BottomNav() {
+  const { search } = useLocation()
+  const variante = useMemo(() => lerVarianteDaBarra(search, varianteGuardada()), [search])
+  useEffect(() => {
+    if (new URLSearchParams(search).get('barra')) guardarVarianteDaBarra(variante)
+  }, [search, variante])
+  const itens = ordemDaBarra(variante)
+
   return (
     <nav data-bottom-nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-2xl">
-        {ITEMS.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              cn(
-                'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium',
-                isActive ? 'text-brand' : 'text-slate-500',
-              )
-            }
-          >
-            <Icon size={22} />
-            {label}
-          </NavLink>
-        ))}
+        {itens.map(({ to, label, icon: Icon, end }) => {
+          const destaque = variante === 'centro' && to === '/'
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium',
+                  isActive ? 'text-brand' : 'text-slate-500',
+                  destaque && 'relative',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {destaque ? (
+                    <span className={cn('-mt-5 flex size-12 items-center justify-center rounded-full shadow-md ring-4 ring-white', isActive ? 'bg-brand text-white' : 'bg-brand-soft text-brand-hover')}>
+                      <Icon size={24} />
+                    </span>
+                  ) : (
+                    <Icon size={22} />
+                  )}
+                  {label}
+                </>
+              )}
+            </NavLink>
+          )
+        })}
       </div>
     </nav>
   )

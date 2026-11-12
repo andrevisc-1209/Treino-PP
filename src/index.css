@@ -103,3 +103,25 @@ input[type="time"] {
 @media (prefers-reduced-motion: reduce) {
   .pop-in { animation: none; }
 }
+
+/* Foco visível para quem navega por teclado ou leitor de tela (WCAG 2.4.7). Fica fora das camadas do Tailwind de propósito:
+   vence os "outline-none" espalhados pelos campos, que só trocavam a cor da borda. Anel verde de marca, 5,12:1 no branco. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+/* Sobre fundo verde (botões primários), o anel verde sumiria: anel branco por dentro. */
+.bg-brand:focus-visible {
+  outline-color: var(--color-brand-hover);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* Quem pede menos movimento no sistema não vê transição nem animação nem rolagem suave (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

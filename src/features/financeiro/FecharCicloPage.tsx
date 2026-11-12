@@ -240,9 +240,14 @@ export function FecharCicloPage() {
           className="fixed inset-x-0 bottom-14 z-30 border-t border-slate-200 bg-white p-3"
         >
           <div className="mx-auto max-w-2xl">
+            {total <= 0 && (
+              <p className="mb-2 text-sm text-amber-800" role="status">
+                Não há nada a cobrar neste ciclo. Para cobrar, inclua aulas com valor ou ajuste o valor da cobrança do aluno.
+              </p>
+            )}
             <div className="flex gap-2">
               <BotaoRelatorio dados={dadosRelatorio} className="flex-1" />
-              <Button onClick={confirmar} className="flex-1" disabled={fechar.isPending || !!faturaExistente}>
+              <Button onClick={confirmar} className="flex-1" disabled={fechar.isPending || !!faturaExistente || total <= 0}>
                 {fechar.isPending ? 'Fechando…' : 'Fechar ciclo'}
               </Button>
             </div>

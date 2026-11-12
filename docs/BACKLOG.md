@@ -1713,3 +1713,12 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Aviso na tela quando há menos de 5 personais: o número é pista, não conclusão.
 - ✅ **Roteiro do teste com 5 personais:** `docs/ux-audit/ROTEIRO_TESTE_USABILIDADE.md` (5 tarefas, critério "4 de 5 sozinhos em menos de 2 minutos", perguntas finais, como fechar).
 - ⏳ Rodar os testes com personais de verdade e transformar o que aparecer em 3 ou mais sessões em itens do backlog.
+
+### 163. Plano pós-auditoria, PR 1: faturas zeradas, foco visível, movimento, Hoje no centro e um alerta por vez — ✅ PR aberta
+- ✅ **Faturas de R$ 0,00 deixam de ser "em atraso".** Causa: o "Fechar ciclo" permitia criar fatura sem nada a cobrar; depois do vencimento ela aparecia como "Em atraso" no Financeiro, no aviso de Hoje e no sino, com R$ 0,00 (as linhas "Fatura vencida em…" que a PR #278 passou a listar). Agora: o ciclo sem valor não fecha (botão desativado com explicação); `estaVencida` ignora total ≤ 0; o aviso diário de cobrança (`avisos-financeiros`) não conta fatura zerada; aulas por aula sem valor ganham o aviso "Essas aulas estão sem valor".
+- ✅ **Migration `20261097…`** cancela as faturas zeradas abertas ou enviadas que já existem (não apaga nada; não mexe em paga nem em fatura com valor).
+- ✅ **Foco visível** (anel verde de 2 px, vence os `outline-none`) e **redução de movimento** global (`prefers-reduced-motion`).
+- ✅ **Barra inferior com Hoje no centro e destaque**, atrás de `?barra=centro` (fica guardada no aparelho; `?barra=padrao` volta). A barra atual segue como padrão, para comparar no teste com 5 personais.
+- ✅ **Hoje: um alerta de ação por vez** (`alertaDeAcao`): registrar aulas, depois fechar ciclos, depois convites (indicação).
+- ✅ `docs/DECISOES_ESTRATEGICAS.md`: memo de vocabulário, preço e comissão.
+- ⏳ **Validação visual logada a 390 px não foi feita:** o login passa por captcha. Fazer depois do merge, no navegador do app, com o personal de teste já logado.

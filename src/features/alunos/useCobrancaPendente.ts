@@ -12,7 +12,7 @@ export function useAlunosComCobrancaPendente(): Set<string> {
   return useMemo(() => {
     const hoje = hojeSP()
     const ids = new Set<string>()
-    for (const f of faturas ?? []) if (estaVencida(f.vencimento, f.status, hoje)) ids.add(f.aluno_id)
+    for (const f of faturas ?? []) if (estaVencida(f.vencimento, f.status, hoje, f.total)) ids.add(f.aluno_id)
     for (const id of alunosComCicloParaFechar({ cobrancas: cobrancas ?? [], faturas: faturas ?? [], participacoes: participacoes ?? [], hoje })) ids.add(id)
     return ids
   }, [cobrancas, faturas, participacoes])
