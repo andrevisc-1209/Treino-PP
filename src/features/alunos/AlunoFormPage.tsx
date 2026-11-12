@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { PaginaSkeleton } from '@/components/Skeleton'
+import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -526,7 +527,21 @@ function AlunoFormConteudo({ mode }: { mode: 'create' | 'edit' }) {
             </Field>
 
             <Field label="Endereço (opcional, para o contrato)" error={formState.errors.endereco?.message}>
-              <Input {...register('endereco')} autoComplete="street-address" placeholder="Rua, número, bairro, cidade/UF" />
+              <Controller
+                control={control}
+                name="endereco"
+                render={({ field }) => (
+                  <GooglePlacesAutocomplete
+                    defaultValue={String(field.value ?? '')}
+                    valorExterno={String(field.value ?? '')}
+                    somenteEndereco
+                    limparAoSelecionar={false}
+                    onSelecionar={() => {}}
+                    onChangeTexto={(texto) => field.onChange(texto)}
+                    placeholder="Busque o endereço ou digite (rua, número, bairro, cidade/UF)"
+                  />
+                )}
+              />
             </Field>
 
             <Field label="Objetivos" error={formState.errors.objetivos?.message}>
