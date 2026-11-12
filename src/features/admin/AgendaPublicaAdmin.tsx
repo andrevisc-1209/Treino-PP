@@ -2,7 +2,8 @@ import { ListaSkeleton } from '@/components/Skeleton'
 import { NumeroComRotulo } from '@/components/NumeroComRotulo'
 import { mapearErroSupabase } from '@/lib/erros'
 import { rotuloTempo, taxaDeAprovacao } from '@/features/agenda/resumoPublica'
-import { useAdminAgendaPublica } from './api'
+import { useAdminAgendaPublica, useAdminTaxaRegistro } from './api'
+import { PERSONAIS_MINIMOS, taxaDeRegistro } from './taxaRegistro'
 
 /** Uso da página pública da agenda: só totais (quantos personais, quantos pedidos, aulas realizadas). Nada de visitante ou aluno. */
 export function AgendaPublicaAdmin() {
@@ -25,6 +26,34 @@ export function AgendaPublicaAdmin() {
           <NumeroComRotulo valor={rotuloTempo(data.medianaRespostaMin)} rotulo="tempo típico de resposta" />
           <NumeroComRotulo valor={String(data.aulasRealizadas)} rotulo="aulas realizadas vindas do link" />
         </div>
+      )}
+    </section>
+  )
+}
+
+/** Taxa de registro: das aulas que já passaram, quantas o personal deu baixa. Só totais, nenhum personal identificado. */
+export function TaxaDeRegistroAdmin() {
+  const { data, isLoading, error } = useAdminTaxaRegistro()
+  const taxa = data ? taxaDeRegistro(data) : null
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-4" aria-labelledby="admin-taxa-registro">
+      <h3 id="admin-taxa-registro" className="text-sm font-semibold text-slate-600">
+        Registro das aulas
+      </h3>
+      <p className="mb-3 text-xs text-slate-500">Das aulas dos últimos 30 dias que terminaram há mais de 12 horas, quantas tiveram baixa (Dei a aula ou Faltou). Só totais; não mostra quem é o personal nem o aluno.</p>
+      {isLoading && <ListaSkeleton linhas={1} />}
+      {error && <p className="text-sm text-red-600">{mapearErroSupabase(error)}</p>}
+      {data && (
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <NumeroComRotulo valor={taxa === null ? '–' : `${taxa}%`} rotulo={`aulas passadas com baixa (${data.aulasRegistradas} de ${data.aulasPassadas})`} />
+            <NumeroComRotulo valor={String(data.personaisComAulas)} rotulo="personais com aulas no período" />
+            <NumeroComRotulo valor={String(data.personaisRegistrando)} rotulo="dão baixa em 80% ou mais das aulas" />
+          </div>
+          {data.personaisComAulas > 0 && data.personaisComAulas < PERSONAIS_MINIMOS && (
+            <p className="mt-2 text-xs text-slate-500">Poucos personais ainda: olhe o número como pista, não como conclusão.</p>
+          )}
+        </>
       )}
     </section>
   )

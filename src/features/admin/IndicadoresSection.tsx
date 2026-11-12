@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { mapearErroSupabase } from '@/lib/erros'
 import { formatarMoeda } from './financeiro'
 import { useAdminBI } from './api'
-import { AgendaPublicaAdmin } from './AgendaPublicaAdmin'
+import { AgendaPublicaAdmin, TaxaDeRegistroAdmin } from './AgendaPublicaAdmin'
 import { BiV1Section } from './BiV1Section'
 import {
   agruparSerie,
@@ -293,6 +293,8 @@ export function IndicadoresSection() {
       <SeletorDePeriodo periodo={periodo} escolher={escolher} />
 
       <BiV1Section dias={periodo} />
+
+      <TaxaDeRegistroAdmin />
 
       <AgendaPublicaAdmin />
 
