@@ -25,7 +25,7 @@ export function FinanceiroBlock({ alunoId, semCartao }: { alunoId: string; semCa
         <ul className="divide-y divide-slate-100">
           {ultimas.map((f) => (
             <li key={f.id}>
-              <Link to={`/financeiro/${f.id}`} className="flex items-center justify-between gap-2 py-2 active:opacity-70">
+              <Link to={`/financeiro/${f.id}`} className="flex items-center justify-between gap-2 min-h-11 py-2 active:opacity-70">
                 <div>
                   <p className="text-sm font-medium">
                     {rotuloModelo(f.modelo)} · {f.periodo_inicio.slice(8, 10)}/{f.periodo_inicio.slice(5, 7)} a {f.periodo_fim.slice(8, 10)}/{f.periodo_fim.slice(5, 7)}
@@ -75,7 +75,7 @@ export function FinanceiroBlock({ alunoId, semCartao }: { alunoId: string; semCa
         <ul className="divide-y divide-slate-100">
           {ultimas.map((f) => (
             <li key={f.id}>
-              <Link to={`/financeiro/${f.id}`} className="flex items-center justify-between gap-2 py-2 active:opacity-70">
+              <Link to={`/financeiro/${f.id}`} className="flex items-center justify-between gap-2 min-h-11 py-2 active:opacity-70">
                 <div>
                   <p className="text-sm font-medium">
                     {f.periodo_inicio.slice(8, 10)}/{f.periodo_inicio.slice(5, 7)} a {f.periodo_fim.slice(8, 10)}/{f.periodo_fim.slice(5, 7)}

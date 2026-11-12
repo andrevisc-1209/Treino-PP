@@ -197,7 +197,7 @@ export function SeletorExercicioNatacao({
                 setAba(a.id)
                 setCriando(false)
               }}
-              className={cn('min-h-10 flex-1 rounded-lg px-2 text-sm font-medium', aba === a.id ? 'bg-white shadow-sm' : 'text-slate-500')}
+              className={cn('min-h-11 flex-1 rounded-lg px-2 text-sm font-medium', aba === a.id ? 'bg-white shadow-sm' : 'text-slate-500')}
             >
               {a.rotulo}
             </button>
@@ -218,7 +218,7 @@ export function SeletorExercicioNatacao({
                     type="button"
                     aria-pressed={grupo === g.key}
                     onClick={() => setGrupo(g.key)}
-                    className={cn('min-h-10 shrink-0 rounded-full border px-3 text-sm font-medium', grupo === g.key ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
+                    className={cn('min-h-11 shrink-0 rounded-full border px-3 text-sm font-medium', grupo === g.key ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700')}
                   >
                     {g.label}
                   </button>

@@ -150,7 +150,7 @@ export function HorarioFormSheet({
                     type="button"
                     onClick={() => toggleAluno(a.id)}
                     className={cn(
-                      'min-h-9 rounded-full border px-3 text-sm font-medium',
+                      'min-h-11 rounded-full border px-3 text-sm font-medium',
                       valor.coParticipantesIds.includes(a.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
                     )}
                   >

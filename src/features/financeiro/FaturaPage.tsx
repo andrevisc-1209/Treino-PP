@@ -346,8 +346,8 @@ export function FaturaPage() {
                   onClick={() => setFormaPagamento(f.value)}
                   className={
                     formaPagamento === f.value
-                      ? 'min-h-9 rounded-full border border-brand bg-brand px-3 text-sm font-medium text-white'
-                      : 'min-h-9 rounded-full border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700'
+                      ? 'min-h-11 rounded-full border border-brand bg-brand px-3 text-sm font-medium text-white'
+                      : 'min-h-11 rounded-full border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700'
                   }
                 >
                   {f.label}

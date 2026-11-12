@@ -213,7 +213,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
               <button type="button"
                 onClick={() => setGrupoEx(null)}
                 className={cn(
-                  'min-h-9 shrink-0 whitespace-nowrap rounded-full border px-3 text-sm font-medium',
+                  'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 text-sm font-medium',
                   grupoEx === null ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-600',
                 )}
               >
@@ -224,7 +224,7 @@ export function ExerciciosEditor<T extends ExercicioEditavel>({
                   key={g}
                   onClick={() => setGrupoEx(g === grupoEx ? null : g)}
                   className={cn(
-                    'min-h-9 shrink-0 whitespace-nowrap rounded-full border px-3 text-sm font-medium',
+                    'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3 text-sm font-medium',
                     grupoEx === g ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-600',
                   )}
                 >

@@ -8,6 +8,10 @@
    não só amostradas da logo) e o motivo de brand/brand-bright serem cores
    diferentes. */
 @theme {
+  /* Piso de texto: text-xs = 13 px (o padrão do Tailwind é 12). Na academia, com sol e
+     pressa, 12 px cansa. text-sm continua 14 px, então a hierarquia se mantém. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.25rem;
   /* Botões, chips selecionados, qualquer fundo com texto branco em cima —
      5.12:1 com branco. É um verde mais escuro que o "verde puro" do PP
      (#4CAF50, 2.78:1 — não passa nem no limiar de texto grande) na mesma

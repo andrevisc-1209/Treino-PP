@@ -112,7 +112,7 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
                   type="button"
                   onClick={() => toggleAluno(a.id)}
                   className={cn(
-                    'min-h-9 rounded-full border px-3 text-sm font-medium',
+                    'min-h-11 rounded-full border px-3 text-sm font-medium',
                     alunoIds.includes(a.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-700',
                   )}
                 >
