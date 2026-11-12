@@ -1832,7 +1832,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ SECURITY INVOKER (a RLS vale como no app), só `authenticated`. O app chama as funções. Migration `20261104…` e teste `supabase/tests/pacote_atomico.sql`.
 - ⏳ Trocar o pacote por cobrança por aula/mensal (encerrar o pacote e depois salvar a cobrança) ainda são dois passos na tela.
 
-### 178. Cadastro com menos atrito (análise de UX de 12/11/2026), PR 1: senha, e-mail, logo e recuperação — ✅ PR aberta
+### 178. Cadastro com menos atrito (análise de UX de 12/11/2026), PR 1: senha, e-mail, logo e recuperação — ✅ Mergeada (#303)
 - **Plano em 2 PRs:** PR 1 (esta) = cadastro, login e recuperação; PR 2 = landing e aviso de cookies (texto do botão e nome do produto na landing, aviso compacto no celular, "Ver como funciona"). **CPF no cadastro: decisão do dono de NÃO mexer** (é a chave do login por CPF).
 - ✅ **Senha:** mínimo de 10 caracteres, **sem regras de composição** (recomendação NIST 800-63B), sem aceitar senha óbvia (sequência, padrão repetido, lista de senhas comuns) e **sem "Confirme a senha"** (o botão de mostrar senha resolve). Medidor com barra e frase ("Muito curta · faltam 3 caracteres", "Previsível", "Boa", "Forte"). Mesma regra em "Crie sua senha" (convite e redefinição). `src/lib/senha.ts`.
 - ✅ **E-mail:** validado ao sair do campo e incluído no "Para continuar, informe…"; sugestão de correção de digitação ("gmial.com → gmail.com?") com botão **Corrigir**.
@@ -1841,4 +1841,11 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **"Esqueci minha senha" leva o que foi digitado** (do login e da tela "Confirme seu e-mail"); depois de enviar, dica do spam e botão com espera de 60 s ("Enviar de novo em Ns").
 - ⏳ **Supabase (dono):** conferir em Authentication → Sign In / Providers → Email: "Minimum password length" = 10 e **sem** "Password requirements" de caracteres obrigatórios; senão o servidor recusa senhas que o app aceita.
 - ⏳ PR 2 (landing e aviso de cookies).
+
+### 179. Landing e aviso de cookies compactos (análise de UX de 12/11/2026), PR 2 — ✅ PR aberta
+- ✅ **Aviso de análise de uso compacto** na landing e no app: a 390 px cobria cerca de 22% da primeira tela (190 px) e passou a ~15% (129 px) na landing e ~17% (148 px) no app. **As promessas são as mesmas** (só mede depois do aceite, sem cookies, sem gravar a sessão, sem nome, e-mail, CPF nem dados de alunos) e continuam batendo com a Política (seção 3) e com os testes `landingAnalytics`. Recusar e Aceitar seguem com o mesmo peso.
+- ✅ **"Ver o app em 30s" → "Ver como funciona ↓"**: o botão só rola até a seção "Um dia na sua rotina", não abre vídeo.
+- ✅ **Um texto só para o botão de cadastro:** "Testar 15 dias grátis" (com "→" no hero e no fim), "Testar grátis" no topo (cabe no celular). Antes: "Começar grátis", "Testar 15 dias grátis →" e "Criar minha conta grátis".
+- ✅ **Nome do produto:** a aba do navegador e o compartilhamento (og:title) passam a dizer "Treino · Personal Perto" (o nome do app e dos Termos); o texto da landing diz "Treino" (o nome do logo), sem "Treino PP". "Treino PP" segue como nome curto do app instalado.
+- ⏳ Ideias da análise que ficaram de fora por decisão: tirar o CPF do cadastro; vídeo ou GIF real do app (precisa de conteúdo); imagens do celular ilustrado em 2x (800 px).
 
