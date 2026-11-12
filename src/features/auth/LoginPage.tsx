@@ -17,7 +17,7 @@ import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { SocialLoginButtons } from '@/components/SocialLoginButtons'
 import { mascararCPF, validarCPF } from '@/lib/cpf'
-import { emailParecido, useCadastroExistente } from './verificarCadastro'
+import { emailParecido, useCadastroExistente, useCaptchaVerificacao } from './verificarCadastro'
 import { ERROS } from '@/lib/mensagens'
 import { PasswordInput } from '@/components/PasswordInput'
 import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
@@ -104,8 +104,10 @@ export function LoginPage() {
   const cpfValor = watch('cpf')
   const emailCadastro = watch('email')
   // avisa já ao digitar (CPF completo / e-mail válido) se existe conta; só no cadastro
-  const cpfJaExiste = useCadastroExistente('cpf', cpfValor ?? '', mode === 'signup' && validarCPF(cpfValor ?? '')) === true
-  const emailJaExiste = useCadastroExistente('email', emailCadastro ?? '', mode === 'signup' && emailParecido(emailCadastro ?? '')) === true
+  const captchaCpf = useCaptchaVerificacao()
+  const captchaEmail = useCaptchaVerificacao()
+  const cpfJaExiste = useCadastroExistente('cpf', cpfValor ?? '', mode === 'signup' && validarCPF(cpfValor ?? ''), captchaCpf) === true
+  const emailJaExiste = useCadastroExistente('email', emailCadastro ?? '', mode === 'signup' && emailParecido(emailCadastro ?? ''), captchaEmail) === true
 
   // sem token depois de 12 s (rede lenta, bloqueador de anúncios): em vez de ficar travado em "Verificando…", oferece tentar de novo
   useEffect(() => {
@@ -440,6 +442,13 @@ export function LoginPage() {
 
             <div className="flex justify-center">
               <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
+            </div>
+            {/* tokens próprios do aviso "já tem conta?" (um por campo): não gastam o do cadastro; invisíveis, salvo se o Cloudflare pedir um clique */}
+            <div className="flex justify-center">
+              <Turnstile onToken={captchaCpf.aoReceber} reiniciar={captchaCpf.vez} />
+            </div>
+            <div className="flex justify-center">
+              <Turnstile onToken={captchaEmail.aoReceber} reiniciar={captchaEmail.vez} />
             </div>
           </>
         )}
