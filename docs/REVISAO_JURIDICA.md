@@ -1,4 +1,4 @@
-# Dossiê para a revisão jurídica: Política de Privacidade 1.11 a 1.16, Termos 1.8 e contrato-modelo
+# Dossiê para a revisão jurídica: Política de Privacidade 1.11 a 1.16, Termos 1.7 e contrato-modelo
 
 Preparado em 12/11/2026 para quem for revisar (advogado de proteção de dados). **Não é parecer jurídico**: é o inventário do que o produto faz e do que os textos dizem, para a pessoa revisar o texto contra a prática. Textos vigentes: `src/features/legal/textos.ts`. A prática está nas migrations e funções citadas.
 
@@ -7,9 +7,9 @@ Quem somos no tratamento: o **Personal Trainer** é controlador dos dados dos al
 ## Resumo do que mudou em cada versão
 | Versão | O que passou a ser tratado | Quem vê | Prazo de guarda | Base legal declarada | Código |
 |---|---|---|---|---|---|
-| **1.11** | CPF e endereço **opcionais** do aluno, para preencher a minuta de contrato em PDF | Só o personal (RLS). A administração não vê; não vai a relatórios, mensagens nem CSV | Enquanto o aluno existir; apagado com a conta | Execução de contrato / legítimo interesse do personal (confirmar) | `20261086…` |
+| **1.11** | CPF e endereço **opcionais** do aluno, para preencher a minuta de contrato em PDF | Só o personal (RLS). A administração não vê; não vai a relatórios, mensagens nem CSV | Enquanto o aluno existir; apagado com a conta | Execução de contrato (art. 7º, V), como declara o texto | `20261086…` |
 | **1.12** | **Página pública da agenda**: visitante informa nome, telefone, mensagem curta e confirma contato por WhatsApp; antirrobô Cloudflare Turnstile (recebe IP e dados do navegador) | Só o personal. Administração só vê totais | Pedido que não vira aula: **30 dias** | Procedimentos preliminares a contrato (art. 7º, V) + consentimento (art. 7º, I) | `20261089…`, `agenda-publica` |
-| **1.13** | Números do resultado da página (pedidos, tempo de resposta) para o personal; **totais** para a administração | Personal: os dele. Admin: só totais, sem nome, telefone, mensagem nem id | n/a (agregados) | Legítimo interesse (estatística agregada) | `20261093…` |
+| **1.13** | Números do resultado da página (pedidos, tempo de resposta) para o personal; **totais** para a administração | Personal: os dele. Admin: só totais, sem nome, telefone, mensagem nem id | n/a (agregados) | O texto **não declara uma base específica** para os totais da administração: apenas afirma que só vê totais. Pedido: indicar a base (ex.: legítimo interesse) | `20261093…` |
 | **1.14** | **Lista de espera**: visitante informa nome, telefone, dia e turno. A plataforma **não** envia mensagem ao visitante; quem chama é o personal, por WhatsApp | Só o personal. Administração nunca | **14 dias** (ou até o dia pedido passar) | Consentimento + procedimentos preliminares | `20261094…`, `supabase/cron/lista_espera.sql` |
 | **1.15** | O personal **pode publicar** CREF, modalidades, locais e "valor a partir de" na página pública | Qualquer pessoa com o link | Até o personal apagar ou excluir a conta | Consentimento do próprio personal (ele escolhe e digita) | `20261095…` |
 | **1.16** | **Foto opcional** do personal na página pública; **3 eventos novos de uso no app** (registrar aula, 1ª série, checklist concluído) e uma propriedade `barra` (padrão ou Hoje no centro) | Foto: qualquer pessoa com o link. Eventos: PostHog, só com aceite | Foto: até remover ou excluir a conta. Eventos: conforme o PostHog | Consentimento (art. 7º, I) | `20261099…`, `analytics.ts` |
@@ -26,8 +26,8 @@ Quem somos no tratamento: o **Personal Trainer** é controlador dos dados dos al
 9. **Dado de saúde.** Consentimento do aluno por link (e-mail ou WhatsApp, com prova do aceite: data, hora, versão, IP). Texto e fluxo estão em `docs/CONSENTIMENTO_SAUDE.md`. Revisar a base do art. 11 e a forma de revogação.
 10. **Menores.** O app não verifica idade do aluno. Há texto sobre responsável legal? Confirmar.
 
-## Termos de Uso (versão 1.8)
-Pontos de atenção: cláusula 2.6 (direito de arrependimento) e 2.8 (exclusão sem reembolso do plano vigente); 5.3 (conteúdo inserido pelo personal é dele); 6.1 e 6.2 (limitação de responsabilidade ao valor pago); 3.4 (a plataforma é controladora só dos dados do personal). Os Termos **não** foram alterados nas PRs de 11 e 12/11/2026. Considerar se a publicação de foto e informações profissionais (1.15 e 1.16) pede uma cláusula de **conteúdo publicado pelo personal** (responsabilidade pela veracidade do CREF e pelos direitos sobre a foto).
+## Termos de Uso (versão 1.7)
+Pontos de atenção: cláusula 2.6 (direito de arrependimento) e 2.8 (exclusão sem reembolso do plano vigente); 5.3 (conteúdo inserido pelo personal é dele); 6.1 e 6.2 (limitação de responsabilidade ao valor pago); 3.4 (a plataforma é controladora só dos dados do personal). Os Termos **não** foram alterados nas PRs de 11 e 12/11/2026 (a versão em vigor é a 1.7). Considerar se a publicação de foto e informações profissionais (1.15 e 1.16) pede uma cláusula de **conteúdo publicado pelo personal** (responsabilidade pela veracidade do CREF e pelos direitos sobre a foto).
 
 ## Contrato-modelo (minuta em PDF do aluno)
 Texto-base em `src/features/contrato/contrato.ts` (cláusulas numeradas, preenchido com dados do aluno e da cobrança). O produto gera a minuta; **não** a assina nem a guarda, e não dá aconselhamento jurídico ao personal. Pedido: revisar o texto-base e o aviso de que a minuta é um modelo que o personal deve adaptar. Pontos: multa e cancelamento, reposição de aulas, cobrança de falta, foro, e consentimento de saúde remetendo ao fluxo próprio.
@@ -46,3 +46,6 @@ Texto-base em `src/features/contrato/contrato.ts` (cláusulas numeradas, preench
 5. Precisamos de cláusula nos Termos sobre conteúdo publicado pelo personal (foto, CREF)?
 6. O encarregado (DPO): é obrigatório indicar e divulgar? Quem, e onde?
 7. O RIPD (relatório de impacto) é recomendável, dada a existência de dado de saúde?
+
+---
+Nota de método: as bases legais da tabela são as que o **texto vigente** declara (conferidas em `textos.ts`); onde o texto não declara, a tabela diz isso. Termos e cláusulas citados foram conferidos pelo número no texto; o contrato-modelo foi descrito pela estrutura do código, sem revisão do conteúdo jurídico.
