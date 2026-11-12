@@ -15,7 +15,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook, PLANOS, tokenMpValido } from '../_shared/mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirWebhook, idDoEvento, PLANOS, tokenMpValido } from '../_shared/mp.ts'
 import { aplicarPagamento, linhaLivroPagamento } from '../_shared/pagamento.ts'
 import { ipDoCliente } from '../_shared/consentimento.ts'
 import { dataSP, montarPagamentoPlano } from '../_shared/notificacoes.ts'
@@ -50,7 +50,9 @@ Deno.serve(async (req) => {
   const corpo = await req.json().catch(() => ({}))
   const acao: string | undefined = corpo.action ?? undefined
   const tipo: string | undefined = corpo.type ?? url.searchParams.get('type') ?? undefined
-  const dataId: string | undefined = corpo?.data?.id ?? url.searchParams.get('data.id') ?? undefined
+  const evento = idDoEvento(url.searchParams.get('data.id'), corpo)
+  if (evento === 'divergente') return new Response('id divergente', { status: 400 })
+  const dataId: string | undefined = evento.id ?? undefined
   console.log('mp-webhook recebido:', JSON.stringify({ action: acao, type: tipo, data_id: dataId }))
   if (!tipo || !dataId || !/^[\w-]+$/.test(String(dataId))) return ok('ignorado')
 

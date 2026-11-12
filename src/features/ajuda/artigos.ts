@@ -323,6 +323,7 @@ export const ARTIGOS: Artigo[] = [
       'Dados de saúde (lesões, cirurgias, medicamentos) só são tratados com o consentimento do aluno.',
       'O aluno pode consentir pelo link que você envia, ou você registra o consentimento dele no app.',
       'Acompanhe quem já consentiu em Configurações, em "Consentimentos LGPD". Esses dados nunca vão em mensagens de WhatsApp ou e-mail.',
+      'Por e-mail, cada endereço recebe no máximo 2 solicitações por dia. Se aparecer o aviso de limite, tente amanhã ou mande o link pelo WhatsApp.',
     ],
     sinonimos: ['lgpd', 'termo', 'lesao', 'privacidade', 'dados sensiveis'],
   },

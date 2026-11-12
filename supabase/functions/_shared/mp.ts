@@ -67,6 +67,17 @@ export function atualizacaoDoPreapproval(
   return { professionalId, atualizacao }
 }
 
+/**
+ * Id do recurso do webhook. A assinatura do MP cobre o `data.id` da QUERY (quando ele vem), então é esse o id que se processa: se o
+ * corpo trouxer outro, o pedido é recusado em vez de assinar um id e processar outro.
+ */
+export function idDoEvento(query: string | null, corpo: unknown): { id: string | null } | 'divergente' {
+  const bruto = (corpo as { data?: { id?: unknown } } | null)?.data?.id
+  const doCorpo = bruto === undefined || bruto === null ? null : String(bruto)
+  if (query && doCorpo && query.toLowerCase() !== doCorpo.toLowerCase()) return 'divergente'
+  return { id: query ?? doCorpo }
+}
+
 export type DecisaoWebhook = 'processar' | 'rejeitar_assinatura' | 'rejeitar_sem_segredo'
 
 /**

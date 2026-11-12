@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { camposClinicos, camposGerais, semDadoClinico } from './payloadAluno'
 import { TERMO_VERSAO } from './termo'
+import { linkHttps, linkMapsDoEndereco } from '@/lib/linkSeguro'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 
 export type Aluno = {
@@ -474,7 +475,7 @@ export function useAdicionarLocalTreino(alunoId: string) {
         professional_id: auth.user!.id,
         nome: local.nome,
         endereco: local.endereco,
-        maps_link: local.mapsLink,
+        maps_link: linkHttps(local.mapsLink) ?? linkMapsDoEndereco(local.endereco),
       })
       if (error) throw error
     },

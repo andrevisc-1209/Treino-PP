@@ -1770,3 +1770,11 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Política 1.17** (o visitante também informa local e modalidade) + migration `20261101…` e teste `supabase/tests/pedido_local_modalidade.sql`. **Redeploy de `agenda-publica`.**
 - ✅ Teste que mantém as modalidades públicas iguais às 5 ativas do app.
 - ⏳ Revisão jurídica da Política 1.17 junto das 1.11 a 1.16 (acrescentar ao dossiê).
+
+### 170. Segurança, lote 1 da revisão manual de 12/11 (e-mail de consentimento, webhook, links, dependências) — ✅ PR aberta
+- ✅ **E-mail de consentimento:** limite de 2 por dia por destinatário (hash, falha fechada) e nome do e-mail reduzido ao primeiro nome, só letras (`bit.ly/x` e telefones não passam mais).
+- ✅ **`mp-webhook`:** processa o `data.id` que a assinatura cobriu; ids divergentes → 400.
+- ✅ **`maps_link`** só `https://` (gravação e exibição); `.env` fora do git; `zod` e `fast-uri` atualizados (audit de produção = 0).
+- ✅ Central de ajuda: artigo de consentimento avisa do limite por e-mail.
+- ⏳ Lote 2 (agenda pública: slug maior, limite contra varredura, expiração de 7 dias, teto atômico) e lote 3 (captcha no "já tem conta?").
+
