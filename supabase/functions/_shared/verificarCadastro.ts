@@ -28,6 +28,13 @@ export function lerPedidoVerificacao(corpo: unknown): PedidoVerificacao | null {
   return null
 }
 
+/** Token do captcha (Turnstile) que o navegador manda na verificação; null se faltar ou não for texto. Quem confere é o Cloudflare (turnstile.ts). */
+export function captchaDoCorpo(corpo: unknown): string | null {
+  if (!corpo || typeof corpo !== 'object') return null
+  const t = (corpo as Record<string, unknown>).captchaToken
+  return typeof t === 'string' && t.length > 0 && t.length <= 2048 ? t : null
+}
+
 /** Escapa % _ e \ para usar o e-mail em ILIKE como igualdade exata (sem curinga). */
 export function escaparIlike(valor: string): string {
   return valor.replace(/[\\%_]/g, (c) => `\\${c}`)

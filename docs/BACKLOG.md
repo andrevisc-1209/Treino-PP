@@ -1778,11 +1778,17 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Central de ajuda: artigo de consentimento avisa do limite por e-mail.
 - ⏳ Lote 2 (agenda pública: slug maior, limite contra varredura, expiração de 7 dias, teto atômico) e lote 3 (captcha no "já tem conta?").
 
-### 171. Segurança, lote 2 da revisão manual (agenda pública: link maior, barreira contra varredura, expiração, teto atômico) — ✅ PR aberta
+### 171. Segurança, lote 2 da revisão manual (agenda pública: link maior, barreira contra varredura, expiração, teto atômico) — ✅ Mergeada (#296)
 - ✅ **Links novos com 8 caracteres hex** no final (eram 4); os antigos seguem valendo e "Trocar o link" gera o novo formato.
 - ✅ **Barreira contra varredura:** 30 links errados por IP por hora bloqueiam o IP em tudo por uma hora (falha fechada; leitura do contador sem somar).
 - ✅ **Pedidos sem resposta expiram** em 7 dias, ou quando o horário passa (vão para "Recusados"); cron horário.
 - ✅ **Teto de 10 pendentes atômico** (função com trava por personal), no lugar de contar e inserir.
 - ✅ Migration `20261102…`, teste `supabase/tests/seguranca_agenda_publica.sql`, cron `expirar_pedidos_agenda.sql`. **Redeploy de `agenda-publica`.**
 - ⏳ Lote 3: captcha no "já tem conta?" do cadastro.
+
+### 172. Segurança, lote 3 da revisão manual (captcha no "já tem conta?" do cadastro) — ✅ PR aberta
+- ✅ **`verificar-cadastro` exige captcha (Turnstile) em toda consulta**, conferido no servidor (falha fechada); limite de 40/hora por IP mantido.
+- ✅ **Token próprio da verificação** (um widget invisível por campo: CPF e e-mail no cadastro, CPF no "Complete seu perfil"), para não gastar o token de uso único do cadastro. Sem token, o aviso "já tem conta" não aparece e o cadastro segue normalmente.
+- ✅ Teste de `captchaDoCorpo`. **Redeploy de `verificar-cadastro`.**
+- ⏳ **Só dá para validar em produção** (a chave do captcha não vale em localhost): digitar um CPF e um e-mail já cadastrados no cadastro e ver o aviso; depois criar uma conta de teste e confirmar que o cadastro ainda funciona.
 

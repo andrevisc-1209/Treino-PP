@@ -106,6 +106,10 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **Risco residual aceito:** quem compartilha IP com um scraper (Wi-Fi de academia, CGNAT) pode ficar uma hora sem abrir links de agenda; o limite de 30 links errados por hora é folgado para uso normal.
 - **Deploy:** rodar a migration ANTES do merge; depois `supabase functions deploy agenda-publica`; rodar `supabase/cron/expirar_pedidos_agenda.sql` UMA vez. Teste: `supabase/tests/seguranca_agenda_publica.sql`.
 
+### PR "revisão manual de 12/11/2026" — lote 3: captcha no "já tem conta?"
+- **[MÉDIA-BAIXA] Oráculo de CPF e e-mail sem captcha** (`verificar-cadastro`): ver a atualização em "Verificação já tem conta? no cadastro". Front: `useCaptchaVerificacao` (um token por campo; sem token a consulta espera e o aviso não aparece, o cadastro segue). Só em produção: a chave do Turnstile não vale em `localhost` (erro 110200).
+- **Deploy:** `supabase functions deploy verificar-cadastro`. Sem migration. O secret `TURNSTILE_SECRET_KEY` já existe (usado por `agenda-publica`).
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
@@ -157,6 +161,7 @@ Hospedada no Railway (domínio público `*.up.railway.app`, não registrado aqui
 - **O que é:** assim que o CPF (completo e válido) ou o e-mail (válido) é digitado no cadastro, e o CPF no "Complete seu perfil", o app chama a Edge Function `verificar-cadastro` e avisa "Já existe uma conta com este CPF/e-mail", levando a pessoa a entrar ou recuperar a senha. Pedido do dono (descobrir só no fim do cadastro era ruim).
 - **O que se abre:** quem digitar valores pode **testar se um CPF ou e-mail é cliente** (enumeração). Isto contraria a decisão anterior de respostas genéricas; fica registrado como risco aceito, no mesmo espírito da mensagem "CPF já cadastrado" do perfil.
 - **Mitigações:** a resposta é só `{ existe: boolean }` (nunca o e-mail do CPF nem o CPF do e-mail); só dispara com CPF de dígitos verificadores válidos ou e-mail bem formado; **limite de 40 consultas por IP por hora** (falha fechada: 503 e o app segue sem o aviso); valor nunca vai para log; a função ignora a própria conta de quem está logado. O banco continua sendo a barreira final (índice único de CPF e e-mail único no Auth).
+- **Atualização (revisão manual de 12/11/2026, lote 3):** `verificar-cadastro` passou a exigir **captcha (Turnstile) em toda consulta**, conferido no servidor (falha fechada: sem segredo ou Cloudflare fora do ar = 503; token inválido = 400; em todos os casos o app segue sem o aviso). O token é **próprio da verificação** (um widget invisível por campo verificado): o token do cadastro/login é de uso único e continua para o cadastro. Para um script, cada consulta passou a custar uma resolução de captcha, além do limite de 40/hora por IP. O risco de enumeração continua aceito, só ficou mais caro.
 - **Não mudou:** o login (CPF ou e-mail) segue com resposta genérica e atraso; a tela "Confirme seu e-mail" de e-mail repetido segue igual para quem chegar a enviar.
 
 

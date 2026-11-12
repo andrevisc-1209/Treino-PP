@@ -9,7 +9,8 @@ import { cepCompleto } from '@/lib/cep'
 import { ERROS } from '@/lib/mensagens'
 import { TERMOS_USO_VERSAO, PRIVACIDADE_VERSAO } from '@/features/legal/textos'
 import { registrarAceiteTermos, salvarPerfilProfissional } from './api'
-import { useCadastroExistente } from './verificarCadastro'
+import { Turnstile } from '@/components/Turnstile'
+import { useCadastroExistente, useCaptchaVerificacao } from './verificarCadastro'
 
 /**
  * Nome + CPF + telefone + preferência de WhatsApp — pedidos uma vez, quando
@@ -48,7 +49,8 @@ export function PerfilObrigatorioForm({
 
   const cpfInvalido = !!cpf && !validarCPF(cpf)
   // CPF digitado completo que já é de OUTRA conta (a função ignora a própria): avisa antes de salvar
-  const cpfDeOutraConta = useCadastroExistente('cpf', cpf, !cpfInicial && validarCPF(cpf)) === true
+  const captchaCpf = useCaptchaVerificacao()
+  const cpfDeOutraConta = useCadastroExistente('cpf', cpf, !cpfInicial && validarCPF(cpf), captchaCpf) === true
 
   const salvar = async () => {
     if (!nome.trim()) return setErro('Informe seu nome')
@@ -95,6 +97,8 @@ export function PerfilObrigatorioForm({
           className={cpfInicial ? 'bg-slate-50 text-slate-600' : cpfTocado && cpfInvalido ? 'border-red-600 focus:border-red-600' : undefined}
         />
       </Field>
+      {/* token de captcha próprio do aviso "CPF de outra conta" (invisível, salvo se o Cloudflare pedir um clique) */}
+      {!cpfInicial && <Turnstile onToken={captchaCpf.aoReceber} reiniciar={captchaCpf.vez} />}
       {cpfDeOutraConta && (
         <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
           Este CPF já está cadastrado em outra conta. Se for você, saia e entre com o e-mail e a senha dessa conta (ou use "Esqueci minha senha"). Se não

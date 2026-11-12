@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { escaparIlike, lerPedidoVerificacao } from './verificarCadastro.ts'
+import { captchaDoCorpo, escaparIlike, lerPedidoVerificacao } from './verificarCadastro.ts'
 
 describe('lerPedidoVerificacao', () => {
   it('CPF válido (com ou sem máscara) vira só dígitos; inválido é recusado', () => {
@@ -22,5 +22,18 @@ describe('lerPedidoVerificacao', () => {
 describe('escaparIlike', () => {
   it('neutraliza curingas para a busca ser igualdade exata', () => {
     expect(escaparIlike('a_b%c\\d@x.com')).toBe('a\\_b\\%c\\\\d@x.com')
+  })
+})
+
+describe('captchaDoCorpo', () => {
+  it('devolve o token quando é texto não vazio e de tamanho razoável', () => {
+    expect(captchaDoCorpo({ campo: 'cpf', valor: 'x', captchaToken: 'abc' })).toBe('abc')
+  })
+  it('null quando falta, é vazio, não é texto ou é enorme', () => {
+    expect(captchaDoCorpo({})).toBeNull()
+    expect(captchaDoCorpo({ captchaToken: '' })).toBeNull()
+    expect(captchaDoCorpo({ captchaToken: 123 })).toBeNull()
+    expect(captchaDoCorpo({ captchaToken: 'x'.repeat(2049) })).toBeNull()
+    expect(captchaDoCorpo(null)).toBeNull()
   })
 })
