@@ -52,7 +52,7 @@ describe('briefing diário', () => {
   })
   it('1 aluno: frase única com horário e local', () => {
     const m = montarBriefing({ nome: 'André Scherer', aulas: [aula('07:00', 'Carlos Silva', 'Smartfit Laranjeiras')], clima: null })!
-    expect(m).toBe('Bom dia, André! 👋\n\nVocê tem 1 treino hoje — Carlos às 07:00 na Smartfit Laranjeiras.\n\nBoa sessão! 💪')
+    expect(m).toBe('Bom dia, André! 👋\n\nVocê tem 1 aula hoje — Carlos às 07:00 na Smartfit Laranjeiras.\n\nBoa sessão! 💪')
   })
   it('2+ alunos: lista ordenada por horário com • e aviso de chuva ≥ 40%', () => {
     const m = montarBriefing({
@@ -61,7 +61,7 @@ describe('briefing diário', () => {
       aulas: [aula('14:00', 'Paula', 'Smartfit Laranjeiras'), aula('07:00', 'Carlos', 'Smartfit Laranjeiras'), aula('11:00', 'Marcos', 'Arena Fit')],
     })!
     expect(m).toBe(
-      'Bom dia, André! 👋\n\nVocê tem 3 treinos hoje:\n• Carlos — 07:00 @ Smartfit Laranjeiras\n• Marcos — 11:00 @ Arena Fit\n• Paula — 14:00 @ Smartfit Laranjeiras\n\n' +
+      'Bom dia, André! 👋\n\nVocê tem 3 aulas hoje:\n• Carlos — 07:00 @ Smartfit Laranjeiras\n• Marcos — 11:00 @ Arena Fit\n• Paula — 14:00 @ Smartfit Laranjeiras\n\n' +
         '⚠️ 88% de chance de chuva hoje (23–27°C) — vale avisar quem treina ao ar livre.\n\nBoa sessão! 💪',
     )
   })

@@ -204,6 +204,7 @@ export function AlunoFichaPage() {
   const tabDaUrl = searchParams.get('tab')
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(tabDaUrl ?? '') ? (tabDaUrl as Tab) : 'Resumo')
   const [registrandoPeso, setRegistrandoPeso] = useState(false)
+  const [docsAbertos, setDocsAbertos] = useState(false)
   const [dadosAbertos, setDadosAbertos] = useState(false)
   const [maisAberto, setMaisAberto] = useState(false)
   const faixaDeAbas = useRef<HTMLDivElement>(null)
@@ -405,9 +406,10 @@ export function AlunoFichaPage() {
             )}
           </div>
 
-          <RelatorioMensalCard aluno={{ id: aluno.id, name: aluno.name }} />
-
-          <ContratoCard aluno={aluno} />
+          <Acordeao titulo="Documentos: contrato e relatório" aberto={docsAbertos} onAlternar={() => setDocsAbertos((v) => !v)}>
+            <ContratoCard aluno={aluno} semCartao />
+            <RelatorioMensalCard aluno={{ id: aluno.id, name: aluno.name }} semCartao />
+          </Acordeao>
 
           <Acordeao titulo="Dados cadastrais" aberto={dadosAbertos} onAlternar={() => setDadosAbertos((v) => !v)}>
           <div className="space-y-2">

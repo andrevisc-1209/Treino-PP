@@ -105,10 +105,10 @@ function FolhaRelatorioMensal({ aluno }: { aluno: { id: string; name: string } }
 }
 
 /** Relatório mensal de acompanhamento na ficha do aluno: independe de fatura e não traz nada financeiro. */
-export function RelatorioMensalCard({ aluno }: { aluno: { id: string; name: string } }) {
+export function RelatorioMensalCard({ semCartao = false, aluno }: { semCartao?: boolean; aluno: { id: string; name: string } }) {
   const [aberto, setAberto] = useState(false)
   return (
-    <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+    <div className={semCartao ? 'space-y-3 border-t border-slate-100 pt-4' : 'space-y-3 rounded-2xl bg-white p-4 shadow-sm'}>
       <h2 className="flex items-center gap-2 font-semibold">
         <CalendarRange size={18} aria-hidden /> Relatório mensal
       </h2>
