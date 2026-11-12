@@ -12,21 +12,21 @@ DECLARE
 BEGIN
   BEGIN
     v_r := treino.admin_taxa_registro();
-    v_log := v_log || 'FALHA (a): a função respondeu sem ser admin';
+    v_log := array_append(v_log, 'FALHA (a): a função respondeu sem ser admin'::TEXT);
   EXCEPTION WHEN insufficient_privilege THEN
-    v_log := v_log || '(a) OK: recusa quem não é admin';
+    v_log := array_append(v_log, '(a) OK: recusa quem não é admin'::TEXT);
   END;
 
   IF has_function_privilege('anon', 'treino.admin_taxa_registro()', 'EXECUTE') THEN
-    v_log := v_log || 'FALHA (b): anon pode executar';
+    v_log := array_append(v_log, 'FALHA (b): anon pode executar'::TEXT);
   ELSE
-    v_log := v_log || '(b) OK: anon não executa';
+    v_log := array_append(v_log, '(b) OK: anon não executa'::TEXT);
   END IF;
 
   IF v_r IS NULL THEN
-    v_log := v_log || '(c) OK: nenhum número sem sessão de admin';
+    v_log := array_append(v_log, '(c) OK: nenhum número sem sessão de admin'::TEXT);
   ELSE
-    v_log := v_log || 'FALHA (c): devolveu números sem ser admin';
+    v_log := array_append(v_log, 'FALHA (c): devolveu números sem ser admin'::TEXT);
   END IF;
 
   RAISE EXCEPTION 'RESULTADO (nada foi gravado): %', array_to_string(v_log, E'\n');
