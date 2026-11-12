@@ -1739,7 +1739,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ FAQ da página pública cita a foto.
 - ⏳ Revisão jurídica da Política 1.16 junto com as 1.11 a 1.15.
 
-### 166. Modo escuro (plano pós-auditoria, PR 4) — ✅ PR aberta
+### 166. Modo escuro (plano pós-auditoria, PR 4) — ✅ Mergeada (#290)
 - ✅ **O app acompanha o tema do celular** (`prefers-color-scheme: dark`), sem chave dentro do app. Técnica: `scripts/gerar-tema-escuro.mjs` gera `src/tema-escuro.css`, que **espelha as escalas de cor do Tailwind** (50↔950, 100↔900...) e define à mão as superfícies (fundo `#0b1220`, cartão `#131c2e`) e o texto cinza. Nenhum componente precisou mudar de classe. Texto de marca vira verde claro; o toast escuro continua escuro.
 - ✅ **Recibo, relatório e documentos ficam claros** (`.tema-claro` volta às cores originais): são feitos para imprimir e enviar.
 - ✅ Gráficos, degradês de rolagem e eixos usam as variáveis de cor (`var(--color-slate-*)`) em vez de hex fixo; logos aparecem sobre um selo branco (`.logo-marca`).
@@ -1748,3 +1748,8 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ FAQ "Modo escuro".
 - ⏳ **Validação visual logada em modo escuro** (Hoje, Agenda, Financeiro, ficha, gráficos): login com captcha; conferir no celular depois do deploy.
 - ⏳ Botão branco do banner de teste (`bg-white` sobre faixa azul) fica escuro no modo escuro: legível, mas vale olhar.
+
+### 167. Barra inferior com o Hoje no centro como padrão — ✅ PR aberta
+- ✅ **Hoje no meio da barra, com destaque**, passa a ser a barra padrão (Agenda, Alunos, **Hoje**, Treinos, Financeiro). Antes só aparecia com `?barra=centro`.
+- ✅ A barra antiga continua em `?barra=padrao` (a escolha fica guardada no aparelho), para o teste com os 5 personais comparar. O evento `aula_registrada` segue levando `barra` (`padrao` ou `centro`).
+- ⏳ Decidir com o teste: se a barra central não ajudar (hábito de quem usa há tempo), voltar ao padrão é uma linha.
