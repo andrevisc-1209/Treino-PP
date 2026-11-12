@@ -106,9 +106,9 @@ export function PerformanceTab({ alunoId }: { alunoId: string }) {
         ) : (
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={dados} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="data" tickFormatter={dataCurta} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} minTickGap={24} />
-              <YAxis domain={['auto', 'auto']} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={40} />
+              <CartesianGrid stroke="var(--color-slate-200)" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="data" tickFormatter={dataCurta} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} minTickGap={24} />
+              <YAxis domain={['auto', 'auto']} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} width={40} />
               <Tooltip
                 labelFormatter={(v) => formatarDataBR(String(v))}
                 formatter={(v) => [`${formatarNumero(Number(v))} ${unidade}`, rotulo]}

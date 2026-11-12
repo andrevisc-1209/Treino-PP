@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 export function RolagemHorizontal({
   children,
   className,
-  corFundo = '#f8fafc',
+  corFundo = 'var(--color-slate-50)',
   snap = false,
 }: {
   children: ReactNode

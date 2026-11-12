@@ -18,7 +18,7 @@ import { MINIMO_NOTAS_PARA_GRAFICO, frequenciaSemanal, notasPorTreino, ordenarIt
 
 const NAVY = '#0f2537'
 const VERDE = '#367c39'
-const EIXO = { fontSize: 11, fill: '#64748b' }
+const EIXO = { fontSize: 11, fill: 'var(--color-slate-500)' }
 
 function dataExtensa(dataISO: string): string {
   const [a, m, d] = dataISO.split('-')
@@ -115,7 +115,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
   if (!raiz) return null
 
   return createPortal(
-    <div id="recibo-conteudo" role="dialog" aria-modal="true" aria-label="Recibo do ciclo" className="fixed inset-0 z-[60] overflow-y-auto bg-slate-100">
+    <div id="recibo-conteudo" role="dialog" aria-modal="true" aria-label="Recibo do ciclo" className="tema-claro fixed inset-0 z-[60] overflow-y-auto bg-slate-100">
       <div className="recibo-sem-impressao sticky top-0 z-10 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-2">
         <button type="button" onClick={onFechar} aria-label="Fechar recibo" className="flex size-11 items-center justify-center rounded-xl active:bg-slate-100">
           <X size={20} />
@@ -276,7 +276,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
               <BlocoGrafico titulo="Frequência semanal (aulas por semana)">
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={frequencia} margin={{ left: 0, right: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
                     <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={EIXO} />
                     <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={EIXO} width={28} />
                     <Tooltip formatter={(v) => [String(v), 'Aulas']} labelFormatter={(l) => `Semana de ${l}`} />
@@ -290,7 +290,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
               <BlocoGrafico titulo="PSE médio por semana (esforço percebido, 0–10)">
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={pse} margin={{ top: 8, left: 0, right: 12 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
                     <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={EIXO} />
                     <YAxis domain={[0, 10]} tickLine={false} axisLine={false} tick={EIXO} width={28} />
                     <Tooltip formatter={(v) => [String(v), 'PSE médio']} labelFormatter={(l) => `Semana de ${l}`} />
@@ -304,7 +304,7 @@ export function ReciboCiclo({ fatura, alunoNome, onFechar }: { fatura: Fatura; a
               <BlocoGrafico titulo="Nota do personal por treino (0 a 10)">
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={notas} margin={{ top: 8, left: 0, right: 12 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
                     <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={EIXO} />
                     <YAxis domain={[0, 10]} tickLine={false} axisLine={false} tick={EIXO} width={28} />
                     <Tooltip formatter={(v) => [String(v), 'Nota']} labelFormatter={(l) => `Treino de ${l}`} />

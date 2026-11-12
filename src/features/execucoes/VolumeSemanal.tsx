@@ -35,9 +35,9 @@ export function VolumeSemanal({ execucoes }: { execucoes: Execucao[] }) {
       <h3 className="text-sm font-semibold">Volume semanal (km)</h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={dados} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="semana" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#64748b' }} interval={0} />
-          <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={36} />
+          <CartesianGrid stroke="var(--color-slate-200)" strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="semana" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: 'var(--color-slate-500)' }} interval={0} />
+          <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} width={36} />
           <Tooltip formatter={(v, nome) => [`${formatarNumero(Number(v))} km`, nome]} />
           <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="Natação" stackId="v" fill={COR.natacao} />

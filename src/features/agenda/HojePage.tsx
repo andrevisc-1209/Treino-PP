@@ -69,7 +69,7 @@ export function HojePage() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <img src={iconMark} alt="Personal Perto" className="h-6 w-auto" />
+          <img src={iconMark} alt="Personal Perto" className="logo-marca h-6 w-auto" />
           <LinkConfiguracoes />
         </div>
       </header>

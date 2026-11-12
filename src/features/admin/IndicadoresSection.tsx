@@ -157,8 +157,8 @@ function Grafico({ dados, chave }: { dados: DadosBI; chave: ChaveSerie }) {
         )}
       </p>
       <svg viewBox={`0 0 ${W} ${H + 22}`} className="w-full" role="img" aria-label={`${meta.rotulo} por ${passoDoGrafico(dados.dias) === 1 ? 'dia' : passoDoGrafico(dados.dias) === 7 ? 'semana' : 'mês'}; total ${fmt(total)}`}>
-        <line x1="0" y1={H} x2={W} y2={H} stroke="#cbd5e1" strokeWidth="1" />
-        <text x="0" y="10" fontSize="11" fill="#64748b">
+        <line x1="0" y1={H} x2={W} y2={H} stroke="var(--color-slate-300)" strokeWidth="1" />
+        <text x="0" y="10" fontSize="11" fill="var(--color-slate-500)">
           {fmt(max)}
         </text>
         {barras.map((b, i) => {
@@ -183,7 +183,7 @@ function Grafico({ dados, chave }: { dados: DadosBI; chave: ChaveSerie }) {
               />
               <rect x={x} y={H - h} width={larg} height={Math.max(h, b.valor > 0 ? 2 : 0)} rx="2" fill={foco === i ? '#2a602c' : '#367c39'} pointerEvents="none" />
               {i % cadaN === 0 && (
-                <text x={i * passoX + passoX / 2} y={H + 15} fontSize="11" textAnchor="middle" fill="#64748b">
+                <text x={i * passoX + passoX / 2} y={H + 15} fontSize="11" textAnchor="middle" fill="var(--color-slate-500)">
                   {b.rotulo}
                 </text>
               )}

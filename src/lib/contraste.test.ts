@@ -88,3 +88,46 @@ describe('contraste das pílulas do /admin (WCAG AA)', () => {
     it(nome, () => expect(contrasteWCAG(texto, fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL))
   }
 })
+
+// ---------- modo escuro (src/tema-escuro.css, gerado por scripts/gerar-tema-escuro.mjs) ----------
+const cssEscuro = fs.readFileSync(path.join(import.meta.dirname, '..', 'tema-escuro.css'), 'utf8')
+const bloco = cssEscuro.slice(0, cssEscuro.indexOf('.tema-claro {')) // só o modo escuro, sem a volta ao claro
+const v = (nome: string): string => bloco.match(new RegExp(`--color-${nome}:\\s*(#[0-9a-f]{6})`))![1]
+const classe = (sel: string, prop: string): string => bloco.match(new RegExp(`${sel.replace(/[.\\/]/g, '\\$&')} \\{ ${prop}:(#[0-9a-f]{6})`))![1]
+const CARTAO = classe('.bg-white', 'background-color')
+const FUNDO = v('slate-50')
+
+describe('contraste do modo escuro (WCAG AA)', () => {
+  it('texto principal e secundário passam AA sobre o fundo, o cartão e o cinza sutil', () => {
+    for (const fundo of [FUNDO, CARTAO, v('slate-100')]) {
+      expect(contrasteWCAG(v('slate-900'), fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+      expect(contrasteWCAG(v('slate-600'), fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+      expect(contrasteWCAG(v('slate-500'), fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+    }
+  })
+  it('ícones e bordas fortes passam 3:1 sobre o cartão (slate-400)', () => {
+    expect(contrasteWCAG(v('slate-400'), CARTAO)).toBeGreaterThanOrEqual(AA_TEXTO_GRANDE_OU_UI)
+  })
+  it('texto de marca passa AA sobre o cartão e sobre o fundo suave de marca', () => {
+    for (const fundo of [CARTAO, FUNDO, v('brand-soft')]) {
+      expect(contrasteWCAG(classe('.text-brand', 'color'), fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+      expect(contrasteWCAG(classe('.text-brand-hover', 'color'), fundo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+    }
+  })
+  it('selos coloridos (texto 700 sobre fundo 50, texto 800 sobre fundo 100) passam AA nas escalas usadas', () => {
+    for (const escala of ['red', 'amber', 'emerald', 'orange', 'sky', 'violet', 'teal', 'rose', 'lime', 'indigo', 'cyan']) {
+      expect(contrasteWCAG(v(`${escala}-700`), v(`${escala}-50`)), `${escala} 700/50`).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+      expect(contrasteWCAG(v(`${escala}-800`), v(`${escala}-100`)), `${escala} 800/100`).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+      expect(contrasteWCAG(v(`${escala}-900`), v(`${escala}-100`)), `${escala} 900/100`).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+    }
+  })
+  it('selos de aviso sobre o cartão: texto 700 do vermelho, âmbar e esmeralda passa AA', () => {
+    for (const escala of ['red', 'amber', 'emerald']) expect(contrasteWCAG(v(`${escala}-700`), CARTAO), escala).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+  })
+  it('texto branco continua passando AA no verde da marca (botões), nos dois temas', () => {
+    expect(contrasteWCAG(BRAND, BRANCO)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+  })
+  it('texto branco sobre o toast escuro passa AA', () => {
+    expect(contrasteWCAG(BRANCO, classe('.bg-slate-900', 'background-color'))).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL)
+  })
+})

@@ -69,18 +69,18 @@ function EixoData({ dataKey }: { dataKey: string }) {
       tickFormatter={formatarDataCurta}
       tickLine={false}
       axisLine={false}
-      tick={{ fontSize: 11, fill: '#64748b' }}
+      tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }}
       minTickGap={24}
     />
   )
 }
 
 function EixoValor() {
-  return <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={32} />
+  return <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} width={32} />
 }
 
 function GradeLeve() {
-  return <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+  return <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
 }
 
 function tooltipFormatter(nomes: Record<string, string>) {
@@ -225,7 +225,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
             <LineChart data={dadosBemEstar} margin={{ left: -20 }}>
               <GradeLeve />
               <EixoData dataKey="session_date" />
-              <YAxis domain={[0, 10]} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={32} />
+              <YAxis domain={[0, 10]} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} width={32} />
               <Tooltip
                 labelFormatter={(v) => formatarDataCurta(String(v))}
                 formatter={tooltipFormatter({
@@ -384,7 +384,7 @@ export function EvolucaoTab({ alunoId }: { alunoId: string }) {
                 domain={[(min: number) => Math.floor(min - 1), (max: number) => Math.ceil(max + 1)]}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: '#64748b' }}
+                tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }}
                 width={32}
               />
               <Tooltip

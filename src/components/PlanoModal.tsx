@@ -23,7 +23,7 @@ async function mensagemDoErro(error: unknown): Promise<string> {
 function CabecalhoConfianca() {
   return (
     <div className="flex justify-center pb-1">
-      <img src={logoPP} alt="Personal Perto" className="h-9 w-auto" />
+      <img src={logoPP} alt="Personal Perto" className="logo-marca h-9 w-auto" />
     </div>
   )
 }

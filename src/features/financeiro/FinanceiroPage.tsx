@@ -277,9 +277,9 @@ export function FinanceiroPage() {
             ) : (
             <ResponsiveContainer width="100%" height={poucosMeses ? 112 : 160}>
               <BarChart data={recebimentos} margin={{ left: 0, right: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} width={48} tickFormatter={(v) => formatarBRL(Number(v)).replace(',00', '')} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-slate-200)" />
+                <XAxis dataKey="rotulo" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-slate-500)' }} width={48} tickFormatter={(v) => formatarBRL(Number(v)).replace(',00', '')} />
                 <Tooltip formatter={(v) => [formatarBRL(Number(v)), 'Recebido']} />
                 <Bar dataKey="total" fill="#367c39" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
@@ -287,7 +287,7 @@ export function FinanceiroPage() {
             )}
           </section>
 
-          <RolagemHorizontal className="mb-3 py-1" corFundo="#f8fafc">
+          <RolagemHorizontal className="mb-3 py-1" corFundo="var(--color-slate-50)">
             {FILTROS.map((f) => (
               <button
                 key={f.value}
