@@ -6,24 +6,24 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Button, Field } from '@/components/ui'
 import { PasswordInput } from '@/components/PasswordInput'
+import { MedidorDeSenha } from '@/components/MedidorDeSenha'
+import { avaliarSenha, SENHA_MIN } from '@/lib/senha'
 import { useAuth } from './AuthProvider'
 import { buscarPerfilProfissional } from './api'
 import { PerfilObrigatorioForm } from './PerfilObrigatorioForm'
 import { mapearErroAuth } from '@/lib/errosAuth'
 
-const schema = z
-  .object({
-    senha: z.string().min(8, 'Mínimo 8 caracteres'),
-    confirmacao: z.string(),
-  })
-  .refine((d) => d.senha === d.confirmacao, { message: 'As senhas não coincidem', path: ['confirmacao'] })
+// mesma regra do cadastro (lib/senha.ts): tamanho, sem senha óbvia e sem pedir a senha duas vezes (o botão de mostrar senha resolve)
+const schema = z.object({
+  senha: z.string().refine((s) => avaliarSenha(s).valida, `Use pelo menos ${SENHA_MIN} caracteres e evite sequências e senhas comuns`),
+})
 
 type Form = z.infer<typeof schema>
 
 export function DefinirSenhaPage() {
   const { session, loading } = useAuth()
   const navigate = useNavigate()
-  const { register, handleSubmit, formState } = useForm<Form>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, formState, watch } = useForm<Form>({ resolver: zodResolver(schema) })
   const [erro, setErro] = useState<string | null>(null)
   const [etapa, setEtapa] = useState<'senha' | 'perfil'>('senha')
   const [nomeInicial, setNomeInicial] = useState('')
@@ -62,9 +62,7 @@ export function DefinirSenhaPage() {
             <Field label="Senha" error={formState.errors.senha?.message}>
               <PasswordInput {...register('senha')} autoComplete="new-password" autoFocus />
             </Field>
-            <Field label="Confirme a senha" error={formState.errors.confirmacao?.message}>
-              <PasswordInput {...register('confirmacao')} autoComplete="new-password" />
-            </Field>
+            <MedidorDeSenha senha={watch('senha') ?? ''} />
             {erro && <p className="text-sm text-red-600">{erro}</p>}
             <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
               Continuar
