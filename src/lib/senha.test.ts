@@ -33,3 +33,19 @@ describe('avaliarSenha', () => {
     expect(avaliarSenha('umafrasebemlonga').progresso).toBe(1)
   })
 })
+
+describe('repetição de caracteres não vale como tamanho', () => {
+  it('"Visc1989@@@@@@@@@@@@@" (21 caracteres, 10 de informação) é só "Boa", com aviso, e não "Forte"', () => {
+    expect(avaliarSenha('Visc1989@@@@@@@@@@@@@')).toMatchObject({ nivel: 'boa', valida: true, dica: 'evite repetir o mesmo caractere' })
+  })
+  it('poucos caracteres diferentes é previsível, mesmo longo', () => {
+    for (const s of ['aaaaabbbbb', '1122334455', 'abcde@@@@@@@@@@@@', '1212121212121212']) {
+      expect(avaliarSenha(s)).toMatchObject({ nivel: 'previsivel', valida: false })
+    }
+  })
+  it('uma repetição pequena (duas iguais seguidas) não atrapalha uma senha boa', () => {
+    expect(avaliarSenha('Cachorro#7712')).toMatchObject({ nivel: 'forte' })
+    expect(avaliarSenha('batatinha-frita')).toMatchObject({ nivel: 'forte' })
+  })
+})
+
