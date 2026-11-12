@@ -1697,7 +1697,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Guardas em `tamanhoTexto.test.ts`**: o tema precisa manter `text-xs` em 13 px e nenhum controle novo pode nascer com `min-h`/`size` de 32 a 40 px.
 - ⏳ Falta medir na prática: abas e chips com rolagem horizontal em telas de 360 px.
 
-### 160. Itens pequenos da auditoria de UX (PR 7, 11/11/2026) — ✅ PR aberta
+### 160. Itens pequenos da auditoria de UX (PR 7, 11/11/2026) — ✅ mesclada
 - ✅ **"Aula", não "treino", no resumo do dia do WhatsApp e no exemplo da landing** ("Você tem 3 aulas hoje"). A função `daily-briefing` usa `_shared/notificacoes.ts`: **redeploy dela** para valer.
 - ✅ **`/treinos` leva a Meus treinos** (antes caía em Hoje).
 - ✅ **Voltar restaura a rolagem** (`RestauraRolagem`): ao voltar, a tela volta onde estava; tela nova abre no topo. Mudar filtro ou aba pela URL não pula a página.
@@ -1706,3 +1706,10 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Clima do Hoje em uma linha** (temperatura, chuva, UV); a dica só aparece com chuva a partir de 40%.
 - ✅ **Ficha do aluno: Contrato e Relatório mensal num acordeão "Documentos"**, fechado por padrão.
 - ⏳ Medir taxa de registro e teste de usabilidade com 5 personais (PR 8).
+
+### 161. Taxa de registro das aulas e roteiro de teste de usabilidade (PR 8 da auditoria de UX, 11/11/2026) — ✅ PR aberta
+- ✅ **Admin > Indicadores: "Registro das aulas".** Das aulas dos últimos 30 dias que terminaram há mais de 12 horas (canceladas e contas de admin ficam de fora), quantas tiveram baixa. Mostra a taxa, quantos personais têm aulas e quantos dão baixa em 80% ou mais. **Só totais**: nenhum personal, aluno, local ou horário sai da função (`treino.admin_taxa_registro()`, SECURITY DEFINER com `is_admin()`).
+- ✅ Migration `20261096000000_admin_taxa_de_registro.sql` (só uma função, sem tabela nem dado novo) e teste `supabase/tests/admin_taxa_registro.sql`.
+- ✅ Aviso na tela quando há menos de 5 personais: o número é pista, não conclusão.
+- ✅ **Roteiro do teste com 5 personais:** `docs/ux-audit/ROTEIRO_TESTE_USABILIDADE.md` (5 tarefas, critério "4 de 5 sozinhos em menos de 2 minutos", perguntas finais, como fechar).
+- ⏳ Rodar os testes com personais de verdade e transformar o que aparecer em 3 ou mais sessões em itens do backlog.

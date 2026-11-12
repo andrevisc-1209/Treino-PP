@@ -1,3 +1,4 @@
+import { normalizarTaxaRegistro } from './taxaRegistro'
 import { normalizarBIv1, normalizarListaAcao, type FiltrosBI } from './biV1'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ErroAmigavel, mensagemDaFuncao } from '@/lib/erroAmigavel'
@@ -369,6 +370,18 @@ export function useAdminAgendaPublica() {
       const { data, error } = await supabase.rpc('admin_agenda_publica_resumo')
       if (error) throw error
       return normalizarResumoAdmin(data)
+    },
+  })
+}
+
+/** Taxa de registro de aulas (só totais; nenhum personal ou aluno identificado). */
+export function useAdminTaxaRegistro() {
+  return useQuery({
+    queryKey: ['admin', 'taxa-registro'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_taxa_registro')
+      if (error) throw error
+      return normalizarTaxaRegistro(data)
     },
   })
 }
