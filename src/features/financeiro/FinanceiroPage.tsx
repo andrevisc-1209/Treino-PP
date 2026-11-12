@@ -7,12 +7,13 @@ import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
 import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ChevronRight, Landmark, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Landmark, TriangleAlert } from 'lucide-react'
 import { EstadoVazio } from '@/components/EstadoVazio'
 import { useAlunos } from '@/features/alunos/api'
 import { ROTA_IMPORTAR } from '@/features/alunos/importar/via'
 import { formatarBRL } from '@/lib/moeda'
 import { formatarDataBR } from '@/lib/format'
+import { faturasEnviadasPendentes, faturasPagasDoMes, rotuloDoMes, rotuloFormaPagamento, somarMeses } from './pagamentos'
 import { hojeSP, limitesDoDiaSP } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 import { cicloAnterior, cicloAtual, itensCobraveisDoCiclo, totalPorAula } from './calc'
@@ -56,6 +57,8 @@ export function FinanceiroPage() {
   const { data: pacotesAtivos } = usePacotesAtivos()
   const [params] = useSearchParams()
   const [filtro, setFiltro] = useState<Filtro>(params.get('filtro') === 'a_fechar' ? 'a_fechar' : 'todos')
+  // histórico de pagamentos: o mês que a aba Pagas está mostrando (começa no mês atual)
+  const [mesPagas, setMesPagas] = useState(() => hojeSP().slice(0, 7))
   const [mostrarSemValor, setMostrarSemValor] = useState(false)
   const [previsaoAberta, setPrevisaoAberta] = useState(false)
   // aulas agendadas de agora até o fim do mês (a projeção da previsão); o "agora" fica fixo para a consulta não se refazer a cada render
@@ -68,7 +71,10 @@ export function FinanceiroPage() {
   const { data: aulasAteFimDoMes } = useAulasNoIntervalo(agora, fimDoMes)
 
   const faturasAbertasEnviadas = useMemo(() => (faturas ?? []).filter((f) => f.status === 'aberta' || f.status === 'enviada'), [faturas])
-  const faturasPagasNoMes = useMemo(() => (faturas ?? []).filter((f) => f.status === 'paga' && f.paga_em?.startsWith(mesAtual)), [faturas, mesAtual])
+  // o cartão "Recebido no mês" e a aba Pagas usam a MESMA conta (pagamentos.ts): o que o cartão soma é o que a lista mostra
+  const faturasPagasNoMes = useMemo(() => faturasPagasDoMes(faturas ?? [], mesAtual), [faturas, mesAtual])
+  const faturasPagasDoMesEscolhido = useMemo(() => faturasPagasDoMes(faturas ?? [], mesPagas), [faturas, mesPagas])
+  const faturasEnviadas = useMemo(() => faturasEnviadasPendentes(faturas ?? [], hojeSP()), [faturas])
   const faturasEmAtraso = useMemo(
     () => (faturas ?? []).filter((f) => estaVencida(f.vencimento, f.status, hoje, f.total)),
     [faturas, hoje],
@@ -129,7 +135,9 @@ export function FinanceiroPage() {
       ),
     [pacotesAtivos, faturas, alunos, hoje],
   )
-  const linhasPacote = useMemo(() => linhasPacoteTodas.filter((l) => filtro === 'todos' || l.estado === filtro), [linhasPacoteTodas, filtro])
+  // Pagas e Enviadas listam FATURAS (o histórico), não alunos: por aluno, a fatura paga de um ciclo que já virou sumia da lista
+  const listaPorFatura = filtro === 'paga' || filtro === 'enviada'
+  const linhasPacote = useMemo(() => (listaPorFatura ? [] : linhasPacoteTodas.filter((l) => filtro === 'todos' || l.estado === filtro)), [linhasPacoteTodas, filtro, listaPorFatura])
   // toda fatura vencida do aviso "N em atraso" precisa aparecer na lista: as que nenhuma linha cobre ganham uma linha própria
   const atrasoAvulso = useMemo(() => {
     const jaMostrados = new Set<string>([
@@ -157,7 +165,7 @@ export function FinanceiroPage() {
   // por padrão a lista mostra o que tem valor: ciclo em aberto sem aula (R$ 0,00) fica atrás do botão "Mostrar sem valor"
   const doFiltro = filtro === 'todos' ? linhas : linhas.filter((l) => l.estado === filtro)
   const qtdSemValor = doFiltro.filter((l) => ehSemValor(l, idsCicloEncerrado.has(l.alunoId))).length
-  const linhasFiltradas = doFiltro
+  const linhasFiltradas = (listaPorFatura ? [] : doFiltro)
     .filter((l) => mostrarSemValor || !ehSemValor(l, idsCicloEncerrado.has(l.alunoId)))
     .toSorted((a, b) => prioridadeDaLinha(a, idsCicloEncerrado.has(a.alunoId)) - prioridadeDaLinha(b, idsCicloEncerrado.has(b.alunoId)))
   const acao = acaoNecessaria(faturasEmAtraso, idsCicloEncerrado.size)
@@ -307,11 +315,62 @@ export function FinanceiroPage() {
             ))}
           </RolagemHorizontal>
 
-          {linhasFiltradas.length === 0 && linhasPacote.length === 0 && atrasoAvulsoVisivel.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
+          {!listaPorFatura && linhasFiltradas.length === 0 && linhasPacote.length === 0 && atrasoAvulsoVisivel.length === 0 && (alunosCobranca?.length ?? 0) > 0 && (
             <p className="text-sm text-slate-600">{qtdSemValor > 0 ? 'Nenhuma cobrança com valor neste filtro.' : 'Nenhum aluno neste filtro.'}</p>
           )}
 
+          {filtro === 'paga' && (
+            <section aria-label="Histórico de pagamentos" className="mb-3">
+              <div className="flex items-center justify-between gap-2 rounded-2xl bg-white p-2 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setMesPagas((m) => somarMeses(m, -1))}
+                  aria-label="Mês anterior"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-700 active:bg-slate-100"
+                >
+                  <ChevronLeft size={20} aria-hidden />
+                </button>
+                <div className="min-w-0 text-center">
+                  <p className="truncate text-sm font-semibold capitalize">{rotuloDoMes(mesPagas)}</p>
+                  <p className="text-xs text-slate-600">
+                    {formatarBRL(faturasPagasDoMesEscolhido.reduce((a, f) => a + f.total, 0))} · {faturasPagasDoMesEscolhido.length} pagamento{faturasPagasDoMesEscolhido.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMesPagas((m) => somarMeses(m, 1))}
+                  disabled={mesPagas >= mesAtual}
+                  aria-label="Próximo mês"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-700 active:bg-slate-100 disabled:opacity-30"
+                >
+                  <ChevronRight size={20} aria-hidden />
+                </button>
+              </div>
+              {faturasPagasDoMesEscolhido.length === 0 && <p className="mt-3 text-sm text-slate-600">Nenhum pagamento recebido em {rotuloDoMes(mesPagas)}.</p>}
+            </section>
+          )}
+          {filtro === 'enviada' && faturasEnviadas.length === 0 && <p className="mb-3 text-sm text-slate-600">Nenhuma fatura enviada aguardando pagamento.</p>}
+
           <ul className="space-y-2">
+            {(filtro === 'paga' ? faturasPagasDoMesEscolhido : filtro === 'enviada' ? faturasEnviadas : []).map((f) => (
+              <li key={`fatura-${f.id}`}>
+                <Link to={`/financeiro/${f.id}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="min-w-0 truncate font-medium">{nomeDoAluno.get(f.aluno_id) ?? f.aluno?.name ?? 'Aluno'}</p>
+                    <p className="shrink-0 text-lg font-bold">{formatarBRL(f.total)}</p>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <p className="min-w-0 text-sm text-slate-500">
+                      {f.status === 'paga'
+                        ? `Paga em ${formatarDataBR(f.paga_em ?? '')}${rotuloFormaPagamento(f.forma_pagamento) ? ` · ${rotuloFormaPagamento(f.forma_pagamento)}` : ''}`
+                        : `Vence em ${f.vencimento ? formatarDataBR(f.vencimento) : '—'}`}
+                      {' · '}ciclo {formatarDataBR(f.periodo_inicio).slice(0, 5)} a {formatarDataBR(f.periodo_fim).slice(0, 5)}
+                    </p>
+                    <SeloFatura status={f.status as FaturaStatus} />
+                  </div>
+                </Link>
+              </li>
+            ))}
             {atrasoAvulsoVisivel.map((f) => (
               <li key={`atraso-${f.id}`}>
                 <Link to={`/financeiro/${f.id}`} className="block rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50">
