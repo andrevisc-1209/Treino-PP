@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, Copy, Link2, MessageCircle } from 'lucide-react'
+import { ChevronDown, Copy, Link2, MessageCircle, QrCode } from 'lucide-react'
 import { NumeroComRotulo } from '@/components/NumeroComRotulo'
 import { mostrarInfoGlobal } from '@/components/Toast'
 import { linkWhatsAppComTexto } from '@/lib/whatsapp'
 import { useProfessionalConfig, useResumoAgendaPublica } from './api'
 import { linkDaAgendaPublica } from './publica'
+import { QrDoLink } from './QrDoLink'
 import { linhaDoLink, medianaConfiavel, rotuloTempo, semMovimento } from './resumoPublica'
 
 async function copiar(texto: string): Promise<boolean> {
@@ -19,6 +20,7 @@ async function copiar(texto: string): Promise<boolean> {
 
 /** Copiar e enviar por WhatsApp o link da página pública da agenda. */
 export function BotoesDoLink({ link, semCopiar }: { link: string; semCopiar?: boolean }) {
+  const [qrAberto, setQrAberto] = useState(false)
   return (
     <div className="flex flex-wrap gap-2">
       {!semCopiar && (
@@ -38,6 +40,14 @@ export function BotoesDoLink({ link, semCopiar }: { link: string; semCopiar?: bo
       >
         <MessageCircle size={16} aria-hidden /> Enviar no WhatsApp
       </a>
+      <button
+        type="button"
+        onClick={() => setQrAberto(true)}
+        className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 text-sm font-medium text-slate-700 active:bg-slate-50"
+      >
+        <QrCode size={16} aria-hidden /> Mostrar QR code
+      </button>
+      <QrDoLink link={link} open={qrAberto} onClose={() => setQrAberto(false)} />
     </div>
   )
 }

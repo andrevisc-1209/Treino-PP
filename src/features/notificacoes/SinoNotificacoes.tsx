@@ -60,6 +60,7 @@ export function SinoNotificacoes() {
     if (!n.lida) marcar.mutate(n.id);
     setAberto(false);
     if (n.tipo === "pedido_aula") return navigate("/agenda?pedidos=1");
+    if (n.tipo === "espera_agenda") return navigate("/agenda?pedidos=espera");
     if (!n.aluno_id) return navigate("/configuracoes");
     navigate(
       n.tipo === "ciclo_encerrado"
@@ -121,6 +122,34 @@ export function SinoNotificacoes() {
               className="min-h-11 rounded-xl bg-brand px-4 text-sm font-medium text-white active:bg-brand-hover"
             >
               Ver pedido
+            </button>
+          </div>
+        </li>
+      );
+    }
+    if (n.tipo === "espera_agenda") {
+      const qtd = n.payload.qtd ?? 1;
+      return (
+        <li
+          key={n.id}
+          className={cn(
+            "rounded-2xl border p-3",
+            n.lida ? "border-slate-200 bg-white" : "border-brand bg-brand-soft",
+          )}
+        >
+          <p className="text-sm">
+            <CalendarPlus size={14} className="mr-1 inline align-[-2px]" aria-hidden />{" "}
+            <strong>{qtd === 1 ? "1 pessoa na lista de espera" : `${qtd} pessoas na lista de espera`}</strong>
+          </p>
+          <p className="mt-1 text-sm text-slate-700">Querem ser avisadas se abrir uma vaga. Quando abrir, chame pelo WhatsApp.</p>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-xs text-slate-500">{tempoRelativo(n.criada_em)}</span>
+            <button
+              type="button"
+              onClick={() => abrir(n)}
+              className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-medium text-slate-700 active:bg-slate-50"
+            >
+              Ver a espera
             </button>
           </div>
         </li>
