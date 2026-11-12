@@ -13,11 +13,11 @@ export type VarianteDaBarra = 'padrao' | 'centro'
 
 const CHAVE = 'treino_barra'
 
-/** Variante pedida pela URL (?barra=centro ou ?barra=padrao); guardada no aparelho para o teste com personais não depender do link. */
+/** Variante pedida pela URL (?barra=centro ou ?barra=padrao); guardada no aparelho para o teste com personais não depender do link. Sem escolha, vale o Hoje no centro. */
 export function lerVarianteDaBarra(search: string, guardada: string | null): VarianteDaBarra {
   const url = new URLSearchParams(search).get('barra')
   if (url === 'centro' || url === 'padrao') return url
-  return guardada === 'centro' ? 'centro' : 'padrao'
+  return guardada === 'padrao' ? 'padrao' : 'centro'
 }
 
 export function guardarVarianteDaBarra(v: VarianteDaBarra) {
