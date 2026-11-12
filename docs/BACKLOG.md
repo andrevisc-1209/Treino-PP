@@ -1826,9 +1826,19 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ⏳ Risco conhecido: cobrança desligada e reativada meses depois (created_at antigo) pode avisar de um ciclo mensal em que o aluno estava sem cobrança.
 - ⏳ PR D: pacote (vender, encerrar, renovar) atômico.
 
-### 177. Financeiro, revisão total: PR D (pacote atômico: vender, editar, encerrar e renovar) — ✅ PR aberta
+### 177. Financeiro, revisão total: PR D (pacote atômico: vender, editar, encerrar e renovar) — ✅ Mergeada (#302)
 - **Problema:** vender (fatura → pacote → desligar a cobrança por aula), encerrar (ligar presenças à fatura → encurtar o prazo → encerrar) e renovar (encerrar + vender) eram feitos em várias etapas, do celular. Rede caindo no meio deixava estado pela metade: fatura sem pacote, pacote com a cobrança por aula ainda ligada (o aluno voltava ao fechamento de ciclo), pacote encerrado sem relatório, ou o pacote antigo encerrado e nenhum novo.
 - ✅ **`treino.vender_pacote`**, **`editar_pacote`** (a fatura aberta/enviada acompanha quantidade, valor e prazo; paga não muda), **`encerrar_pacote`** (liga só as presenças presenciais desde o início, encurta o prazo da fatura) e **`renovar_pacote`** (encerrar + vender na mesma transação: se a venda nova falha, o pacote antigo continua ativo). Cada uma numa transação, com as mesmas validações do banco e mensagens em português (um pacote ativo por aluno, recebimento não futuro, forma de pagamento obrigatória quando recebido, fatura que já começa hoje).
 - ✅ SECURITY INVOKER (a RLS vale como no app), só `authenticated`. O app chama as funções. Migration `20261104…` e teste `supabase/tests/pacote_atomico.sql`.
 - ⏳ Trocar o pacote por cobrança por aula/mensal (encerrar o pacote e depois salvar a cobrança) ainda são dois passos na tela.
+
+### 178. Cadastro com menos atrito (análise de UX de 12/11/2026), PR 1: senha, e-mail, logo e recuperação — ✅ PR aberta
+- **Plano em 2 PRs:** PR 1 (esta) = cadastro, login e recuperação; PR 2 = landing e aviso de cookies (texto do botão e nome do produto na landing, aviso compacto no celular, "Ver como funciona"). **CPF no cadastro: decisão do dono de NÃO mexer** (é a chave do login por CPF).
+- ✅ **Senha:** mínimo de 10 caracteres, **sem regras de composição** (recomendação NIST 800-63B), sem aceitar senha óbvia (sequência, padrão repetido, lista de senhas comuns) e **sem "Confirme a senha"** (o botão de mostrar senha resolve). Medidor com barra e frase ("Muito curta · faltam 3 caracteres", "Previsível", "Boa", "Forte"). Mesma regra em "Crie sua senha" (convite e redefinição). `src/lib/senha.ts`.
+- ✅ **E-mail:** validado ao sair do campo e incluído no "Para continuar, informe…"; sugestão de correção de digitação ("gmial.com → gmail.com?") com botão **Corrigir**.
+- ✅ **Oferta no cadastro:** "Comece seus 15 dias grátis · sem cartão" abaixo do nome do produto.
+- ✅ **Logo clicável** (volta à página inicial; no app instalado fica só a imagem) e **logo na recuperação de senha**.
+- ✅ **"Esqueci minha senha" leva o que foi digitado** (do login e da tela "Confirme seu e-mail"); depois de enviar, dica do spam e botão com espera de 60 s ("Enviar de novo em Ns").
+- ⏳ **Supabase (dono):** conferir em Authentication → Sign In / Providers → Email: "Minimum password length" = 10 e **sem** "Password requirements" de caracteres obrigatórios; senão o servidor recusa senhas que o app aceita.
+- ⏳ PR 2 (landing e aviso de cookies).
 

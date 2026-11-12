@@ -20,7 +20,9 @@ import { mascararCPF, validarCPF } from '@/lib/cpf'
 import { emailParecido, useCadastroExistente, useCaptchaVerificacao } from './verificarCadastro'
 import { ERROS } from '@/lib/mensagens'
 import { PasswordInput } from '@/components/PasswordInput'
-import { PasswordChecklist, senhaAtendeTodasRegras } from '@/components/PasswordChecklist'
+import { MedidorDeSenha } from '@/components/MedidorDeSenha'
+import { avaliarSenha, SENHA_MIN } from '@/lib/senha'
+import { sugerirEmail } from './sugestaoEmail'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
 import { guardarCodigoDoLink } from '@/features/indicacao/indicacao'
@@ -30,6 +32,7 @@ import { evento } from '@/features/analytics/analytics'
 const CAPTCHA_ATIVO = !!import.meta.env.VITE_TURNSTILE_SITE_KEY
 const ALLOW_SIGNUP = import.meta.env.VITE_ALLOW_SIGNUP === 'true'
 const REENVIO_ESPERA_SEGUNDOS = 60
+const DICA_SPAM = 'Se não chegar em alguns minutos, olhe a caixa de spam.'
 
 function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
   const base = z.object({
@@ -37,29 +40,35 @@ function buildSchema(mode: 'login' | 'signup' | 'recuperar') {
     email: mode === 'login' ? z.string().refine(identificadorValido, 'Informe um e-mail ou CPF válido') : z.string().email('E-mail inválido'),
     password:
       mode === 'signup'
-        ? z
-            .string()
-            .min(8, 'Mínimo 8 caracteres')
-            .regex(/[A-Z]/, 'Precisa de 1 letra maiúscula')
-            .regex(/[0-9]/, 'Precisa de 1 número')
-            .regex(/[^A-Za-z0-9]/, 'Precisa de 1 símbolo')
+        ? z.string().refine((s) => avaliarSenha(s).valida, `Use pelo menos ${SENHA_MIN} caracteres e evite sequências e senhas comuns`)
         : z.string().min(6, 'Mínimo 6 caracteres'),
-    confirmPassword: z.string().optional(),
     cpf: mode === 'signup' ? z.string().refine(validarCPF, ERROS.CPF.invalido) : z.string().optional(),
     termosAceitos:
       mode === 'signup'
         ? z.boolean().refine((v) => v === true, { message: 'Você precisa aceitar os Termos de Uso e a Política de Privacidade' })
         : z.boolean().optional(),
   })
-  return base.refine((d) => mode !== 'signup' || d.password === d.confirmPassword, {
-    message: 'As senhas não coincidem',
-    path: ['confirmPassword'],
-  })
+  return base
 }
 type Form = z.infer<ReturnType<typeof buildSchema>>
 
 const schemaRecuperar = z.object({ email: z.string().refine(identificadorValido, 'Informe um e-mail ou CPF válido') })
 type FormRecuperar = z.infer<typeof schemaRecuperar>
+
+/**
+ * Logo no topo das telas de entrada. No navegador leva de volta à página inicial (quem chegou pelo cadastro e quer rever a oferta não fica
+ * sem saída); no app instalado (PWA) fica só a imagem, porque a página inicial é de divulgação e tiraria a pessoa do app.
+ */
+function LogoDaMarca({ className }: { className: string }) {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches
+  const imagem = <img src={iconMark} alt="Personal Perto" className={className} />
+  if (standalone) return imagem
+  return (
+    <a href="/landing.html" aria-label="Voltar à página inicial do Treino" className="mx-auto block w-fit">
+      {imagem}
+    </a>
+  )
+}
 
 /** Aviso de que o CPF/e-mail digitado já tem conta: só diz que existe (nada da conta aparece) e leva para entrar ou recuperar a senha. */
 function AvisoJaCadastrado({ oque, onEntrar, onRecuperar }: { oque: 'CPF' | 'e-mail'; onEntrar: () => void; onRecuperar: () => void }) {
@@ -92,6 +101,8 @@ export function LoginPage() {
   const [emailPendenteOrigem, setEmailPendenteOrigem] = useState<'signup' | 'login'>('signup')
   const [reenviando, setReenviando] = useState(false)
   const [esperaReenvio, setEsperaReenvio] = useState(0)
+  // recuperar senha: depois de enviar, o botão espera 60 s (o Supabase só manda 1 e-mail por minuto)
+  const [esperaRecuperar, setEsperaRecuperar] = useState(0)
   const [captchaDemorou, setCaptchaDemorou] = useState(false)
 
   const { register, handleSubmit, formState, setValue, watch, trigger } = useForm<Form>({
@@ -107,6 +118,7 @@ export function LoginPage() {
   const captchaCpf = useCaptchaVerificacao()
   const captchaEmail = useCaptchaVerificacao()
   const cpfJaExiste = useCadastroExistente('cpf', cpfValor ?? '', mode === 'signup' && validarCPF(cpfValor ?? ''), captchaCpf) === true
+  const sugestaoDeEmail = mode === 'signup' ? sugerirEmail(emailCadastro ?? '') : null
   const emailJaExiste = useCadastroExistente('email', emailCadastro ?? '', mode === 'signup' && emailParecido(emailCadastro ?? ''), captchaEmail) === true
 
   // sem token depois de 12 s (rede lenta, bloqueador de anúncios): em vez de ficar travado em "Verificando…", oferece tentar de novo
@@ -124,6 +136,12 @@ export function LoginPage() {
     const t = setTimeout(() => setEsperaReenvio((s) => s - 1), 1000)
     return () => clearTimeout(t)
   }, [esperaReenvio])
+
+  useEffect(() => {
+    if (esperaRecuperar <= 0) return
+    const t = setTimeout(() => setEsperaRecuperar((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [esperaRecuperar])
 
   // link de indicação (?ref=): guarda o código até a pessoa entrar (o servidor valida depois)
   useEffect(() => {
@@ -182,7 +200,7 @@ export function LoginPage() {
     return (
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 text-center shadow">
-          <img src={iconMark} alt="Personal Perto" className="logo-marca mx-auto h-12 w-auto" />
+          <LogoDaMarca className="logo-marca mx-auto h-12 w-auto" />
           <h1 className="text-xl font-bold">Confirme seu e-mail</h1>
           <p className="text-sm text-slate-600">
             {emailPendenteOrigem === 'login'
@@ -221,9 +239,9 @@ export function LoginPage() {
               type="button"
               className="min-h-11 w-full text-sm text-slate-600 underline"
               onClick={() => {
+                const email = emailPendente
                 setEmailPendente(null)
-                setMode('recuperar')
-                setMsg(null)
+                irParaRecuperar(email)
               }}
             >
               Esqueci minha senha
@@ -310,7 +328,10 @@ export function LoginPage() {
       const { data, error } = await supabase.functions.invoke('recuperar-senha-cpf', { body: { cpf: f.email.replace(/\D/g, ''), captchaToken: captchaToken || undefined } })
       gastarCaptcha()
       if (error) setMsg(await mensagemDaFuncao(error, 'Não foi possível enviar agora. Tente de novo.'))
-      else setMsg((data as { mensagem?: string } | null)?.mensagem ?? 'Se houver uma conta com esse CPF, enviamos o link para o e-mail do cadastro.')
+      else {
+        setMsg(`${(data as { mensagem?: string } | null)?.mensagem ?? 'Se houver uma conta com esse CPF, enviamos o link para o e-mail do cadastro.'} ${DICA_SPAM}`)
+        setEsperaRecuperar(REENVIO_ESPERA_SEGUNDOS)
+      }
       return
     }
     const { error } = await supabase.auth.resetPasswordForEmail(f.email.trim(), {
@@ -319,7 +340,10 @@ export function LoginPage() {
     })
     gastarCaptcha()
     if (error) setMsg(mapearErroAuth(error))
-    else setMsg('Se o e-mail existir, enviamos um link para redefinir a senha.')
+    else {
+      setMsg(`Se o e-mail existir, enviamos um link para redefinir a senha. ${DICA_SPAM}`)
+      setEsperaRecuperar(REENVIO_ESPERA_SEGUNDOS)
+    }
   }
 
   if (mode === 'recuperar') {
@@ -327,6 +351,7 @@ export function LoginPage() {
       <div className="flex min-h-full items-center justify-center p-4">
         <form onSubmit={recuperarForm.handleSubmit(onSubmitRecuperar)} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
           <div>
+            <LogoDaMarca className="logo-marca mx-auto mb-3 h-12 w-auto" />
             <h1 className="text-2xl font-bold">Recuperar senha</h1>
             <p className="text-sm text-slate-500">Informe seu CPF ou e-mail para receber o link de redefinição no e-mail do cadastro.</p>
           </div>
@@ -343,8 +368,8 @@ export function LoginPage() {
             <Turnstile onToken={setCaptchaToken} reiniciar={captchaVez} />
           </div>
           {msg && <p className="text-sm text-slate-600">{msg}</p>}
-          <Button type="submit" className="w-full" disabled={recuperarForm.formState.isSubmitting}>
-            Enviar link
+          <Button type="submit" className="w-full" disabled={recuperarForm.formState.isSubmitting || esperaRecuperar > 0}>
+            {esperaRecuperar > 0 ? `Enviar de novo em ${esperaRecuperar}s` : 'Enviar link'}
           </Button>
           <button
             type="button"
@@ -365,9 +390,14 @@ export function LoginPage() {
     <div className="flex min-h-full items-center justify-center p-4">
       <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow">
         <div className="text-center">
-          <img src={iconMark} alt="Personal Perto" className="logo-marca mx-auto h-12 w-auto" />
+          <LogoDaMarca className="logo-marca mx-auto h-12 w-auto" />
           <h1 className="mt-2 text-xl font-bold">{APP_NAME}</h1>
-          <p className="text-sm text-slate-500">Assistente do personal</p>
+          {mode === 'signup' ? (
+            // a oferta da página inicial segue na tela do cadastro: a pessoa lembra o que ganha ao preencher
+            <p className="text-sm font-medium text-brand-hover">Comece seus 15 dias grátis · sem cartão</p>
+          ) : (
+            <p className="text-sm text-slate-500">Assistente do personal</p>
+          )}
         </div>
         {/* Google primeiro nas duas telas: quem tem conta Google resolve em um toque, sem ler campo nenhum */}
         <SocialLoginButtons acao={mode === 'login' ? 'entrar' : 'criar'} />
@@ -402,21 +432,30 @@ export function LoginPage() {
               placeholder="000.000.000-00 ou voce@email.com"
             />
           ) : (
-            <Input type="email" {...register('email')} autoComplete="email" />
+            <Input type="email" {...register('email', { onBlur: () => void trigger('email') })} autoComplete="email" />
           )}
         </Field>
+        {mode === 'signup' && sugestaoDeEmail && (
+          <p className="text-sm text-slate-700">
+            Você quis dizer <strong>{sugestaoDeEmail}</strong>?{' '}
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center font-medium text-brand-hover underline"
+              onClick={() => {
+                setValue('email', sugestaoDeEmail, { shouldValidate: true })
+              }}
+            >
+              Corrigir
+            </button>
+          </p>
+        )}
         {mode === 'signup' && emailJaExiste && (
           <AvisoJaCadastrado oque="e-mail" onEntrar={() => irParaEntrar(emailCadastro ?? '')} onRecuperar={() => irParaRecuperar(emailCadastro ?? '')} />
         )}
-        <Field label="Senha" error={mode === 'login' ? formState.errors.password?.message : undefined}>
+        <Field label="Senha" error={formState.errors.password?.message}>
           <PasswordInput {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
         </Field>
-        {mode === 'signup' && <PasswordChecklist senha={senhaValor ?? ''} />}
-        {mode === 'signup' && (
-          <Field label="Confirme a senha" error={formState.errors.confirmPassword?.message}>
-            <PasswordInput {...register('confirmPassword')} autoComplete="new-password" />
-          </Field>
-        )}
+        {mode === 'signup' && <MedidorDeSenha senha={senhaValor ?? ''} />}
 
         {mode === 'signup' && (
           <>
@@ -465,7 +504,8 @@ export function LoginPage() {
           const faltas: string[] = []
           if (mode === 'signup' && formState.errors.cpf) faltas.push('um CPF válido')
           if (mode === 'signup' && (cpfJaExiste || emailJaExiste)) faltas.push('outro CPF/e-mail, ou entre na conta que já existe')
-          if (mode === 'signup' && !senhaAtendeTodasRegras(senhaValor ?? '')) faltas.push('uma senha que atenda todos os requisitos')
+          if (mode === 'signup' && formState.errors.email) faltas.push('um e-mail válido')
+          if (mode === 'signup' && !avaliarSenha(senhaValor ?? '').valida) faltas.push(`uma senha com pelo menos ${SENHA_MIN} caracteres, sem ser óbvia`)
           const verificando = CAPTCHA_ATIVO && !captchaToken
           return (
             <>
@@ -495,7 +535,7 @@ export function LoginPage() {
         })()}
 
         {mode === 'login' && (
-          <button type="button" className="min-h-11 w-full text-sm text-slate-600 underline" onClick={() => setMode('recuperar')}>
+          <button type="button" className="min-h-11 w-full text-sm text-slate-600 underline" onClick={() => irParaRecuperar(emailCadastro ?? '')}>
             Esqueci minha senha
           </button>
         )}

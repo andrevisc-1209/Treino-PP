@@ -19,7 +19,7 @@ export const ERROS = {
     // genérica DE PROPÓSITO: não confirma se o e-mail tem conta (evita listar quem é cliente); orienta quem já tem conta
     emailDuplicado: 'Não foi possível concluir o cadastro. Se você já tem uma conta, entre com seu e-mail ou use "Esqueci minha senha".',
     emailNaoConfirmado: 'Confirme seu e-mail antes de entrar.',
-    senhaFraca: 'Senha fraca. Use pelo menos 8 caracteres.',
+    senhaFraca: 'Senha fraca. Use pelo menos 10 caracteres e evite sequências e senhas comuns.',
     sessaoExpirada: 'Sua sessão expirou. Entre novamente.',
     generico: 'Não foi possível concluir. Tente de novo.',
   },
