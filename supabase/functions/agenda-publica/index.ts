@@ -128,6 +128,16 @@ Deno.serve(async (req) => {
       console.error('agenda-publica: falha ao gravar a espera', errEspera.message)
       return json(req, { error: 'Não foi possível enviar agora. Tente novamente.' }, 500)
     }
+    // Avisa o personal no sino, AGRUPADO (a função soma ao aviso não lido). Só quando entrou gente nova (23505 = já estava na espera).
+    // Falha aqui NUNCA derruba o pedido de espera, que já está gravado. Sem nome nem telefone no aviso.
+    if (!errEspera) {
+      try {
+        const { error: errAviso } = await admin.rpc('avisar_espera_agenda', { p_professional_id: professionalId })
+        if (errAviso) console.error('agenda-publica: espera gravada, mas o aviso do sino falhou', errAviso.message)
+      } catch (e) {
+        console.error('agenda-publica: espera gravada, mas o aviso falhou', (e as Error).message)
+      }
+    }
     return json(req, { estado: 'enviado', nome_personal: primeiroNome(personal.name) })
   }
 

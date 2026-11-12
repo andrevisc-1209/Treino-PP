@@ -1,4 +1,4 @@
-export type TipoNotificacao = 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida' | 'pedido_aula'
+export type TipoNotificacao = 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida' | 'pedido_aula' | 'espera_agenda'
 
 export interface NotificacaoAgrupavel {
   tipo: TipoNotificacao

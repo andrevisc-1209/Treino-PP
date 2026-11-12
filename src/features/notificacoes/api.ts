@@ -11,9 +11,9 @@ export type Notificacao = {
   id: string
   /** null só em avisos que não são de aluno (indicacao_concedida) */
   aluno_id: string | null
-  tipo: 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida' | 'pedido_aula'
+  tipo: 'treino_concluido' | 'ciclo_encerrado' | 'indicacao_concedida' | 'pedido_aula' | 'espera_agenda'
   lida: boolean
-  payload: { pedido_id?: string; inicio?: string; execucao_id?: string; plano_nome?: string; modalidade?: ModalidadeTipo; tem_notas?: boolean } & PayloadCiclo &
+  payload: { qtd?: number; pedido_id?: string; inicio?: string; execucao_id?: string; plano_nome?: string; modalidade?: ModalidadeTipo; tem_notas?: boolean } & PayloadCiclo &
     PayloadIndicacao
   criada_em: string
   aluno: { name: string } | null

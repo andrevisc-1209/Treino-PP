@@ -1718,7 +1718,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ `docs/ux-audit/BRIEFING.md`: descritivo do produto para quem vai analisar UX (corrigido: **15 dias de teste e R$ 15/mês**, não 30 dias).
 - ✅ `docs/ux-audit/RELATORIO-2026-11.md`: crítica por heurísticas, relatório do Chrome, o que o código confirmou, o insight central (aula não registrada → número errado → perda de confiança) e **tabela de status** do que foi feito (#278 a #285) e do que segue em aberto.
 
-### 163. Plano pós-auditoria, PR 1: faturas zeradas, foco visível, movimento, Hoje no centro e um alerta por vez — ✅ PR aberta
+### 163. Plano pós-auditoria, PR 1: faturas zeradas, foco visível, movimento, Hoje no centro e um alerta por vez — ✅ Mergeada (#287)
 - ✅ **Faturas de R$ 0,00 deixam de ser "em atraso".** Causa: o "Fechar ciclo" permitia criar fatura sem nada a cobrar; depois do vencimento ela aparecia como "Em atraso" no Financeiro, no aviso de Hoje e no sino, com R$ 0,00 (as linhas "Fatura vencida em…" que a PR #278 passou a listar). Agora: o ciclo sem valor não fecha (botão desativado com explicação); `estaVencida` ignora total ≤ 0; o aviso diário de cobrança (`avisos-financeiros`) não conta fatura zerada; aulas por aula sem valor ganham o aviso "Essas aulas estão sem valor".
 - ✅ **Migration `20261097…`** cancela as faturas zeradas abertas ou enviadas que já existem (não apaga nada; não mexe em paga nem em fatura com valor).
 - ✅ **Foco visível** (anel verde de 2 px, vence os `outline-none`) e **redução de movimento** global (`prefers-reduced-motion`).
@@ -1726,3 +1726,8 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Hoje: um alerta de ação por vez** (`alertaDeAcao`): registrar aulas, depois fechar ciclos, depois convites (indicação).
 - ✅ `docs/DECISOES_ESTRATEGICAS.md`: memo de vocabulário, preço e comissão.
 - ⏳ **Validação visual logada a 390 px não foi feita:** o login passa por captcha. Fazer depois do merge, no navegador do app, com o personal de teste já logado.
+
+### 164. Aviso da lista de espera no sino e QR code do link da agenda (plano pós-auditoria, PR 2) — ✅ PR aberta
+- ✅ **Aviso ao personal quando alguém entra na lista de espera:** no sino, **agrupado** ("5 pessoas na lista de espera", um aviso só enquanto não for lido). Sem WhatsApp. O aviso não leva nome, telefone, dia nem turno (payload só com `qtd`). Migration `20261098…` (tipo `espera_agenda` + função `avisar_espera_agenda`, só service_role) e teste `supabase/tests/aviso_lista_de_espera.sql`. **Redeploy de `agenda-publica`.**
+- ✅ **QR code do link da agenda** ("Mostrar QR code" no cartão do link): gerado no aparelho com a lib `qrcode` já usada no Pix, sem serviço externo; abre numa folha, com "Baixar imagem" (PNG).
+- ✅ FAQ "Receber pedidos de aula pelo link da sua agenda": QR code e aviso agrupado. Política sem mudança (nenhum dado novo coletado; o aviso não tem dado do visitante).
