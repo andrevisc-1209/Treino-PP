@@ -1842,10 +1842,16 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ⏳ **Supabase (dono):** conferir em Authentication → Sign In / Providers → Email: "Minimum password length" = 10 e **sem** "Password requirements" de caracteres obrigatórios; senão o servidor recusa senhas que o app aceita.
 - ⏳ PR 2 (landing e aviso de cookies).
 
-### 179. Landing e aviso de cookies compactos (análise de UX de 12/11/2026), PR 2 — ✅ PR aberta
+### 179. Landing e aviso de cookies compactos (análise de UX de 12/11/2026), PR 2 — ✅ Mergeada (#304)
 - ✅ **Aviso de análise de uso compacto** na landing e no app: a 390 px cobria cerca de 22% da primeira tela (190 px) e passou a ~15% (129 px) na landing e ~17% (148 px) no app. **As promessas são as mesmas** (só mede depois do aceite, sem cookies, sem gravar a sessão, sem nome, e-mail, CPF nem dados de alunos) e continuam batendo com a Política (seção 3) e com os testes `landingAnalytics`. Recusar e Aceitar seguem com o mesmo peso.
 - ✅ **"Ver o app em 30s" → "Ver como funciona ↓"**: o botão só rola até a seção "Um dia na sua rotina", não abre vídeo.
 - ✅ **Um texto só para o botão de cadastro:** "Testar 15 dias grátis" (com "→" no hero e no fim), "Testar grátis" no topo (cabe no celular). Antes: "Começar grátis", "Testar 15 dias grátis →" e "Criar minha conta grátis".
 - ✅ **Nome do produto:** a aba do navegador e o compartilhamento (og:title) passam a dizer "Treino · Personal Perto" (o nome do app e dos Termos); o texto da landing diz "Treino" (o nome do logo), sem "Treino PP". "Treino PP" segue como nome curto do app instalado.
 - ⏳ Ideias da análise que ficaram de fora por decisão: tirar o CPF do cadastro; vídeo ou GIF real do app (precisa de conteúdo); imagens do celular ilustrado em 2x (800 px).
+
+### 180. Medidor de senha: repetição de caracteres não conta como tamanho — ✅ PR aberta
+- **Problema (visto pelo dono):** `Visc1989@@@@@@@@@@@@@` (21 caracteres) aparecia como "Forte"; o medidor olhava o tamanho e a repetição o inflava.
+- ✅ O **tamanho efetivo** conta uma sequência do mesmo caractere no máximo 2 vezes. A senha acima vira "Boa · evite repetir o mesmo caractere"; "Forte" exige 7 caracteres diferentes e tamanho efetivo de 14 (ou 12 com mistura de tipos).
+- ✅ **Poucos caracteres diferentes** (menos de 5, ou sequência escondida como `1122334455`) ou tamanho efetivo abaixo de 10 viram "Previsível" e não passam. O mínimo de 10 caracteres continua valendo no servidor.
+- ⏳ O "Confirme a senha" **não volta**: decisão do dono (ficou só com o botão de mostrar a senha).
 
