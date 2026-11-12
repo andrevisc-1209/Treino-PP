@@ -12,13 +12,14 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ipDoCliente } from '../_shared/consentimento.ts'
-import { limiteExcedido, resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
+import { limiteExcedido, limiteJaAtingido, resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 import { verificarTurnstile } from '../_shared/turnstile.ts'
 import { montarPedidoAula } from '../_shared/notificacoes.ts'
 import { enviarAoPersonal } from '../_shared/whatsappPersonal.ts'
 import {
   calcularVagas,
   dataEHoraSP,
+  MAX_LINKS_ERRADOS_POR_IP_HORA,
   MAX_PEDIDOS_POR_IP_HORA,
   MAX_ESPERA_POR_PERSONAL,
   MAX_PEDIDOS_POR_TELEFONE_DIA,
@@ -61,6 +62,19 @@ Deno.serve(async (req) => {
   // Consulta: limite por IP, falha aberta (rota de leitura de baixo risco).
   if (ip && (await limiteExcedido(`agenda-publica:ip:${ip}`, 60))) return resposta429(cors(req))
 
+  // Varredura de links: o IP que já errou muitos links nesta hora fica barrado em TUDO (até em links certos), senão ainda serviria de teste de
+  // "esse link existe?". Falha FECHADA: sem o contador, não responde. Quem só abre links certos nunca soma nesse contador.
+  const chaveErros = ip ? `agenda-publica:erro-link:ip:${ip}` : null
+  if (chaveErros) {
+    const varredura = await limiteJaAtingido(chaveErros, MAX_LINKS_ERRADOS_POR_IP_HORA, 3600)
+    if (varredura === 'erro') return resposta503(cors(req))
+    if (varredura === 'excedido') return resposta429(cors(req))
+  }
+  const linkErrado = async () => {
+    if (chaveErros) await verificarLimite(chaveErros, MAX_LINKS_ERRADOS_POR_IP_HORA, 3600)
+    return json(req, INDISPONIVEL)
+  }
+
   let body: Record<string, unknown>
   try {
     body = await req.json()
@@ -68,7 +82,7 @@ Deno.serve(async (req) => {
     return json(req, { error: 'Corpo da requisição inválido.' }, 400)
   }
   const acao = body.acao === 'pedir' ? 'pedir' : body.acao === 'espera' ? 'espera' : 'consultar'
-  if (!slugValido(body.slug)) return json(req, INDISPONIVEL)
+  if (!slugValido(body.slug)) return linkErrado()
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
 
@@ -77,7 +91,7 @@ Deno.serve(async (req) => {
     .select('professional_id, duracao_padrao_min, intervalo_min, antecedencia_horas, horizonte_semanas, agenda_publica_ativa, apresentacao, pagina_cref, pagina_modalidades, pagina_locais, pagina_preco_aula, pagina_foto, locais_atendimento, modalidades_atendimento')
     .eq('agenda_publica_slug', body.slug)
     .maybeSingle()
-  if (!cfg || !cfg.agenda_publica_ativa) return json(req, INDISPONIVEL)
+  if (!cfg || !cfg.agenda_publica_ativa) return linkErrado()
   const professionalId = cfg.professional_id as string
 
   const [{ data: assinatura }, { data: personal }] = await Promise.all([
@@ -208,33 +222,31 @@ Deno.serve(async (req) => {
   if (porTelefone === 'erro') return resposta503(cors(req))
   if (porTelefone === 'excedido') return resposta429(cors(req))
 
-  const { count: pendentes } = await admin.from('pedidos_agenda').select('id', { count: 'exact', head: true }).eq('professional_id', professionalId).eq('status', 'pendente')
-  if ((pendentes ?? 0) >= MAX_PENDENTES_POR_PERSONAL) {
-    return json(req, { error: 'Este personal está com muitos pedidos em aberto. Tente de novo em alguns dias.' }, 429)
-  }
-
-  const { data: criado, error } = await admin
-    .from('pedidos_agenda')
-    .insert({
-      professional_id: professionalId,
-      visitante_nome: v.pedido.nome,
-      visitante_telefone: v.pedido.telefone,
-      mensagem: v.pedido.mensagem,
-      local_escolhido: v.pedido.local,
-      modalidade: v.pedido.modalidade,
-      inicio: new Date(`${vaga.dataISO}T${vaga.inicio}:00-03:00`).toISOString(),
-      duracao_min: parametros.duracaoMin,
-    })
-    .select('id')
-    .single()
-  // 23505 = o mesmo telefone já pediu esse horário e o pedido está pendente: tratamos como enviado (idempotente)
-  if (error && error.code !== '23505') {
+  // O teto de pendentes é conferido DENTRO da mesma transação do INSERT (função com trava por personal): duas chamadas juntas não furam o teto.
+  const { data: gravado, error } = await admin.rpc('criar_pedido_agenda', {
+    p_professional_id: professionalId,
+    p_nome: v.pedido.nome,
+    p_telefone: v.pedido.telefone,
+    p_mensagem: v.pedido.mensagem,
+    p_local: v.pedido.local,
+    p_modalidade: v.pedido.modalidade,
+    p_inicio: new Date(`${vaga.dataISO}T${vaga.inicio}:00-03:00`).toISOString(),
+    p_duracao: parametros.duracaoMin,
+    p_max_pendentes: MAX_PENDENTES_POR_PERSONAL,
+  })
+  if (error) {
     console.error('agenda-publica: falha ao gravar o pedido', error.message)
     return json(req, { error: 'Não foi possível enviar agora. Tente novamente.' }, 500)
   }
+  const resultado = gravado as { estado?: string; id?: string } | null
+  if (resultado?.estado === 'cheio') {
+    return json(req, { error: 'Este personal está com muitos pedidos em aberto. Tente de novo em alguns dias.' }, 429)
+  }
+  // 'duplicado' = o mesmo telefone já pediu esse horário e o pedido está pendente: tratamos como enviado (idempotente)
+  const criado = resultado?.estado === 'ok' && resultado.id ? { id: resultado.id } : null
 
   // Avisa o personal (sino do app e WhatsApp da plataforma). Falha aqui NUNCA derruba o pedido, que já está gravado.
-  if (!error && criado) {
+  if (criado) {
     const texto = montarPedidoAula(vaga.dataISO, vaga.inicio)
     try {
       const { error: errAviso } = await admin

@@ -1771,10 +1771,18 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Teste que mantém as modalidades públicas iguais às 5 ativas do app.
 - ⏳ Revisão jurídica da Política 1.17 junto das 1.11 a 1.16 (acrescentar ao dossiê).
 
-### 170. Segurança, lote 1 da revisão manual de 12/11 (e-mail de consentimento, webhook, links, dependências) — ✅ PR aberta
+### 170. Segurança, lote 1 da revisão manual de 12/11 (e-mail de consentimento, webhook, links, dependências) — ✅ Mergeada (#295)
 - ✅ **E-mail de consentimento:** limite de 2 por dia por destinatário (hash, falha fechada) e nome do e-mail reduzido ao primeiro nome, só letras (`bit.ly/x` e telefones não passam mais).
 - ✅ **`mp-webhook`:** processa o `data.id` que a assinatura cobriu; ids divergentes → 400.
 - ✅ **`maps_link`** só `https://` (gravação e exibição); `.env` fora do git; `zod` e `fast-uri` atualizados (audit de produção = 0).
 - ✅ Central de ajuda: artigo de consentimento avisa do limite por e-mail.
 - ⏳ Lote 2 (agenda pública: slug maior, limite contra varredura, expiração de 7 dias, teto atômico) e lote 3 (captcha no "já tem conta?").
+
+### 171. Segurança, lote 2 da revisão manual (agenda pública: link maior, barreira contra varredura, expiração, teto atômico) — ✅ PR aberta
+- ✅ **Links novos com 8 caracteres hex** no final (eram 4); os antigos seguem valendo e "Trocar o link" gera o novo formato.
+- ✅ **Barreira contra varredura:** 30 links errados por IP por hora bloqueiam o IP em tudo por uma hora (falha fechada; leitura do contador sem somar).
+- ✅ **Pedidos sem resposta expiram** em 7 dias, ou quando o horário passa (vão para "Recusados"); cron horário.
+- ✅ **Teto de 10 pendentes atômico** (função com trava por personal), no lugar de contar e inserir.
+- ✅ Migration `20261102…`, teste `supabase/tests/seguranca_agenda_publica.sql`, cron `expirar_pedidos_agenda.sql`. **Redeploy de `agenda-publica`.**
+- ⏳ Lote 3: captcha no "já tem conta?" do cadastro.
 

@@ -47,3 +47,22 @@ describe('respostaDoLimite', () => {
   })
 })
 
+
+describe('consultarAtingido', async () => {
+  const { consultarAtingido } = await import('./rateLimit.ts')
+  const rpc = (resposta: { data: unknown; error: { message: string } | null }) => vi.fn().mockResolvedValue(resposta)
+
+  it('true do banco = limite atingido; false = ainda não', async () => {
+    expect(await consultarAtingido(rpc({ data: true, error: null }), 'k', 30)).toBe('excedido')
+    expect(await consultarAtingido(rpc({ data: false, error: null }), 'k', 30)).toBe('ok')
+  })
+  it('erro do banco ou exceção = erro (quem chama falha fechado)', async () => {
+    expect(await consultarAtingido(rpc({ data: null, error: { message: 'x' } }), 'k', 30)).toBe('erro')
+    expect(await consultarAtingido(vi.fn().mockRejectedValue(new Error('rede')), 'k', 30)).toBe('erro')
+  })
+  it('manda a chave cortada em 120 caracteres, o máximo e a janela', async () => {
+    const f = rpc({ data: false, error: null })
+    await consultarAtingido(f, 'x'.repeat(200), 30, 3600)
+    expect(f).toHaveBeenCalledWith({ p_key: 'x'.repeat(120), p_max: 30, p_window_seconds: 3600 })
+  })
+})

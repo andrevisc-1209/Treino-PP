@@ -205,3 +205,5 @@ export const vagaDisponivel = (vagas: Vaga[], dataISO: string, hora: string): Va
 export const MAX_PENDENTES_POR_PERSONAL = 10
 export const MAX_PEDIDOS_POR_TELEFONE_DIA = 3
 export const MAX_PEDIDOS_POR_IP_HORA = 10
+/** Links inexistentes ou desligados que um mesmo IP pode tentar por hora antes de ser barrado (varredura de links). Quem acessa só links certos nunca soma. */
+export const MAX_LINKS_ERRADOS_POR_IP_HORA = 30
