@@ -58,3 +58,17 @@ export function faturasEnviadasPendentes<T extends FaturaDePagamento>(faturas: T
 
 const FORMAS: Record<FormaPagamento, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', transferencia: 'Transferência', outro: 'Outro' }
 export const rotuloFormaPagamento = (f: FormaPagamento | null | undefined): string | null => (f ? FORMAS[f] : null)
+
+/**
+ * Valida a data do pagamento informada pelo personal: precisa ser uma data real (AAAA-MM-DD), de 2020 em diante e não pode ser futura
+ * (um pagamento futuro entraria como "recebido" num mês que ainda não chegou). null = está certa.
+ */
+export function validarDataPagamento(dataISO: string, hojeISO: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataISO)) return 'Informe a data do pagamento.'
+  const [a, m, d] = dataISO.split('-').map(Number)
+  const real = new Date(Date.UTC(a, m - 1, d))
+  if (real.getUTCFullYear() !== a || real.getUTCMonth() !== m - 1 || real.getUTCDate() !== d) return 'Essa data não existe.'
+  if (a < 2020) return 'Informe uma data de 2020 em diante.'
+  if (dataISO > hojeISO) return 'A data do pagamento não pode ser futura.'
+  return null
+}

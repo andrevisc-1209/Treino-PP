@@ -15,6 +15,8 @@ import { gerarPayloadPix, normalizarCidadePix } from '@/lib/pix'
 import { linkWhatsApp } from '@/lib/whatsapp'
 import { BottomSheet, Button, Field, Input } from '@/components/ui'
 import { confirmarAcao } from '@/components/ConfirmSheet'
+import { mapearErroSupabase } from '@/lib/erros'
+import { validarDataPagamento } from './pagamentos'
 import { montarMensagemFatura, resumoTreinoPeriodo } from './mensagem'
 import { SeloFatura, estaVencida, rotuloModelo } from './rotulos'
 import { ReciboCiclo } from './ReciboCiclo'
@@ -58,6 +60,8 @@ export function FaturaPage() {
   const marcarPaga = useMarcarFaturaPaga()
   const desfazer = useDesfazerPagamentoFatura()
   const cancelar = useCancelarFatura()
+  // erro de qualquer ação da fatura (enviar, desfazer, cancelar): sem sinal ou com a fatura mudada, a tela precisa dizer, não ficar parada
+  const erroDaAcao = enviar.error ?? desfazer.error ?? cancelar.error
 
   const [mensagem, setMensagem] = useState('')
   const [pagamentoAberto, setPagamentoAberto] = useState(false)
@@ -178,7 +182,10 @@ export function FaturaPage() {
     }
   }
 
+  const erroDaData = validarDataPagamento(dataPagamento, hojeSP())
+
   const confirmarPagamento = () => {
+    if (erroDaData) return
     marcarPaga.mutate(
       { faturaId: fatura.id, alunoId: fatura.aluno_id, pagaEm: dataPagamento, formaPagamento },
       { onSuccess: () => setPagamentoAberto(false) },
@@ -187,6 +194,7 @@ export function FaturaPage() {
 
   const confirmarDesfazer = () => {
     const statusAnterior = fatura.enviada_em ? 'enviada' : 'aberta'
+    desfazer.reset()
     desfazer.mutate({ faturaId: fatura.id, alunoId: fatura.aluno_id, statusAnterior })
   }
 
@@ -198,6 +206,7 @@ export function FaturaPage() {
       destrutivo: true,
     })
     if (!ok) return
+    cancelar.reset()
     cancelar.mutate({ faturaId: fatura.id, alunoId: fatura.aluno_id })
   }
 
@@ -274,7 +283,14 @@ export function FaturaPage() {
         {fatura.status !== 'cancelada' && (
           <div className="flex flex-wrap gap-2">
             {fatura.status !== 'paga' && (
-              <Button variant="ghost" onClick={() => setPagamentoAberto(true)} disabled={marcarPaga.isPending}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  marcarPaga.reset()
+                  setPagamentoAberto(true)
+                }}
+                disabled={marcarPaga.isPending}
+              >
                 Marcar como paga
               </Button>
             )}
@@ -283,10 +299,18 @@ export function FaturaPage() {
                 Desfazer pagamento
               </Button>
             )}
-            <Button variant="ghost" onClick={confirmarCancelar} disabled={cancelar.isPending} className="text-red-600">
-              Cancelar fatura
-            </Button>
+            {/* fatura paga não se cancela: o pagamento sumiria do "Recebido". Quem errou o pagamento usa "Desfazer pagamento" primeiro. */}
+            {fatura.status !== 'paga' && (
+              <Button variant="ghost" onClick={confirmarCancelar} disabled={cancelar.isPending} className="text-red-600">
+                Cancelar fatura
+              </Button>
+            )}
           </div>
+        )}
+        {erroDaAcao && (
+          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            {mapearErroSupabase(erroDaAcao)}
+          </p>
         )}
 
         {config?.pix_chave && config.pix_nome && perfil && !cidadePix && (
@@ -335,7 +359,8 @@ export function FaturaPage() {
       <BottomSheet open={pagamentoAberto} onClose={() => setPagamentoAberto(false)} title="Marcar como paga">
         <div className="space-y-4">
           <Field label="Data do pagamento">
-            <Input type="date" value={dataPagamento} onChange={(e) => setDataPagamento(e.target.value)} />
+            <Input type="date" value={dataPagamento} max={hojeSP()} onChange={(e) => setDataPagamento(e.target.value)} />
+            {erroDaData && <p role="alert" className="mt-1 text-sm text-red-600">{erroDaData}</p>}
           </Field>
           <Field label="Forma de pagamento">
             <div className="flex flex-wrap gap-2">
@@ -355,7 +380,12 @@ export function FaturaPage() {
               ))}
             </div>
           </Field>
-          <Button onClick={confirmarPagamento} className="w-full" disabled={marcarPaga.isPending}>
+          {marcarPaga.error && (
+            <p role="alert" className="text-sm text-red-600">
+              {mapearErroSupabase(marcarPaga.error)}
+            </p>
+          )}
+          <Button onClick={confirmarPagamento} className="w-full" disabled={marcarPaga.isPending || !!erroDaData}>
             Confirmar pagamento
           </Button>
         </div>

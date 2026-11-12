@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cicloAnterior, cicloAtual, dividirValor, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
+import { cicloAnterior, cicloAtual, cicloPodeSerFechado, dividirValor, itensCobraveisDoCiclo, totalMensal, totalPorAula } from './calc'
 
 describe('cicloAtual', () => {
   it('dia 10, hoje depois do início do ciclo: 10/set a 09/out', () => {
@@ -69,5 +69,17 @@ describe('cicloAnterior', () => {
   it('vira o ano', () => {
     expect(cicloAnterior(1, '2027-01-15')).toEqual({ inicio: '2026-12-01', fim: '2026-12-31' })
     expect(cicloAnterior(20, '2027-01-05')).toEqual({ inicio: '2026-11-20', fim: '2026-12-19' })
+  })
+})
+
+describe('cicloPodeSerFechado', () => {
+  const ciclo = { inicio: '2026-10-01', fim: '2026-10-31' }
+  it('não deixa fechar antes nem no último dia (aula do fim do dia ficaria sem fatura)', () => {
+    expect(cicloPodeSerFechado(ciclo, '2026-10-15')).toBe(false)
+    expect(cicloPodeSerFechado(ciclo, '2026-10-31')).toBe(false)
+  })
+  it('deixa fechar a partir do dia seguinte ao fim do ciclo', () => {
+    expect(cicloPodeSerFechado(ciclo, '2026-11-01')).toBe(true)
+    expect(cicloPodeSerFechado(ciclo, '2026-11-12')).toBe(true)
   })
 })

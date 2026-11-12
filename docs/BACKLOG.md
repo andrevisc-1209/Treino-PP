@@ -1792,7 +1792,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Teste de `captchaDoCorpo`. **Redeploy de `verificar-cadastro`.**
 - ⏳ **Só dá para validar em produção** (a chave do captcha não vale em localhost): digitar um CPF e um e-mail já cadastrados no cadastro e ver o aviso; depois criar uma conta de teste e confirmar que o cadastro ainda funciona.
 
-### 173. Financeiro: aba Pagas com o histórico de pagamentos (faturas, mês a mês) e Enviadas de qualquer ciclo — ✅ PR aberta
+### 173. Financeiro: aba Pagas com o histórico de pagamentos (faturas, mês a mês) e Enviadas de qualquer ciclo — ✅ Mergeada (#298)
 - **Problema (achado nos dados reais do personal):** a aba "Pagas" listava ALUNOS pela última fatura em relação ao ciclo atual; ao virar o ciclo, a fatura paga do ciclo anterior sumia da lista (o aluno voltava para "A fechar"). Havia 5 faturas pagas em novembro e a lista mostrava 1 (a de pacote). Não existia histórico de pagamentos na tela.
 - ✅ **"Pagas" passa a listar faturas pagas** (aluno, valor, "Paga em dd/mm · forma", ciclo), da mais recente para a mais antiga, com **setas para navegar pelos meses** e total e quantidade do mês no topo. Vira o histórico de pagamentos.
 - ✅ O cartão **"Recebido no mês"** e a aba usam a **mesma conta** (`pagamentos.ts`); fatura de R$ 0,00 paga não conta como recebimento (nem na lista nem no cartão).
@@ -1800,4 +1800,13 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ "A fechar", "Em atraso" e "Todos" não mudam. Sem migration.
 - ✅ Testes com os dados reais que mostraram o erro; artigo "Ver o histórico de pagamentos recebidos" na Central de ajuda.
 - ⏳ Validar no celular logado (390px, claro e escuro).
+
+### 174. Financeiro, revisão total: PR A (fechamento, vencimento, valores, erros e travas) — ✅ PR aberta
+- ✅ **Fechamento só depois do fim do ciclo** (a partir do dia seguinte ao último dia): fechar antes deixava as aulas feitas depois sem fatura para sempre (a fatura cobre o ciclo inteiro e só existe uma por ciclo). A tela explica quando dá para fechar; a regra vale também na ação (`CicloNaoTerminouError`). Sem `?ref`, a tela abre o ciclo que acabou de terminar quando ele espera fatura.
+- ✅ **Vencimento a partir do fechamento:** `vencimentoDaFatura` conta N dias a partir do que vier depois, fim do ciclo ou hoje. Fechado com atraso, a fatura não nasce mais "Em atraso" (nem dispara os avisos de 1, 3 e 7 dias).
+- ✅ **Valor editado no fechamento vai para a aula** (antes só o total mudava e o recibo mostrava o valor antigo).
+- ✅ **Erros visíveis** ao marcar como paga, enviar, desfazer e cancelar (antes falhavam em silêncio).
+- ✅ **Fatura paga não se cancela** (primeiro "Desfazer pagamento"); marcar como paga só vale para aberta/enviada; **data do pagamento** não pode ser futura, vazia nem inexistente.
+- ✅ Testes: regra de fechamento, vencimento e data do pagamento. Central de ajuda atualizada.
+- ⏳ PR B: funções SQL atômicas para fechar ciclo e cancelar fatura (hoje em duas etapas). Depois: aulas sem fatura ao desligar a cobrança, primeiro ciclo do aluno mensal e paginação.
 

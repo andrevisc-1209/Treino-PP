@@ -240,7 +240,9 @@ export const ARTIGOS: Artigo[] = [
     titulo: 'Fechar o ciclo e gerar a fatura',
     passos: [
       'Quando um aluno completa o ciclo de aulas, ele aparece para fechar. O aviso aparece na tela Hoje e no Financeiro; toque em "Fechar ciclo".',
+      'O ciclo só pode ser fechado a partir do dia seguinte ao último dia dele. Assim, as aulas que ainda vão acontecer até o fim do ciclo entram na fatura e nenhuma fica sem cobrança.',
       'Confira as aulas incluídas e confirme. A fatura é criada. Se o total for R$ 0,00 (sem aula com valor), o app não deixa fechar: defina o valor da aula na cobrança do aluno ou inclua aulas.',
+      'O vencimento conta a partir do dia em que você fecha o ciclo (ou do fim do ciclo, o que vier depois). Se você fechar com atraso, a fatura não nasce vencida. Se mudar o valor de uma aula na tela de fechamento, o valor novo vale também no recibo e no relatório.',
       'A mensagem para o aluno fica pronta para você enviar pelo WhatsApp.',
     ],
     sinonimos: ['cobrar', 'cobranca', 'mensalidade', 'fatura', 'fechamento'],
@@ -254,6 +256,7 @@ export const ARTIGOS: Artigo[] = [
       'Use as setas no alto da lista para voltar a meses anteriores e ver o histórico. O valor e a quantidade ali são os mesmos do cartão "Recebido no mês".',
       'O filtro "Enviadas" lista todas as faturas enviadas que ainda aguardam pagamento, de qualquer ciclo. As vencidas ficam em "Em atraso".',
       'Faturas de R$ 0,00 não contam como recebimento e não aparecem na lista.',
+      'Fatura paga não pode ser cancelada de uma vez: toque em "Desfazer pagamento" e só depois cancele. A data do pagamento não pode ser futura.',
     ],
     sinonimos: ['pagamentos', 'recebido', 'recebimentos', 'pagas', 'historico', 'faturas pagas', 'quem pagou'],
   },
