@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { dataSP, hojeSP, limitesDoDiaSP, somarDias } from '@/lib/datas'
+import { dataSP, hojeSP, limitesDoDiaSP } from '@/lib/datas'
 import { ErroAmigavel } from '@/lib/erroAmigavel'
 import { cicloPodeSerFechado } from './calc'
+import { CicloJaFechadoError, CicloNaoTerminouError, traduzirErroFinanceiro } from './erroFinanceiro'
 import { validarDataPagamento } from './pagamentos'
 import type { ItemRecibo } from './recibo'
 import type { colunasDaAvaliacao } from './avaliacao'
@@ -264,22 +265,7 @@ export type FecharCicloInput = {
   valoresDosItens?: Record<string, number>
 }
 
-/** O ciclo daquele aluno/período já tem fatura (não cancelada): só pode existir uma por período. */
-export class CicloJaFechadoError extends Error {
-  constructor() {
-    super('Este ciclo já foi encerrado.')
-    this.name = 'CicloJaFechadoError'
-  }
-}
-
-/** Tentativa de fechar um ciclo que ainda não terminou (só se fecha a partir do dia seguinte ao último dia do ciclo). */
-export class CicloNaoTerminouError extends Error {
-  constructor(periodoFim: string) {
-    const aberto = somarDias(periodoFim, 1)
-    super(`Este ciclo termina em ${periodoFim.slice(8, 10)}/${periodoFim.slice(5, 7)}. Você poderá fechá-lo a partir de ${aberto.slice(8, 10)}/${aberto.slice(5, 7)}.`)
-    this.name = 'CicloNaoTerminouError'
-  }
-}
+export { CicloJaFechadoError, CicloNaoTerminouError } from './erroFinanceiro'
 
 /** Fatura já existente (não cancelada) do aluno naquele período, se houver. */
 async function buscarFaturaDoCiclo(alunoId: string, periodoInicio: string): Promise<{ id: string; status: FaturaStatus } | null> {
@@ -306,61 +292,29 @@ export function useFecharCiclo() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: FecharCicloInput) => {
-      const { data: u } = await supabase.auth.getUser()
-      if (!u.user) throw new Error('Sessão expirada')
-
-      // Mesma regra da tela, para valer também fora dela: antes do fim do ciclo, as aulas feitas depois ficariam sem fatura para sempre.
+      // Mesma regra do banco, antes da ida à rede: antes do fim do ciclo, as aulas feitas depois ficariam sem fatura para sempre.
       if (!cicloPodeSerFechado({ inicio: input.periodo_inicio, fim: input.periodo_fim }, hojeSP())) throw new CicloNaoTerminouError(input.periodo_fim)
 
-      // Remove fatura cancelada anterior (mesmo aluno + período) para permitir refechamento:
-      // UNIQUE (aluno_id, periodo_inicio) vale mesmo para faturas canceladas.
-      const { error: errLimpeza } = await supabase
-        .from('faturas')
-        .delete()
-        .eq('aluno_id', input.aluno_id)
-        .eq('periodo_inicio', input.periodo_inicio)
-        .eq('status', 'cancelada')
-      if (errLimpeza) throw errLimpeza
-
-      // Só uma fatura por aluno + período (UNIQUE): se já existe, não tenta inserir.
-      if (await buscarFaturaDoCiclo(input.aluno_id, input.periodo_inicio)) throw new CicloJaFechadoError()
-
-      const { data: fatura, error } = await supabase
-        .from('faturas')
-        .insert({
-          professional_id: u.user.id,
-          aluno_id: input.aluno_id,
-          periodo_inicio: input.periodo_inicio,
-          periodo_fim: input.periodo_fim,
-          modelo: input.modelo,
-          qtd_aulas: input.qtd_aulas,
-          valor_aulas: input.valor_aulas,
-          ajuste: input.ajuste,
-          ajuste_descricao: input.ajuste_descricao,
-          total: input.total,
-          vencimento: input.vencimento,
-        })
-        .select('id')
-        .single()
+      // Tudo numa transação no banco (fatura + aulas + conferência do total): se a rede cair no meio, não sobra fatura sem aulas.
+      // Ciclo com fatura cancelada pode ser refechado: o banco troca a cancelada pela nova.
+      const itens = input.itemIds.map((id) => (input.valoresDosItens && id in input.valoresDosItens ? { id, valor: input.valoresDosItens[id] } : { id }))
+      const { data, error } = await supabase.rpc('fechar_ciclo', {
+        p_aluno_id: input.aluno_id,
+        p_periodo_inicio: input.periodo_inicio,
+        p_periodo_fim: input.periodo_fim,
+        p_modelo: input.modelo,
+        p_qtd_aulas: input.qtd_aulas,
+        p_valor_aulas: input.valor_aulas,
+        p_ajuste: input.ajuste,
+        p_ajuste_descricao: input.ajuste_descricao,
+        p_total: input.total,
+        p_vencimento: input.vencimento,
+        p_itens: itens,
+      })
       // Corrida entre dois cliques/abas: o UNIQUE barrou — mesma mensagem, sem texto técnico.
       if (error?.code === '23505') throw new CicloJaFechadoError()
-      if (error) throw error
-
-      if (input.itemIds.length > 0) {
-        // os itens com valor editado levam o valor novo junto com o vínculo; os demais entram todos de uma vez
-        const editados = input.itemIds.filter((id) => input.valoresDosItens && id in input.valoresDosItens)
-        const iguais = input.itemIds.filter((id) => !editados.includes(id))
-        for (const id of editados) {
-          const { error: errItem } = await supabase.from('aula_participantes').update({ fatura_id: fatura.id, valor: input.valoresDosItens![id] }).eq('id', id)
-          if (errItem) throw errItem
-        }
-        if (iguais.length > 0) {
-          const { error: errItens } = await supabase.from('aula_participantes').update({ fatura_id: fatura.id }).in('id', iguais)
-          if (errItens) throw errItens
-        }
-      }
-
-      return fatura.id as string
+      if (error) throw traduzirErroFinanceiro(error)
+      return data as string
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['faturas'] })
@@ -436,12 +390,9 @@ export function useCancelarFatura() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ faturaId }: { faturaId: string; alunoId?: string }) => {
-      // fatura paga não se cancela de uma vez: o pagamento sumiria do "Recebido". Primeiro desfaz o pagamento.
-      const { data, error } = await supabase.from('faturas').update({ status: 'cancelada' }).eq('id', faturaId).in('status', ['aberta', 'enviada']).select('id')
-      if (error) throw error
-      if (!data?.length) throw new ErroAmigavel('Esta fatura não pode ser cancelada agora: se está paga, desfaça o pagamento antes. Atualize a tela.')
-      const { error: errItens } = await supabase.from('aula_participantes').update({ fatura_id: null }).eq('fatura_id', faturaId)
-      if (errItens) throw errItens
+      // Cancela a fatura e solta as aulas numa transação só (paga não se cancela: desfaz o pagamento antes).
+      const { error } = await supabase.rpc('cancelar_fatura', { p_fatura_id: faturaId })
+      if (error) throw traduzirErroFinanceiro(error)
     },
     onSuccess: (_d, vars) => {
       invalidarFatura(qc, vars.faturaId, vars.alunoId)

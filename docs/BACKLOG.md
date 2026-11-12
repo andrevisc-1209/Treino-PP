@@ -1810,3 +1810,10 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Testes: regra de fechamento, vencimento e data do pagamento. Central de ajuda atualizada.
 - ⏳ PR B: funções SQL atômicas para fechar ciclo e cancelar fatura (hoje em duas etapas). Depois: aulas sem fatura ao desligar a cobrança, primeiro ciclo do aluno mensal e paginação.
 
+### 175. Financeiro, revisão total: PR B (fechar ciclo e cancelar fatura atômicos) — ✅ PR aberta
+- **Problema:** fechar o ciclo (criar a fatura → ligar as aulas) e cancelar a fatura (marcar cancelada → soltar as aulas) eram feitos em duas etapas, do celular. Rede caindo no meio: fatura sem aulas (as aulas voltavam a parecer cobráveis e podiam ser cobradas de novo) ou aulas presas a uma fatura cancelada (nunca mais cobradas).
+- ✅ **`treino.fechar_ciclo(...)`**: uma transação cria a fatura, liga as aulas (gravando o valor editado de cada uma) e confere no banco: o ciclo já terminou (fuso de São Paulo), não há outra fatura do período (troca a cancelada), as aulas são do aluno, cobráveis e ainda sem fatura, e o total bate com as aulas + ajuste. Qualquer falha desfaz tudo.
+- ✅ **`treino.cancelar_fatura(id)`**: só aberta ou enviada (paga: desfaz o pagamento antes); cancela e solta as aulas na mesma transação.
+- ✅ SECURITY INVOKER (a RLS vale como no app), só `authenticated`. O app passou a chamar as duas funções. Migration `20261103…` e teste `supabase/tests/financeiro_atomico.sql`.
+- ⏳ Pacote (vender/encerrar) segue em etapas: fica para depois.
+
