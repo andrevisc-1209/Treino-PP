@@ -23,6 +23,29 @@ export async function consultarLimite(rpc: ChamadaRpc, chave: string, max: numbe
   }
 }
 
+type ChamadaAtingido = (args: { p_key: string; p_max: number; p_window_seconds: number }) => PromiseLike<{ data: unknown; error: { message: string } | null }>
+
+/** Núcleo testável de "o limite já foi atingido?": só LÊ o contador (não soma). 'excedido' = atingido; 'erro' = banco falhou. */
+export async function consultarAtingido(rpc: ChamadaAtingido, chave: string, max: number, janelaSeg = 3600): Promise<ResultadoLimite> {
+  try {
+    const { data, error } = await rpc({ p_key: chave.slice(0, 120), p_max: max, p_window_seconds: janelaSeg })
+    if (error) {
+      console.error('rateLimit: falha ao ler o limite', error.message)
+      return 'erro'
+    }
+    return data === true ? 'excedido' : 'ok'
+  } catch (e) {
+    console.error('rateLimit: erro inesperado ao ler o limite', e instanceof Error ? e.message : 'desconhecido')
+    return 'erro'
+  }
+}
+
+/** Lê (sem somar) se o contador da chave já atingiu `max` na janela. Quem soma é `verificarLimite`. */
+export async function limiteJaAtingido(chave: string, max: number, janelaSeg = 3600): Promise<ResultadoLimite> {
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
+  return consultarAtingido((a) => admin.rpc('limite_atingido', a), chave, max, janelaSeg)
+}
+
 /** Para rotas sensíveis: quem chama decide o que fazer com 'erro' (falha fechada). */
 export async function verificarLimite(chave: string, max: number, janelaSeg = 60): Promise<ResultadoLimite> {
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })

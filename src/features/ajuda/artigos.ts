@@ -205,6 +205,7 @@ export const ARTIGOS: Artigo[] = [
       'Quando alguém entra na lista de espera, o sino mostra "N pessoas na lista de espera" (os avisos se somam em um só, sem repetir). O aviso não traz nome nem telefone: eles ficam na aba Espera da Agenda.',
       'Para parar de receber pedidos, desligue a chave. "Trocar o link" faz o link antigo deixar de funcionar.',
       'Privacidade: o nome, o telefone e a mensagem de quem pediu só você vê. Pedidos que não viram aula são apagados em 30 dias. Quem entra na lista de espera também só aparece para você e some em 14 dias. A administração da plataforma vê só totais (quantos pedidos), nunca quem pediu. Peça para ninguém escrever dados de saúde na mensagem.',
+      'Pedido que ninguém respondeu em 7 dias, ou cujo horário já passou, sai de "Pendentes" sozinho e aparece em "Recusados". Isso mantém a fila livre para novos pedidos. Links criados agora têm um final maior, mais difícil de adivinhar; os links antigos continuam funcionando, e "Trocar o link" gera um novo.',
     ],
     sinonimos: ['lista de espera', 'fila de espera', 'link', 'autoagendamento', 'agendar sozinho', 'calendly', 'pedido', 'reservar', 'pagina publica', 'aprovar'],
   },

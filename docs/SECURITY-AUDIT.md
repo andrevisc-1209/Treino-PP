@@ -99,6 +99,13 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 5. **[BAIXA] Dependências:** `zod` (alto, memória no navegador de quem digita) e `fast-uri` atualizados; `npm audit --omit=dev` = 0.
 - **Deploy:** `supabase functions deploy enviar-consentimento-saude` e `supabase functions deploy mp-webhook`. Sem migration.
 
+### PR "revisão manual de 12/11/2026" — lote 2: agenda pública (migration 20261102)
+1. **[MÉDIA] Link da agenda fácil de varrer:** o sufixo tinha 4 caracteres hex (65 mil combinações) e o limite da consulta (60/min por IP) falhava aberto, então dava para montar um diretório de todos os personais com a página ligada. Agora: sufixo de **8 hex** nos links novos (os antigos continuam; "Trocar o link" gera um novo) e um contador de **links errados por IP (30/hora)**: passou disso, o IP é barrado em tudo por uma hora, inclusive em links certos, para não servir de teste de "esse link existe?". Quem só abre links certos nunca soma. Falha **fechada**. Leitura do contador sem somar: `treino.limite_atingido` (só service_role).
+2. **[BAIXA] Fila de pedidos enchível por um concorrente:** pedido pendente há mais de 7 dias, ou com horário já passado, **expira** (vai para "Recusados"): `treino.expirar_pedidos_agenda()` + cron horário (`supabase/cron/expirar_pedidos_agenda.sql`).
+3. **[BAIXA] Teto de pendentes não atômico:** "contar e depois inserir" no Edge Function deixava duas chamadas juntas furarem o teto de 10. O INSERT passou para `treino.criar_pedido_agenda` (trava por personal, teto conferido na mesma transação; só service_role).
+- **Risco residual aceito:** quem compartilha IP com um scraper (Wi-Fi de academia, CGNAT) pode ficar uma hora sem abrir links de agenda; o limite de 30 links errados por hora é folgado para uso normal.
+- **Deploy:** rodar a migration ANTES do merge; depois `supabase functions deploy agenda-publica`; rodar `supabase/cron/expirar_pedidos_agenda.sql` UMA vez. Teste: `supabase/tests/seguranca_agenda_publica.sql`.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
