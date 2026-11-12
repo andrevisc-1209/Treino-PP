@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, perfilPublico, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
+import { fotoPublica, calcularVagas, dataEHoraSP, instanteSP, normalizarTelefone, primeiroNome, slugValido, perfilPublico, somarDiasISO, vagaDisponivel, validarEspera, validarPedido } from './agendaPublica'
 
 describe('horário de São Paulo', () => {
   it('data e hora de um instante e o caminho de volta', () => {
@@ -94,7 +94,7 @@ describe('lista de espera: validação', () => {
 describe('perfil público da página', () => {
   it('apara, limita e transforma vazio em nulo', () => {
     expect(perfilPublico({ pagina_cref: '  012345-G/RJ ', pagina_modalidades: 'Musculação · Natação', pagina_locais: '   ', pagina_preco_aula: '120.5' })).toEqual({
-      cref: '012345-G/RJ', modalidades: 'Musculação · Natação', locais: null, preco_aula: 120.5,
+      cref: '012345-G/RJ', modalidades: 'Musculação · Natação', locais: null, preco_aula: 120.5, foto: null,
     })
     expect(perfilPublico({ pagina_cref: 'x'.repeat(50) }).cref).toHaveLength(30)
   })
@@ -103,6 +103,19 @@ describe('perfil público da página', () => {
     expect(perfilPublico({ pagina_preco_aula: 5000 }).preco_aula).toBe(5000)
   })
   it('sem nada preenchido, tudo nulo', () => {
-    expect(perfilPublico({})).toEqual({ cref: null, modalidades: null, locais: null, preco_aula: null })
+    expect(perfilPublico({})).toEqual({ cref: null, modalidades: null, locais: null, preco_aula: null, foto: null })
+  })
+
+  describe('foto do perfil', () => {
+    it('só passa WebP ou JPEG em data URL, dentro do limite', () => {
+      expect(fotoPublica('data:image/webp;base64,AAAA')).toBe('data:image/webp;base64,AAAA')
+      expect(fotoPublica('data:image/jpeg;base64,AAAA')).toBe('data:image/jpeg;base64,AAAA')
+      for (const ruim of ['data:image/png;base64,AAAA', 'data:image/svg+xml;base64,AAAA', 'https://x.com/a.jpg', 'data:image/webp;base64,A" onerror="x', null, 7]) expect(fotoPublica(ruim)).toBeNull()
+      expect(fotoPublica('data:image/webp;base64,' + 'A'.repeat(60000))).toBeNull()
+    })
+    it('entra no perfil público', () => {
+      expect(perfilPublico({ pagina_foto: 'data:image/webp;base64,AAAA' }).foto).toBe('data:image/webp;base64,AAAA')
+      expect(perfilPublico({}).foto).toBeNull()
+    })
   })
 })

@@ -42,3 +42,8 @@ export function ordemDaBarra(v: VarianteDaBarra) {
   const [hoje, ...resto] = ITEMS
   return [resto[0], resto[1], hoje, resto[2], resto[3]]
 }
+
+/** A barra em uso agora (URL ou o que ficou guardado), para anotar em eventos de uso. */
+export function varianteAtualDaBarra(): VarianteDaBarra {
+  return lerVarianteDaBarra(typeof location === 'undefined' ? '' : location.search, varianteGuardada())
+}

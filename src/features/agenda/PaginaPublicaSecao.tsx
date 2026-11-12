@@ -8,6 +8,9 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig, useSalvarProfessionalConfig, type ProfessionalConfig } from './api'
 import { LIMITES_PERFIL, perfilDigitadoDe, perfilParaSalvar, type PerfilDigitado } from './perfilPagina'
 import { BotoesDoLink } from './LinkDaAgenda'
+import { FotoDoPerfil } from './FotoDoPerfil'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { usePerfilProfissional } from '@/features/auth/api'
 import { linkDaAgendaPublica } from './publica'
 
 const LIMITE_APRESENTACAO = 160
@@ -62,6 +65,8 @@ function ApresentacaoCampo({ salva }: { salva: string }) {
 function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefined }) {
   const { exigir } = useExigirAssinatura()
   const salvar = useSalvarProfessionalConfig()
+  const { session } = useAuth()
+  const { data: perfilProf } = usePerfilProfissional(session?.user.id)
   const salvo = perfilDigitadoDe(config)
   const [rascunho, setRascunho] = useState<PerfilDigitado | null>(null)
   const [erro, setErro] = useState<string | null>(null)
@@ -90,6 +95,7 @@ function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefine
         <p className="text-sm font-medium">Perfil na página (opcional)</p>
         <p className="text-xs text-slate-600">Quem abre o seu link vê o que você preencher aqui, para saber com quem está falando. Campo vazio não aparece.</p>
       </div>
+      <FotoDoPerfil foto={config?.pagina_foto} nome={perfilProf?.name ?? ''} />
       <Field label="CREF">
         <Input value={valor.cref} maxLength={LIMITES_PERFIL.cref} placeholder="Ex.: 012345-G/RJ" onChange={(e) => mudar('cref', e.target.value)} />
       </Field>
@@ -102,7 +108,7 @@ function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefine
       <Field label="Valor por aula, a partir de (R$)" error={erro ?? undefined}>
         <Input value={valor.preco} inputMode="decimal" placeholder="Ex.: 120,00" onChange={(e) => mudar('preco', e.target.value)} />
       </Field>
-      <p className="text-xs text-slate-600">Tudo isto fica visível a qualquer pessoa com o link. Não escreva telefone nem dados de saúde.</p>
+      <p className="text-xs text-slate-600">Tudo isto, inclusive a foto, fica visível a qualquer pessoa com o link. Não escreva telefone nem dados de saúde.</p>
       {alterado && (
         <Button type="button" onClick={exigir(() => void gravar())} disabled={salvar.isPending}>
           Salvar perfil

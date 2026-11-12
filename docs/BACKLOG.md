@@ -1727,7 +1727,14 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ `docs/DECISOES_ESTRATEGICAS.md`: memo de vocabulário, preço e comissão.
 - ⏳ **Validação visual logada a 390 px não foi feita:** o login passa por captcha. Fazer depois do merge, no navegador do app, com o personal de teste já logado.
 
-### 164. Aviso da lista de espera no sino e QR code do link da agenda (plano pós-auditoria, PR 2) — ✅ PR aberta
+### 164. Aviso da lista de espera no sino e QR code do link da agenda (plano pós-auditoria, PR 2) — ✅ Mergeada (#288)
 - ✅ **Aviso ao personal quando alguém entra na lista de espera:** no sino, **agrupado** ("5 pessoas na lista de espera", um aviso só enquanto não for lido). Sem WhatsApp. O aviso não leva nome, telefone, dia nem turno (payload só com `qtd`). Migration `20261098…` (tipo `espera_agenda` + função `avisar_espera_agenda`, só service_role) e teste `supabase/tests/aviso_lista_de_espera.sql`. **Redeploy de `agenda-publica`.**
 - ✅ **QR code do link da agenda** ("Mostrar QR code" no cartão do link): gerado no aparelho com a lib `qrcode` já usada no Pix, sem serviço externo; abre numa folha, com "Baixar imagem" (PNG).
 - ✅ FAQ "Receber pedidos de aula pelo link da sua agenda": QR code e aviso agrupado. Política sem mudança (nenhum dado novo coletado; o aviso não tem dado do visitante).
+
+### 165. Foto do personal na página pública e medição de uso no app, com Política 1.16 (plano pós-auditoria, PR 3) — ✅ PR aberta
+- ✅ **Foto opcional na página pública** (Configurações → Página pública → "Escolher foto"). Reduzida **no aparelho** para 256 × 256 (recorte quadrado central, respeita a orientação do celular), WebP ou JPEG, **até 60.000 caracteres (~45 KB)**. Salva na hora, com "Trocar" e "Remover" (confirmação). Aparece no topo da página pública no lugar da inicial. **Sem Storage:** fica em `professional_config.pagina_foto` (data URL), então **some junto com a conta** na exclusão e não deixa arquivo órfão. A função `agenda-publica` valida o formato antes de devolver (`fotoPublica`). Migration `20261099…` + teste `supabase/tests/foto_do_perfil.sql`. **Redeploy de `agenda-publica`.**
+- ✅ **Três eventos novos de uso no app** (só com o aceite do PostHog que já existe; sem identify, sem sessão, sem dado de aluno ou de saúde): `aula_registrada`, `primeira_serie_registrada` (uma vez por navegador) e `checklist_concluido` (só de quem viu o checklist com pendências e terminou). `aula_registrada` leva uma única propriedade, `barra` (`padrao` ou `centro`), para comparar as duas barras inferiores no teste. O "tempo até a primeira série" sai do intervalo entre o cadastro e esse evento no PostHog, que já tem o horário.
+- ✅ **Política de Privacidade 1.16** (foto opcional e sete etapas medidas) + versão registrada na migration. O teste `landingAnalytics.test.ts` agora trava os sete eventos e a única propriedade permitida.
+- ✅ FAQ da página pública cita a foto.
+- ⏳ Revisão jurídica da Política 1.16 junto com as 1.11 a 1.15.

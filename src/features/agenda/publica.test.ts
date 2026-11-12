@@ -20,7 +20,7 @@ describe('ler a resposta da função', () => {
       nome_personal: 'André',
       cidade: 'Rio/RJ',
       apresentacao: null,
-      perfil: { cref: null, modalidades: null, locais: null, preco_aula: null },
+      perfil: { cref: null, modalidades: null, locais: null, preco_aula: null, foto: null },
       antecedencia_horas: null,
       duracao_min: 45,
       vagas: [{ dataISO: '2026-10-30', inicio: '07:00', fim: '07:45' }],
@@ -130,14 +130,14 @@ describe('cartão do dia: hoje, amanhã e mês', () => {
 
 describe('perfil da página', () => {
   it('lê só o formato conhecido', () => {
-    expect(lerPerfil(null)).toEqual({ cref: null, modalidades: null, locais: null, preco_aula: null })
+    expect(lerPerfil(null)).toEqual({ cref: null, modalidades: null, locais: null, preco_aula: null, foto: null })
     expect(lerPerfil({ cref: ' 012345-G/RJ ', preco_aula: '120', locais: 'x'.repeat(300) }).locais).toHaveLength(100)
     expect(lerPerfil({ preco_aula: 0 }).preco_aula).toBeNull()
     expect(lerPerfil({ preco_aula: 9999 }).preco_aula).toBeNull()
   })
   it('só mostra o que está preenchido, com o CREF sem repetir a sigla', () => {
-    expect(linhasDoPerfil({ cref: null, modalidades: null, locais: null, preco_aula: null })).toEqual([])
-    const l = linhasDoPerfil({ cref: 'CREF 012345-G/RJ', modalidades: 'Musculação', locais: null, preco_aula: 120 })
+    expect(linhasDoPerfil({ cref: null, modalidades: null, locais: null, preco_aula: null, foto: null })).toEqual([])
+    const l = linhasDoPerfil({ cref: 'CREF 012345-G/RJ', modalidades: 'Musculação', locais: null, preco_aula: 120, foto: null })
     expect(l.map((x) => x.texto.replace(/\u00a0/g, ' '))).toEqual(['CREF 012345-G/RJ', 'Musculação', 'a partir de R$ 120,00 por aula'])
     expect(textoDoPreco(null)).toBeNull()
   })

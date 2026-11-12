@@ -1,3 +1,4 @@
+import { eventoUmaVez } from '@/features/analytics/analytics'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
@@ -301,7 +302,10 @@ export function useSalvarSerie(sessionId: string) {
         .upsert(input, { onConflict: 'sessao_exercicio_id,set_number' })
       if (error) throw error
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessao-exercicios', sessionId] }),
+    onSuccess: (_d, input) => {
+      if (input.completed) eventoUmaVez('primeira_serie_registrada') // só o nome do evento, uma vez por navegador
+      qc.invalidateQueries({ queryKey: ['sessao-exercicios', sessionId] })
+    },
   })
 }
 

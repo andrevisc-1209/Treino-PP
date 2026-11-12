@@ -4,6 +4,8 @@ import { normalizarResumo } from './resumoPublica'
 import { normalizarEspera } from './espera'
 import { janelasDosDias, type JanelaSemanal, type ParametrosAgenda } from './disponibilidade'
 import { useEffect } from 'react'
+import { evento } from '@/features/analytics/analytics'
+import { varianteAtualDaBarra } from '@/components/barraInferior'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { hojeSP, limitesDoDiaSP } from '@/lib/datas'
@@ -66,6 +68,8 @@ export type ProfessionalConfig = {
   pagina_modalidades?: string | null
   pagina_locais?: string | null
   pagina_preco_aula?: number | null
+  /** migration 20261099: foto pequena (data URL WebP/JPEG) do personal na página pública */
+  pagina_foto?: string | null
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'
@@ -221,7 +225,10 @@ export function useCheckIn() {
       }
       await atualizarStatusAulaSeCompleta(aulaId)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['aulas'] }),
+    onSuccess: () => {
+      evento('aula_registrada', { barra: varianteAtualDaBarra() })
+      qc.invalidateQueries({ queryKey: ['aulas'] })
+    },
   })
 }
 
@@ -241,7 +248,10 @@ export function useMarcarFalta() {
       if (error) throw error
       await atualizarStatusAulaSeCompleta(aulaId)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['aulas'] }),
+    onSuccess: () => {
+      evento('aula_registrada', { barra: varianteAtualDaBarra() })
+      qc.invalidateQueries({ queryKey: ['aulas'] })
+    },
   })
 }
 
