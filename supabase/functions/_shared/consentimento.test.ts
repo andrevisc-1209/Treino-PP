@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canalValido, emailValido, escaparHtml, estadoDoToken, expiraEm, ipDoCliente, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
+import { canalValido, emailValido, escaparHtml, chaveDoEmail, estadoDoToken, expiraEm, ipDoCliente, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from './consentimento.ts'
 
 const agora = new Date('2026-10-06T12:00:00.000Z')
 
@@ -89,13 +89,34 @@ describe('ipDoCliente', () => {
 })
 
 describe('nomeSeguroParaEmail', () => {
-  it('remove links e quebras de linha, limita a 60 caracteres e usa o padrão se sobrar nada', () => {
-    expect(nomeSeguroParaEmail('Ana https://golpe.com/x Souza', 'aluno')).toBe('Ana Souza')
-    expect(nomeSeguroParaEmail('Ana\nwww.golpe.com\tSouza', 'aluno')).toBe('Ana Souza')
-    expect(nomeSeguroParaEmail('a'.repeat(200), 'aluno')).toHaveLength(60)
-    expect(nomeSeguroParaEmail('http://golpe.com', 'aluno')).toBe('aluno')
+  it('usa só o primeiro nome (palavra de letras) e o padrão se não sobrar nada', () => {
+    expect(nomeSeguroParaEmail('João da Silva', 'aluno')).toBe('João')
+    expect(nomeSeguroParaEmail('Ana-Clara D\'Ávila', 'aluno')).toBe('Ana-Clara')
     expect(nomeSeguroParaEmail('   ', 'Seu personal')).toBe('Seu personal')
-    expect(nomeSeguroParaEmail('João da Silva', 'aluno')).toBe('João da Silva')
+    expect(nomeSeguroParaEmail('a'.repeat(200), 'aluno')).toBe('aluno')
+  })
+  it('não deixa passar links, domínios sem http, telefones nem e-mails', () => {
+    expect(nomeSeguroParaEmail('Ana https://golpe.com/x Souza', 'aluno')).toBe('Ana')
+    expect(nomeSeguroParaEmail('http://golpe.com', 'aluno')).toBe('aluno')
+    expect(nomeSeguroParaEmail('bit.ly/3xYz', 'aluno')).toBe('aluno')
+    expect(nomeSeguroParaEmail('tinyurl.com/abc ligue 11 99999-0000', 'aluno')).toBe('ligue')
+    expect(nomeSeguroParaEmail('11999990000 golpe@x.com', 'aluno')).toBe('aluno')
+    expect(nomeSeguroParaEmail('Ana\nwww.golpe.com\tSouza', 'aluno')).toBe('Ana')
+  })
+  it('nada do que sobra tem ponto, barra, arroba ou dígito', () => {
+    for (const nome of ['Prêmio bit.ly/x', '9 a.b c', 'x@y.z w', '/// ???', 'Ana.Souza']) {
+      expect(nomeSeguroParaEmail(nome, 'aluno')).not.toMatch(/[./@\d]/)
+    }
+  })
+})
+
+describe('chaveDoEmail', () => {
+  it('é estável, ignora caixa e espaços e não guarda o e-mail em claro', async () => {
+    const a = await chaveDoEmail(' Ana@Exemplo.com ')
+    expect(a).toBe(await chaveDoEmail('ana@exemplo.com'))
+    expect(a).toHaveLength(32)
+    expect(a).not.toContain('ana')
+    expect(await chaveDoEmail('outra@exemplo.com')).not.toBe(a)
   })
 })
 

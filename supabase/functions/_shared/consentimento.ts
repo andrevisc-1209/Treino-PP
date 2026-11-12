@@ -72,15 +72,22 @@ export function escaparHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-/** Nome vindo do usuário para o corpo do e-mail: sem links, sem quebras de linha, no máximo 60 caracteres. */
+/**
+ * Nome vindo do usuário para o assunto e o corpo do e-mail: SÓ o primeiro nome, e só se for uma palavra de letras (hífen e apóstrofo
+ * permitidos). Qualquer coisa com ponto, barra, @ ou dígito é descartada: o cadastro é aberto e o e-mail sai com a nossa marca, então um
+ * nome como "Prêmio bit.ly/x ligue 11 9999" não pode virar texto de golpe. Se nada sobrar, usa o padrão.
+ */
 export function nomeSeguroParaEmail(nome: string, padrao: string): string {
-  const limpo = nome
-    .replace(/https?:\/\/\S+|www\.\S+/gi, '')
-    .replace(/[\r\n\t]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 60)
-  return limpo || padrao
+  for (const palavra of nome.split(/\s+/)) {
+    if (/^\p{L}[\p{L}'’-]{0,29}$/u.test(palavra)) return palavra
+  }
+  return padrao
+}
+
+/** Chave do limite por DESTINATÁRIO (hash do e-mail em minúsculas): o e-mail nunca vai em claro para a tabela de limites. */
+export async function chaveDoEmail(email: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`email:${email.trim().toLowerCase()}`))
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32)
 }
 
 export function montarEmailConsentimento(args: { nomeAluno: string; nomePersonal: string; linkAutorizar: string; linkNegar: string }) {

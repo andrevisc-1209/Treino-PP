@@ -1,6 +1,7 @@
 import { ExternalLink, X } from 'lucide-react'
 import { GooglePlacesAutocomplete, type LocalSelecionado } from '@/components/GooglePlacesAutocomplete'
 import { mapearErroSupabase } from '@/lib/erros'
+import { linkHttps, linkMapsDoEndereco } from '@/lib/linkSeguro'
 import { LOCAIS_TREINO_MAX, useAdicionarLocalTreino, useLocaisTreino, useRemoverLocalTreino } from './api'
 
 /** Até 5 endereços de treino do aluno, escolhidos via Google Places (item 4). */
@@ -25,7 +26,7 @@ export function LocaisTreinoBlock({ alunoId }: { alunoId: string }) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{l.nome}</p>
                 <a
-                  href={l.maps_link}
+                  href={linkHttps(l.maps_link) ?? linkMapsDoEndereco(l.endereco)}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-1 truncate text-xs text-brand-hover"

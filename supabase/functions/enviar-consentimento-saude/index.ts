@@ -12,7 +12,7 @@
 // (remetente fixo: "Treino PP <noreply@personalperto.com.br>").
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { canalValido, emailValido, expiraEm, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from '../_shared/consentimento.ts'
+import { canalValido, chaveDoEmail, emailValido, expiraEm, montarEmailConsentimento, nomeSeguroParaEmail, podeEnviarAgora, validarMotivoReenvio } from '../_shared/consentimento.ts'
 import { resposta429, resposta503, verificarLimite } from '../_shared/rateLimit.ts'
 
 const APP_URL = 'https://treino.personalperto.com.br'
@@ -111,6 +111,10 @@ Deno.serve(async (req) => {
     const dia = await verificarLimite(`enviar-consentimento:d:${id}`, 60, 86400)
     if (dia === 'erro') return resposta503(cors(req))
     if (dia === 'excedido') return resposta429(cors(req))
+    // Por DESTINATÁRIO: sem isso, várias contas descartáveis mandam e-mail com a nossa marca para a mesma pessoa. Vale entre contas.
+    const destino = await verificarLimite(`enviar-consentimento:dest:${await chaveDoEmail(email!)}`, 2, 86400)
+    if (destino === 'erro') return resposta503(cors(req))
+    if (destino === 'excedido') return json(req, { error: 'Esse e-mail já recebeu solicitações hoje. Tente de novo amanhã.' }, 429)
   }
 
   const { data: personal } = await cliente.from('professionals').select('name').eq('id', aluno.professional_id).maybeSingle()

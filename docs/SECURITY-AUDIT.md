@@ -91,6 +91,14 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 ### Achado operacional — função esquecida no ar (22/10/2026)
 - **[MÉDIA] Cópia antiga do `admin-actions` ainda publicada** com outro endereço (`dynamic-handler`, criada pelo dashboard 22 dias antes): continuava respondendo a usuários logados e **não tinha a exigência do segundo fator**, o que contornaria a MFA do admin. Foi **apagada** (`supabase functions delete dynamic-handler`). Prevenção: depois de cada deploy, conferir no dashboard (Edge Functions) que a lista contém só as funções do repositório (hoje 16).
 
+### PR "revisão manual de 12/11/2026" — lote 1: e-mail com a nossa marca, higiene e dependências
+1. **[MÉDIA] Relé de golpe pelo e-mail de consentimento** (`enviar-consentimento-saude`): o limite era só por personal e o filtro de links do nome só tirava `http://` e `www.`, então `bit.ly/x` e "ligue 11 9999…" saíam no assunto e no corpo. Agora: limite de **2 por dia por destinatário** (hash do e-mail, vale entre contas, falha fechada) e `nomeSeguroParaEmail` usa **só o primeiro nome, só letras** (ponto, barra, @ e dígito são descartados).
+2. **[BAIXA] `mp-webhook`** conferia a assinatura com o `data.id` da query mas processava o do corpo; agora processa o id assinado e recusa (400) se os dois divergirem (`idDoEvento`).
+3. **[BAIXA] `maps_link` do local do aluno** virava `href` sem checagem; `linkHttps` só deixa passar `https://` (gravação e exibição), senão cai na busca do Google Maps pelo endereço (`src/lib/linkSeguro.ts`).
+4. **[INFO] `.env` estava versionado** (só valores públicos: URL, chave publicável e site key do captcha); passou para o `.gitignore` e saiu do índice (`git rm --cached`). O arquivo local continua.
+5. **[BAIXA] Dependências:** `zod` (alto, memória no navegador de quem digita) e `fast-uri` atualizados; `npm audit --omit=dev` = 0.
+- **Deploy:** `supabase functions deploy enviar-consentimento-saude` e `supabase functions deploy mp-webhook`. Sem migration.
+
 ## ⚠️ Risco aceito
 - **Sessão em `localStorage`**: token legível por XSS. Mitigado por não haver sinks de XSS no código e pela CSP. Aceito enquanto o app for SPA sem backend de sessão.
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.

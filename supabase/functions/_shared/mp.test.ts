@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, planoPorFrequencia, statusDoMP, tokenDeCartaoValido, tokenMpValido } from './mp.ts'
+import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, idDoEvento, planoPorFrequencia, statusDoMP, tokenDeCartaoValido, tokenMpValido } from './mp.ts'
 
 async function assinar(secret: string, manifest: string) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -134,5 +134,17 @@ describe('decidirPagamento (Checkout Pro)', () => {
   it('usa external_reference quando a metadata não vem', () => {
     const d = decidirPagamento(pag({ metadata: { plan_slug: 'mensal' }, external_reference: uid, transaction_amount: 15 }), null, agora)
     expect(d.tipo).toBe('ativar')
+  })
+})
+
+describe('idDoEvento', () => {
+  it('usa o id da query (o que a assinatura cobre) e aceita o corpo quando não há query', () => {
+    expect(idDoEvento('123', { data: { id: 123 } })).toEqual({ id: '123' })
+    expect(idDoEvento('123', {})).toEqual({ id: '123' })
+    expect(idDoEvento(null, { data: { id: 456 } })).toEqual({ id: '456' })
+    expect(idDoEvento(null, null)).toEqual({ id: null })
+  })
+  it('recusa quando a query e o corpo trazem ids diferentes', () => {
+    expect(idDoEvento('123', { data: { id: '999' } })).toBe('divergente')
   })
 })
