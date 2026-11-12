@@ -1,10 +1,10 @@
-/** Campos do perfil opcional da página pública (Configurações → Página pública). Helpers puros, sem I/O. */
+/** Campos de TEXTO do perfil opcional da página pública (Configurações → Página pública). Os locais ficam em locaisAtendimento.ts. Helpers puros, sem I/O. */
 
-export type PerfilDigitado = { cref: string; modalidades: string; locais: string; preco: string }
+export type PerfilDigitado = { cref: string; modalidades: string; preco: string }
 
-export type DadosDoPerfil = { pagina_cref: string | null; pagina_modalidades: string | null; pagina_locais: string | null; pagina_preco_aula: number | null }
+export type DadosDoPerfil = { pagina_cref: string | null; pagina_modalidades: string | null; pagina_preco_aula: number | null }
 
-export const LIMITES_PERFIL = { cref: 30, modalidades: 80, locais: 100 } as const
+export const LIMITES_PERFIL = { cref: 30, modalidades: 80 } as const
 export const PRECO_MIN = 1
 export const PRECO_MAX = 5000
 
@@ -28,18 +28,16 @@ export function perfilParaSalvar(f: PerfilDigitado): { ok: true; dados: DadosDoP
     dados: {
       pagina_cref: ou_nulo(f.cref)?.slice(0, LIMITES_PERFIL.cref) ?? null,
       pagina_modalidades: ou_nulo(f.modalidades)?.slice(0, LIMITES_PERFIL.modalidades) ?? null,
-      pagina_locais: ou_nulo(f.locais)?.slice(0, LIMITES_PERFIL.locais) ?? null,
       pagina_preco_aula: preco,
     },
   }
 }
 
 /** O formulário vem do que está salvo: preço com vírgula, vazio quando não há. */
-export function perfilDigitadoDe(c: { pagina_cref?: string | null; pagina_modalidades?: string | null; pagina_locais?: string | null; pagina_preco_aula?: number | null } | null | undefined): PerfilDigitado {
+export function perfilDigitadoDe(c: { pagina_cref?: string | null; pagina_modalidades?: string | null; pagina_preco_aula?: number | null } | null | undefined): PerfilDigitado {
   return {
     cref: c?.pagina_cref ?? '',
     modalidades: c?.pagina_modalidades ?? '',
-    locais: c?.pagina_locais ?? '',
     preco: c?.pagina_preco_aula != null ? String(c.pagina_preco_aula).replace('.', ',') : '',
   }
 }

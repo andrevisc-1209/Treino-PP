@@ -9,6 +9,7 @@ import { useConfigurarAgendaPublica, useDisponibilidade, useProfessionalConfig, 
 import { LIMITES_PERFIL, perfilDigitadoDe, perfilParaSalvar, type PerfilDigitado } from './perfilPagina'
 import { BotoesDoLink } from './LinkDaAgenda'
 import { FotoDoPerfil } from './FotoDoPerfil'
+import { LocaisDoPersonal } from './LocaisDoPersonal'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePerfilProfissional } from '@/features/auth/api'
 import { linkDaAgendaPublica } from './publica'
@@ -102,9 +103,7 @@ function PerfilCampos({ config }: { config: ProfessionalConfig | null | undefine
       <Field label="Modalidades">
         <Input value={valor.modalidades} maxLength={LIMITES_PERFIL.modalidades} placeholder="Ex.: Musculação · Natação" onChange={(e) => mudar('modalidades', e.target.value)} />
       </Field>
-      <Field label="Onde você atende">
-        <Input value={valor.locais} maxLength={LIMITES_PERFIL.locais} placeholder="Ex.: Laranjeiras · Catete" onChange={(e) => mudar('locais', e.target.value)} />
-      </Field>
+      <LocaisDoPersonal config={config} />
       <Field label="Valor por aula, a partir de (R$)" error={erro ?? undefined}>
         <Input value={valor.preco} inputMode="decimal" placeholder="Ex.: 120,00" onChange={(e) => mudar('preco', e.target.value)} />
       </Field>

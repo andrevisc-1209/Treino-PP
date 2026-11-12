@@ -1749,7 +1749,15 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ⏳ **Validação visual logada em modo escuro** (Hoje, Agenda, Financeiro, ficha, gráficos): login com captcha; conferir no celular depois do deploy.
 - ⏳ Botão branco do banner de teste (`bg-white` sobre faixa azul) fica escuro no modo escuro: legível, mas vale olhar.
 
-### 167. Barra inferior com o Hoje no centro como padrão — ✅ PR aberta
+### 167. Barra inferior com o Hoje no centro como padrão — ✅ Mergeada (#291)
 - ✅ **Hoje no meio da barra, com destaque**, passa a ser a barra padrão (Agenda, Alunos, **Hoje**, Treinos, Financeiro). Antes só aparecia com `?barra=centro`.
 - ✅ A barra antiga continua em `?barra=padrao` (a escolha fica guardada no aparelho), para o teste com os 5 personais comparar. O evento `aula_registrada` segue levando `barra` (`padrao` ou `centro`).
 - ⏳ Decidir com o teste: se a barra central não ajudar (hábito de quem usa há tempo), voltar ao padrão é uma linha.
+
+### 168. Busca de endereço do Google e até 5 locais de atendimento do personal — ✅ PR aberta
+- ✅ **"Onde você atende" agora usa a busca do Google (Places) e aceita até 5 locais** (duas academias, um parque). Antes era um texto livre. A busca sugere **estabelecimentos** (não endereço residencial); quem não acha digita o nome e usa "Adicionar como está". Salva na hora, com remover. Migration `20261100…` (`professional_config.locais_atendimento`, JSONB, até 5) e teste `supabase/tests/locais_de_atendimento.sql`.
+- ✅ **A página pública mostra só os nomes** (resumo em `pagina_locais`, até 100 caracteres, sem cortar nome); o endereço completo fica só com o personal. Quem tinha o texto antigo continua vendo-o até adicionar um local. **Não precisa de redeploy da função** (a página já lê `pagina_locais`).
+- ✅ **Atalhos dos seus locais** nos campos "Local" do horário fixo e da aula avulsa (antes só havia os usados recentemente, e só na aula avulsa).
+- ✅ **Endereço do aluno no cadastro** ganhou a busca do Google (só endereços), como já tinha no contrato. O campo acompanha o cadastro carregado depois.
+- ✅ **Revisão dos campos de endereço:** com busca do Google: local de treino do aluno, endereço e local das aulas no contrato, local do horário fixo, local da aula avulsa, endereço do aluno (novo), onde você atende (novo). Sem busca, de propósito: Bairro e Cidade em Configurações (vêm do CEP) e "Cidade do foro" (só a cidade).
+- ⏳ A busca só funciona com `VITE_GOOGLE_MAPS_API_KEY` no build (secret do GitHub); sem ela, os campos viram texto livre.

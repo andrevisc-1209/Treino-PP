@@ -193,7 +193,7 @@ export const ARTIGOS: Artigo[] = [
     passos: [
       'Antes, defina seus horários de atendimento (veja "Definir seus horários de atendimento e ver as vagas livres").',
       'Vá em Configurações → Página pública da agenda e ligue "Aceitar pedidos pelo link". A página vem desligada.',
-      'Também é opcional preencher o perfil da página (foto, CREF, modalidades, onde você atende e o valor "a partir de"): quem abre o link vê só o que você preencher, para saber com quem está falando. Tudo fica visível a qualquer pessoa com o link, e nada é publicado sem você tocar em "Salvar perfil".',
+      'Também é opcional preencher o perfil da página (foto, CREF, modalidades, onde você atende, com até 5 locais como duas academias, e o valor "a partir de"): quem abre o link vê só o que você preencher, para saber com quem está falando. Tudo fica visível a qualquer pessoa com o link, e nada é publicado sem você tocar em "Salvar perfil".',
       'Se quiser, escreva uma apresentação curta (até 160 caracteres) logo abaixo da chave: ela aparece no topo da página. Não coloque telefone nem dados de saúde.',
       'Copie o link ou envie pelo WhatsApp. Ele também fica no alto da Agenda, e "Ver como visitante" mostra a página como seus alunos a verão. Quem abrir vê só os seus horários livres, escolhe um e envia nome, telefone e uma mensagem curta. Nada é marcado sozinho: você aprova cada pedido.',
       'Com a página ligada, a Agenda mostra uma linha "Link da agenda" com o botão Copiar. Toque nela para abrir o endereço, o botão de WhatsApp e os números: pedidos dos últimos 7 dias, quantos esperam sua resposta, o seu tempo típico de resposta (só depois de alguns pedidos) e quantas aulas já foram feitas pelo link.',

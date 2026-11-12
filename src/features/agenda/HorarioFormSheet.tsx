@@ -7,6 +7,8 @@ import { ORDEM_SEMANA_SEG_DOM, nomeDiaCurtoPorWeekday } from '@/lib/datas'
 import { confirmarAcao } from '@/components/ConfirmSheet'
 import { confirmarDuracaoSeAtipica } from '@/features/sessoes/duracaoAtipica'
 import { conflitosDoHorario, descreverConflitos } from './conflitos'
+import { useProfessionalConfig } from './api'
+import { lerLocais, textoDoLocal } from './locaisAtendimento'
 import type { HorarioFixoLinha } from './horarioGrupo'
 
 export type HorarioFormValor = {
@@ -45,6 +47,9 @@ export function HorarioFormSheet({
 }) {
   const [valor, setValor] = useState<HorarioFormValor>(valorInicial ?? VAZIO)
   const [erro, setErro] = useState<string | null>(null)
+  const { data: config } = useProfessionalConfig()
+  const meusLocais = lerLocais(config?.locais_atendimento).map(textoDoLocal)
+  const [versaoLocal, setVersaoLocal] = useState(0)
   const [confirmando, setConfirmando] = useState(false)
 
   useEffect(() => {
@@ -131,12 +136,31 @@ export function HorarioFormSheet({
 
         <Field label="Local">
           <GooglePlacesAutocomplete
+            key={versaoLocal}
             defaultValue={valor.local}
             onChangeTexto={(texto) => setValor((v) => ({ ...v, local: texto }))}
             onSelecionar={() => {}}
             limparAoSelecionar={false}
             placeholder="Opcional — busque um endereço"
           />
+          {meusLocais.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2" aria-label="Seus locais de atendimento">
+              {meusLocais.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => {
+                    setValor((v) => ({ ...v, local: l }))
+                    setVersaoLocal((n) => n + 1)
+                  }}
+                  className="min-h-11 max-w-full truncate rounded-full border border-slate-300 bg-white px-3 text-sm text-slate-700 active:bg-slate-50"
+                  title={l}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
         </Field>
 
         {outrosAlunos.length > 0 && (

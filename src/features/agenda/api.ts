@@ -70,6 +70,8 @@ export type ProfessionalConfig = {
   pagina_preco_aula?: number | null
   /** migration 20261099: foto pequena (data URL WebP/JPEG) do personal na página pública */
   pagina_foto?: string | null
+  /** migration 20261100: até 5 locais de atendimento ({ nome, endereco, mapsLink }) */
+  locais_atendimento?: unknown
 }
 
 const AULA_SELECT = '*, aula_participantes(*, aluno:alunos(name, phone))'

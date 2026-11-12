@@ -11,6 +11,7 @@ import { aulasSobrepoe } from './conflitos'
 import { useAulasNoIntervalo, useCriarAulaAvulsa, useProfessionalConfig, type Aula } from './api'
 import { mapearErroSupabase } from '@/lib/erros'
 import { GooglePlacesAutocomplete } from '@/components/GooglePlacesAutocomplete'
+import { lerLocais, textoDoLocal } from './locaisAtendimento'
 
 function useLocaisUsados() {
   return useQuery({
@@ -36,6 +37,8 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
   const { data: config } = useProfessionalConfig()
   const { data: locais } = useLocaisUsados()
   const criar = useCriarAulaAvulsa()
+  // seus locais de atendimento vêm primeiro; depois os usados há pouco (sem repetir)
+  const atalhos = [...new Set([...lerLocais(config?.locais_atendimento).map(textoDoLocal), ...(locais ?? [])])]
 
   const [alunoIds, setAlunoIds] = useState<string[]>([])
   // aula avulsa é sempre para agora ou depois: dia passado vira hoje, e a hora padrão some se já passou
@@ -147,9 +150,9 @@ export function NovaAulaAvulsaSheet({ open, onClose, dataInicial }: { open: bool
             limparAoSelecionar={false}
             placeholder="Opcional — busque um endereço"
           />
-          {locais && locais.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2" aria-label="Locais usados recentemente">
-              {locais.slice(0, 4).map((l) => (
+          {atalhos.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2" aria-label="Seus locais e os usados recentemente">
+              {atalhos.slice(0, 6).map((l) => (
                 <button
                   key={l}
                   type="button"

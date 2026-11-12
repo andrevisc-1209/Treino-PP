@@ -61,6 +61,8 @@ export function GooglePlacesAutocomplete({
   defaultValue,
   limparAoSelecionar = true,
   somenteEndereco = false,
+  tipos,
+  valorExterno,
   onChangeTexto,
 }: {
   onSelecionar: (local: LocalSelecionado) => void
@@ -71,6 +73,10 @@ export function GooglePlacesAutocomplete({
   limparAoSelecionar?: boolean
   /** Endereço residencial: sugere só endereços e, ao escolher, o campo fica só com o endereço (sem o "nome —" na frente). */
   somenteEndereco?: boolean
+  /** Tipos do Google Places (ex.: ['establishment'] para academias e estabelecimentos, sem endereço residencial). Tem prioridade sobre `somenteEndereco`. */
+  tipos?: string[]
+  /** Valor vindo de fora (ex.: formulário que carrega o cadastro depois): o campo acompanha, desde que a pessoa não esteja digitando nele. */
+  valorExterno?: string
   /** Digitação livre, pra quando o campo também aceita texto sem passar pelo autocomplete. */
   onChangeTexto?: (texto: string) => void
 }) {
@@ -85,7 +91,7 @@ export function GooglePlacesAutocomplete({
       if (cancelado || !inputRef.current || !window.google) return
       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
         fields: ['name', 'formatted_address', 'place_id', 'url'],
-        ...(somenteEndereco ? { types: ['address'] } : {}),
+        ...(tipos ? { types: tipos } : somenteEndereco ? { types: ['address'] } : {}),
       })
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace()
@@ -108,6 +114,12 @@ export function GooglePlacesAutocomplete({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey])
+
+  useEffect(() => {
+    const campo = inputRef.current
+    if (valorExterno === undefined || !campo || document.activeElement === campo) return
+    if (campo.value !== valorExterno) campo.value = valorExterno
+  }, [valorExterno])
 
   return (
     <Input

@@ -15,15 +15,15 @@ describe('preço digitado', () => {
 
 describe('perfilParaSalvar', () => {
   it('apara, limita e transforma vazio em nulo', () => {
-    const r = perfilParaSalvar({ cref: '  012345-G/RJ ', modalidades: 'Musculação  ·  Natação', locais: '   ', preco: '' })
-    expect(r).toEqual({ ok: true, dados: { pagina_cref: '012345-G/RJ', pagina_modalidades: 'Musculação · Natação', pagina_locais: null, pagina_preco_aula: null } })
+    const r = perfilParaSalvar({ cref: '  012345-G/RJ ', modalidades: 'Musculação  ·  Natação', preco: '' })
+    expect(r).toEqual({ ok: true, dados: { pagina_cref: '012345-G/RJ', pagina_modalidades: 'Musculação · Natação', pagina_preco_aula: null } })
   })
   it('preço inválido pede correção e não grava nada', () => {
-    const r = perfilParaSalvar({ cref: '', modalidades: '', locais: '', preco: '9999' })
+    const r = perfilParaSalvar({ cref: '', modalidades: '', preco: '9999' })
     expect(r.ok).toBe(false)
   })
   it('o formulário volta do que está salvo', () => {
-    expect(perfilDigitadoDe({ pagina_cref: 'X', pagina_preco_aula: 120.5 })).toEqual({ cref: 'X', modalidades: '', locais: '', preco: '120,5' })
-    expect(perfilDigitadoDe(null)).toEqual({ cref: '', modalidades: '', locais: '', preco: '' })
+    expect(perfilDigitadoDe({ pagina_cref: 'X', pagina_preco_aula: 120.5 })).toEqual({ cref: 'X', modalidades: '', preco: '120,5' })
+    expect(perfilDigitadoDe(null)).toEqual({ cref: '', modalidades: '', preco: '' })
   })
 })
