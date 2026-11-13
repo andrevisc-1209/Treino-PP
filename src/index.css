@@ -43,6 +43,17 @@ html, body, #root { height: 100%; }
 /* Sem o "elástico" da página (iPhone/PWA): no fim da lista, o puxão levava a barra fixa de baixo para o meio do conteúdo. O overscroll-behavior
    só vale no elemento que rola (html), por isso saiu do body. O "puxar para atualizar" do app é próprio (PuxarParaAtualizar). */
 html, body { overscroll-behavior-y: none; }
+
+/* iPhone: ao tocar num campo de texto com fonte menor que 16px, o Safari dá zoom na página e o zoom não volta ao sair do campo (no vídeo da
+   importação, a barra de baixo ficou cortada à direita depois de colar a lista da IA, que usava text-sm). Em tela de toque, todo campo de texto
+   tem pelo menos 16px. Regra fora de @layer: vence as classes text-sm/text-xs do Tailwind (que ficam dentro de um layer). */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='file'], [type='color'], [type='button'], [type='submit'], [type='reset'], [type='image']),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
 body { @apply bg-slate-50 text-slate-900 antialiased font-sans; }
 h1, h2, h3, h4, h5, h6 { @apply font-heading; }
 
