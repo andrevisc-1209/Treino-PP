@@ -39,7 +39,7 @@ WhatsApp com quem pergunta "como funciona?". Link da bio: `https://treino.person
 
 **Por que primeiro:** o maior freio de quem tem tudo em planilha ou caderno é o custo de trocar de ferramenta (a seção "Traga seus alunos" da landing já ataca isso).
 **Gancho de dor:** "Trocar de app e digitar 40 alunos de novo? Não precisa."
-**Dados:** `alunos-ficticios.csv` e `lista-baguncada-ficticia.txt` (esta, para colar numa IA).
+**Dados:** para o gancho "40 alunos", use **`lista-baguncada-40-ficticia.txt`** (para colar na IA) e **`alunos-ficticios-40.csv`** (o resultado esperado; os 40 entram "Pronto", sem nenhum dado de saúde nem menor de idade). As versões menores, `alunos-ficticios.csv` (15, com 1 "com aviso") e `lista-baguncada-ficticia.txt`, servem quando quiser mostrar o aviso e o "já existe".
 
 | Tempo | Imagem | Fala | Texto na tela |
 |---|---|---|---|

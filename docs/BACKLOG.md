@@ -1875,9 +1875,13 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Testes de `verificarNovaVersao` e `deveVerificarAgora`; artigo "Atualizar o app e pegar a versão nova" na Central de ajuda.
 - ⏳ **Dono:** validar no iPhone instalado (não reproduzo o elástico do iOS aqui): puxar no fim das listas (a barra de baixo não pode se mexer), puxar em Hoje e Treinos, e "Verificar atualização" depois de um deploy.
 
-### 184. iPhone: campos de texto com 16 px para o Safari não dar zoom na página — ✅ PR aberta
+### 184. iPhone: campos de texto com 16 px para o Safari não dar zoom na página — ✅ Mergeada (#309)
 - **Achado pelo vídeo da importação de alunos (dono, 13/11/2026):** depois de tocar na caixa "Cole aqui a resposta da IA" (que usa `text-sm`), a página ficou com zoom e a **barra de baixo cortada à direita** ("Finan…") até a tela mudar. O Safari do iPhone dá zoom ao focar um campo de texto com fonte menor que 16 px e o zoom não volta ao sair do campo.
 - ✅ Regra global em `src/index.css`: em tela de toque (`pointer: coarse`), todo `input` de texto, `textarea` e `select` tem **16 px**. Fica fora de `@layer`, senão o `text-sm`/`text-xs` do Tailwind (dentro de um layer) venceria. Não mexe em checkbox, radio, botão nem arquivo, nem no desktop (verificado no Chromium: desktop 14/13 px como antes; toque 16 px).
 - ✅ Teste `zoomDoIphone.test.ts` impede que a regra seja apagada ou movida para dentro de um layer.
 - ⏳ **Dono, no iPhone:** tocar numa caixa de texto pequena (ex.: a resposta da IA na importação) e conferir que a página não dá zoom e a barra de baixo fica inteira.
+
+### 185. Marketing: 40 alunos fictícios para o vídeo da importação — ✅ PR aberta (só documentação)
+- ✅ `docs/marketing/videos-de-tela/alunos-ficticios-40.csv` (40 alunos: 20 mulheres e 20 homens, telefones inventados `(11) 90000-02xx`, e-mails `@example.com` em 2 de cada 3, nascimento e sexo preenchidos para os cartões não ficarem "Sem data de nascimento", objetivos realistas) e `lista-baguncada-40-ficticia.txt` (a mesma turma como lista de caderno, em formatos variados, para colar na IA).
+- ✅ Conferido com o leitor real da importação: **40 linhas, 40 prontas, 0 avisos**. Sem dado de saúde, valor, CPF nem menor de idade (os problemas apontados na análise do vídeo de 13/11).
 
