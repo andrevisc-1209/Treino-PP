@@ -85,7 +85,7 @@ export function PuxarParaAtualizar({ onAtualizar, children }: { onAtualizar: () 
           role="status"
           aria-label={atualizando ? 'Atualizando' : 'Puxe para atualizar'}
           className="pointer-events-none fixed inset-x-0 top-0 z-40 flex justify-center"
-          style={{ transform: `translateY(${Math.max(0, distancia - 36)}px)` }}
+          style={{ top: 'env(safe-area-inset-top)', transform: `translateY(${Math.max(0, distancia - 36)}px)` }}
         >
           <div className="flex size-9 items-center justify-center rounded-full bg-white text-brand shadow-md">
             {atualizando ? (

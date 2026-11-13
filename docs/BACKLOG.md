@@ -1860,8 +1860,18 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ⏳ **Dono, no Snyk:** marcar as 3 linhas (posthog-js, jspdf, jspdf-autotable) como Ignore, tipo "Not vulnerable", validade de 90 dias.
 - ⏳ **Rever em 12/02/2027**, ou quando o `fflate` publicar a correção (`npm update fflate`).
 
-### 182. Marketing: roteiros dos 5 primeiros vídeos de tela para o Instagram — ✅ PR aberta (só documentação)
+### 182. Marketing: roteiros dos 5 primeiros vídeos de tela para o Instagram — ✅ Mergeada (#307, só documentação)
 - ✅ `docs/marketing/videos-de-tela/ROTEIROS.md`: preparação (conta de demonstração separada, dados fictícios, gravação) e **5 roteiros** no formato do `reels.md` (tempo, imagem, fala, texto na tela, legenda, hashtags): **1) importar alunos**, 2) cadastrar um aluno em 2 minutos, 3) iniciar o treino (com modo avião), 4) agenda por link com QR code, 5) fechar o ciclo e mandar a mensagem pronta. Mais 5 ideias para os próximos.
 - ✅ `alunos-ficticios.csv`: 15 alunos fictícios (telefones inventados, e-mails `@example.com`), conferido com o leitor real da importação: 14 prontos e 1 com aviso (telefone inválido, de propósito). `lista-baguncada-ficticia.txt`: lista de caderno fictícia para o caminho da IA.
 - ⏳ **Dono:** criar a conta de demonstração, cadastrar a "Ana Exemplo" à mão (para mostrar "já existe"), importar o CSV e gravar. Cada vídeo termina com o CTA do calendário ("15 dias grátis, sem cartão. Link na bio.").
+
+### 183. Atualização do app: "esticar" da tela no iPhone, puxar para atualizar em mais telas e busca de versão nova — ✅ PR aberta
+- **Relato do dono (print):** ao puxar/rolar a tela, a barra de baixo ia parar no meio do conteúdo; algumas telas não atualizavam ao puxar; e ao atualizar não chegava a versão nova do app.
+- ✅ **Elástico da página desligado:** o `overscroll-behavior` estava no `body`, mas só vale no elemento que rola (o `html`), então não fazia nada; agora `html, body { overscroll-behavior-y: none }`. Causa provável do glitch (a barra fixa de baixo acompanhava o puxão no fim da lista no iPhone/PWA).
+- ✅ **Puxar para atualizar também em Hoje e Treinos** (já havia em Agenda, Alunos e Financeiro); o indicador respeita a barra de status (`safe-area-inset-top`).
+- ✅ **Puxar para atualizar agora procura versão nova do app** (`useAtualizarTela`): se achar, avisa e atualiza sozinho. Antes só recarregava os dados e o app instalado ficava dias na versão velha (o PWA está em modo "prompt" e o navegador quase não busca o `sw.js` de um app em segundo plano).
+- ✅ **Busca automática:** ao voltar para o app (no máximo a cada 30 min) e de hora em hora com o app aberto; se houver versão nova, o aviso "Nova versão disponível" aparece sozinho.
+- ✅ **Configurações → "Verificar atualização"** com a versão em uso (commit publicado + data do build).
+- ✅ Testes de `verificarNovaVersao` e `deveVerificarAgora`; artigo "Atualizar o app e pegar a versão nova" na Central de ajuda.
+- ⏳ **Dono:** validar no iPhone instalado (não reproduzo o elástico do iOS aqui): puxar no fim das listas (a barra de baixo não pode se mexer), puxar em Hoje e Treinos, e "Verificar atualização" depois de um deploy.
 

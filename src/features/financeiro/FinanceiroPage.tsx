@@ -1,7 +1,7 @@
 import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { ListaSkeleton } from '@/components/Skeleton'
-import { useQueryClient } from '@tanstack/react-query'
+import { useAtualizarTela } from '@/lib/useAtualizarTela'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { LinkConfiguracoes } from '@/components/LinkConfiguracoes'
 import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
@@ -64,7 +64,7 @@ export function FinanceiroPage() {
   const [previsaoAberta, setPrevisaoAberta] = useState(false)
   // aulas agendadas de agora até o fim do mês (a projeção da previsão); o "agora" fica fixo para a consulta não se refazer a cada render
   const [agora] = useState(() => new Date())
-  const qc = useQueryClient()
+  const atualizarTela = useAtualizarTela()
 
   const hoje = hojeSP()
   const mesAtual = hoje.slice(0, 7)
@@ -175,7 +175,7 @@ export function FinanceiroPage() {
   const poucosMeses = recebimentos.filter((r) => r.total > 0).length <= 2
 
   return (
-    <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
+    <PuxarParaAtualizar onAtualizar={atualizarTela}>
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Financeiro</h1>

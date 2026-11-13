@@ -40,7 +40,9 @@
 
 html, body, #root { height: 100%; }
 /* o pull-to-refresh é nosso (PuxarParaAtualizar); desliga o do navegador pra não recarregar a página junto */
-body { overscroll-behavior-y: contain; }
+/* Sem o "elástico" da página (iPhone/PWA): no fim da lista, o puxão levava a barra fixa de baixo para o meio do conteúdo. O overscroll-behavior
+   só vale no elemento que rola (html), por isso saiu do body. O "puxar para atualizar" do app é próprio (PuxarParaAtualizar). */
+html, body { overscroll-behavior-y: none; }
 body { @apply bg-slate-50 text-slate-900 antialiased font-sans; }
 h1, h2, h3, h4, h5, h6 { @apply font-heading; }
 

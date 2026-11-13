@@ -344,6 +344,19 @@ export const ARTIGOS: Artigo[] = [
     sinonimos: ['login', 'entrar', 'acesso', 'recuperar', 'cpf', 'redefinir'],
   },
   {
+    id: 'atualizar-o-app',
+    categoria: 'comecando',
+    titulo: 'Atualizar o app e pegar a versão nova',
+    passos: [
+      'Puxe a tela para baixo, a partir do topo, em Hoje, Agenda, Alunos, Treinos ou Financeiro: os dados recarregam e o app procura uma versão nova. Se achar, ele avisa "Nova versão encontrada" e se atualiza sozinho.',
+      'Em Configurações, no fim da página, toque em "Verificar atualização": ela mostra a versão que você está usando (código e data) e procura uma nova na hora.',
+      'Se aparecer o aviso "Nova versão disponível" na parte de baixo da tela, toque em "Atualizar".',
+      'O app instalado pode ficar dias aberto em segundo plano; ao voltar para ele depois de um tempo, ele também procura a versão nova sozinho.',
+      'Se mesmo assim a tela ficar estranha depois de uma atualização, feche o app por completo (deslize para cima na lista de apps) e abra de novo.',
+    ],
+    sinonimos: ['atualizar', 'atualizacao', 'versao', 'nova versao', 'puxar', 'recarregar', 'travado', 'pwa'],
+  },
+  {
     id: 'saude-consentimento',
     categoria: 'privacidade',
     titulo: 'Dados de saúde e consentimento do aluno',
