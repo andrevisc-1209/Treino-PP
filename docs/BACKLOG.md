@@ -1865,7 +1865,7 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ `alunos-ficticios.csv`: 15 alunos fictícios (telefones inventados, e-mails `@example.com`), conferido com o leitor real da importação: 14 prontos e 1 com aviso (telefone inválido, de propósito). `lista-baguncada-ficticia.txt`: lista de caderno fictícia para o caminho da IA.
 - ⏳ **Dono:** criar a conta de demonstração, cadastrar a "Ana Exemplo" à mão (para mostrar "já existe"), importar o CSV e gravar. Cada vídeo termina com o CTA do calendário ("15 dias grátis, sem cartão. Link na bio.").
 
-### 183. Atualização do app: "esticar" da tela no iPhone, puxar para atualizar em mais telas e busca de versão nova — ✅ PR aberta
+### 183. Atualização do app: "esticar" da tela no iPhone, puxar para atualizar em mais telas e busca de versão nova — ✅ Mergeada (#308)
 - **Relato do dono (print):** ao puxar/rolar a tela, a barra de baixo ia parar no meio do conteúdo; algumas telas não atualizavam ao puxar; e ao atualizar não chegava a versão nova do app.
 - ✅ **Elástico da página desligado:** o `overscroll-behavior` estava no `body`, mas só vale no elemento que rola (o `html`), então não fazia nada; agora `html, body { overscroll-behavior-y: none }`. Causa provável do glitch (a barra fixa de baixo acompanhava o puxão no fim da lista no iPhone/PWA).
 - ✅ **Puxar para atualizar também em Hoje e Treinos** (já havia em Agenda, Alunos e Financeiro); o indicador respeita a barra de status (`safe-area-inset-top`).
@@ -1874,4 +1874,10 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Configurações → "Verificar atualização"** com a versão em uso (commit publicado + data do build).
 - ✅ Testes de `verificarNovaVersao` e `deveVerificarAgora`; artigo "Atualizar o app e pegar a versão nova" na Central de ajuda.
 - ⏳ **Dono:** validar no iPhone instalado (não reproduzo o elástico do iOS aqui): puxar no fim das listas (a barra de baixo não pode se mexer), puxar em Hoje e Treinos, e "Verificar atualização" depois de um deploy.
+
+### 184. iPhone: campos de texto com 16 px para o Safari não dar zoom na página — ✅ PR aberta
+- **Achado pelo vídeo da importação de alunos (dono, 13/11/2026):** depois de tocar na caixa "Cole aqui a resposta da IA" (que usa `text-sm`), a página ficou com zoom e a **barra de baixo cortada à direita** ("Finan…") até a tela mudar. O Safari do iPhone dá zoom ao focar um campo de texto com fonte menor que 16 px e o zoom não volta ao sair do campo.
+- ✅ Regra global em `src/index.css`: em tela de toque (`pointer: coarse`), todo `input` de texto, `textarea` e `select` tem **16 px**. Fica fora de `@layer`, senão o `text-sm`/`text-xs` do Tailwind (dentro de um layer) venceria. Não mexe em checkbox, radio, botão nem arquivo, nem no desktop (verificado no Chromium: desktop 14/13 px como antes; toque 16 px).
+- ✅ Teste `zoomDoIphone.test.ts` impede que a regra seja apagada ou movida para dentro de um layer.
+- ⏳ **Dono, no iPhone:** tocar numa caixa de texto pequena (ex.: a resposta da IA na importação) e conferir que a página não dá zoom e a barra de baixo fica inteira.
 
