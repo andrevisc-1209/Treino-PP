@@ -115,8 +115,14 @@ Nenhum valor de secret é reproduzido neste documento; achados apontam apenas ar
 - **`frame-ancestors` e `X-Content-Type-Options` via `<meta>`**: os browsers ignoram; o GitHub Pages não permite headers. Só mudam com proxy (ex.: Cloudflare). Aceito por ora.
 - **Crons protegidos só por `CRON_SECRET`** (`verify_jwt = false`): a comparação (`segredoCronValido`, `_shared/notificacoes.ts:70`) já é em tempo constante e exige 16+ caracteres. Risco residual: vazamento do segredo — mitigar com rotação periódica no Vault.
 - **Dependências de dev com CVE** (`sharp`, `source-map-js`): produção tem 0 vulnerabilidades; só afeta o build.
+- **`fflate` (CVE-2026-122146, Snyk, severidade alta 8.7, 12/11/2026)** — "Memory Allocation with Excessive Size Value" em `unzipSync`: um ZIP malicioso que declara um tamanho descomprimido gigante esgota a memória. Aparece em 3 caminhos do `package-lock.json`: `jspdf@4.2.1` → `fflate@0.8.3` (e `jspdf-autotable@5.0.8`, que depende do `jspdf`) e `posthog-js@1.438.24` → `fflate@0.4.9`.
+  - **Por que é aceito:** a função vulnerável **não é usada**. O app não tem importação de ZIP nem chama `unzipSync` (`grep` em `src/`: nenhum uso direto de `fflate`). O `jspdf` usa o `fflate` só para COMPRIMIR o PDF que gera, e o PostHog só para comprimir os eventos que envia. Um invasor teria de entregar um ZIP a uma função que o app não executa; no pior caso, derrubaria a aba de quem gera o PDF.
+  - **Sem correção possível hoje:** `fflate@0.8.3` é a última versão publicada no npm (conferido em 12/11/2026), então `npm update`/`npm audit fix` não resolvem; o texto genérico do Snyk ("relock your lockfile") não se aplica.
+  - **No Snyk:** marcar as 3 linhas como Ignore (tipo "Not vulnerable", motivo acima, validade de 90 dias).
+  - **Rever em 12/02/2027**, ou antes, quando o `fflate` publicar uma versão corrigida: então `npm update fflate` (e conferir o `posthog-js`, que traz uma cópia 0.4.x própria) e remover este item.
 
 ## 🔍 Revisão manual pendente
+- **`fflate` (CVE-2026-122146)**: reavaliar em **12/02/2027** (ver "Risco aceito"): se houver versão corrigida, atualizar e fechar o ignore do Snyk; se não, renovar o ignore por mais 90 dias.
 - **Rate limit do Supabase Auth**: confirmar no dashboard (Auth → Rate Limits e Attack Protection/captcha) e o JWT expiry real (3600 s).
 - ~~**Chave do Google Maps**~~ → feito em 23/10/2026, ver "Chave do Google Maps" em Risco aceito/Corrigido abaixo. Pendente apenas o alerta de orçamento (Faturamento → Orçamentos e alertas).
 - **Buckets do Storage**: o app não usa; confirmar no dashboard que não há buckets criados à mão.

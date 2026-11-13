@@ -1849,9 +1849,14 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Nome do produto:** a aba do navegador e o compartilhamento (og:title) passam a dizer "Treino · Personal Perto" (o nome do app e dos Termos); o texto da landing diz "Treino" (o nome do logo), sem "Treino PP". "Treino PP" segue como nome curto do app instalado.
 - ⏳ Ideias da análise que ficaram de fora por decisão: tirar o CPF do cadastro; vídeo ou GIF real do app (precisa de conteúdo); imagens do celular ilustrado em 2x (800 px).
 
-### 180. Medidor de senha: repetição de caracteres não conta como tamanho — ✅ PR aberta
+### 180. Medidor de senha: repetição de caracteres não conta como tamanho — ✅ Mergeada (#305)
 - **Problema (visto pelo dono):** `Visc1989@@@@@@@@@@@@@` (21 caracteres) aparecia como "Forte"; o medidor olhava o tamanho e a repetição o inflava.
 - ✅ O **tamanho efetivo** conta uma sequência do mesmo caractere no máximo 2 vezes. A senha acima vira "Boa · evite repetir o mesmo caractere"; "Forte" exige 7 caracteres diferentes e tamanho efetivo de 14 (ou 12 com mistura de tipos).
 - ✅ **Poucos caracteres diferentes** (menos de 5, ou sequência escondida como `1122334455`) ou tamanho efetivo abaixo de 10 viram "Previsível" e não passam. O mínimo de 10 caracteres continua valendo no servidor.
 - ⏳ O "Confirme a senha" **não volta**: decisão do dono (ficou só com o botão de mostrar a senha).
+
+### 181. Risco aceito: `fflate` (CVE-2026-122146, Snyk) — ✅ PR aberta (só documentação)
+- ✅ Registrado em `docs/SECURITY-AUDIT.md` (Risco aceito): `unzipSync` com ZIP malicioso esgota a memória, mas o app não usa essa função (só comprime, via `jspdf` e `posthog-js`) e não existe versão corrigida (0.8.3 é a última no npm).
+- ⏳ **Dono, no Snyk:** marcar as 3 linhas (posthog-js, jspdf, jspdf-autotable) como Ignore, tipo "Not vulnerable", validade de 90 dias.
+- ⏳ **Rever em 12/02/2027**, ou quando o `fflate` publicar a correção (`npm update fflate`).
 
