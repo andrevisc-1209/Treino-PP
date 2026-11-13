@@ -1855,3 +1855,8 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Poucos caracteres diferentes** (menos de 5, ou sequência escondida como `1122334455`) ou tamanho efetivo abaixo de 10 viram "Previsível" e não passam. O mínimo de 10 caracteres continua valendo no servidor.
 - ⏳ O "Confirme a senha" **não volta**: decisão do dono (ficou só com o botão de mostrar a senha).
 
+### 182. Marketing: roteiros dos 5 primeiros vídeos de tela para o Instagram — ✅ PR aberta (só documentação)
+- ✅ `docs/marketing/videos-de-tela/ROTEIROS.md`: preparação (conta de demonstração separada, dados fictícios, gravação) e **5 roteiros** no formato do `reels.md` (tempo, imagem, fala, texto na tela, legenda, hashtags): **1) importar alunos**, 2) cadastrar um aluno em 2 minutos, 3) iniciar o treino (com modo avião), 4) agenda por link com QR code, 5) fechar o ciclo e mandar a mensagem pronta. Mais 5 ideias para os próximos.
+- ✅ `alunos-ficticios.csv`: 15 alunos fictícios (telefones inventados, e-mails `@example.com`), conferido com o leitor real da importação: 14 prontos e 1 com aviso (telefone inválido, de propósito). `lista-baguncada-ficticia.txt`: lista de caderno fictícia para o caminho da IA.
+- ⏳ **Dono:** criar a conta de demonstração, cadastrar a "Ana Exemplo" à mão (para mostrar "já existe"), importar o CSV e gravar. Cada vídeo termina com o CTA do calendário ("15 dias grátis, sem cartão. Link na bio.").
+
