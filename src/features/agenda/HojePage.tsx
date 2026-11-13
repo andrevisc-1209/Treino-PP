@@ -24,10 +24,13 @@ import { ClimaCard } from '@/components/ClimaCard'
 import { AtividadeRecente } from '@/features/execucoes/AtividadeRecente'
 import { useAlunosComCicloParaFechar } from '@/features/alunos/useCobrancaPendente'
 import { alertaDeAcao } from './alertaDeAcao'
+import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
+import { useAtualizarTela } from '@/lib/useAtualizarTela'
 
 export function HojePage() {
   useGerarAulasDiarias()
   const navigate = useNavigate()
+  const atualizarTela = useAtualizarTela()
   const { emAtivacao, total } = useAtivacao()
   const hoje = hojeSP()
   const { data: aulas, isLoading, error, refetch } = useAulasDoDia(hoje)
@@ -58,6 +61,7 @@ export function HojePage() {
   }
 
   return (
+    <PuxarParaAtualizar onAtualizar={atualizarTela}>
     <div className="mx-auto max-w-2xl p-4">
       <header className="mb-4 flex items-center justify-between">
         <div>
@@ -139,5 +143,6 @@ export function HojePage() {
       <AulaAcoesSheet aula={aulaAberta} onClose={() => setAulaAberta(null)} passoInicial={passoInicial} />
       <NovaAulaAvulsaSheet open={novaAulaAberta} onClose={() => setNovaAulaAberta(false)} dataInicial={hoje} />
     </div>
+    </PuxarParaAtualizar>
   )
 }

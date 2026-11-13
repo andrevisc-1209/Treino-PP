@@ -2,7 +2,7 @@ import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useExigirAssinatura } from "@/features/assinatura/useExigirAssinatura";
-import { useQueryClient } from "@tanstack/react-query";
+import { useAtualizarTela } from '@/lib/useAtualizarTela'
 import {
   Archive,
   ArchiveRestore,
@@ -82,7 +82,7 @@ export function AlunosPage() {
   const { data: ultimasExecucoes } = useUltimaExecucaoPorAluno();
   const navigate = useNavigate();
   const { exigir, somenteLeitura, abrirPlanos } = useExigirAssinatura();
-  const qc = useQueryClient();
+  const atualizarTela = useAtualizarTela()
   const [busca, setBusca] = useState("");
   const [menuAberto, setMenuAberto] = useState<Aluno | null>(null);
   const [faixa, setFaixa] = useState<FaixaSemTreino>("todos");
@@ -252,7 +252,7 @@ export function AlunosPage() {
           ];
 
   return (
-    <PuxarParaAtualizar onAtualizar={() => qc.invalidateQueries()}>
+    <PuxarParaAtualizar onAtualizar={atualizarTela}>
       <div className="mx-auto max-w-2xl p-4 pb-24">
         <header className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Meus alunos</h1>

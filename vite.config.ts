@@ -33,11 +33,16 @@ function htmlCspPlugin(csp: string): Plugin {
   }
 }
 
+// Versão mostrada em Configurações: o commit publicado (o GitHub Actions informa GITHUB_SHA; fora dele, "local") e a data do build.
+const APP_VERSAO = (process.env.GITHUB_SHA ?? 'local').slice(0, 7)
+const APP_DATA = new Date().toISOString().slice(0, 10)
+
 export default defineConfig(({ command, mode }) => {
   const supabaseUrl = loadEnv(mode, process.cwd(), 'VITE_').VITE_SUPABASE_URL
   if (command === 'build' && !supabaseUrl) console.warn('[csp] VITE_SUPABASE_URL ausente no build: connect-src ficou com o curinga *.supabase.co')
   return {
   base: '/',
+  define: { __APP_VERSAO__: JSON.stringify(APP_VERSAO), __APP_DATA__: JSON.stringify(APP_DATA) },
   plugins: [
     react(),
     tailwindcss(),

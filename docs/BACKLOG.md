@@ -1855,3 +1855,13 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ **Poucos caracteres diferentes** (menos de 5, ou sequência escondida como `1122334455`) ou tamanho efetivo abaixo de 10 viram "Previsível" e não passam. O mínimo de 10 caracteres continua valendo no servidor.
 - ⏳ O "Confirme a senha" **não volta**: decisão do dono (ficou só com o botão de mostrar a senha).
 
+### 183. Atualização do app: "esticar" da tela no iPhone, puxar para atualizar em mais telas e busca de versão nova — ✅ PR aberta
+- **Relato do dono (print):** ao puxar/rolar a tela, a barra de baixo ia parar no meio do conteúdo; algumas telas não atualizavam ao puxar; e ao atualizar não chegava a versão nova do app.
+- ✅ **Elástico da página desligado:** o `overscroll-behavior` estava no `body`, mas só vale no elemento que rola (o `html`), então não fazia nada; agora `html, body { overscroll-behavior-y: none }`. Causa provável do glitch (a barra fixa de baixo acompanhava o puxão no fim da lista no iPhone/PWA).
+- ✅ **Puxar para atualizar também em Hoje e Treinos** (já havia em Agenda, Alunos e Financeiro); o indicador respeita a barra de status (`safe-area-inset-top`).
+- ✅ **Puxar para atualizar agora procura versão nova do app** (`useAtualizarTela`): se achar, avisa e atualiza sozinho. Antes só recarregava os dados e o app instalado ficava dias na versão velha (o PWA está em modo "prompt" e o navegador quase não busca o `sw.js` de um app em segundo plano).
+- ✅ **Busca automática:** ao voltar para o app (no máximo a cada 30 min) e de hora em hora com o app aberto; se houver versão nova, o aviso "Nova versão disponível" aparece sozinho.
+- ✅ **Configurações → "Verificar atualização"** com a versão em uso (commit publicado + data do build).
+- ✅ Testes de `verificarNovaVersao` e `deveVerificarAgora`; artigo "Atualizar o app e pegar a versão nova" na Central de ajuda.
+- ⏳ **Dono:** validar no iPhone instalado (não reproduzo o elástico do iOS aqui): puxar no fim das listas (a barra de baixo não pode se mexer), puxar em Hoje e Treinos, e "Verificar atualização" depois de um deploy.
+

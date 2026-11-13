@@ -21,6 +21,7 @@ import { useAtualizarWhatsappOptIn, usePerfilProfissional, useSalvarDadosPessoai
 import { useTelefoneVerificadoEm } from '@/features/auth/verificacaoTelefone'
 import { VerificacaoTelefone } from './VerificacaoTelefone'
 import { PaginaPublicaSecao } from './PaginaPublicaSecao'
+import { VerificarAtualizacao } from '@/components/VerificarAtualizacao'
 import { useProfessionalConfig, useSalvarProfessionalConfig, type SalvarProfessionalConfigInput } from './api'
 
 const TIPOS_PIX: { value: PixTipo; label: string }[] = [
@@ -369,6 +370,8 @@ export function ConfiguracoesPage() {
             </span>
             <ChevronRight size={20} className="text-slate-400" aria-hidden />
           </Link>
+
+          <VerificarAtualizacao />
 
           <button
             type="button"

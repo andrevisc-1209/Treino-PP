@@ -1,3 +1,5 @@
+import { PuxarParaAtualizar } from '@/components/PuxarParaAtualizar'
+import { useAtualizarTela } from '@/lib/useAtualizarTela'
 import { ErroComRetry } from '@/components/ErroComRetry'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -36,6 +38,7 @@ import { RolagemHorizontal } from '@/components/RolagemHorizontal'
 import { useExigirAssinatura } from '@/features/assinatura/useExigirAssinatura'
 
 export function ModelosPage() {
+  const atualizarTela = useAtualizarTela()
   const { exigir } = useExigirAssinatura()
   const navigate = useNavigate()
   const { data: modelos, isLoading, error, refetch } = useModelos()
@@ -223,6 +226,7 @@ export function ModelosPage() {
   }
 
   return (
+    <PuxarParaAtualizar onAtualizar={atualizarTela}>
     <div className="mx-auto max-w-2xl p-4 pb-24">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Treinos planejados</h1>
@@ -461,5 +465,6 @@ export function ModelosPage() {
         </div>
       </BottomSheet>
     </div>
+    </PuxarParaAtualizar>
   )
 }
