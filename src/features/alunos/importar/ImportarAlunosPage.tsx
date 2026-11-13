@@ -245,6 +245,11 @@ export function ImportarAlunosPage() {
                 rows={5}
                 spellCheck={false}
                 autoCapitalize="off"
+                autoCorrect="off"
+                // sem sugestões de preenchimento: o exemplo da caixa cita "email" e o iPhone passava a sugerir o e-mail da própria pessoa sobre a lista colada
+                autoComplete="off"
+                inputMode="text"
+                data-form-type="other"
                 placeholder="nome;telefone;email;nascimento;sexo;objetivos"
                 className="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm"
               />
