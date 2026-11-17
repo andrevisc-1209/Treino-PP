@@ -1903,3 +1903,12 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ⏳ **Dono, depois do merge:** `supabase functions deploy mp-webhook` (partindo da main atualizada; conferir com `grep -c inicioDoPeriodoPago supabase/functions/_shared/mp.ts`).
 - Não muda o caminho antigo de assinatura recorrente (`atualizacaoDoPreapproval`, usa a data do MP). Base para o cupom de parceiro (itens seguintes).
 
+### 189. Cupom de parceiro, parte 2: o cupom no banco — ✅ PR aberta (**tem migration**: `20261105000000_cupom_de_parceiro.sql`, rodar ANTES do merge)
+Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Decisões em `cupom-de-parceiro-decisoes` (memória do projeto): os dias SOMAM depois do trial, um cupom por conta, vale junto com a indicação (fora do teto de 6 meses), só conta nova, libera na hora (sem exigir alunos).
+- ✅ `treino.campanhas_cupom` (código, parceiro, dias 1–365, período, **limite de usos obrigatório**, ativa), `treino.resgates_cupom` (UNIQUE por personal) e `treino.cupom_tentativas` (freio). Todas com RLS ligada e **sem acesso do cliente** (mesmo padrão de `indicacoes`: só funções `SECURITY DEFINER`).
+- ✅ `treino.resgatar_cupom(codigo)`: `ok | invalido | fora_do_periodo | esgotado | ja_usou | nao_novo | muitas_tentativas`. Conta nova = criada há ≤ 7 dias e sem alunos. A campanha é travada (`FOR UPDATE`) ao contar os usos: o limite não estoura. Soma os dias com `estender_bonus` (mesmo `bonus_ate` da indicação). 8 códigos errados na hora bloqueiam novas tentativas.
+- ✅ `treino.meu_cupom()` para a tela "Acesso por cupom até…" (PR 3); nunca devolve o nome do parceiro.
+- ✅ Teste `supabase/tests/cupom_de_parceiro.sql` (a–i), termina com `RAISE EXCEPTION 'RESULTADO…'`: **ainda não executado** (sem Postgres local).
+- ⏳ **Próximas PRs:** 3 (campo "tenho um cupom" no cadastro, link `?cupom=`, tela do acesso por cupom, Política e Termos) e 4 (admin: criar/pausar campanha e números por campanha). Sem elas o cupom só existe por SQL (campanha criada à mão no SQL Editor).
+- ⏳ **Dono:** rodar a migration e o teste SQL no SQL Editor antes do merge.
+
