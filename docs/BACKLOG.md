@@ -1885,3 +1885,8 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ `docs/marketing/videos-de-tela/alunos-ficticios-40.csv` (40 alunos: 20 mulheres e 20 homens, telefones inventados `(11) 90000-02xx`, e-mails `@example.com` em 2 de cada 3, nascimento e sexo preenchidos para os cartões não ficarem "Sem data de nascimento", objetivos realistas) e `lista-baguncada-40-ficticia.txt` (a mesma turma como lista de caderno, em formatos variados, para colar na IA).
 - ✅ Conferido com o leitor real da importação: **40 linhas, 40 prontas, 0 avisos**. Sem dado de saúde, valor, CPF nem menor de idade (os problemas apontados na análise do vídeo de 13/11).
 
+### 186. Importação: a caixa da resposta da IA não oferece preenchimento automático — ✅ PR aberta
+- **Achado pelo vídeo da importação (dono, 13/11/2026):** ao tocar na caixa "Cole aqui a resposta da IA", o teclado do iPhone mostrava as sugestões `andrevisc@hotmail.com` e `andrevisc@gmail.com` (o texto de exemplo da caixa cita "email" e o iPhone achou que era um campo de e-mail).
+- ✅ A caixa passa a ter `autoComplete="off"`, `autoCorrect="off"`, `inputMode="text"` (além de `spellCheck={false}` e `autoCapitalize="off"` que já tinha): o teclado não sugere o e-mail da pessoa por cima da lista colada. Teste `caixaDaIa.test.ts` trava os atributos.
+- ⏳ **Dono, no iPhone:** tocar na caixa e conferir que a barra de sugestões não mostra e-mails (o iOS pode ainda mostrar a barra de sugestões de palavras, que é normal).
+
