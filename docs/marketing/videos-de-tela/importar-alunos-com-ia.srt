@@ -1,0 +1,40 @@
+1
+00:00:00,150 --> 00:00:04,360
+Quer trazer seus alunos para o app sem digitar um por um? Vem ver.
+
+2
+00:00:04,810 --> 00:00:12,780
+No app logado, toque em Adicionar alunos. Você pode usar uma planilha, ou uma IA. Vamos de IA.
+
+3
+00:00:13,230 --> 00:00:16,470
+Toque em copiar prompt: ele já vem pronto.
+
+4
+00:00:16,920 --> 00:00:27,110
+Cole o prompt no ChatGPT ou no Gemini, e depois a sua lista, do jeito que estiver. Só nome, contato e objetivo: nunca dado de saúde.
+
+5
+00:00:27,560 --> 00:00:32,470
+Em segundos, a IA devolve tudo organizado. Copie a resposta.
+
+6
+00:00:32,920 --> 00:00:36,710
+Volte ao app, cole aqui e toque em Conferir.
+
+7
+00:00:37,160 --> 00:00:41,840
+O app mostra os quarenta alunos, e você confere tudo antes de salvar.
+
+8
+00:00:42,290 --> 00:00:48,560
+Toque em Importar quarenta alunos, e pronto! Não gostou? Dá para desfazer com um toque.
+
+9
+00:00:49,010 --> 00:00:52,560
+Depois, é só completar cobrança e horários na ficha.
+
+10
+00:00:53,010 --> 00:00:56,880
+Teste grátis por quinze dias, sem cartão. Link na bio.
+

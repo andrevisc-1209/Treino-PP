@@ -1,0 +1,36 @@
+1
+00:00:00,150 --> 00:00:05,270
+Cadastrar um aluno no app leva uns dois minutos, em cinco passos. Vem ver.
+
+2
+00:00:05,720 --> 00:00:13,080
+Primeiro, os dados: nome, nascimento, sexo, telefone com atalho para o WhatsApp, e e-mail.
+
+3
+00:00:13,530 --> 00:00:25,130
+O CPF e o endereço são opcionais: servem para gerar o contrato do aluno. Marque os objetivos e, se ele treina para uma prova, escolha o esporte e a data.
+
+4
+00:00:25,580 --> 00:00:35,660
+Na cobrança, você escolhe: por aula, pacote de aulas ou mensal. Define o valor, o dia do ciclo e o vencimento. Ou deixa para depois.
+
+5
+00:00:36,110 --> 00:00:46,190
+Na saúde, o app manda um link para o aluno autorizar o uso dos dados, conforme a LGPD. Só depois você registra lesões e medicamentos.
+
+6
+00:00:46,640 --> 00:00:54,960
+Nos horários, escolha os dias, a hora e a duração. O local tem busca de endereço, e dá para marcar quem treina junto.
+
+7
+00:00:55,410 --> 00:01:00,930
+Revise tudo e salve. Pronto: o aluno já está na agenda e no financeiro.
+
+8
+00:01:01,380 --> 00:01:08,580
+E na ficha do aluno você gera o contrato em PDF, pronto para imprimir e assinar. Tudo isso, sem planilha.
+
+9
+00:01:09,030 --> 00:01:12,950
+Teste grátis por quinze dias, sem cartão. Link na bio.
+

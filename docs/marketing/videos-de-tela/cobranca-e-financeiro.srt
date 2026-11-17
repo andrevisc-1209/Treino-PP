@@ -1,0 +1,32 @@
+1
+00:00:00,150 --> 00:00:02,630
+Aula registrada vira cobrança.
+
+2
+00:00:03,080 --> 00:00:08,600
+No Financeiro: o que falta receber, o que já entrou no mês e o que está atrasado.
+
+3
+00:00:09,050 --> 00:00:12,890
+Cada fatura mostra as aulas, o valor e o vencimento.
+
+4
+00:00:13,340 --> 00:00:23,420
+O recibo e o relatório em PDF trazem as aulas feitas, os dias treinados, a frequência semanal e o esforço do aluno. Ótimo argumento para renovar.
+
+5
+00:00:23,870 --> 00:00:29,390
+Você escreve uma avaliação do ciclo e baixa o resumo de cobrança, com o Pix, se quiser.
+
+6
+00:00:29,840 --> 00:00:43,360
+A mensagem para o aluno já vem pronta, com as aulas, o valor, o vencimento e o Pix. É só abrir o WhatsApp e enviar. O pagamento é combinado direto com o aluno; recebeu, é só marcar como paga.
+
+7
+00:00:43,810 --> 00:00:50,370
+E na previsão do mês você vê o que já entrou, o que falta receber e o que ainda vem das aulas agendadas.
+
+8
+00:00:50,820 --> 00:00:54,740
+Teste grátis por quinze dias, sem cartão. Link na bio.
+

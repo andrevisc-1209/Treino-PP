@@ -1,0 +1,40 @@
+1
+00:00:00,150 --> 00:00:06,230
+Papel, planilha, WhatsApp e boleto esquecido? Seu dia de personal cabe num app só.
+
+2
+00:00:06,680 --> 00:00:12,680
+Toda manhã, a agenda do dia chega no seu WhatsApp: quem treina, a que horas e onde.
+
+3
+00:00:13,130 --> 00:00:22,570
+Traga seus alunos em minutos: por planilha, ou com a ajuda de uma IA. Cadastre dados, cobrança, horários e até o contrato em PDF.
+
+4
+00:00:23,020 --> 00:00:31,020
+Na academia, marque as séries na hora, mesmo sem sinal. E o treino à distância vai por link: o aluno não instala nada.
+
+5
+00:00:31,470 --> 00:00:36,830
+O histórico e a evolução de cada aluno ficam prontos para você mostrar o progresso.
+
+6
+00:00:37,280 --> 00:00:47,040
+No fim do ciclo, o app fecha a conta, gera a fatura e deixa a mensagem pronta. Você envia pelo WhatsApp, e o pagamento é direto com o aluno.
+
+7
+00:00:47,490 --> 00:00:53,650
+Quer encaixar mais aulas? Mande o seu link de agenda: o aluno pede o horário e você só aprova.
+
+8
+00:00:54,100 --> 00:01:00,420
+Dados de saúde só com o consentimento do aluno, e cada personal vê apenas os próprios alunos.
+
+9
+00:01:00,870 --> 00:01:15,110
+E o preço? Quinze reais por mês, com alunos ilimitados. Sem taxa por aluno e sem comissão sobre a cobrança. No plano trimestral são trinta e nove reais, e no semestral, sessenta: dez reais por mês.
+
+10
+00:01:15,560 --> 00:01:20,600
+Teste quinze dias grátis, sem cartão, e sem fidelidade. Link na bio.
+

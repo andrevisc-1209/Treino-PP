@@ -1886,3 +1886,9 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ A caixa passa a ter `autoComplete="off"`, `autoCorrect="off"`, `inputMode="text"` (além de `spellCheck={false}` e `autoCapitalize="off"` que já tinha): o teclado não sugere o e-mail da pessoa por cima da lista colada. Teste `caixaDaIa.test.ts` trava os atributos.
 - ⏳ **Dono, no iPhone:** tocar na caixa e conferir que a barra de sugestões não mostra e-mails (o iOS pode ainda mostrar a barra de sugestões de palavras, que é normal).
 
+### 187. Marketing: roteiros e legendas dos vídeos de tela (importação, cadastro, cobrança e divulgação) — ✅ PR aberta (só documentação)
+- ✅ `docs/marketing/videos-de-tela/`: `ROTEIRO-importar-alunos-com-ia.md`, `ROTEIRO-cadastro-de-aluno.md`, `ROTEIRO-cobranca-e-financeiro.md` e `ROTEIRO-divulgacao-do-app.md` (tabelas de tempo, legenda na tela e narração; versões longa, de 27 s, de 18 s e de 9 s do vídeo de divulgação), mais as legendas sincronizadas (`.srt`) e `LEGENDAS-DE-POST.md`.
+- ✅ Narração final gerada pelo dono na ElevenLabs; os cortes seguem a duração real de cada áudio. Os `.mp4` ficam fora do git (`saida-videos/` no `.gitignore`).
+- ✅ Dados fictícios em todos os vídeos; nenhum dado de saúde de aluno em tela (a faixa de lesão e o gráfico de prontidão ficaram de fora dos cortes); sugestões de e-mail e telefone do teclado desfocadas; barra de status e Central de Controle cortadas.
+- ⏳ **Dono:** assistir cada vídeo com som antes de postar e confirmar os preços na landing no dia.
+
