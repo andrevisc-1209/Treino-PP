@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assinaturaValida, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, idDoEvento, planoPorFrequencia, statusDoMP, tokenDeCartaoValido, tokenMpValido } from './mp.ts'
+import { assinaturaValida, inicioDoPeriodoPago, atualizacaoDoPreapproval, decidirPagamento, decidirWebhook, fimDoPeriodo, idDoEvento, planoPorFrequencia, statusDoMP, tokenDeCartaoValido, tokenMpValido } from './mp.ts'
 
 async function assinar(secret: string, manifest: string) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
@@ -111,6 +111,30 @@ describe('decidirPagamento (Checkout Pro)', () => {
   it('renovação antecipada soma ao que resta', () => {
     const d = decidirPagamento(pag({ id: 1000 }), { status: 'ativa', assinatura_fim: '2026-10-16T12:00:00.000Z', mp_payment_id: '999' }, agora)
     expect(d.tipo === 'ativar' && d.atualizacao.assinatura_fim).toBe('2027-01-14T12:00:00.000Z')
+  })
+  it('pagar no meio do trial soma o resto do trial ao plano (não perde dias grátis)', () => {
+    const d = decidirPagamento(pag(), { status: 'trial', assinatura_fim: null, mp_payment_id: null, trial_fim: '2026-10-16T12:00:00.000Z' }, agora)
+    expect(d.tipo === 'ativar' && d.atualizacao.assinatura_fim).toBe('2027-01-14T12:00:00.000Z') // 16/10 + 90 dias
+  })
+  it('trial já vencido não adianta o início: conta de agora', () => {
+    const d = decidirPagamento(pag(), { status: 'trial', assinatura_fim: null, mp_payment_id: null, trial_fim: '2026-09-20T12:00:00.000Z' }, agora)
+    expect(d.tipo === 'ativar' && d.atualizacao.assinatura_fim).toBe('2027-01-04T12:00:00.000Z')
+  })
+  it('bônus (indicação ou cupom) ainda valendo: o plano pago começa depois dele', () => {
+    const d = decidirPagamento(pag(), { status: 'trial', assinatura_fim: null, mp_payment_id: null, trial_fim: '2026-10-16T12:00:00.000Z', bonus_ate: '2027-01-14T12:00:00.000Z' }, agora)
+    expect(d.tipo === 'ativar' && d.atualizacao.assinatura_fim).toBe('2027-04-14T12:00:00.000Z') // 14/01 + 90 dias
+  })
+  it('assinatura em dia com bônus além dela soma depois do bônus', () => {
+    const d = decidirPagamento(pag({ id: 1001 }), { status: 'ativa', assinatura_fim: '2026-10-16T12:00:00.000Z', mp_payment_id: '999', bonus_ate: '2026-11-15T12:00:00.000Z' }, agora)
+    expect(d.tipo === 'ativar' && d.atualizacao.assinatura_fim).toBe('2027-02-13T12:00:00.000Z') // 15/11 + 90 dias
+  })
+  it('trial_fim de conta que não é mais trial (ex.: cancelada) não conta; bônus conta em qualquer status', () => {
+    const cancelada = { status: 'cancelada', assinatura_fim: null, mp_payment_id: 'x', trial_fim: '2026-12-01T12:00:00.000Z', bonus_ate: '2026-10-20T12:00:00.000Z' }
+    expect(inicioDoPeriodoPago(cancelada, agora)).toBe(new Date('2026-10-20T12:00:00.000Z').getTime())
+  })
+  it('sem os campos novos o cálculo é o antigo (a partir de agora)', () => {
+    expect(inicioDoPeriodoPago(null, agora)).toBe(agora.getTime())
+    expect(inicioDoPeriodoPago({ status: 'trial', assinatura_fim: null, mp_payment_id: null }, agora)).toBe(agora.getTime())
   })
   it('é idempotente para o mesmo payment_id', () => {
     const d = decidirPagamento(pag(), { status: 'ativa', assinatura_fim: '2027-01-04T12:00:00.000Z', mp_payment_id: '999' }, agora)

@@ -1896,3 +1896,10 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Dados fictícios em todos os vídeos; nenhum dado de saúde de aluno em tela (a faixa de lesão e o gráfico de prontidão ficaram de fora dos cortes); sugestões de e-mail e telefone do teclado desfocadas; barra de status e Central de Controle cortadas.
 - ⏳ **Dono:** assistir cada vídeo com som antes de postar e confirmar os preços na landing no dia.
 
+### 188. Pagamento: quem assina no meio do trial ou do bônus não perde os dias grátis — ✅ PR aberta (Edge Function, sem migration)
+- **Achado ao planejar o cupom (dono, 17/11/2026):** `decidirPagamento` calculava o início do plano pago a partir de "agora" ou do fim da assinatura em dia. Não olhava o fim do trial nem o `bonus_ate` (mês grátis da indicação). Quem pagava no dia 10 de um trial de 15 dias (ou com bônus) ficava com acesso até o MAIOR entre o plano e o bônus, e perdia os dias sobrepostos.
+- ✅ `inicioDoPeriodoPago` (`_shared/mp.ts`): o plano pago começa depois do maior entre agora, o fim da assinatura em dia, o fim do trial (só se ainda é trial) e o fim do bônus (em qualquer status). `assinatura_fim` = fim do grátis + período.
+- ✅ `mp-webhook` passa `trial_fim` e `bonus_ate` para a decisão; 6 testes novos (trial no meio, trial vencido, bônus, assinatura em dia com bônus, cancelada, sem campos novos).
+- ⏳ **Dono, depois do merge:** `supabase functions deploy mp-webhook` (partindo da main atualizada; conferir com `grep -c inicioDoPeriodoPago supabase/functions/_shared/mp.ts`).
+- Não muda o caminho antigo de assinatura recorrente (`atualizacaoDoPreapproval`, usa a data do MP). Base para o cupom de parceiro (itens seguintes).
+

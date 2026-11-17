@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'treino' } })
       const donoId: string | undefined = pagamento.metadata?.user_id ?? pagamento.external_reference
       const { data: atual } = donoId
-        ? await supabase.from('assinaturas').select('status, assinatura_fim, mp_payment_id').eq('professional_id', donoId).maybeSingle()
+        ? await supabase.from('assinaturas').select('status, assinatura_fim, mp_payment_id, trial_fim, bonus_ate').eq('professional_id', donoId).maybeSingle()
         : { data: null }
       // Cada pagamento só credita UMA vez (tabela pagamentos_processados), mesmo reentregue fora de ordem.
       const resultado = await aplicarPagamento(
