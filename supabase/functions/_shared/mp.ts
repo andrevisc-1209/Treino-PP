@@ -146,7 +146,30 @@ export type PagamentoMP = {
   metadata?: { user_id?: string; plan_slug?: string; period_days?: number | string } | null
 }
 
-export type AssinaturaAtual = { status: string; assinatura_fim: string | null; mp_payment_id: string | null } | null
+export type AssinaturaAtual = {
+  status: string
+  assinatura_fim: string | null
+  mp_payment_id: string | null
+  /** Fim do trial (só vale enquanto o status é 'trial') e do mês grátis da indicação/cupom (vale em qualquer status). Opcionais: sem eles o cálculo cai no antigo. */
+  trial_fim?: string | null
+  bonus_ate?: string | null
+} | null
+
+const msDe = (iso: string | null | undefined): number => {
+  const t = iso ? new Date(iso).getTime() : Number.NaN
+  return Number.isNaN(t) ? 0 : t
+}
+
+/**
+ * De onde o período pago começa a contar: do maior entre agora, o fim da assinatura em dia, o fim do trial (se ainda é trial) e o fim do
+ * bônus (indicação, cupom). Assim quem paga no meio do trial ou do bônus não perde os dias grátis: o plano pago vem DEPOIS deles
+ * (assinatura_fim vira fim do grátis + período). Antes só contava "agora" e a assinatura, e o grátis sobreposto era perdido.
+ */
+export function inicioDoPeriodoPago(atual: AssinaturaAtual, agora: Date): number {
+  const fimAssinatura = atual?.status === 'ativa' ? msDe(atual.assinatura_fim) : 0
+  const fimTrial = atual?.status === 'trial' ? msDe(atual.trial_fim) : 0
+  return Math.max(agora.getTime(), fimAssinatura, fimTrial, msDe(atual?.bonus_ate))
+}
 
 export type DecisaoPagamento =
   | { tipo: 'ativar'; professionalId: string; atualizacao: Record<string, unknown> }
@@ -155,7 +178,7 @@ export type DecisaoPagamento =
 
 /**
  * O que fazer com um pagamento do Checkout Pro (já buscado na API do MP).
- * - approved: ativa e soma o período ao que ainda resta (renovação antecipada não perde dias).
+ * - approved: ativa e soma o período ao que ainda resta, inclusive o trial e o bônus grátis (pagar antes não perde dias).
  *   Idempotente: o mesmo payment_id reenviado pelo webhook não soma de novo.
  * - refunded/charged_back: cancela só se for o pagamento que ativou a assinatura atual.
  * - pending/in_process/rejected/cancelled: não mexe — quem está no trial ou já paga não pode
@@ -182,8 +205,7 @@ export function decidirPagamento(pag: PagamentoMP, atual: AssinaturaAtual, agora
   }
   if (atual?.mp_payment_id === paymentId) return { tipo: 'ignorar', motivo: 'pagamento já processado' }
 
-  const fimAtual = atual?.status === 'ativa' && atual.assinatura_fim ? new Date(atual.assinatura_fim).getTime() : 0
-  const base = Math.max(agora.getTime(), Number.isNaN(fimAtual) ? 0 : fimAtual)
+  const base = inicioDoPeriodoPago(atual, agora)
   const fim = new Date(base + plano.periodDays * 86_400_000).toISOString()
   return {
     tipo: 'ativar',
