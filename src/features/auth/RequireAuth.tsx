@@ -11,6 +11,7 @@ import { useAuth } from './AuthProvider'
 import { CompletarPerfilGate } from './CompletarPerfilGate'
 import { emModoFoco } from './modoFoco'
 import { useAplicarIndicacaoGuardada } from '@/features/indicacao/api'
+import { useAplicarCupomGuardado } from '@/features/cupom/api'
 import { useRegistrarOrigemGuardada } from '@/features/analytics/useRegistrarOrigem'
 import { useMinhaExclusao } from '@/features/conta/api'
 import { ExclusaoPendenteTela } from '@/features/conta/ExclusaoPendenteTela'
@@ -27,6 +28,12 @@ function IrParaLandingOuLogin() {
 /** Registra o código de indicação guardado (link ?ref=) logo depois de entrar. */
 function AplicarIndicacao({ userId }: { userId: string }) {
   useAplicarIndicacaoGuardada(userId)
+  return null
+}
+
+/** Resgata o cupom de parceiro guardado (cadastro ou link ?cupom=) logo depois de entrar. */
+function AplicarCupom({ userId }: { userId: string }) {
+  useAplicarCupomGuardado(userId)
   return null
 }
 
@@ -67,6 +74,7 @@ export function RequireAuth() {
       <div className={modoFoco ? '' : 'pb-16'}>
         <NotificacoesRealtime professionalId={session.user.id} />
         <AplicarIndicacao userId={session.user.id} />
+        <AplicarCupom userId={session.user.id} />
         <RegistrarOrigem userId={session.user.id} />
         {!modoFoco && (
           <div className="mx-auto max-w-2xl px-4 pt-4">

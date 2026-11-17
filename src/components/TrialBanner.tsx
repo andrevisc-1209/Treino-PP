@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { ChevronRight, Sparkles } from 'lucide-react'
 import { useAssinatura } from '@/features/assinatura/useAssinatura'
 import { PlanoModal } from './PlanoModal'
-import { varianteDoBannerDoTeste } from './trialBannerRegra'
+import { diasGratisRestantes, varianteDoBannerDoTeste } from './trialBannerRegra'
 
 /**
  * Aviso do trial no topo do app: linha compacta na tela Hoje, nada nas demais e banner completo nos últimos dias (ver trialBannerRegra.ts). Some sozinho quando não está mais em trial
@@ -16,7 +16,8 @@ export function TrialBanner() {
   const { pathname } = useLocation()
   const [modalAberto, setModalAberto] = useState(false)
 
-  const variante = assinatura && assinatura.status === 'trial' ? varianteDoBannerDoTeste(pathname, assinatura.diasRestantesTrial) : null
+  const dias = assinatura && assinatura.status === 'trial' ? diasGratisRestantes(assinatura.diasRestantesTrial, assinatura.trialFim, assinatura.bonusAte) : null
+  const variante = assinatura && assinatura.status === 'trial' ? varianteDoBannerDoTeste(pathname, dias) : null
   if (!assinatura || !variante) return null
 
   if (variante === 'compacto') {
@@ -29,7 +30,7 @@ export function TrialBanner() {
         >
           <Sparkles size={16} className="shrink-0 text-brand-bright" aria-hidden />
           <span className="min-w-0 flex-1">
-            Teste grátis: <strong>{assinatura.diasRestantesTrial}</strong> {assinatura.diasRestantesTrial === 1 ? 'dia restante' : 'dias restantes'}
+            Teste grátis: <strong>{dias}</strong> {dias === 1 ? 'dia restante' : 'dias restantes'}
           </span>
           <ChevronRight size={16} className="shrink-0 text-white/80" aria-hidden />
         </button>
@@ -43,8 +44,8 @@ export function TrialBanner() {
       <div className="mb-4 flex items-center gap-3 rounded-2xl bg-accent px-4 py-3 text-white">
         <Sparkles size={18} className="shrink-0 text-brand-bright" />
         <p className="min-w-0 flex-1 text-sm">
-          Você tem <strong>{assinatura.diasRestantesTrial}</strong>{' '}
-          {assinatura.diasRestantesTrial === 1 ? 'dia' : 'dias'} de trial gratuito restantes.
+          Você tem <strong>{dias}</strong>{' '}
+          {dias === 1 ? 'dia' : 'dias'} de acesso gratuito restantes.
         </p>
         <button
           type="button"
