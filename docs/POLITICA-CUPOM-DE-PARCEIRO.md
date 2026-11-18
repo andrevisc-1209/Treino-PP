@@ -1,6 +1,6 @@
 # Política de Privacidade e Termos: cupom de parceiro (para o jurídico)
 
-**Status:** proposta, **ainda não aplicada** (a PR do cupom no app não muda a versão dos documentos: subir a versão exige nova linha em `treino.documentos_versoes` por migration e novo aceite no cadastro; fazer só depois da aprovação).
+**Status:** **aprovada pelo jurídico (18/11/2026) e aplicada** nos Termos 1.8 (cláusula 2.10) e na Política 1.18 (migration `20261108`, BACKLOG item 194). Registro original da proposta abaixo.
 
 ## O que muda na prática
 Quem usa um cupom de parceiro passa a ter, no cadastro, **qual campanha de cupom usou e quantos dias ganhou** (tabela de resgates). Serve para o parceiro e o Personal Perto medirem o resultado da ação (quantos cadastros, quantos ativaram, quantos pagaram) e para impedir uso repetido ou acima do limite.

@@ -1932,7 +1932,7 @@ Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Deci
 
 ### 192. Cupom de parceiro: pendências depois das 4 PRs — ⏳ aberto
 - ⏳ **Dono:** (1) conferir que o `mp-webhook` está com o deploy da #313 (`supabase functions deploy mp-webhook` a partir da main); (2) criar uma campanha de teste pela aba **Cupons** do /admin, abrir o link do parceiro numa conta nova e conferir: aviso de cupom aplicado, "Acesso até" na tela de Assinatura, números subindo no painel; (3) encaminhar ao jurídico `docs/POLITICA-CUPOM-DE-PARCEIRO.md` (Política e Termos) antes de divulgar em larga escala.
-- ⏳ Depois da aprovação do jurídico: subir as versões da Política e dos Termos (`textos.ts`, migration em `documentos_versoes`, `versoesRegistradas.test.ts`).
+- ✅ Jurídico aprovou (18/11/2026): versões aplicadas no item 194.
 - Ideias sem pressa: exigir N alunos por campanha (campo opcional); revogar o cupom de um personal por abuso (hoje só pausa a campanha); pagamento durante o cupom já soma (item 188).
 
 ### 193. Cupom: cada campanha define quem pode usar (só contas novas ou qualquer personal) — ✅ PR aberta (**tem migration**: `20261107000000_cupom_publico_da_campanha.sql`, rodar ANTES do merge)
@@ -1943,4 +1943,10 @@ Pedido do dono (18/11/2026): separar, ao montar a campanha, cupom para usuário 
 - ✅ Central de ajuda e proposta de Termos ajustadas ("conforme a campanha").
 - ✅ Teste `supabase/tests/cupom_publico.sql` (a–f), **ainda não executado**; o `admin_cupons.sql` foi atualizado para a nova assinatura.
 - ⏳ **Dono:** rodar a migration e o teste antes do merge. O texto jurídico (item 192) agora precisa citar que o cupom pode valer para quem já é cliente.
+
+### 194. Cupom de parceiro: Termos 1.8 e Política 1.18 (aprovados pelo jurídico) — ✅ PR aberta (**tem migration**: `20261108000000_politica_118_termos_18_cupom.sql`, rodar ANTES do merge)
+- ✅ **Termos 1.8:** nova cláusula 2.10 (cupons de parceiros: dias grátis conforme a campanha, para contas novas ou qualquer Personal, uma vez por conta, somam ao acesso, plano pago começa depois dos dias grátis, recusa ou cancelamento por abuso). As cláusulas existentes não foram renumeradas.
+- ✅ **Política 1.18:** cupom de parceiro na lista de dados (2.1), parágrafo na seção 3 ("Cupom de parceiro": campanha usada, data, dias; tentativas erradas por 1 dia; o parceiro não recebe dado pessoal) e retenção na 5.1 (enquanto a conta existir; apagado junto com ela).
+- ✅ Migration registra as duas versões em `documentos_versoes` (sem ela o cadastro novo é recusado); `versoesRegistradas.test.ts` cobre.
+- ⏳ **Dono:** (1) rodar a migration ANTES do merge; (2) a Política diz que mudanças relevantes são comunicadas no app ou por e-mail com 10 dias de antecedência: avisar os personais existentes (ex.: aviso no app/e-mail) conforme o jurídico orientar.
 
