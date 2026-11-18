@@ -1896,23 +1896,23 @@ Só front; sem migration e sem deploy. **As 5 abas ficam** (decisão do dono): R
 - ✅ Dados fictícios em todos os vídeos; nenhum dado de saúde de aluno em tela (a faixa de lesão e o gráfico de prontidão ficaram de fora dos cortes); sugestões de e-mail e telefone do teclado desfocadas; barra de status e Central de Controle cortadas.
 - ⏳ **Dono:** assistir cada vídeo com som antes de postar e confirmar os preços na landing no dia.
 
-### 188. Pagamento: quem assina no meio do trial ou do bônus não perde os dias grátis — ✅ PR aberta (Edge Function, sem migration)
+### 188. Pagamento: quem assina no meio do trial ou do bônus não perde os dias grátis — ✅ Mergeada (#313) (Edge Function, sem migration)
 - **Achado ao planejar o cupom (dono, 17/11/2026):** `decidirPagamento` calculava o início do plano pago a partir de "agora" ou do fim da assinatura em dia. Não olhava o fim do trial nem o `bonus_ate` (mês grátis da indicação). Quem pagava no dia 10 de um trial de 15 dias (ou com bônus) ficava com acesso até o MAIOR entre o plano e o bônus, e perdia os dias sobrepostos.
 - ✅ `inicioDoPeriodoPago` (`_shared/mp.ts`): o plano pago começa depois do maior entre agora, o fim da assinatura em dia, o fim do trial (só se ainda é trial) e o fim do bônus (em qualquer status). `assinatura_fim` = fim do grátis + período.
 - ✅ `mp-webhook` passa `trial_fim` e `bonus_ate` para a decisão; 6 testes novos (trial no meio, trial vencido, bônus, assinatura em dia com bônus, cancelada, sem campos novos).
 - ⏳ **Dono, depois do merge:** `supabase functions deploy mp-webhook` (partindo da main atualizada; conferir com `grep -c inicioDoPeriodoPago supabase/functions/_shared/mp.ts`).
 - Não muda o caminho antigo de assinatura recorrente (`atualizacaoDoPreapproval`, usa a data do MP). Base para o cupom de parceiro (itens seguintes).
 
-### 189. Cupom de parceiro, parte 2: o cupom no banco — ✅ PR aberta (**tem migration**: `20261105000000_cupom_de_parceiro.sql`, rodar ANTES do merge)
+### 189. Cupom de parceiro, parte 2: o cupom no banco — ✅ Mergeada (#314) (**tem migration**: `20261105000000_cupom_de_parceiro.sql`, rodar ANTES do merge)
 Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Decisões em `cupom-de-parceiro-decisoes` (memória do projeto): os dias SOMAM depois do trial, um cupom por conta, vale junto com a indicação (fora do teto de 6 meses), só conta nova, libera na hora (sem exigir alunos).
 - ✅ `treino.campanhas_cupom` (código, parceiro, dias 1–365, período, **limite de usos obrigatório**, ativa), `treino.resgates_cupom` (UNIQUE por personal) e `treino.cupom_tentativas` (freio). Todas com RLS ligada e **sem acesso do cliente** (mesmo padrão de `indicacoes`: só funções `SECURITY DEFINER`).
 - ✅ `treino.resgatar_cupom(codigo)`: `ok | invalido | fora_do_periodo | esgotado | ja_usou | nao_novo | muitas_tentativas`. Conta nova = criada há ≤ 7 dias e sem alunos. A campanha é travada (`FOR UPDATE`) ao contar os usos: o limite não estoura. Soma os dias com `estender_bonus` (mesmo `bonus_ate` da indicação). 8 códigos errados na hora bloqueiam novas tentativas.
 - ✅ `treino.meu_cupom()` para a tela "Acesso por cupom até…" (PR 3); nunca devolve o nome do parceiro.
 - ✅ Teste `supabase/tests/cupom_de_parceiro.sql` (a–i), termina com `RAISE EXCEPTION 'RESULTADO…'`: **ainda não executado** (sem Postgres local).
-- ⏳ **Próximas PRs:** 3 (campo "tenho um cupom" no cadastro, link `?cupom=`, tela do acesso por cupom, Política e Termos) e 4 (admin: criar/pausar campanha e números por campanha). Sem elas o cupom só existe por SQL (campanha criada à mão no SQL Editor).
+- ✅ As partes 3 (app) e 4 (admin) vieram nos itens 190 e 191.
 - ⏳ **Dono:** rodar a migration e o teste SQL no SQL Editor antes do merge.
 
-### 190. Cupom de parceiro, parte 3: o cupom no app — ✅ PR aberta (só app; a migration é a do item 189, já rodada)
+### 190. Cupom de parceiro, parte 3: o cupom no app — ✅ Mergeada (#315) (só app; a migration é a do item 189, já rodada)
 - ✅ **Cadastro:** link "Tenho um cupom de parceiro" abre um campo opcional; o código fica guardado até a pessoa entrar (vale também com e-mail a confirmar). Link do parceiro: `/login?cupom=CODIGO&utm_source=parceiro&utm_medium=<nome>&utm_campaign=cupom-codigo` (`linkDeCupom`); o UTM entra no painel de origem.
 - ✅ **Logo depois de entrar** (`useAplicarCupomGuardado`): resgata uma vez (`resgatar_cupom`), mostra o resultado e esquece o código; sem rede, mantém para a próxima abertura.
 - ✅ **Configurações → Assinatura:** "Tenho um cupom" para quem não digitou no cadastro; quem já usou vê só "Cupom aplicado: N dias grátis" (nunca o parceiro).
@@ -1920,13 +1920,18 @@ Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Deci
 - ✅ Central de ajuda: artigo "Cupom de parceiro: dias grátis na conta nova".
 - ✅ Testes: `cupom.test.ts`, `resumo.test.ts` (dias grátis) e `trialBannerRegra.test.ts`.
 - ⏳ **Política e Termos:** texto proposto em `docs/POLITICA-CUPOM-DE-PARCEIRO.md`, **sem subir a versão** (exige aprovação do jurídico, migration em `documentos_versoes` e novo aceite). Dono: encaminhar ao jurídico antes de divulgar o cupom em larga escala.
-- ⏳ **Falta (PR 4):** admin (criar/pausar campanha e números por campanha); até lá, campanhas por SQL.
+- ✅ O admin das campanhas veio na PR 4 (item 191).
 
-### 191. Cupom de parceiro, parte 4: admin das campanhas — ✅ PR aberta (**tem migration**: `20261106000000_admin_cupons.sql`, rodar ANTES do merge)
+### 191. Cupom de parceiro, parte 4: admin das campanhas — ✅ Mergeada (#316) (**tem migration**: `20261106000000_admin_cupons.sql`, rodar ANTES do merge)
 - ✅ **/admin → aba "Cupons":** cartões (campanhas vigentes, cupons usados com dias dados, ativaram, já pagaram), **nova campanha** (código, parceiro, dias, limite de usos, "vale até" o último dia) com o link do parceiro já montado, lista de campanhas com situação (vigente, pausada, esgotada, vencida, ainda não começou), funil por campanha (usos/limite, ativaram, pagaram), **Copiar link**, **Pausar/Reativar** (com confirmação) e os 30 usos mais recentes.
 - ✅ Banco: `admin_cupons()`, `admin_criar_campanha_cupom(...)` e `admin_atualizar_campanha_cupom(...)`: `SECURITY DEFINER`, exigem `is_admin()` (MFA) e gravam em `admin_logs` (ações novas no CHECK; aparecem no histórico como "Campanha de cupom criada/alterada"). Validações com mensagem em português; o limite de usos nunca fica abaixo dos usos já feitos.
 - ✅ **Privacidade:** o painel mostra só nome de personal e números (ativado = cadastrou ≥ 1 aluno; pagante = tem pagamento no livro de receita). Nunca e-mail, CPF nem dado de aluno; o parceiro não recebe nada.
 - ✅ Testes: `cupons.test.ts` (situação, formulário, data de validade em Brasília, normalização) e `supabase/tests/admin_cupons.sql` (a–f), **ainda não executado** (sem Postgres local).
 - ⏳ **Dono:** rodar a migration e o teste SQL antes do merge; depois criar uma campanha de teste pelo painel, abrir o link do parceiro numa conta nova e conferir que os números sobem.
 - ⏳ Política e Termos do cupom seguem como proposta em `docs/POLITICA-CUPOM-DE-PARCEIRO.md` (item 190).
+
+### 192. Cupom de parceiro: pendências depois das 4 PRs — ⏳ aberto
+- ⏳ **Dono:** (1) conferir que o `mp-webhook` está com o deploy da #313 (`supabase functions deploy mp-webhook` a partir da main); (2) criar uma campanha de teste pela aba **Cupons** do /admin, abrir o link do parceiro numa conta nova e conferir: aviso de cupom aplicado, "Acesso até" na tela de Assinatura, números subindo no painel; (3) encaminhar ao jurídico `docs/POLITICA-CUPOM-DE-PARCEIRO.md` (Política e Termos) antes de divulgar em larga escala.
+- ⏳ Depois da aprovação do jurídico: subir as versões da Política e dos Termos (`textos.ts`, migration em `documentos_versoes`, `versoesRegistradas.test.ts`).
+- Ideias sem pressa: exigir N alunos por campanha (campo opcional); revogar o cupom de um personal por abuso (hoje só pausa a campanha); pagamento durante o cupom já soma (item 188).
 
