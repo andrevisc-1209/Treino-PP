@@ -30,7 +30,7 @@ describe('fimDoDiaSP e percentual', () => {
 })
 
 describe('erroDoFormulario', () => {
-  const ok = { codigo: 'parceiro3m', parceiro: 'Academia X', dias: '90', validade: '2027-02-28', maxUsos: '50' }
+  const ok = { codigo: 'parceiro3m', parceiro: 'Academia X', dias: '90', validade: '2027-02-28', maxUsos: '50', publico: 'novos' as const }
   it('formulário certo não dá erro', () => expect(erroDoFormulario(ok, agora)).toBeNull())
   it('cada campo inválido tem a sua mensagem', () => {
     expect(erroDoFormulario({ ...ok, codigo: 'ab' }, agora)).toContain('código')
@@ -46,7 +46,8 @@ describe('normalizarCupons', () => {
   it('aceita contagens como texto e nunca devolve undefined', () => {
     const p = normalizarCupons({ totais: { campanhas: '2', pagantes: '1' }, campanhas: [{ id: 'a', codigo: 'X', usos: '3', ativa: true }], recentes: [{ id: 'r', pagante: true }] })
     expect(p.totais).toMatchObject({ campanhas: 2, pagantes: 1, resgates: 0 })
-    expect(p.campanhas[0]).toMatchObject({ id: 'a', usos: 3, ativa: true, max_usos: 0 })
+    expect(p.campanhas[0]).toMatchObject({ id: 'a', usos: 3, ativa: true, max_usos: 0, publico: 'novos' })
+    expect(normalizarCupons({ campanhas: [{ id: 'b', publico: 'todos' }, { id: 'c', publico: 'qualquer' }] }).campanhas.map((c) => c.publico)).toEqual(['todos', 'novos'])
     expect(p.recentes[0]).toMatchObject({ pagante: true, ativado: false })
     expect(normalizarCupons(null)).toEqual({ totais: { campanhas: 0, ativas: 0, resgates: 0, ativados: 0, pagantes: 0, dias_concedidos: 0 }, campanhas: [], recentes: [] })
   })

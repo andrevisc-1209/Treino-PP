@@ -326,10 +326,10 @@ export const ARTIGOS: Artigo[] = [
     categoria: 'conta',
     titulo: 'Cupom de parceiro: dias grátis na conta nova',
     passos: [
-      'Se um parceiro do Personal Perto te passou um código de cupom, ele soma dias grátis ao seu teste de 15 dias. Exemplo: um cupom de 90 dias dá 15 dias de teste mais 90 dias de cupom.',
+      'Se um parceiro do Personal Perto te passou um código de cupom, ele soma dias grátis ao seu acesso. Exemplo: um cupom de 90 dias, numa conta nova, dá 15 dias de teste mais 90 dias de cupom.',
       'No cadastro, toque em "Tenho um cupom de parceiro" e digite o código (ou abra o link do parceiro, que já vem com o código preenchido). Depois de criar a conta e entrar, o app aplica o cupom e avisa.',
       'Esqueceu de digitar? Em Configurações → Assinatura, toque em "Tenho um cupom" e informe o código.',
-      'O cupom vale só para conta nova (criada há até 7 dias e ainda sem alunos cadastrados), uma vez por conta, dentro do período e do limite de usos da campanha. Pode ser usado junto com o programa de indicação.',
+      'Cada campanha define quem pode usar: só contas novas (criadas há até 7 dias e ainda sem alunos cadastrados) ou qualquer personal, inclusive quem já usa o app. Vale um cupom por conta, dentro do período e do limite de usos da campanha, e pode ser usado junto com o programa de indicação.',
       'Se você assinar antes de os dias acabarem, o plano pago começa depois deles: você não perde nenhum dia grátis.',
       'Em Configurações → Assinatura aparece "Acesso até" com a data em que os dias grátis terminam.',
     ],

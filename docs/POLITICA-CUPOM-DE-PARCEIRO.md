@@ -13,7 +13,7 @@ Quem usa um cupom de parceiro passa a ter, no cadastro, **qual campanha de cupom
 > **Cupom de parceiro.** Se você usar um código de cupom ao criar a conta, guardamos qual campanha de cupom você usou, a data e quantos dias grátis recebeu. Usamos isso para conceder os dias, evitar uso repetido ou acima do limite da campanha e saber quais parcerias trazem Personal Trainers, vendo só o resultado somado por campanha. Não repassamos ao parceiro seu nome, contato ou qualquer dado seu.
 
 ## Texto sugerido (Termos, nova cláusula)
-> **Cupons.** Cupons de parceiros concedem dias grátis a contas novas, uma vez por conta, dentro do período e do limite de cada campanha. Os dias somam-se ao teste e, se você assinar durante eles, o plano pago começa depois do fim dos dias grátis. Podemos recusar ou cancelar cupons usados de forma abusiva (por exemplo, várias contas para obter dias grátis).
+> **Cupons.** Cupons de parceiros concedem dias grátis, conforme a campanha, a contas novas ou a qualquer Personal, uma vez por conta, dentro do período e do limite de cada campanha. Os dias somam-se ao teste e, se você assinar durante eles, o plano pago começa depois do fim dos dias grátis. Podemos recusar ou cancelar cupons usados de forma abusiva (por exemplo, várias contas para obter dias grátis).
 
 ## Base legal sugerida
 Execução do contrato (conceder o benefício) e legítimo interesse (LGPD, art. 7º, IX): medir parcerias e evitar fraude, com dado mínimo.

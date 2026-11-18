@@ -1,5 +1,5 @@
 -- Teste para o SQL Editor do Supabase. NÃO grava nada: termina de propósito com um erro que desfaz tudo. Rode DEPOIS das migrations
--- 20261105 e 20261106. Usa uma conta admin existente (simula o token aal2 do MFA) e dois personais comuns (B resgata um cupom). Prova:
+-- 20261105, 20261106 e 20261107. Usa uma conta admin existente (simula o token aal2 do MFA) e dois personais comuns (B resgata um cupom). Prova:
 --   (a) personal comum NÃO chama admin_cupons(), admin_criar_campanha_cupom() nem admin_atualizar_campanha_cupom();
 --   (b) o admin cria uma campanha (código em maiúsculas) e a ação entra em admin_logs; código repetido, dias 0, validade passada, limite 0
 --       e código curto são recusados com mensagem em português;
@@ -111,7 +111,7 @@ BEGIN
   -- (f) anon
   v_log := array_append(v_log, CASE WHEN
         NOT has_function_privilege('anon', 'treino.admin_cupons()', 'EXECUTE')
-    AND NOT has_function_privilege('anon', 'treino.admin_criar_campanha_cupom(text,text,integer,timestamp with time zone,integer)', 'EXECUTE')
+    AND NOT has_function_privilege('anon', 'treino.admin_criar_campanha_cupom(text,text,integer,timestamp with time zone,integer,text)', 'EXECUTE')
     AND NOT has_function_privilege('anon', 'treino.admin_atualizar_campanha_cupom(uuid,boolean,timestamp with time zone,integer)', 'EXECUTE')
     THEN '(f) OK: anon não executa as 3 funções' ELSE '(f) FALHA: permissões erradas' END);
 

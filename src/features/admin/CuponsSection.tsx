@@ -8,7 +8,7 @@ import { mapearErroSupabase } from '@/lib/erros'
 import { formatarDataBR } from '@/lib/format'
 import { linkDeCupom, normalizarCupom } from '@/features/cupom/cupom'
 import { useAdminAtualizarCampanhaCupom, useAdminCriarCampanhaCupom, useAdminCupons } from './api'
-import { erroDoFormulario, fimDoDiaSP, percentual, ROTULO_SITUACAO_CAMPANHA, situacaoDaCampanha, type CampanhaCupom, type FormCampanha } from './cupons'
+import { erroDoFormulario, fimDoDiaSP, percentual, ROTULO_PUBLICO, ROTULO_SITUACAO_CAMPANHA, situacaoDaCampanha, type CampanhaCupom, type FormCampanha } from './cupons'
 
 function Cartao({ titulo, valor, nota }: { titulo: string; valor: string; nota?: string }) {
   return (
@@ -21,7 +21,7 @@ function Cartao({ titulo, valor, nota }: { titulo: string; valor: string; nota?:
 }
 
 const data = (iso: string | null) => (iso ? formatarDataBR(iso.slice(0, 10)) : '—')
-const FORM_VAZIO: FormCampanha = { codigo: '', parceiro: '', dias: '90', validade: '', maxUsos: '50' }
+const FORM_VAZIO: FormCampanha = { codigo: '', parceiro: '', dias: '90', validade: '', maxUsos: '50', publico: 'novos' }
 const COR_SITUACAO: Record<string, string> = {
   vigente: 'bg-emerald-100 text-emerald-800',
   pausada: 'bg-slate-200 text-slate-800',
@@ -60,7 +60,7 @@ export function CuponsSection() {
     setErroForm(msg)
     if (msg) return
     criar.mutate(
-      { codigo: codigoValido!, parceiro: form.parceiro.trim(), dias: Number(form.dias), validoAte: fimDoDiaSP(form.validade)!, maxUsos: Number(form.maxUsos) },
+      { codigo: codigoValido!, parceiro: form.parceiro.trim(), dias: Number(form.dias), validoAte: fimDoDiaSP(form.validade)!, maxUsos: Number(form.maxUsos), publico: form.publico },
       {
         onSuccess: () => {
           mostrarInfoGlobal(`Campanha ${codigoValido} criada.`)
@@ -127,6 +127,20 @@ export function CuponsSection() {
               <span className="text-sm font-medium text-slate-700">Vale até (último dia)</span>
               <Input type="date" value={form.validade} onChange={(e) => setForm({ ...form, validade: e.target.value })} />
             </label>
+            <fieldset className="space-y-1">
+              <legend className="text-sm font-medium text-slate-700">Quem pode usar</legend>
+              {(['novos', 'todos'] as const).map((v) => (
+                <label key={v} className="flex min-h-11 items-start gap-3 py-1">
+                  <input type="radio" name="publico" className="mt-0.5 size-6 shrink-0 accent-brand" checked={form.publico === v} onChange={() => setForm({ ...form, publico: v })} />
+                  <span className="text-sm text-slate-700">
+                    <strong>{ROTULO_PUBLICO[v]}</strong>
+                    <span className="block text-xs text-slate-500">
+                      {v === 'novos' ? 'Conta criada há até 7 dias e ainda sem alunos.' : 'Inclui quem já usa o app ou já paga: os dias somam depois do acesso atual.'}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
             {codigoValido && <p className="break-all text-xs text-slate-500">Link do parceiro: {linkDeCupom(codigoValido, form.parceiro)}</p>}
             {erroForm && <p className="text-sm text-red-600">{erroForm}</p>}
             <div className="flex gap-2">
@@ -158,7 +172,7 @@ export function CuponsSection() {
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${COR_SITUACAO[sit]}`}>{ROTULO_SITUACAO_CAMPANHA[sit]}</span>
                   </div>
                   <p className="text-xs text-slate-500">
-                    {c.dias_bonus} dias · vale até {data(c.valido_ate)} · {c.usos}/{c.max_usos} usos · {c.ativados} ativaram ({percentual(c.ativados, c.usos)}%) · {c.pagantes} pagaram ({percentual(c.pagantes, c.usos)}%)
+                    {c.dias_bonus} dias · {ROTULO_PUBLICO[c.publico]} · vale até {data(c.valido_ate)} · {c.usos}/{c.max_usos} usos · {c.ativados} ativaram ({percentual(c.ativados, c.usos)}%) · {c.pagantes} pagaram ({percentual(c.pagantes, c.usos)}%)
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => copiar(link, 'Link do parceiro copiado.')} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 px-3 text-sm font-medium active:bg-slate-50">
