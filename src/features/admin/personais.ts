@@ -55,15 +55,18 @@ export const ROTULO_ACAO_ADMIN: Record<string, string> = {
   alterar_plano: 'Ajuste de plano',
   alterar_cpf: 'Correção de CPF',
   revogar_indicacao: 'Indicação revogada',
+  criar_campanha_cupom: 'Campanha de cupom criada',
+  atualizar_campanha_cupom: 'Campanha de cupom alterada',
 }
 
-export type AbaAdmin = 'geral' | 'indicadores' | 'personais' | 'financeiro' | 'indicacoes' | 'suporte' | 'privacidade'
+export type AbaAdmin = 'geral' | 'indicadores' | 'personais' | 'financeiro' | 'indicacoes' | 'cupons' | 'suporte' | 'privacidade'
 export const ABAS_ADMIN: { id: AbaAdmin; rotulo: string }[] = [
   { id: 'geral', rotulo: 'Visão geral' },
   { id: 'indicadores', rotulo: 'Indicadores' },
   { id: 'personais', rotulo: 'Personais' },
   { id: 'financeiro', rotulo: 'Financeiro' },
   { id: 'indicacoes', rotulo: 'Indicações' },
+  { id: 'cupons', rotulo: 'Cupons' },
   { id: 'suporte', rotulo: 'Suporte' },
   { id: 'privacidade', rotulo: 'Privacidade' },
 ]

@@ -9,6 +9,7 @@ import type { MetricasPersonal } from './personais'
 import { normalizarFinanceiro } from './financeiro'
 import { normalizarBI, type PeriodoBI } from './bi'
 import { normalizarIndicacoes } from './indicacoes'
+import { normalizarCupons } from './cupons'
 import { normalizarResumoAdmin } from '@/features/agenda/resumoPublica'
 import { normalizarAtividade, normalizarContatos, normalizarResumoContatos, type CanalContato, type ResultadoContato } from './contatos'
 
@@ -304,6 +305,64 @@ export function useAdminRevogarIndicacao() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'indicacoes'] })
       qc.invalidateQueries({ queryKey: ['admin', 'bonus'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'historico'] })
+    },
+  })
+}
+
+export function useAdminCupons() {
+  return useQuery({
+    queryKey: ['admin', 'cupons'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_cupons')
+      if (error) throw error
+      return normalizarCupons(data)
+    },
+  })
+}
+
+/** Erros P0001 das funções de campanha já vêm em português e escritos para o admin: mostra o texto em vez do genérico. */
+function erroDaRpc(error: { code?: string; message?: string }): unknown {
+  return error.code === 'P0001' && error.message ? new ErroAmigavel(error.message) : error
+}
+
+export type NovaCampanha = { codigo: string; parceiro: string; dias: number; validoAte: string; maxUsos: number }
+
+export function useAdminCriarCampanhaCupom() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (n: NovaCampanha) => {
+      const { data, error } = await supabase.rpc('admin_criar_campanha_cupom', {
+        p_codigo: n.codigo,
+        p_parceiro: n.parceiro,
+        p_dias: n.dias,
+        p_valido_ate: n.validoAte,
+        p_max_usos: n.maxUsos,
+      })
+      if (error) throw erroDaRpc(error)
+      return data as string
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'cupons'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'historico'] })
+    },
+  })
+}
+
+export function useAdminAtualizarCampanhaCupom() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (a: { id: string; ativa?: boolean; validoAte?: string; maxUsos?: number }) => {
+      const { error } = await supabase.rpc('admin_atualizar_campanha_cupom', {
+        p_id: a.id,
+        p_ativa: a.ativa ?? null,
+        p_valido_ate: a.validoAte ?? null,
+        p_max_usos: a.maxUsos ?? null,
+      })
+      if (error) throw erroDaRpc(error)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'cupons'] })
       qc.invalidateQueries({ queryKey: ['admin', 'historico'] })
     },
   })
