@@ -326,7 +326,7 @@ function erroDaRpc(error: { code?: string; message?: string }): unknown {
   return error.code === 'P0001' && error.message ? new ErroAmigavel(error.message) : error
 }
 
-export type NovaCampanha = { codigo: string; parceiro: string; dias: number; validoAte: string; maxUsos: number }
+export type NovaCampanha = { codigo: string; parceiro: string; dias: number; validoAte: string; maxUsos: number; publico: 'novos' | 'todos' }
 
 export function useAdminCriarCampanhaCupom() {
   const qc = useQueryClient()
@@ -338,6 +338,7 @@ export function useAdminCriarCampanhaCupom() {
         p_dias: n.dias,
         p_valido_ate: n.validoAte,
         p_max_usos: n.maxUsos,
+        p_publico: n.publico,
       })
       if (error) throw erroDaRpc(error)
       return data as string

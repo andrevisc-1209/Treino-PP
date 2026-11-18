@@ -1,6 +1,9 @@
 /** Helpers puros do painel de cupons de parceiro no /admin (sem I/O). Só nome de personal e números: nunca dado de aluno. */
 import { normalizarCupom } from '@/features/cupom/cupom'
 
+export type PublicoCampanha = 'novos' | 'todos'
+export const ROTULO_PUBLICO: Record<PublicoCampanha, string> = { novos: 'Só contas novas', todos: 'Qualquer personal' }
+
 export type TotaisCupons = { campanhas: number; ativas: number; resgates: number; ativados: number; pagantes: number; dias_concedidos: number }
 
 export type CampanhaCupom = {
@@ -12,6 +15,7 @@ export type CampanhaCupom = {
   valido_ate: string
   max_usos: number
   ativa: boolean
+  publico: PublicoCampanha
   usos: number
   ativados: number
   pagantes: number
@@ -45,6 +49,7 @@ export function normalizarCupons(bruto: unknown): PainelCupons {
       valido_ate: String(c.valido_ate ?? ''),
       max_usos: num(c.max_usos),
       ativa: c.ativa === true,
+      publico: c.publico === 'todos' ? 'todos' : 'novos',
       usos: num(c.usos),
       ativados: num(c.ativados),
       pagantes: num(c.pagantes),
@@ -91,7 +96,7 @@ export function fimDoDiaSP(data: string): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-export type FormCampanha = { codigo: string; parceiro: string; dias: string; validade: string; maxUsos: string }
+export type FormCampanha = { codigo: string; parceiro: string; dias: string; validade: string; maxUsos: string; publico: PublicoCampanha }
 
 /** Valida o formulário de nova campanha; devolve a mensagem do primeiro erro ou null. O servidor valida de novo. */
 export function erroDoFormulario(f: FormCampanha, agora: number = Date.now()): string | null {

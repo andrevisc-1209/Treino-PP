@@ -1930,3 +1930,12 @@ Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Deci
 - ⏳ **Dono:** rodar a migration e o teste SQL antes do merge; depois criar uma campanha de teste pelo painel, abrir o link do parceiro numa conta nova e conferir que os números sobem.
 - ⏳ Política e Termos do cupom seguem como proposta em `docs/POLITICA-CUPOM-DE-PARCEIRO.md` (item 190).
 
+### 193. Cupom: cada campanha define quem pode usar (só contas novas ou qualquer personal) — ✅ PR aberta (**tem migration**: `20261107000000_cupom_publico_da_campanha.sql`, rodar ANTES do merge)
+Pedido do dono (18/11/2026): separar, ao montar a campanha, cupom para usuário novo e para todos.
+- ✅ `campanhas_cupom.publico` (`novos` padrão | `todos`); as campanhas que já existem ficam `novos`. A regra de conta nova (≤ 7 dias e sem alunos) só vale para `novos`; em `todos` os dias somam depois do fim do acesso atual (trial, assinatura ou bônus). Continua um cupom por conta, com período e limite de usos.
+- ✅ `/admin → Cupons`: seletor "Quem pode usar" na nova campanha e o público de cada campanha na lista. O público **não muda depois de criada** (para mudar, criar outra campanha).
+- ✅ `admin_criar_campanha_cupom` ganha o parâmetro `p_publico`; a função antiga de 5 parâmetros é removida.
+- ✅ Central de ajuda e proposta de Termos ajustadas ("conforme a campanha").
+- ✅ Teste `supabase/tests/cupom_publico.sql` (a–f), **ainda não executado**; o `admin_cupons.sql` foi atualizado para a nova assinatura.
+- ⏳ **Dono:** rodar a migration e o teste antes do merge. O texto jurídico (item 192) agora precisa citar que o cupom pode valer para quem já é cliente.
+
