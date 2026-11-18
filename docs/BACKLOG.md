@@ -1922,3 +1922,11 @@ Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Deci
 - ⏳ **Política e Termos:** texto proposto em `docs/POLITICA-CUPOM-DE-PARCEIRO.md`, **sem subir a versão** (exige aprovação do jurídico, migration em `documentos_versoes` e novo aceite). Dono: encaminhar ao jurídico antes de divulgar o cupom em larga escala.
 - ⏳ **Falta (PR 4):** admin (criar/pausar campanha e números por campanha); até lá, campanhas por SQL.
 
+### 191. Cupom de parceiro, parte 4: admin das campanhas — ✅ PR aberta (**tem migration**: `20261106000000_admin_cupons.sql`, rodar ANTES do merge)
+- ✅ **/admin → aba "Cupons":** cartões (campanhas vigentes, cupons usados com dias dados, ativaram, já pagaram), **nova campanha** (código, parceiro, dias, limite de usos, "vale até" o último dia) com o link do parceiro já montado, lista de campanhas com situação (vigente, pausada, esgotada, vencida, ainda não começou), funil por campanha (usos/limite, ativaram, pagaram), **Copiar link**, **Pausar/Reativar** (com confirmação) e os 30 usos mais recentes.
+- ✅ Banco: `admin_cupons()`, `admin_criar_campanha_cupom(...)` e `admin_atualizar_campanha_cupom(...)`: `SECURITY DEFINER`, exigem `is_admin()` (MFA) e gravam em `admin_logs` (ações novas no CHECK; aparecem no histórico como "Campanha de cupom criada/alterada"). Validações com mensagem em português; o limite de usos nunca fica abaixo dos usos já feitos.
+- ✅ **Privacidade:** o painel mostra só nome de personal e números (ativado = cadastrou ≥ 1 aluno; pagante = tem pagamento no livro de receita). Nunca e-mail, CPF nem dado de aluno; o parceiro não recebe nada.
+- ✅ Testes: `cupons.test.ts` (situação, formulário, data de validade em Brasília, normalização) e `supabase/tests/admin_cupons.sql` (a–f), **ainda não executado** (sem Postgres local).
+- ⏳ **Dono:** rodar a migration e o teste SQL antes do merge; depois criar uma campanha de teste pelo painel, abrir o link do parceiro numa conta nova e conferir que os números sobem.
+- ⏳ Política e Termos do cupom seguem como proposta em `docs/POLITICA-CUPOM-DE-PARCEIRO.md` (item 190).
+

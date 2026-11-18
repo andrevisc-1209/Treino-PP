@@ -35,6 +35,7 @@ import { useMfa } from './mfa'
 import { useInadimplentes, type Inadimplente } from './useInadimplentes'
 import { ConsentimentosSection } from './ConsentimentosSection'
 import { IndicacoesSection } from './IndicacoesSection'
+import { CuponsSection } from './CuponsSection'
 import { fimDoAcesso } from './indicacoes'
 import { RelatosSection } from './RelatosSection'
 import {
@@ -470,6 +471,8 @@ function AdminDashboard() {
         {aba === 'financeiro' && <FinanceiroSection />}
 
         {aba === 'indicacoes' && <IndicacoesSection />}
+
+        {aba === 'cupons' && <CuponsSection />}
 
         {aba === 'suporte' && (
           <>
