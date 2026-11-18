@@ -1912,3 +1912,13 @@ Origem: dono, 17/11/2026 (ação com parceiro: "cupom XXXX ativa 3 meses"). Deci
 - ⏳ **Próximas PRs:** 3 (campo "tenho um cupom" no cadastro, link `?cupom=`, tela do acesso por cupom, Política e Termos) e 4 (admin: criar/pausar campanha e números por campanha). Sem elas o cupom só existe por SQL (campanha criada à mão no SQL Editor).
 - ⏳ **Dono:** rodar a migration e o teste SQL no SQL Editor antes do merge.
 
+### 190. Cupom de parceiro, parte 3: o cupom no app — ✅ PR aberta (só app; a migration é a do item 189, já rodada)
+- ✅ **Cadastro:** link "Tenho um cupom de parceiro" abre um campo opcional; o código fica guardado até a pessoa entrar (vale também com e-mail a confirmar). Link do parceiro: `/login?cupom=CODIGO&utm_source=parceiro&utm_medium=<nome>&utm_campaign=cupom-codigo` (`linkDeCupom`); o UTM entra no painel de origem.
+- ✅ **Logo depois de entrar** (`useAplicarCupomGuardado`): resgata uma vez (`resgatar_cupom`), mostra o resultado e esquece o código; sem rede, mantém para a próxima abertura.
+- ✅ **Configurações → Assinatura:** "Tenho um cupom" para quem não digitou no cadastro; quem já usou vê só "Cupom aplicado: N dias grátis" (nunca o parceiro).
+- ✅ **Dias grátis visíveis e sem alarme falso:** a tela de Assinatura passa a mostrar "Acesso até <fim dos dias grátis>" e avisa que, se assinar antes, o plano começa depois deles. Antes, depois do fim do trial de 15 dias a tela dizia "O período de teste terminou" mesmo com o cupom valendo. O banner do teste conta os dias grátis (não "faltam 3 dias" com 90 de cupom pela frente).
+- ✅ Central de ajuda: artigo "Cupom de parceiro: dias grátis na conta nova".
+- ✅ Testes: `cupom.test.ts`, `resumo.test.ts` (dias grátis) e `trialBannerRegra.test.ts`.
+- ⏳ **Política e Termos:** texto proposto em `docs/POLITICA-CUPOM-DE-PARCEIRO.md`, **sem subir a versão** (exige aprovação do jurídico, migration em `documentos_versoes` e novo aceite). Dono: encaminhar ao jurídico antes de divulgar o cupom em larga escala.
+- ⏳ **Falta (PR 4):** admin (criar/pausar campanha e números por campanha); até lá, campanhas por SQL.
+

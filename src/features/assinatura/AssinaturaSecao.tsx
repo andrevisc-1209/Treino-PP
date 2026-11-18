@@ -4,11 +4,13 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { PlanoModal } from '@/components/PlanoModal'
 import { mapearErroSupabase } from '@/lib/erros'
+import { CupomCampo } from '@/features/cupom/CupomCampo'
 import { useAssinatura } from './useAssinatura'
 import { resumirAssinatura } from './resumo'
 
 const COR_STATUS: Record<string, string> = {
   Trial: 'bg-sky-100 text-sky-900',
+  'Dias grátis': 'bg-sky-100 text-sky-900',
   Ativo: 'bg-emerald-100 text-emerald-800',
   Encerrado: 'bg-red-100 text-red-800',
   Cancelado: 'bg-slate-200 text-slate-800',
@@ -49,6 +51,7 @@ export function AssinaturaSecao() {
       <Button variant={r.acao === 'renovar' ? 'outline' : 'primary'} className="w-full" onClick={() => setEscolhendoPlano(true)}>
         {r.acao === 'renovar' ? 'Renovar' : 'Assinar agora'}
       </Button>
+      <CupomCampo />
       <PlanoModal open={escolhendoPlano} onClose={() => setEscolhendoPlano(false)} />
     </>
   )

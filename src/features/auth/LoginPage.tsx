@@ -26,6 +26,7 @@ import { sugerirEmail } from './sugestaoEmail'
 import iconMark from '@/assets/brand/icon-mark.png'
 import { AvisoAnalytics } from '@/features/analytics/AvisoAnalytics'
 import { guardarCodigoDoLink } from '@/features/indicacao/indicacao'
+import { guardarCupom, guardarCupomDoLink, lerCupomGuardado, normalizarCupom } from '@/features/cupom/cupom'
 import { guardarOrigemDoLink } from '@/features/analytics/origem'
 import { evento } from '@/features/analytics/analytics'
 
@@ -96,6 +97,10 @@ export function LoginPage() {
   )
   const [msg, setMsg] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState('')
+  // cupom de parceiro (opcional): vem do link (?cupom=) ou digitado; fica guardado até a pessoa entrar e o app resgata (servidor valida)
+  const [cupomInicial] = useState(() => normalizarCupom(new URLSearchParams(window.location.search).get('cupom')) ?? lerCupomGuardado() ?? '')
+  const [cupom, setCupom] = useState(cupomInicial)
+  const [cupomAberto, setCupomAberto] = useState(cupomInicial !== '')
   const [captchaVez, setCaptchaVez] = useState(0)
   const [emailPendente, setEmailPendente] = useState<string | null>(null)
   const [emailPendenteOrigem, setEmailPendenteOrigem] = useState<'signup' | 'login'>('signup')
@@ -147,6 +152,7 @@ export function LoginPage() {
   useEffect(() => {
     guardarCodigoDoLink(window.location.search, !!session)
     guardarOrigemDoLink(window.location.search, !!session)
+    guardarCupomDoLink(window.location.search, !!session)
   }, [session])
 
   // funil: a pessoa abriu o formulário de cadastro (1 evento por abertura da tela)
@@ -456,6 +462,30 @@ export function LoginPage() {
           <PasswordInput {...register('password')} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
         </Field>
         {mode === 'signup' && <MedidorDeSenha senha={senhaValor ?? ''} />}
+
+        {mode === 'signup' &&
+          (cupomAberto ? (
+            <Field label="Cupom de parceiro (opcional)" error={cupom && !normalizarCupom(cupom) ? 'O código tem de 4 a 20 letras e números.' : undefined}>
+              <Input
+                value={cupom}
+                onChange={(e) => {
+                  const v = e.target.value.toUpperCase()
+                  setCupom(v)
+                  guardarCupom(v)
+                }}
+                autoCapitalize="characters"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                maxLength={24}
+                placeholder="Ex.: PARCEIRO3M"
+              />
+            </Field>
+          ) : (
+            <button type="button" className="min-h-11 text-left text-sm font-medium text-brand-hover underline" onClick={() => setCupomAberto(true)}>
+              Tenho um cupom de parceiro
+            </button>
+          ))}
 
         {mode === 'signup' && (
           <>

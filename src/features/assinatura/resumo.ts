@@ -33,9 +33,29 @@ export type ResumoAssinatura = {
 const dataBR = (d: Date | null): string => (d ? formatarDataBR(dataSP(d)) : '—')
 
 /** Dados da seção "Assinatura" das Configurações, a partir do que `useAssinatura` já lê de treino.assinaturas. */
-export function resumirAssinatura(a: Assinatura): ResumoAssinatura {
+export function resumirAssinatura(a: Assinatura, agora: Date = new Date()): ResumoAssinatura {
   const status = ROTULO_STATUS_ASSINATURA[a.status]
   const plano = a.plano ? PLANOS_VALOR[a.plano] : null
+
+  // Dias grátis (cupom de parceiro ou mês da indicação) vão DEPOIS do período base: o acesso vai até o fim deles.
+  const baseFim = a.status === 'trial' ? a.trialFim : (a.assinaturaFim ?? a.trialFim)
+  const comDiasGratis = !!a.bonusAte && a.bonusAte.getTime() > agora.getTime() && (!baseFim || a.bonusAte.getTime() > baseFim.getTime())
+  if (comDiasGratis) {
+    const trialRodando = a.status === 'trial' && (a.diasRestantesTrial ?? 0) > 0
+    const nota = 'Seu acesso inclui dias grátis de cupom ou indicação. Se assinar antes de acabar, o plano começa depois deles: você não perde nenhum dia.'
+    if (a.status === 'ativa') {
+      return { status, plano: plano?.nome ?? '—', prazoRotulo: 'Acesso até', prazo: dataBR(a.bonusAte), valor: plano ? formatarBRL(plano.valor) : '—', nota, acao: 'renovar' }
+    }
+    return {
+      status: trialRodando ? status : 'Dias grátis',
+      plano: 'Período grátis (teste e dias de cupom ou indicação)',
+      prazoRotulo: 'Acesso até',
+      prazo: dataBR(a.bonusAte),
+      valor: 'Grátis',
+      nota,
+      acao: 'assinar',
+    }
+  }
 
   if (a.status === 'trial') {
     const dias = a.diasRestantesTrial ?? 0
